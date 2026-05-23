@@ -1,0 +1,338 @@
+<!DOCTYPE html><html class="light" lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>能力量表初筛 - 产品思维提升工具</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #2a14b4;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .slider-thumb::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #2a14b4;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#2a14b4",
+                        "on-primary": "#ffffff",
+                        "background": "#f7f9fb",
+                        "surface": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container": "#eceef0",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#464554",
+                        "outline": "#777586",
+                        "outline-variant": "#c7c4d7",
+                        "secondary": "#006a61",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "md": "24px",
+                        "margin-desktop": "40px",
+                        "base": "8px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "lg": "48px",
+                        "xl": "80px",
+                        "sm": "12px"
+                    },
+                    "fontFamily": {
+                        "body": ["Hanken Grotesk"],
+                        "headline": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", {"lineHeight": "20px"}],
+                        "body-md": ["16px", {"lineHeight": "24px"}],
+                        "body-lg": ["18px", {"lineHeight": "28px"}],
+                        "label-bold": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface">
+<!-- 侧边导航栏 -->
+<aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container-low border-r border-outline-variant flex flex-col py-6 z-50">
+<div class="px-6 mb-10">
+<h1 class="text-headline-md font-bold text-on-surface">产品思维提升</h1>
+<p class="text-label-bold uppercase tracking-wider text-on-surface-variant opacity-70">专业版</p>
+</div>
+<nav class="flex-1 space-y-1"><a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#"><span class="material-symbols-outlined">dashboard</span><span class="text-body-md">工作台</span></a><a class="flex items-center gap-3 px-6 py-3 text-primary border-l-4 border-primary bg-surface-container-high" href="#"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span><span class="text-body-md font-bold">AI 舑断</span></a><a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#"><span class="material-symbols-outlined">menu_book</span><span class="text-body-md">日常训练</span></a><a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#"><span class="material-symbols-outlined">rocket_launch</span><span class="text-body-md">特训冲刺</span></a></nav>
+<div class="px-6 mt-auto">
+<div class="pt-4 border-t border-outline-variant space-y-1"><a class="flex items-center gap-3 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined text-sm">settings</span><span class="text-body-sm">设置</span></a><a class="flex items-center gap-3 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined text-sm">help</span><span class="text-body-sm">帮助中心</span></a></div>
+</div>
+</aside>
+<!-- 顶部应用栏 -->
+<header class="fixed top-0 right-0 left-[280px] h-20 bg-background/80 backdrop-blur-md border-b border-outline-variant flex items-center justify-between px-margin-desktop z-40">
+<div class="flex items-center gap-4">
+<h2 class="text-headline-lg font-bold text-on-surface">诊断模块</h2>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="text-body-sm">当前阶段:</span>
+<span class="text-label-bold text-primary px-3 py-1 bg-primary/10 rounded-full">阶段一：能力量表初筛</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-variant">
+<img alt="用户头像" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWF07_Edsm2OYi7jYdSJOy88tX8vhZsb1kL-2JqG1db1nC6ibX7d2Qh_9IgjibdfaMdn5Pf6Z-myO5H91_azHnrUILoG3XUuor7A9j0FQc9rQKaquHlAEuH6neKF6br__VxCHAkz04mARdRWkW1ShR24mz-gWTErbF-4eIWj5eH4w5p4J-q7v9SYPxFE6RIUM1B49tfwYqG3bBWxPjxJ3gUuwzT4OhLR08bQHTUpAG_V_HVc-_psqBpbiFbFqy45b8lZf_yLJO7Y8">
+</button>
+</div>
+</header>
+<!-- 主要内容 -->
+<main class="ml-[280px] pt-20 min-h-screen">
+<div class="max-w-5xl mx-auto px-margin-desktop py-12">
+<!-- 进度指示器 Stepper -->
+<div class="flex items-center justify-between mb-12 w-full"><div class="flex-1 flex flex-col gap-3 group"><div class="h-1.5 w-full bg-primary rounded-full"></div><div class="flex items-center gap-2"><span class="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary text-[10px] font-bold">1</span><span class="text-body-sm font-bold text-on-surface">能力量表初筛</span></div></div><div class="w-12 h-1.5 flex items-center justify-center px-2"><div class="h-[1px] w-full bg-outline-variant"></div></div><div class="flex-1 flex flex-col gap-3 group opacity-50"><div class="h-1.5 w-full bg-surface-container-highest rounded-full"></div><div class="flex items-center gap-2"><span class="flex items-center justify-center w-5 h-5 rounded-full bg-surface-container-highest text-on-surface-variant text-[10px] font-bold">2</span><span class="text-body-sm text-on-surface-variant">教练深度访谈</span></div></div><div class="w-12 h-1.5 flex items-center justify-center px-2"><div class="h-[1px] w-full bg-outline-variant"></div></div><div class="flex-1 flex flex-col gap-3 group opacity-50"><div class="h-1.5 w-full bg-surface-container-highest rounded-full"></div><div class="flex items-center gap-2"><span class="flex items-center justify-center w-5 h-5 rounded-full bg-surface-container-highest text-on-surface-variant text-[10px] font-bold">3</span><span class="text-body-sm text-on-surface-variant">案例实战验证</span></div></div></div>
+<!-- 介绍部分 -->
+<div class="mb-12">
+<h3 class="text-headline-lg mb-4">阶段一：能力量表初筛</h3>
+<p class="text-body-lg text-on-surface-variant max-w-3xl">
+                    请根据您过去 6-12 个月的工作实践，对以下四个维度的核心能力进行自评。</p>
+</div>
+<!-- 维度评分网格 -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+<!-- 無列 1: 战略思维 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 hover:border-primary transition-colors group">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 bg-primary/10 rounded flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">explore</span>
+</div>
+<h4 class="text-headline-md">战略思维</h4>
+</div>
+<p class="text-body-sm text-on-surface-variant mb-8 h-10">在复杂市场环境下识别机会、制定愿景及规划长期产品路线图的能力。</p>
+<div class="space-y-4"><div class="flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex flex-wrap gap-1.5 w-full">
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="strategic_thinking" type="radio" value="1">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">初学入门</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="strategic_thinking" type="radio" value="2">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">基础执行</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input checked="" class="sr-only peer" name="strategic_thinking" type="radio" value="3">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">熟练应用</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="strategic_thinking" type="radio" value="4">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专业进阶</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="strategic_thinking" type="radio" value="5">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专家大师</div>
+</label>
+</div>
+</div>
+</div></div>
+</div>
+<!-- 無列 2: 系统设计能力 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 hover:border-primary transition-colors group">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 bg-primary/10 rounded flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">account_tree</span>
+</div>
+<h4 class="text-headline-md">系统设计能力</h4>
+</div>
+<p class="text-body-sm text-on-surface-variant mb-8 h-10">理解复杂系统架构、平衡技术债务与功能迭代、定义清晰接口与逻辑流的能力。</p>
+<div class="space-y-4"><div class="flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex flex-wrap gap-1.5 w-full">
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="system_design" type="radio" value="1">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">初学入门</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input checked="" class="sr-only peer" name="system_design" type="radio" value="2">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">基础执行</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="system_design" type="radio" value="3">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">熟练应用</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="system_design" type="radio" value="4">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专业进阶</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="system_design" type="radio" value="5">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专家大师</div>
+</label>
+</div>
+</div>
+</div></div>
+</div>
+<!-- 無列 3: 数据决策能力 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 hover:border-primary transition-colors group">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 bg-primary/10 rounded flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<h4 class="text-headline-md">数据决策能力</h4>
+</div>
+<p class="text-body-sm text-on-surface-variant mb-8 h-10">利用定量与定性数据分析驱动决策、验证假设及监控产品健康度的能力。</p>
+<div class="space-y-4"><div class="flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex flex-wrap gap-1.5 w-full">
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="data_decision" type="radio" value="1">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">初学入门</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="data_decision" type="radio" value="2">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">基础执行</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="data_decision" type="radio" value="3">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">熟练应用</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input checked="" class="sr-only peer" name="data_decision" type="radio" value="4">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专业进阶</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="data_decision" type="radio" value="5">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专家大师</div>
+</label>
+</div>
+</div>
+</div></div>
+</div>
+<!-- 無列 4: 用户洞察与需求管理 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 hover:border-primary transition-colors group">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 bg-primary/10 rounded flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<h4 class="text-headline-md">用户洞察与需求管理</h4>
+</div>
+<p class="text-body-sm text-on-surface-variant mb-8 h-10">深度同理心、挖掘用户潜藏需求、从调研中提取核心痛点并转化为产品力的能力。</p>
+<div class="space-y-4"><div class="flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex flex-wrap gap-1.5 w-full">
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="user_insight" type="radio" value="1">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">初学入门</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="user_insight" type="radio" value="2">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">基础执行</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input checked="" class="sr-only peer" name="user_insight" type="radio" value="3">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">熟练应用</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="user_insight" type="radio" value="4">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专业进阶</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="user_insight" type="radio" value="5">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专家大师</div>
+</label>
+</div>
+</div>
+</div></div>
+</div>
+<!-- 無列 5: 商业思维 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 hover:border-primary transition-colors group">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 bg-primary/10 rounded flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">monetization_on</span>
+</div>
+<h4 class="text-headline-md">商业思维</h4>
+</div>
+<p class="text-body-sm text-on-surface-variant mb-8 h-10">深刻理解商业模式、市场京争及盈利逻辑，能够从商业价值角度驱动产品决策的能力。</p>
+<div class="space-y-4"><div class="flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex flex-wrap gap-1.5 w-full">
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="business_thinking" type="radio" value="1">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">初学入门</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="business_thinking" type="radio" value="2">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">基础执行</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="business_thinking" type="radio" value="3">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">熟练应用</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="business_thinking" type="radio" value="4">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专业进阶</div>
+</label>
+<label class="flex-1 flex flex-col items-center cursor-pointer">
+<input class="sr-only peer" name="business_thinking" type="radio" value="5">
+<div class="w-full py-2 px-1 text-center rounded border border-outline-variant peer-checked:bg-primary peer-checked:text-on-primary peer-checked:border-primary text-[12px] transition-colors">专家大师</div>
+</label>
+</div>
+</div>
+</div></div>
+</div>
+</div>
+<!-- 操作区域 -->
+<div class="mt-12 flex items-center justify-between border-t border-outline-variant pt-8">
+    <button class="px-8 py-3 text-on-surface-variant font-label-bold border border-outline-variant rounded-lg hover:bg-surface-container transition-colors">
+        暂时保存
+    </button>
+    <button class="px-8 py-3 bg-[#4338ca] text-white font-label-bold rounded-lg flex items-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]">
+        <span class="">进入下一阶段</span>
+        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+    </button>
+</div>
+</div>
+</main>
+<!-- 背景装饰 -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-1/4 left-1/3 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px]"></div>
+</div>
+
+
+
+
+
+
+</body></html>

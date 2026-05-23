@@ -1,0 +1,144 @@
+{
+  "project": "产品升云阶 — Product Thinking Enhancement Tool",
+  "last_updated": "2026-05-23",
+  "current_feature": null,
+  "notes": "原型阶段已完成，10 个页面全部就绪。品牌名统一为「产品升云阶」。画像展示集成在工作台，不设独立页面。新增 AI 模型配置页。",
+  "features": [
+    {
+      "id": "infra-001",
+      "name": "项目脚手架搭建",
+      "description": "Next.js App Router 初始化、Tailwind CSS + shadcn/ui 配置、目录结构搭建、ESLint + Prettier 配置、TypeScript 严格模式",
+      "dependencies": [],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "infra-002",
+      "name": "Supabase 集成",
+      "description": "Supabase 项目初始化、账密登录、PostgreSQL schema 设计（用户表、画像表、答题记录表、诊断报告表、特训进度表）、supabase-js 客户端封装",
+      "dependencies": ["infra-001"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "infra-003",
+      "name": "Vercel AI SDK 集成",
+      "description": "AI provider 配置（支持动态读取用户配置的模型和 API Key）、流式对话封装、多轮上下文管理、错误处理",
+      "dependencies": ["infra-001"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "infra-004",
+      "name": "Prompt 管理体系",
+      "description": "统一人格底座 + 阶段性指令叠加架构实现。Prompt 模板统一管理（src/prompts/）、角色切换机制、上下文携带（前阶段结论 → 下一阶段）",
+      "dependencies": ["infra-003"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "infra-005",
+      "name": "AI 模型配置模块",
+      "description": "内置 DeepSeek V4 Flash 默认模型、DeepSeek V4 Pro 可选、支持自定义 OpenAI 兼容 API。深度思考 (reasoning) 默认开启。API Key 存储在数据库中。",
+      "dependencies": ["infra-002", "infra-003"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "profile-001",
+      "name": "用户画像引擎 — 数据模型与展示",
+      "description": "画像数据模型（维度等级、成长曲线、薄弱项、训练完成度）、数据采集点埋入各模块、Supabase 读写接口。UI 展示集成在工作台（Dashboard）中，不设独立页面。",
+      "dependencies": ["infra-002"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "profile-002",
+      "name": "用户画像引擎 — 推荐逻辑",
+      "description": "基于画像的训练题推荐逻辑、案例推送优先级算法、薄弱项自动聚焦、成长曲线可视化（工作台 SVG 图表）",
+      "dependencies": ["profile-001"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "diag-001",
+      "name": "诊断模块 — 能力量表初筛（阶段一）",
+      "description": "AI 生成 5 维度 × 5 题 = 25 题自评量表、1-5 分制锚点、量表 UI、初步定级计算。原型已完成（需从 5 题扩至 25 题）。",
+      "dependencies": ["infra-003", "infra-004"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "diag-002",
+      "name": "诊断模块 — AI 深度访谈（阶段二）",
+      "description": "多轮对话界面、AI 基于初筛结果深挖薄弱维度、对话策略引擎、诊断摘要生成",
+      "dependencies": ["diag-001"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "diag-003",
+      "name": "诊断模块 — 案例实战验证（阶段三）",
+      "description": "AI 出题引擎（基于薄弱维度生成 B 端场景题）、多维度评分引擎、综合诊断报告生成与持久化",
+      "dependencies": ["diag-002"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "training-001",
+      "name": "日常训练 — 场景题库",
+      "description": "按 5 维度筛选 UI、AI 动态出题（非预置）、答题 → AI 评分反馈闭环、个性化推荐（基于画像）",
+      "dependencies": ["infra-004", "profile-001"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "training-002",
+      "name": "日常训练 — 案例库",
+      "description": "经典 B 端产品拆解（AI 动态生成）、决策推演案例生成引擎、分类浏览与检索",
+      "dependencies": ["infra-004"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "bootcamp-001",
+      "name": "特训冲刺 — 简历解析（Day 0）",
+      "description": "简历上传功能、AI 简历解析引擎（能力画像 + 面试弱点预测 + 10 道面试题生成）、解析结果展示与编辑",
+      "dependencies": ["infra-003", "infra-004"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "bootcamp-002",
+      "name": "特训冲刺 — AI 模拟面试（Day 1-5）",
+      "description": "每日面试循环引擎（模拟面试 30min → 诊断反馈 15min → 材料推送）、5 天难度递增策略、进度管理",
+      "dependencies": ["bootcamp-001"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "bootcamp-003",
+      "name": "特训冲刺 — 面试诊断报告",
+      "description": "每轮面试结束后生成诊断报告（维度评分 + 关键时刻回放 + 改进计划 + 推荐材料）、5 天成长追踪",
+      "dependencies": ["bootcamp-002"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "ux-001",
+      "name": "全局 UI 与导航",
+      "description": "布局框架、侧边栏导航（工作台→AI 诊断→日常训练→特训冲刺）、用户认证流程（登录/注册/退出）、页面路由结构、Loading/Error/Empty 状态处理",
+      "dependencies": ["infra-001", "infra-002"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "ux-002",
+      "name": "AI 设置页",
+      "description": "AI 模型配置页面：DeepSeek API Key 输入、模型选择（Flash / Pro / 自定义）、深度思考开关、连接测试",
+      "dependencies": ["infra-005", "ux-001"],
+      "status": "not-started",
+      "evidence": ""
+    }
+  ]
+}

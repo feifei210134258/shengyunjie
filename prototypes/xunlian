@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>AI 案例拆解 - PM LevelUp</title>
+<!-- Google Fonts: Hanken Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#3b3bc9",
+                    "tertiary-fixed": "#e1e0ff",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#86f2e4",
+                    "outline-variant": "#c7c4d7",
+                    "on-tertiary-container": "#bebfff",
+                    "on-secondary-fixed": "#00201d",
+                    "secondary-fixed": "#89f5e7",
+                    "on-secondary-container": "#006f66",
+                    "on-primary-fixed": "#100069",
+                    "surface-tint": "#5148d7",
+                    "primary-container": "#4338ca",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#464554",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-bright": "#f7f9fb",
+                    "surface-container-high": "#e6e8ea",
+                    "on-tertiary-fixed-variant": "#2f2ebe",
+                    "on-primary-fixed-variant": "#372abf",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#e3dfff",
+                    "on-tertiary-fixed": "#07006c",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#eff1f3",
+                    "background": "#f7f9fb",
+                    "tertiary-fixed-dim": "#c0c1ff",
+                    "surface-variant": "#e0e3e5",
+                    "surface-dim": "#d8dadc",
+                    "on-background": "#191c1e",
+                    "outline": "#777586",
+                    "tertiary": "#1f1ab3",
+                    "inverse-surface": "#2d3133",
+                    "on-surface": "#191c1e",
+                    "on-primary-container": "#c1beff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed-dim": "#6bd8cb",
+                    "surface-container": "#eceef0",
+                    "secondary": "#006a61",
+                    "on-secondary-fixed-variant": "#005049",
+                    "inverse-primary": "#c3c0ff",
+                    "primary": "#2a14b4",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "surface": "#f7f9fb"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "24px",
+                    "xl": "80px",
+                    "gutter": "24px",
+                    "margin-mobile": "16px",
+                    "base": "8px",
+                    "margin-desktop": "40px",
+                    "lg": "48px",
+                    "sm": "12px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "headline-xl": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "label-bold": ["Hanken Grotesk"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "body-sm": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                    "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                    "label-bold": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                    "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                    "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                    "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                    "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex selection:bg-primary selection:text-on-primary">
+<!-- SideNavBar Component -->
+<nav class="bg-surface-container-low dark:bg-surface-dim h-screen w-64 fixed left-0 top-0 border-r border-outline-variant flex flex-col h-full py-md px-sm z-50">
+<!-- Brand Header -->
+<div class="px-sm mb-lg flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0" data-alt="A clean, abstract geometric logo representing strategy and upward growth, primarily in deep indigo and bright white, minimal professional tech aesthetic.">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: &quot;FILL&quot; 1;">trending_up</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary font-bold">PM LevelUp</h1>
+<p class="font-label-bold text-label-bold text-on-surface-variant">战略洞察平台</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-xs flex-grow">
+<!-- Inactive -->
+<a class="flex items-center gap-sm px-sm py-sm text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-all duration-200 ease-in-out font-body-md text-body-md rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="">控制台</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-sm px-sm py-sm text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-all duration-200 ease-in-out font-body-md text-body-md rounded-lg" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="">能力诊断</span>
+</a>
+<!-- Active (Mapped to Daily Training context) -->
+<a class="flex items-center gap-sm px-sm py-sm bg-secondary-container text-on-secondary-container font-label-bold rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">fitness_center</span>
+<span class="">日常训练</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-sm px-sm py-sm text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-all duration-200 ease-in-out font-body-md text-body-md rounded-lg" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="">特训冲刺</span>
+</a>
+</div>
+<!-- Bottom Profile -->
+
+</nav>
+<!-- Main Workspace Area -->
+<main class="ml-64 w-[calc(100%-16rem)] flex flex-col min-h-screen">
+<!-- TopAppBar Component -->
+<header class="bg-surface/80 backdrop-blur-md fixed top-0 right-0 w-[calc(100%-16rem)] z-40 border-b border-outline-variant flex justify-between items-center h-16 px-gutter">
+<div class="flex items-center gap-md">
+<span class="font-headline-md text-headline-md text-primary font-bold">日常训练</span>
+<!-- Inner Nav Links -->
+<nav class="hidden lg:flex gap-md ml-lg">
+
+
+
+</nav>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-sm">
+<!-- Search Bar (on_right) -->
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-xl pr-sm py-xs bg-surface-container-lowest border border-outline-variant rounded-full font-body-sm text-body-sm focus:border-primary focus:ring-2 focus:ring-primary-fixed-dim outline-none transition-all w-64 text-on-surface" placeholder="搜索见解..." type="text">
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-full transition-colors scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-full transition-colors scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full ml-sm bg-primary-fixed-dim overflow-hidden border border-outline-variant shrink-0 cursor-pointer" data-alt="A professional headshot avatar of a product manager, bright lighting, neutral background, looking confident.">
+<!-- Placeholder for User Profile Image -->
+<div class="w-full h-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">person</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Canvas Content -->
+<div class="mt-16 bg-surface flex-1 overflow-y-auto">
+<div class="max-w-[1040px] mx-auto space-y-lg"><div class="max-w-3xl mx-auto"><div class="flex justify-between items-end mb-2"><div class="space-y-1"><span class="text-primary font-label-bold uppercase tracking-widest text-xs">每日挑战</span><h3 class="text-on-surface font-headline-md">第 1 / 4 题</h3></div><div class="flex gap-1.5 pb-2"><div class="w-8 h-1.5 rounded-full bg-primary"></div><div class="w-8 h-1.5 rounded-full bg-surface-container-highest"></div><div class="w-8 h-1.5 rounded-full bg-surface-container-highest"></div><div class="w-8 h-1.5 rounded-full bg-surface-container-highest"></div></div><div class="flex items-center gap-2 mb-2 px-3 py-1.5 bg-secondary-container/30 text-on-secondary-container rounded-full w-fit">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: &quot;FILL&quot; 1;">local_fire_department</span>
+<span class="font-label-bold text-[10px]">已连续训练 12 天</span>
+</div></div><div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl shadow-sm relative overflow-hidden ring-1 ring-black/5"><div class="absolute top-0 left-0 w-1.5 h-full bg-primary"></div><div class="flex items-center gap-sm mb-4"><span class="px-2.5 py-0.5 bg-primary-fixed text-on-primary-fixed-variant font-label-bold text-[10px] rounded uppercase">策略选题</span><span class="px-2.5 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-bold text-[10px] rounded uppercase">能力维度：战略思维</span></div><h2 class="font-headline-md text-headline-md text-on-surface mb-4 leading-relaxed font-bold">你负责一款面向中小企业的 CRM 产品。现有资源只够做 3 个功能之一：1) 线索自动评分 2) 邮件模板库 3) 移动端签到。你选哪个？说明理由。</h2><p class="text-on-surface-variant font-body-md leading-6 border-t border-outline-variant/30 pt-4">请根据当前市场环境、中小企业核心痛点以及产品生命周期阶段进行深度解析，阐明你的决策逻辑与预期收益。</p></div><div class="space-y-md mt-md"><div class="group relative"><textarea class="w-full min-h-[150px] p-md bg-surface-container-lowest border border-outline-variant rounded-xl font-body-md text-body-md focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-outline-variant/60 shadow-inner" placeholder="写下你的思考..."></textarea><div class="absolute bottom-4 right-4 text-outline-variant font-label-bold text-xs pointer-events-none group-focus-within:text-primary/50">支持 Markdown 格式</div></div>
+<div class="mt-4 bg-surface-container-lowest border border-primary/20 rounded-xl p-md shadow-sm relative overflow-hidden" id="ai-analysis-container"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"></div><div class="flex items-center gap-sm mb-6"><span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: &quot;FILL&quot; 1;">auto_awesome</span><h3 class="font-headline-md text-[18px] text-on-surface font-bold">AI 深度解析</h3></div><div class="space-y-6"><section><h4 class="font-headline-md text-[16px] text-on-surface flex items-center gap-2 mb-4"><span class="material-symbols-outlined text-primary text-[20px]">analytics</span> 诊断</h4><div class="space-y-4"><div class="bg-surface-container-low rounded-lg p-md border border-outline-variant/30"><p class="text-body-md text-on-surface leading-relaxed mb-4">你的选择（线索自动评分）在当前阶段非常合理。你准确地识别到了中小企业在销售效率上的核心痛点，并考虑到线索自动评分能最快带来直接转化提升，体现了较好的 ROI 意识。</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="space-y-2"><h5 class="font-label-bold text-secondary flex items-center gap-1"><span class="material-symbols-outlined text-sm">check_circle</span> 核心亮点</h5><ul class="text-body-sm text-on-surface-variant list-disc list-inside space-y-1 ml-1"><li class="">考虑了长期的 ROI 收益</li><li class="">准确切中中小企业客户核心诉求</li><li class="">逻辑清晰，决策路径完整</li></ul></div><div class="space-y-2"><h5 class="font-label-bold text-error flex items-center gap-1"><span class="material-symbols-outlined text-sm">warning</span> 思维盲区</h5><ul class="text-body-sm text-on-surface-variant list-disc list-inside space-y-1 ml-1"><li class="">忽略了技术实现的可行性与成本估算</li><li class="">未充分考虑竞争对手当前的进度</li><li class="">缺乏对失败风险的预案说明</li></ul></div></div></div></div></section><section><h4 class="font-headline-md text-[16px] text-on-surface flex items-center gap-2 mb-4"><span class="material-symbols-outlined text-primary text-[20px]">lightbulb</span> 建议</h4><div class="bg-primary-fixed/20 rounded-lg p-md border border-primary-fixed/40"><p class="text-body-md text-on-surface-variant leading-relaxed mb-4">基于你的分析逻辑，以下是进一步提升方案专业度的建议：</p><ul class="text-body-sm text-on-surface-variant list-disc list-inside space-y-2 ml-1"><li class=""><span class="font-bold text-on-surface">增加资源评估：</span> 建议在策略规划中增加“技术与资源预估”模块，与研发确认数据清洗成本。</li><li class=""><span class="font-bold text-on-surface">竞品对比：</span> 在决策理由中加入对竞品现有功能的对标分析，增强方案的市场说服力。</li><li class=""><span class="font-bold text-on-surface">风险预控：</span> 补充针对所选功能的落地风险评估及相应的应对预案（如：若自动化评分准确率不如预期时的补救措施）。</li></ul></div></section></div></div>
+<div class="flex justify-between items-center"><div class="flex items-center gap-gutter"><button class="px-8 py-3 bg-primary text-on-primary hover:bg-primary-container transition-all font-label-bold text-body-md rounded-full flex items-center gap-2 shadow-lg shadow-primary/20"><span class="material-symbols-outlined text-lg" style="font-variation-settings: &quot;FILL&quot; 1;">bolt</span>重新分析</button><button class="px-8 py-3 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all font-label-bold text-body-md rounded-full flex items-center gap-2 border border-outline-variant">下一题 <span class="material-symbols-outlined text-lg">arrow_forward</span></button></div></div></div></div></div>
+</div>
+</main>
+
+
+
+
+
+
+</body></html>
