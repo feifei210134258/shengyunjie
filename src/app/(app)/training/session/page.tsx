@@ -9,7 +9,7 @@ import remarkGfm from "remark-gfm";
 function StreamingMarkdown({ text }: { text: string }) {
   const lines = text.split("\n");
   return (
-    <div className="text-base text-on-surface mb-2 leading-snug font-bold whitespace-pre-wrap">
+    <div className="text-sm text-on-surface mb-2 leading-relaxed tracking-wide whitespace-pre-wrap">
       {lines.map((line, i) => {
         // 空行
         if (!line.trim()) return <div key={i} className="h-2" />;
@@ -60,12 +60,12 @@ const ALL_DIMS = [
   "商业思维",
 ];
 
-const DIM_LABELS: Record<string, string> = {
-  "战略思维": "策略选题",
-  "系统设计能力": "架构设计",
-  "数据决策能力": "数据驱动",
-  "用户洞察与需求管理": "用户研究",
-  "商业思维": "商业分析",
+const DIM_FRAMEWORKS: Record<string, string> = {
+  "战略思维": "机会成本分析",
+  "系统设计能力": "系统思维",
+  "数据决策能力": "假设验证",
+  "用户洞察与需求管理": "第一性原理",
+  "商业思维": "单位经济模型",
 };
 
 export default function TrainingSessionPage() {
@@ -82,8 +82,10 @@ export default function TrainingSessionPage() {
 
   const [round, setRound] = useState(1);
 
-  // 难度按轮次递进：1轮初级，2轮中级，3轮及以上高级
-  const difficulty = round === 1 ? "初级" : round === 2 ? "中级" : "高级";
+  // 题目质量反馈状态：记录每个维度的反馈结果
+  const [feedbackStatus, setFeedbackStatus] = useState<
+    Record<string, { type: "up" | "down" | null; message: string; show: boolean }>
+  >({});
 
   // 流式出题时暂存原始文本，避免 ReactMarkdown 频繁重渲染导致闪烁
   const [streamedText, setStreamedText] = useState("");
@@ -129,8 +131,11 @@ export default function TrainingSessionPage() {
         }
       }
 
-      // 如果 AI 仍输出难度前缀，清理掉
-      const cleanText = text.replace(/^【难度：[^】]+】\s*/, "");
+      // 清理 AI 可能输出的前缀（难度标签、题目标题）
+      let cleanText = text.replace(/^【难度：[^】]+】\s*/, "");
+      // 覆盖多种"题目"前缀变体：**题目：**、题目：、题目、**题目** 等
+      cleanText = cleanText.replace(/^(\*\*?)?\s*题目\s*[：:]?\s*(\*\*?)\s*/i, "");
+      cleanText = cleanText.replace(/^【题目】\s*/i, "");
 
       setQuestions((prev) => ({ ...prev, [dim]: { text: cleanText, loading: false } }));
       setStreamedText("");
@@ -247,11 +252,35 @@ export default function TrainingSessionPage() {
   const handleFeedback = async (type: "up" | "down") => {
     const q = questions[currentDim]?.text;
     if (!q) return;
-    await fetch("/api/training/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question_text: q, feedback_type: type }),
-    }).catch(() => {});
+    try {
+      const res = await fetch("/api/training/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question_text: q, feedback_type: type }),
+      });
+      if (!res.ok) throw new Error("提交失败");
+      setFeedbackStatus((prev) => ({
+        ...prev,
+        [currentDim]: { type, message: type === "up" ? "已标记为好题，感谢反馈！" : "已收到改进建议，感谢反馈！", show: true },
+      }));
+      setTimeout(() => {
+        setFeedbackStatus((prev) => ({
+          ...prev,
+          [currentDim]: { ...prev[currentDim], show: false },
+        }));
+      }, 2500);
+    } catch {
+      setFeedbackStatus((prev) => ({
+        ...prev,
+        [currentDim]: { type: null, message: "反馈提交失败，请稍后重试", show: true },
+      }));
+      setTimeout(() => {
+        setFeedbackStatus((prev) => ({
+          ...prev,
+          [currentDim]: { ...prev[currentDim], show: false },
+        }));
+      }, 2500);
+    }
   };
 
   const handleRegenerate = () => {
@@ -268,12 +297,27 @@ export default function TrainingSessionPage() {
 
   // 从分析文本中提取诊断和建议
   const extractSections = (text: string) => {
-    const diagnosisMatch = text.match(/#{1,2}\s*诊断[\s\S]*?(?=#{1,2}\s*建议|$)/i);
-    const suggestionMatch = text.match(/#{1,2}\s*建议[\s\S]*?(?=#{1,2}|$)/i);
-    return {
-      diagnosis: diagnosisMatch ? diagnosisMatch[0].replace(/^#{1,2}\s*诊断\s*/, "").trim() : text,
-      suggestion: suggestionMatch ? suggestionMatch[0].replace(/^#{1,2}\s*建议\s*/, "").trim() : "",
-    };
+    // 先定位 "## 建议" 的位置，按位置分割（避免正则前瞻匹配到子标题）
+    const suggestionMatch = text.match(/#{1,6}\s*建议\s*/i);
+
+    if (suggestionMatch && suggestionMatch.index !== undefined) {
+      const suggestionStart = suggestionMatch.index;
+      const beforeSuggestion = text.slice(0, suggestionStart).trim();
+      const afterSuggestion = text.slice(suggestionStart + suggestionMatch[0].length).trim();
+
+      // 去掉诊断部分的标题
+      const diagnosis = beforeSuggestion.replace(/^#{1,6}\s*诊断\s*/i, "").trim();
+      return { diagnosis, suggestion: afterSuggestion };
+    }
+
+    // 没有找到建议标题，尝试只提取诊断
+    const diagnosisMatch = text.match(/#{1,6}\s*诊断\s*([\s\S]*)/i);
+    if (diagnosisMatch) {
+      return { diagnosis: diagnosisMatch[1].trim(), suggestion: "" };
+    }
+
+    // 最终回退
+    return { diagnosis: text, suggestion: "" };
   };
 
   const sections = hasAnalysis ? extractSections(analysisState.text) : { diagnosis: "", suggestion: "" };
@@ -325,17 +369,12 @@ export default function TrainingSessionPage() {
             <div className="bg-surface-container-lowest border border-outline-variant p-3 rounded-xl shadow-sm relative overflow-hidden ring-1 ring-black/5 mb-2">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
               <div className="flex items-center gap-sm mb-2">
+                <span className="px-2.5 py-0.5 bg-surface-container-high text-on-surface-variant font-label-bold text-[10px] rounded uppercase">
+                  {currentDim}
+                </span>
                 <span className="px-2.5 py-0.5 bg-primary-fixed text-on-primary-fixed-variant font-label-bold text-[10px] rounded uppercase">
-                  {DIM_LABELS[currentDim] || "选题"}
+                  {DIM_FRAMEWORKS[currentDim] || "思维框架"}
                 </span>
-                <span className="px-2.5 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-bold text-[10px] rounded uppercase">
-                  能力维度：{currentDim}
-                </span>
-                {difficulty && (
-                  <span className="px-2.5 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant font-label-bold text-[10px] rounded uppercase">
-                    {difficulty}
-                  </span>
-                )}
                 <div className="flex-1" />
                 <button
                   onClick={handleRegenerate}
@@ -361,7 +400,7 @@ export default function TrainingSessionPage() {
                 )
               ) : (
                 <>
-                  <div className="text-base text-on-surface mb-2 leading-snug font-bold">
+                  <div className="text-sm text-on-surface mb-2 leading-relaxed tracking-wide">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{qState?.text || ""}</ReactMarkdown>
                   </div>
                   {/* 反馈按钮 */}
@@ -369,18 +408,25 @@ export default function TrainingSessionPage() {
                     <span className="text-xs text-on-surface-variant">题目质量：</span>
                     <button
                       onClick={() => handleFeedback("up")}
-                      className="p-1 hover:bg-surface-container-high rounded transition-colors"
+                      disabled={feedbackStatus[currentDim]?.show}
+                      className={`p-1 rounded transition-colors ${feedbackStatus[currentDim]?.type === "up" ? "bg-primary-container text-primary" : "hover:bg-surface-container-high"} disabled:opacity-60`}
                       title="好题"
                     >
-                      <span className="material-symbols-outlined text-sm">thumb_up</span>
+                      <span className="material-symbols-outlined text-sm" style={feedbackStatus[currentDim]?.type === "up" ? { fontVariationSettings: "'FILL' 1" } : undefined}>thumb_up</span>
                     </button>
                     <button
                       onClick={() => handleFeedback("down")}
-                      className="p-1 hover:bg-surface-container-high rounded transition-colors"
+                      disabled={feedbackStatus[currentDim]?.show}
+                      className={`p-1 rounded transition-colors ${feedbackStatus[currentDim]?.type === "down" ? "bg-error-container text-error" : "hover:bg-surface-container-high"} disabled:opacity-60`}
                       title="需要改进"
                     >
-                      <span className="material-symbols-outlined text-sm">thumb_down</span>
+                      <span className="material-symbols-outlined text-sm" style={feedbackStatus[currentDim]?.type === "down" ? { fontVariationSettings: "'FILL' 1" } : undefined}>thumb_down</span>
                     </button>
+                    {feedbackStatus[currentDim]?.show && (
+                      <span className={`text-xs ${feedbackStatus[currentDim]?.type === null ? "text-error" : "text-primary"}`}>
+                        {feedbackStatus[currentDim]?.message}
+                      </span>
+                    )}
                   </div>
                 </>
               )}
