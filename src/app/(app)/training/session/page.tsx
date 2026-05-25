@@ -141,7 +141,7 @@ export default function TrainingSessionPage() {
       setAnalyses((prev) => ({ ...prev, [currentDim]: { text: fullText, loading: false } }));
 
       // 提取评分
-      const scoreMatch = fullText.match(/【评分：(\\d+)\\/10】/);
+      const scoreMatch = fullText.match(/【评分：(\d+)\/10】/);
       const extractedScore = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
       setScore(extractedScore);
 
