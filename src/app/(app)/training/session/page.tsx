@@ -5,6 +5,53 @@ import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+/** 轻量 markdown 解析，用于流式展示时避免 ReactMarkdown 全量重渲染导致的闪烁 */
+function StreamingMarkdown({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <div className="text-base text-on-surface mb-2 leading-snug font-bold whitespace-pre-wrap">
+      {lines.map((line, i) => {
+        // 空行
+        if (!line.trim()) return <div key={i} className="h-2" />;
+
+        // 有序列表
+        const listMatch = line.match(/^(\d+)\.\s+(.*)$/);
+        if (listMatch) {
+          return (
+            <div key={i} className="ml-4">
+              <span className="text-on-surface-variant mr-2">{listMatch[1]}.</span>
+              {parseBold(listMatch[2])}
+            </div>
+          );
+        }
+
+        // 无序列表
+        const bulletMatch = line.match(/^[-*+]\s+(.*)$/);
+        if (bulletMatch) {
+          return (
+            <div key={i} className="ml-4">
+              <span className="text-on-surface-variant mr-2">•</span>
+              {parseBold(bulletMatch[1])}
+            </div>
+          );
+        }
+
+        return <div key={i}>{parseBold(line)}</div>;
+      })}
+    </div>
+  );
+}
+
+function parseBold(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 const ALL_DIMS = [
   "战略思维",
   "系统设计能力",
@@ -31,10 +78,15 @@ export default function TrainingSessionPage() {
   const [answers, setAnswers] = useState<Record<string, { text: string; submitting: boolean }>>({});
   const [analyses, setAnalyses] = useState<Record<string, { text: string; loading: boolean }>>({});
 
-  const [difficulty, setDifficulty] = useState<string>("");
   const [score, setScore] = useState<number>(0);
 
   const [round, setRound] = useState(1);
+
+  // 难度按轮次递进：1轮初级，2轮中级，3轮及以上高级
+  const difficulty = round === 1 ? "初级" : round === 2 ? "中级" : "高级";
+
+  // 流式出题时暂存原始文本，避免 ReactMarkdown 频繁重渲染导致闪烁
+  const [streamedText, setStreamedText] = useState("");
 
   useEffect(() => {
     if (!questions[currentDim]?.text && !questions[currentDim]?.loading) {
@@ -45,6 +97,7 @@ export default function TrainingSessionPage() {
 
   const generateQuestion = useCallback(async (dim: string) => {
     setQuestions((prev) => ({ ...prev, [dim]: { text: "", loading: true } }));
+    setStreamedText("");
 
     try {
       const res = await fetch("/api/train", {
@@ -69,26 +122,24 @@ export default function TrainingSessionPage() {
               const t = JSON.parse(line.slice(2));
               if (typeof t === "string") {
                 text += t;
-                setQuestions((prev) => ({ ...prev, [dim]: { text, loading: true } }));
+                setStreamedText(text);
               }
             } catch {}
           }
         }
       }
 
-      setQuestions((prev) => ({ ...prev, [dim]: { text, loading: false } }));
+      // 如果 AI 仍输出难度前缀，清理掉
+      const cleanText = text.replace(/^【难度：[^】]+】\s*/, "");
 
-      // 解析难度标签
-      const diffMatch = text.match(/【难度：(初级|中级|高级)】/);
-      if (diffMatch) {
-        setDifficulty(diffMatch[1]);
-      }
+      setQuestions((prev) => ({ ...prev, [dim]: { text: cleanText, loading: false } }));
+      setStreamedText("");
 
-      if (text) {
+      if (cleanText) {
         fetch("/api/training/questions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dimension: dim, question: text }),
+          body: JSON.stringify({ dimension: dim, question: cleanText }),
         }).catch(() => {});
       }
     } catch {
@@ -96,6 +147,7 @@ export default function TrainingSessionPage() {
         ...prev,
         [dim]: { text: "（出题失败，请重新出题）", loading: false },
       }));
+      setStreamedText("");
     }
   }, []);
 
@@ -170,7 +222,6 @@ export default function TrainingSessionPage() {
     if (currentIndex < ALL_DIMS.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setScore(0);
-      setDifficulty("");
     } else {
       // 完成一轮，触发 session 闭环
       const roundQuestions = ALL_DIMS.map((d) => questions[d]?.text).filter(Boolean);
@@ -188,7 +239,6 @@ export default function TrainingSessionPage() {
       setAnswers({});
       setAnalyses({});
       setScore(0);
-      setDifficulty("");
     }
   };
 
@@ -299,12 +349,16 @@ export default function TrainingSessionPage() {
                 </button>
               </div>
 
-              {qState?.loading && !qState.text ? (
-                <div className="space-y-3 animate-pulse">
-                  <div className="h-4 bg-surface-container-high rounded w-full" />
-                  <div className="h-4 bg-surface-container-high rounded w-5/6" />
-                  <div className="h-4 bg-surface-container-high rounded w-4/6" />
-                </div>
+              {qState?.loading ? (
+                streamedText ? (
+                  <StreamingMarkdown text={streamedText} />
+                ) : (
+                  <div className="space-y-3 animate-pulse">
+                    <div className="h-4 bg-surface-container-high rounded w-full" />
+                    <div className="h-4 bg-surface-container-high rounded w-5/6" />
+                    <div className="h-4 bg-surface-container-high rounded w-4/6" />
+                  </div>
+                )
               ) : (
                 <>
                   <div className="text-base text-on-surface mb-2 leading-snug font-bold">
