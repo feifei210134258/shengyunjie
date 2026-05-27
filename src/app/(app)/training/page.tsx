@@ -213,6 +213,27 @@ export default function TrainingPage() {
           </div>
         </section>
 
+        {/* 案例库入口 */}
+        <section>
+          <Link
+            href="/training/cases"
+            className="flex items-center gap-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-5 hover:bg-surface-container transition-colors"
+          >
+            <div className="w-12 h-12 bg-tertiary-container text-on-tertiary-container rounded-xl flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-2xl">menu_book</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-headline-md text-on-surface">案例库</h3>
+              <p className="text-body-sm text-on-surface-variant">
+                拆解经典 B 端产品，理解产品思维框架
+              </p>
+            </div>
+            <span className="material-symbols-outlined text-on-surface-variant">
+              arrow_forward
+            </span>
+          </Link>
+        </section>
+
         {/* 日历 + 历史记录 */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 日历 */}

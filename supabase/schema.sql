@@ -244,3 +244,21 @@ create policy "用户可以提交反馈"
 create policy "用户可以更新自己的反馈"
   on public.question_feedback for update
   using (auth.uid() = user_id);
+
+-- Case Library: AI-generated product case study articles
+create table if not exists public.case_articles (
+  id                uuid primary key default gen_random_uuid(),
+  product_name      text not null,
+  perspective       text not null,
+  perspective_label text not null,
+  content           text not null,
+  summary           text,
+  created_at        timestamptz default now(),
+  unique(product_name, perspective)
+);
+
+alter table public.case_articles enable row level security;
+
+create policy "所有认证用户可读案例文章"
+  on public.case_articles for select
+  using (auth.role() = 'authenticated');
