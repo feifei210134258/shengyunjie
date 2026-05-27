@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
+import { useRouter } from "next/navigation";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -22,18 +22,9 @@ interface Perspective {
   article?: { id: string; summary: string | null; created_at: string } | null;
 }
 
-interface ArticleData {
-  id: string;
-  content: string;
-  summary: string | null;
-  created_at: string;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Page                                                               */
-/* ------------------------------------------------------------------ */
-
 export default function CasesPage() {
+  const router = useRouter();
+
   // Data
   const [products, setProducts] = useState<Product[]>([]);
   const [perspectives, setPerspectives] = useState<Perspective[]>([]);
@@ -43,18 +34,6 @@ export default function CasesPage() {
   const [selectedPerspective, setSelectedPerspective] = useState<
     string | null
   >(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerProduct, setDrawerProduct] = useState<string | null>(null);
-  const [productPerspectives, setProductPerspectives] = useState<
-    Perspective[]
-  >([]);
-  const [articleView, setArticleView] = useState<{
-    perspective: string;
-    label: string;
-  } | null>(null);
-  const [articleData, setArticleData] = useState<ArticleData | null>(null);
-  const [articleLoading, setArticleLoading] = useState(false);
-  const [articleError, setArticleError] = useState<string | null>(null);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customProduct, setCustomProduct] = useState("");
 
@@ -80,66 +59,12 @@ export default function CasesPage() {
       ? "全部"
       : perspectives.find((p) => p.slug === selectedPerspective)?.label || "";
 
-  /* ------ Drawer handlers ------ */
-
-  function openProductDrawer(productName: string) {
-    setDrawerProduct(productName);
-    setArticleView(null);
-    setArticleData(null);
-    setDrawerOpen(true);
-    // Fetch product perspectives
-    fetch(`/api/cases?action=get-product&product=${encodeURIComponent(productName)}`)
-      .then((r) => r.json())
-      .then((data) => setProductPerspectives(data.perspectives || []));
-  }
-
-  function closeDrawer() {
-    setDrawerOpen(false);
-    setDrawerProduct(null);
-    setArticleView(null);
-    setArticleData(null);
-    setProductPerspectives([]);
-  }
-
-  function loadArticle(perspectiveSlug: string, perspectiveLabel: string) {
-    setArticleView({ perspective: perspectiveSlug, label: perspectiveLabel });
-    setArticleData(null);
-    setArticleError(null);
-    setArticleLoading(true);
-    fetch(
-      `/api/cases?product=${encodeURIComponent(drawerProduct || "")}&perspective=${perspectiveSlug}`
-    )
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || `请求失败 (${r.status})`);
-        return data;
-      })
-      .then((data) => {
-        if (data.article) setArticleData(data.article);
-      })
-      .catch((err) => {
-        setArticleError(err.message || "加载失败，请重试");
-      })
-      .finally(() => setArticleLoading(false));
-  }
-
-  function backToProductList() {
-    setArticleView(null);
-    setArticleData(null);
-  }
-
   /* ------ Custom product ------ */
 
   function handleCustomSubmit() {
     const name = customProduct.trim();
     if (!name) return;
-    setDrawerProduct(name);
-    setArticleView(null);
-    setArticleData(null);
-    setProductPerspectives(
-      perspectives.map((p) => ({ ...p, article: undefined }))
-    );
-    setDrawerOpen(true);
+    router.push(`/training/cases/${encodeURIComponent(name)}`);
     setShowCustomInput(false);
     setCustomProduct("");
   }
@@ -233,7 +158,11 @@ export default function CasesPage() {
           {filteredProducts.map((product) => (
             <button
               key={product.name}
-              onClick={() => openProductDrawer(product.name)}
+              onClick={() =>
+                router.push(
+                  `/training/cases/${encodeURIComponent(product.name)}`
+                )
+              }
               className="text-left p-5 bg-surface-container-low hover:bg-surface-container rounded-2xl border border-outline-variant transition-colors"
             >
               <div className="flex items-start justify-between">
@@ -316,117 +245,6 @@ export default function CasesPage() {
         </div>
       )}
 
-      {/* Article Drawer (Sheet) */}
-      {drawerOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/30 z-40"
-            onClick={closeDrawer}
-          />
-
-          {/* Drawer */}
-          <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-surface-container-lowest z-50 shadow-xl overflow-y-auto">
-            {/* Drawer header */}
-            <div className="sticky top-0 bg-surface-container-lowest border-b border-outline-variant px-6 py-4 flex items-center gap-3 z-10">
-              {articleView ? (
-                <button
-                  onClick={backToProductList}
-                  className="material-symbols-outlined text-on-surface-variant hover:text-on-surface"
-                >
-                  arrow_back
-                </button>
-              ) : (
-                <button
-                  onClick={closeDrawer}
-                  className="material-symbols-outlined text-on-surface-variant hover:text-on-surface"
-                >
-                  close
-                </button>
-              )}
-              <h2 className="font-headline-md text-on-surface flex-1">
-                {articleView
-                  ? `${drawerProduct} · ${articleView.label}`
-                  : drawerProduct}
-              </h2>
-            </div>
-
-            {/* Drawer content */}
-            <div className="px-6 py-4">
-              {articleView ? (
-                /* Article reading view */
-                articleLoading ? (
-                  <div className="space-y-3 animate-pulse">
-                    <div className="h-4 bg-surface-container-high rounded w-3/4" />
-                    <div className="h-4 bg-surface-container-high rounded" />
-                    <div className="h-4 bg-surface-container-high rounded" />
-                    <div className="h-4 bg-surface-container-high rounded w-5/6" />
-                    <div className="h-4 bg-surface-container-high rounded" />
-                    <div className="h-4 bg-surface-container-high rounded w-2/3" />
-                    <p className="text-body-sm text-on-surface-variant mt-4">
-                      AI 正在分析...
-                    </p>
-                  </div>
-                ) : articleData ? (
-                  <article className="max-w-none">
-                    <div className="markdown-content text-body-md leading-relaxed text-on-surface">
-                      <ReactMarkdown>{articleData.content}</ReactMarkdown>
-                    </div>
-                    <p className="text-body-sm text-on-surface-variant mt-6 pt-4 border-t border-outline-variant">
-                      生成时间:{" "}
-                      {new Date(articleData.created_at).toLocaleDateString(
-                        "zh-CN"
-                      )}
-                    </p>
-                  </article>
-                ) : (
-                  <div className="text-center">
-                    <p className="text-body-md text-error">
-                      {articleError || "加载失败，请重试"}
-                    </p>
-                    <button
-                      onClick={() =>
-                        loadArticle(articleView.perspective, articleView.label)
-                      }
-                      className="mt-3 px-4 py-2 bg-primary text-white rounded-full text-body-sm"
-                    >
-                      重试
-                    </button>
-                  </div>
-                )
-              ) : (
-                /* Perspective list */
-                <div className="space-y-1">
-                  <p className="text-body-sm text-on-surface-variant mb-4">
-                    选择分析视角，AI 将为你生成产品拆解
-                  </p>
-                  {productPerspectives.map((p) => (
-                    <button
-                      key={p.slug}
-                      onClick={() => loadArticle(p.slug, p.label)}
-                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-surface-container transition-colors flex items-center justify-between"
-                    >
-                      <div>
-                        <span className="text-body-md text-on-surface">
-                          {p.label}
-                        </span>
-                        {p.article?.summary && (
-                          <p className="text-body-sm text-on-surface-variant mt-0.5 line-clamp-1">
-                            {p.article.summary}
-                          </p>
-                        )}
-                      </div>
-                      <span className="material-symbols-outlined text-on-surface-variant">
-                        {p.article ? "description" : "smart_toy"}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+      </div>
   );
 }
