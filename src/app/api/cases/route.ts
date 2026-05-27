@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 /* ------------------------------------------------------------------ */
 
 const PERSPECTIVES = [
+  { slug: "overview", label: "全局分析" },
   { slug: "positioning", label: "产品定位" },
   { slug: "growth", label: "增长飞轮" },
   { slug: "business-model", label: "商业模式" },
@@ -44,20 +45,27 @@ async function generateArticle(
     "deepseek-v4-flash"
   );
 
+  const isOverview = perspective.slug === "overview";
+  const wordLimit = isOverview ? 1000 : 500;
+
+  const questions = isOverview
+    ? "请对「${productName}」进行全面的产品分析，涵盖产品定位、增长飞轮、商业模式、功能架构、竞争策略等方面。"
+    : "请从「${perspective.label}」视角分析「${productName}」。";
+
   const result = await generateText({
     model,
     system: `你是资深 B 端产品分析专家。你的任务是对指定产品进行简洁、有洞察的拆解分析。
 
 要求：
-- 总字数控制在 500 字以内
-- 聚焦于指定的分析视角（${perspective.label}），不需要面面俱到
+- 总字数控制在 ${wordLimit} 字以内
+${isOverview ? "- 从多个维度进行综合分析，包括产品定位、增长模式、商业逻辑、功能演进等\n- 给出对产品经理的实用启示" : `- 聚焦于指定的分析视角（${perspective.label}），不需要面面俱到`}
 - 每条观点要有具体事实或逻辑支撑，不空谈
 - 如果对产品了解有限，只写确信的部分，不编造
-- 结尾给出 1-2 条产品经理可以借鉴的启示`,
+- 使用 Markdown 格式组织内容，适当使用标题、列表、加粗等增强可读性`,
     messages: [
       {
         role: "user",
-        content: `请从「${perspective.label}」视角分析「${productName}」，写一篇约 500 字的产品拆解。`,
+        content: `${questions}写一篇约 ${wordLimit} 字的产品拆解，使用 Markdown 格式。`,
       },
     ],
   });

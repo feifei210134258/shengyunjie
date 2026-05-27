@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -367,9 +368,9 @@ export default function CasesPage() {
                     </p>
                   </div>
                 ) : articleData ? (
-                  <article className="prose prose-sm max-w-none">
-                    <div className="whitespace-pre-wrap text-body-md leading-relaxed text-on-surface">
-                      {articleData.content}
+                  <article className="max-w-none">
+                    <div className="markdown-content text-body-md leading-relaxed text-on-surface">
+                      <ReactMarkdown>{articleData.content}</ReactMarkdown>
                     </div>
                     <p className="text-body-sm text-on-surface-variant mt-6 pt-4 border-t border-outline-variant">
                       生成时间:{" "}
