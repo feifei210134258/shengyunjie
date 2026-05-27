@@ -3,61 +3,54 @@
 ## 当前状态 / Current State
 
 **Last Updated:** 2026-05-23
-**会话 ID：** proto-review-001
-**Current Objective:** 原型评审 + 技术方案确认
-**进度摘要：** 完成了 Stitch 原型文件的注入与评审，确认 10 个页面全部就绪。与用户对齐了品牌名、技术选型、产品决策。设计文档已更新。
+**会话 ID：** fullstack-build-001
+**Current Objective:** 全栈编码 — 从原型到可运行产品
+**进度摘要：** 完成了项目脚手架搭建、Supabase 集成、AI SDK 集成、认证流程、诊断模块（量表+访谈+案例+报告）、训练模块（首页+答题+AI分析）、设置页、前后端数据持久化打通。
 
 ---
 
 ## 功能进度
 
-### 已完成 / What's Done
+### 已完成 / What's Done（本会话）
 
-- [x] **原型注入完成** — 10 个 HTML 原型文件全部写入（含工作台、诊断×4、训练×2、特训×3）
-- [x] **原型功能分析** — 逐一对照 feature_list.json 评审，识别与设计的差出
-- [x] **产品名确认** — 统一为「产品升云阶」
-- [x] **技术方案确认** — 详见下方决策记录
-- [x] **文档更新** — DESIGN.md、docs/设计文档、feature_list.json、progress.md
+- [x] **项目脚手架（infra-001）** — Next.js App Router + Tailwind CSS + TypeScript + shadcn/ui
+- [x] **Supabase 集成（infra-002）** — 账密登录、7 张数据表（profiles/diagnosis_reports/dimension_scores/growth_snapshots/training_records/user_settings/chat_history）
+- [x] **AI SDK 集成（infra-003）** — DeepSeek V4 Flash 接入、流式对话、思考模式（reasoning_effort: max）
+- [x] **Prompt 管理（infra-004 部分）** — 提示词策略文档编写、训练出题官/评卷官/诊断师 prompt 实装
+- [x] **AI 模型配置模块（infra-005）** — 设置页（API Key/模型选择/深度思考开关）
+- [x] **全局 UI 与导航（ux-001）** — 布局框架、侧边栏导航、认证流程、12 个页面路由
+- [x] **AI 设置页（ux-002）** — 完整设置页面
+- [x] **诊断阶段一（diag-001）** — 25 题能力量表、维度评分、提交落库
+- [x] **诊断阶段二（diag-002）** — AI 深度访谈、对话保存
+- [x] **诊断阶段三（diag-003）** — 案例实战 + 综合诊断报告
+- [x] **日常训练（training-001）** — 训练首页（看板）+ 答题页（AI 出题 + 分析 + 记录）
 
-### 进行中 / What's In Progress
+### 待开始 / What's Next
 
-- [ ] 待从 `infra-001` 开始编码
-
-### 待开始 / What's Next（按依赖顺序）
-
-1. `infra-001` → 项目脚手架搭建
-2. `infra-002` → Supabase 集成
-3. `infra-003` → Vercel AI SDK 集成
-4. `infra-004` → Prompt 管理体系
-5. `infra-005` → AI 模型配置模块
-6. `ux-001` → 全局 UI 与导航
-7. `ux-002` → AI 设置页
-8. `profile-001` → 用户画像引擎 — 数据模型
+- [ ] **用户画像引擎（profile-001/002）** — 画像数据模型已就绪，需接入工作台
+- [ ] **日常训练·案例库（training-002）** — 经典 B 端产品拆解
+- [ ] **特训冲刺（bootcamp-001/002/003）** — 简历解析 + AI 模拟面试 + 面试报告
+- [ ] **工作台仪表盘（dashboard）** — 展示画像、训练统计、诊断报告摘要
 
 ---
 
 ## 阻塞项 / Blockers & Risks
 
-- [ ] 诊断阶段一需从 5 题扩至 25 题（原型已标记，编码时处理）
-- [ ] 无其他阻塞项
+- [ ] 诊断阶段一的 25 题目前是硬编码，后续需改为 AI 动态生成
+- [ ] 训练首页的统计数据尚未从 API 读取（目前硬编码）
 
 ---
 
 ## 决策记录
 
-| # | 决策 | 背景 | 替代方案 | 日期 |
-|---|------|------|---------|------|
-| 1 | 采用 harness-creator 框架管理 AI agent 工作流 | 确保多会话间上下文连续、功能状态可追踪 | 无 | 2026-05-19 |
-| 2 | **品牌名：产品升云阶** | 统一 7 个不同品牌名 | PM 进阶大师、AI PM Coach 等 | 2026-05-23 |
-| 3 | **需要登录（邮箱）** | 数据持久化、跨设备访问 | 无登录本地存储 | 2026-05-23 |
-| 4 | **数据库：Supabase PostgreSQL** | 账密登录、关系数据好查 | SQLite / localStorage | 2026-05-23 |
-| 5 | **AI 模型：DeepSeek V4 Flash 默认** | 质量优先，内置配置 | 单一固定模型 | 2026-05-23 |
-| 6 | **支持用户自定义 AI 模型** | 灵活性，用户可填 API Key | 不支持自定义 | 2026-05-23 |
-| 7 | **深度思考默认开启** | 诊断质量核心保障 | 可选关闭 | 2026-05-23 |
-| 8 | **桌面优先，暂不做移动端** | 个人工具，桌面够用 | 响应式适配 | 2026-05-23 |
-| 9 | **全免费** | 个人工具 | 付费功能 | 2026-05-23 |
-| 10 | **画像展示集成在工作台** | 去掉了独立画像页面 | 独立画像页 | 2026-05-23 |
-| 11 | **诊断阶段一扩至 25 题（5 维×5 题）** | 原型简化了，需要补全对齐设计文档 | 保持 5 题 | 2026-05-23 |
+| # | 决策 | 背景 | 日期 |
+|---|------|------|------|
+| 1 | 采用 AGENTS.md 框架管理 AI agent 工作流 | 确保多会话间上下文连续 | 2026-05-19 |
+| 2 | **DeepSeek V4 Flash 默认模型** | 质量优先 | 2026-05-23 |
+| 3 | **深度思考默认开启（reasoning_effort: max）** | 诊断质量核心保障 | 2026-05-23 |
+| 4 | **桌面优先** | 个人工具 | 2026-05-23 |
+| 5 | **全免费** | 个人工具 | 2026-05-23 |
+| 6 | **每做一题就记录，不搞 batch** | 防丢数据，实时更新统计 | 2026-05-23 |
 
 ---
 
@@ -65,31 +58,32 @@
 
 | 文件 | 说明 |
 |------|------|
-| `gongzuotai` | 填充 — 工作台原型 |
-| `zhenduan` | 填充 — 诊断阶段一原型 |
-| `zhenduan2` | 填充 — 诊断阶段二原型 |
-| `zhenduan3` | 填充 — 诊断阶段三原型 |
-| `zhenduan4` | 填充 — 综合诊断报告原型 |
-| `xunlian` | 填充 — 训练答题页原型 |
-| `DESIGN.md` | 更新 — 产品名改为「产品升云阶」 |
-| `docs/2026-05-19-pm-thinking-tool-design.md` | 更新 — 产品名、技术决策、AI 模型策略 |
-| `feature_list.json` | 更新 — 新增 2 个 feature、修正描述、增加 notes |
+| `src/app/*` | 全部 12 个页面路由 |
+| `src/app/api/*` | 全部 API 路由（chat/train/diagnosis/*/training/*/settings） |
+| `src/lib/ai.ts` | AI 模型配置 + 思考模式注入 |
+| `src/lib/supabase.ts` | Supabase 客户端 |
+| `src/lib/supabase-server.ts` | 服务端 Supabase 客户端（新增） |
+| `src/contexts/AuthContext.tsx` | 认证上下文（超时兜底） |
+| `src/components/Sidebar.tsx` | 侧边栏导航（修正） |
+| `supabase/schema.sql` | 数据库 schema |
+| `AGENTS.md` | 新增"前后端完整性"硬性规则 |
+| `feature_list.json` | 更新状态 |
 | `progress.md` | 更新 — 本文件 |
 
 ---
 
 ## 完成证据 / Verification Evidence
 
-- [x] 10 个原型文件全部就位（含 4 个已有 + 6 个新填充）
-- [x] 技术方案经用户确认
-- [x] 设计文档全面更新
+- [x] `npx tsc --noEmit` 通过
+- [x] `npx next build` 通过（12 个页面 + 10 个 API 路由）
+- [x] DeepSeek 流式对话测试通过（返回中文分析）
+- [x] API 路由 POST/GET 全部返回 200
+- [x] 登录/注册页面 CSS 正常渲染
 
 ---
 
 ## 下个会话记录 / Recommended Next Step
 
-原型评审完成，技术方案已定。下个会话应：
-1. 从 `infra-001`（项目脚手架搭建）开始编码
-2. 先用 `npx create-next-app` 初始化项目
-3. 配置 Tailwind + shadcn/ui
-4. 注意诊断阶段一需要 25 题而非原型的 5 题
+1. 工作台仪表盘 — 读取 training_stats + 诊断报告展示
+2. 用户画像引擎 — 画像卡片展示 + 成长曲线
+3. 训练首页统计数据从 API 读取（替代硬编码）

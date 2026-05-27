@@ -53,6 +53,15 @@
 - architecture decision、新增依赖、数据库 schema 变更 → 先问用户
 - 发现设计文档与实现不一致 → 更新设计文档或与用户确认
 
+### 前后端完整性 / Full-stack completeness ⚠️ 硬性规则
+**每个功能必须同时包含前端页面 + 后端数据持久化 + API 路由，缺一不可。**
+禁止出现"只搭了界面，数据没落地"的情况。
+- 表单提交 → 写入 Supabase 表
+- 页面加载 → 从 Supabase 读取数据
+- AI 对话 → 记录到对应数据表
+- 配置变更 → 保存到 user_settings 表
+- 功能完成声明前，必须验证同一次操作中数据确实写入并读回
+
 ### 留下可重启的状态 / Leave clean state / restartable
 - 下个会话必须能直接运行 `./init.sh` 然后开工
 - 不确定的东西写进 `progress.md` 的阻塞/风险区，不遗留未提交代码
@@ -85,6 +94,7 @@
 一个功能 **只有全部满足以下条件** 才算完成：
 
 - [ ] 目标行为已实现
+- [ ] 数据已落地：操作写入 Supabase 表，界面从 Supabase 读取
 - [ ] 对应的验证命令已运行（test / lint / type-check）
 - [ ] 证据已记录在 `feature_list.json` 或 `progress.md`
 - [ ] 仓库可从标准启动路径重新启动（`./init.sh` 通过）

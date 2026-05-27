@@ -12,17 +12,33 @@ export async function POST(req: Request) {
   const chatModel = getChatModel(apiKey, "deepseek-v4-flash");
 
   if (action === "generate") {
+    // 维度 → 思维框架映射
+    const frameworkMap: Record<string, string> = {
+      "战略思维": "机会成本分析 / 战略取舍框架",
+      "系统设计能力": "系统思维 / 模块化与依赖关系梳理",
+      "数据决策能力": "假设验证 / 因果推断",
+      "用户洞察与需求管理": "第一性原理 / JTBD（Jobs-to-be-Done）",
+      "商业思维": "单位经济模型 / 商业模式画布推演",
+    };
+    const framework = frameworkMap[dimension] || "产品思维框架";
+
     const result = streamText({
       model: chatModel,
-      system: `你是 B 端产品训练题库的策展人和出题人。你的题目服务于有经验的产品经理向高级 PM 跃迁。
-题目要有真实感、有决策压力、有思考深度。
+      system: `你是 B 端产品训练题库的策展人和出题人。你的用户是"执行层产品经理"，训练目标是帮助他们向"高阶产品"进阶。
+
+核心原则：
+1. **小而真**：场景必须具体、真实、可感知。可以是对真实知名产品/功能的分析，也可以是真实PM日常会遇到的具体困境。坚决禁止虚构公司名、营收数字、市场份额、融资额等宏大叙事数据。
+2. **思维框架导向**：每道题必须让答题者运用「${framework}」这一思维框架。难度来自"思维深度"，不是"信息阅读量"。
+3. **执行层进阶定位**：题目要让执行层PM跳出现有执行思维，但不要用"年营收5亿、CEO战略会、全公司资源重组"这种虚假宏大场景来堆难度。
+
+当前维度：${dimension}
+对应思维框架：${framework}
 
 要求：
 - 必须围绕维度「${dimension}」出题
 - **每道题不超过 300 字**
-- 体裁不限、结构不限，自由发挥
 - 只出题，不加任何分析和引导`,
-      messages: [{ role: "user", content: `出一道关于「${dimension}」维度的训练题。` }],
+      messages: [{ role: "user", content: `请出一道关于「${dimension}」维度的训练题，要求答题者运用「${framework}」思维框架。` }],
     });
     return result.toDataStreamResponse();
   }
