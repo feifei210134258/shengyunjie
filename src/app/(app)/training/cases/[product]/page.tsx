@@ -23,6 +23,22 @@ interface ArticleData {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Constants                                                          */
+/* ------------------------------------------------------------------ */
+
+const PERSPECTIVE_ICONS: Record<string, string> = {
+  overview: "dashboard",
+  positioning: "gps_fixed",
+  growth: "trending_up",
+  "business-model": "account_balance",
+  pricing: "sell",
+  architecture: "account_tree",
+  competition: "strategy",
+  retention: "rocket_launch",
+  ecosystem: "hub",
+};
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -110,36 +126,43 @@ export default function ProductCasePage() {
       {/* Content: sidebar + article */}
       <div className="flex gap-8">
         {/* Perspective Sidebar */}
-        <aside className="w-[200px] shrink-0">
+        <aside className="w-[220px] shrink-0">
           {perspectivesLoading ? (
             <div className="space-y-2 animate-pulse">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-9 bg-surface-container-high rounded-xl"
+                  className="h-12 bg-surface-container-high rounded-2xl"
                 />
               ))}
             </div>
           ) : (
-            <nav className="space-y-1">
-              {perspectives.map((p) => (
-                <button
-                  key={p.slug}
-                  onClick={() => switchPerspective(p.slug)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-body-sm transition-colors flex items-center justify-between ${
-                    p.slug === activePerspective
-                      ? "bg-primary/10 text-primary font-semibold"
-                      : "text-on-surface-variant hover:bg-surface-container"
-                  }`}
-                >
-                  <span>{p.label}</span>
-                  {p.article && (
-                    <span className="material-symbols-outlined text-base opacity-60">
-                      description
+            <nav className="space-y-1.5">
+              {perspectives.map((p) => {
+                const icon = PERSPECTIVE_ICONS[p.slug] || "chevron_right";
+                const isActive = p.slug === activePerspective;
+                return (
+                  <button
+                    key={p.slug}
+                    onClick={() => switchPerspective(p.slug)}
+                    className={`w-full text-left px-4 py-3 rounded-2xl text-body-sm transition-colors flex items-center gap-3 ${
+                      isActive
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-on-surface-variant hover:bg-surface-container"
+                    }`}
+                  >
+                    <span className={`material-symbols-outlined text-xl ${isActive ? "" : "opacity-50"}`}>
+                      {icon}
                     </span>
-                  )}
-                </button>
-              ))}
+                    <span className="flex-1">{p.label}</span>
+                    {p.article && (
+                      <span className="material-symbols-outlined text-sm opacity-40">
+                        description
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </nav>
           )}
         </aside>
