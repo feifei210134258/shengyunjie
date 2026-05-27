@@ -262,3 +262,7 @@ alter table public.case_articles enable row level security;
 create policy "所有认证用户可读案例文章"
   on public.case_articles for select
   using (auth.role() = 'authenticated');
+
+create policy "认证用户可创建案例文章"
+  on public.case_articles for insert
+  with check (auth.role() = 'authenticated');

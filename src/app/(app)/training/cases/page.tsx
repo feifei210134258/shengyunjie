@@ -53,6 +53,7 @@ export default function CasesPage() {
   } | null>(null);
   const [articleData, setArticleData] = useState<ArticleData | null>(null);
   const [articleLoading, setArticleLoading] = useState(false);
+  const [articleError, setArticleError] = useState<string | null>(null);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customProduct, setCustomProduct] = useState("");
 
@@ -102,13 +103,21 @@ export default function CasesPage() {
   function loadArticle(perspectiveSlug: string, perspectiveLabel: string) {
     setArticleView({ perspective: perspectiveSlug, label: perspectiveLabel });
     setArticleData(null);
+    setArticleError(null);
     setArticleLoading(true);
     fetch(
       `/api/cases?product=${encodeURIComponent(drawerProduct || "")}&perspective=${perspectiveSlug}`
     )
-      .then((r) => r.json())
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || `请求失败 (${r.status})`);
+        return data;
+      })
       .then((data) => {
         if (data.article) setArticleData(data.article);
+      })
+      .catch((err) => {
+        setArticleError(err.message || "加载失败，请重试");
       })
       .finally(() => setArticleLoading(false));
   }
@@ -370,7 +379,19 @@ export default function CasesPage() {
                     </p>
                   </article>
                 ) : (
-                  <p className="text-body-md text-error">加载失败，请重试</p>
+                  <div className="text-center">
+                    <p className="text-body-md text-error">
+                      {articleError || "加载失败，请重试"}
+                    </p>
+                    <button
+                      onClick={() =>
+                        loadArticle(articleView.perspective, articleView.label)
+                      }
+                      className="mt-3 px-4 py-2 bg-primary text-white rounded-full text-body-sm"
+                    >
+                      重试
+                    </button>
+                  </div>
                 )
               ) : (
                 /* Perspective list */
