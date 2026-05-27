@@ -1,0 +1,15 @@
+{
+  "change": "case-library",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "34c79f149160f78210d7f156a801e27edddd1335368f0dad19cd8813a92ce578",
+  "files": [
+    { "path": "openspec/changes/case-library/proposal.md", "sha256": "7cb888ec4576771c816cc9ea06cbdd795bd818573179a738431004194015bed8" },
+    { "path": "openspec/changes/case-library/design.md", "sha256": "d3471fbe26bb48c129f3e5f41284022645ea8d2d403bfeaff67ea4f3c8882b07" },
+    { "path": "openspec/changes/case-library/tasks.md", "sha256": "d53368bd080045ed1d78366c180b22ec56acbcb37c2d86f483c3e8ca1954fc23" },
+    { "path": "openspec/changes/case-library/specs/case-article-generate/spec.md", "sha256": "23f5a480b642d52518b4687a81b10da57f6aec4bd8a8e643866e9b4790349040" },
+    { "path": "openspec/changes/case-library/specs/case-library-browse/spec.md", "sha256": "7bc5b677d9006b7409e57f6eab4ded40f10519fdd4900b07559c72d2be7e16af" }
+  ]
+}

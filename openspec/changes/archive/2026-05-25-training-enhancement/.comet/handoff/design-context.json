@@ -1,0 +1,17 @@
+{
+  "change": "training-enhancement",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "ee77b68197119a5f3cf66991793f9edfd008ee06f8db08ab0f2547d1797727f1",
+  "files": [
+    { "path": "openspec/changes/training-enhancement/proposal.md", "sha256": "5d0114df1ac2d2b182deb97b90499faa09ecfcdb43af2a1a350f832225b16646" },
+    { "path": "openspec/changes/training-enhancement/design.md", "sha256": "7263d9c37fb99609fcf45ee8186cad22ea13b88413ee32c8308064ecbb25c69e" },
+    { "path": "openspec/changes/training-enhancement/tasks.md", "sha256": "9ef102dd322eca6c587cdd635356718f1e9ddf969a39074dde5087a2124fdcf0" },
+    { "path": "openspec/changes/training-enhancement/specs/training-ai-scoring/spec.md", "sha256": "c624f984cf903b6232bab816d51380b0003f1e7bf97c81b553fc279466e53da4" },
+    { "path": "openspec/changes/training-enhancement/specs/training-history-review/spec.md", "sha256": "efc8a8e7f9dab3bb12110a12fa2d9ca88ec4e0b5840885b5a147c5012419f64a" },
+    { "path": "openspec/changes/training-enhancement/specs/training-question-quality/spec.md", "sha256": "57f1696e2cb38e0d6cd8fc5946f037c289c6d78473fe5fa89c549e80af31fe0b" },
+    { "path": "openspec/changes/training-enhancement/specs/training-streak-session/spec.md", "sha256": "80af7dd44f5d76b2611a5e7127be5ce812940cb8325d128127da8e59bb76eae0" }
+  ]
+}

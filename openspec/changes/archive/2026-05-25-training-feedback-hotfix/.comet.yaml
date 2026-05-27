@@ -1,0 +1,12 @@
+workflow: hotfix
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+design_doc: null
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-25-training-feedback-hotfix-verify.md
+branch_status: handled
+verified_at: 2026-05-25
+archived: true

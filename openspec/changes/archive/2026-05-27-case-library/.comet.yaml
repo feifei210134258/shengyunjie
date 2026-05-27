@@ -1,0 +1,16 @@
+workflow: full
+phase: archive
+build_mode: executing-plans
+isolation: branch
+verify_mode: light
+base_ref: 3adcce7362b3bedc85638772873f8b84d2073681
+design_doc: docs/superpowers/specs/2026-05-27-case-library-design.md
+plan: docs/superpowers/plans/2026-05-27-case-library.md
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-27-case-library-verify.md
+branch_status: handled
+created_at: 2026-05-27
+verified_at: 2026-05-27
+archived: true
+handoff_context: openspec/changes/case-library/.comet/handoff/design-context.json
+handoff_hash: 34c79f149160f78210d7f156a801e27edddd1335368f0dad19cd8813a92ce578

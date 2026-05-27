@@ -1,0 +1,13 @@
+workflow: full
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+design_doc: openspec/changes/training-single-mode/design.md
+plan: openspec/changes/training-single-mode/tasks.md
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-24-training-single-mode-verify.md
+branch_status: handled
+verified_at: 2026-05-24
+archived: true
+direct_override: true
