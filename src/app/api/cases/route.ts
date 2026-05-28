@@ -49,8 +49,8 @@ async function generateArticle(
   const wordLimit = isOverview ? 1000 : 500;
 
   const questions = isOverview
-    ? "请对「${productName}」进行全面的产品分析，涵盖产品定位、增长飞轮、商业模式、功能架构、竞争策略等方面。"
-    : "请从「${perspective.label}」视角分析「${productName}」。";
+    ? `请对「${productName}」进行全面的产品分析，涵盖产品定位、增长飞轮、商业模式、功能架构、竞争策略等方面。`
+    : `请从「${perspective.label}」视角分析「${productName}」。`;
 
   const result = await generateText({
     model,
