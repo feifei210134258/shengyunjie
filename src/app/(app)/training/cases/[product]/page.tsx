@@ -100,6 +100,7 @@ export default function ProductCasePage() {
 
   // Switch perspective
   function switchPerspective(slug: string) {
+    loadArticle(slug);
     router.replace(
       `/training/cases/${encodeURIComponent(productName)}?perspective=${slug}`
     );
