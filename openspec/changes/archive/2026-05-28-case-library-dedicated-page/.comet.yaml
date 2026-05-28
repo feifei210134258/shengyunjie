@@ -1,0 +1,17 @@
+workflow: full
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+base_ref: 72cd87e274033de882e4e23a3c6a48da33572d32
+design_doc: docs/superpowers/specs/2026-05-27-case-library-dedicated-page-design.md
+plan: docs/superpowers/plans/2026-05-27-case-library-dedicated-page.md
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-27-case-library-dedicated-page-verify.md
+branch_status: handled
+created_at: 2026-05-27
+verified_at: 2026-05-28
+archived: true
+handoff_context: openspec/changes/case-library-dedicated-page/.comet/handoff/design-context.json
+handoff_hash: e271e6e862586b650da30b6831e73d1cb21ccb7d7a639f6ff0e1f103e0185a10
+direct_override: true

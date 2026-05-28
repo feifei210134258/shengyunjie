@@ -2,10 +2,10 @@
 
 ## 当前状态 / Current State
 
-**Last Updated:** 2026-05-23
+**Last Updated:** 2026-05-28
 **会话 ID：** fullstack-build-001
 **Current Objective:** 全栈编码 — 从原型到可运行产品
-**进度摘要：** 完成了项目脚手架搭建、Supabase 集成、AI SDK 集成、认证流程、诊断模块（量表+访谈+案例+报告）、训练模块（首页+答题+AI分析）、设置页、前后端数据持久化打通。
+**进度摘要：** 完成了项目脚手架搭建、Supabase 集成、AI SDK 集成、认证流程、诊断模块（量表+访谈+案例+报告）、训练模块（首页+答题+AI分析）、设置页、前后端数据持久化打通、案例库独立页面。
 
 ---
 
@@ -24,13 +24,14 @@
 - [x] **诊断阶段二（diag-002）** — AI 深度访谈、对话保存
 - [x] **诊断阶段三（diag-003）** — 案例实战 + 综合诊断报告
 - [x] **日常训练（training-001）** — 训练首页（看板）+ 答题页（AI 出题 + 分析 + 记录）
+- [x] **案例库独立页面（comet: case-library-dedicated-page）** — 产品分析从抽屉改为独立页面 `/training/cases/[product]`，视角切换 tabs，列表页简化（2026-05-28 归档完成）
 
 ### 待开始 / What's Next
 
-- [ ] **用户画像引擎（profile-001/002）** — 画像数据模型已就绪，需接入工作台
-- [ ] **日常训练·案例库（training-002）** — 经典 B 端产品拆解
-- [ ] **特训冲刺（bootcamp-001/002/003）** — 简历解析 + AI 模拟面试 + 面试报告
 - [ ] **工作台仪表盘（dashboard）** — 展示画像、训练统计、诊断报告摘要
+- [ ] **用户画像引擎（profile-001/002）** — 画像数据模型已就绪，需接入工作台
+- [ ] **日常训练·案例库内容（training-002 部分）** — 经典 B 端产品拆解（AI 动态生成）、决策推演案例生成
+- [ ] **特训冲刺（bootcamp-001/002/003）** — 简历解析 + AI 模拟面试 + 面试报告
 
 ---
 
@@ -49,8 +50,8 @@
 | 2 | **DeepSeek V4 Flash 默认模型** | 质量优先 | 2026-05-23 |
 | 3 | **深度思考默认开启（reasoning_effort: max）** | 诊断质量核心保障 | 2026-05-23 |
 | 4 | **桌面优先** | 个人工具 | 2026-05-23 |
-| 5 | **全免费** | 个人工具 | 2026-05-23 |
-| 6 | **每做一题就记录，不搞 batch** | 防丢数据，实时更新统计 | 2026-05-23 |
+| 5 | **每做一题就记录，不搞 batch** | 防丢数据，实时更新统计 | 2026-05-23 |
+| 6 | **案例库用独立页面替代抽屉** | 提升阅读体验，导航更清晰 | 2026-05-27 |
 
 ---
 
@@ -58,27 +59,27 @@
 
 | 文件 | 说明 |
 |------|------|
-| `src/app/*` | 全部 12 个页面路由 |
-| `src/app/api/*` | 全部 API 路由（chat/train/diagnosis/*/training/*/settings） |
+| `src/app/*` | 全部页面路由 |
+| `src/app/api/*` | 全部 API 路由 |
 | `src/lib/ai.ts` | AI 模型配置 + 思考模式注入 |
 | `src/lib/supabase.ts` | Supabase 客户端 |
-| `src/lib/supabase-server.ts` | 服务端 Supabase 客户端（新增） |
-| `src/contexts/AuthContext.tsx` | 认证上下文（超时兜底） |
-| `src/components/Sidebar.tsx` | 侧边栏导航（修正） |
+| `src/lib/supabase-server.ts` | 服务端 Supabase 客户端 |
+| `src/contexts/AuthContext.tsx` | 认证上下文 |
+| `src/components/Sidebar.tsx` | 侧边栏导航 |
 | `supabase/schema.sql` | 数据库 schema |
-| `AGENTS.md` | 新增"前后端完整性"硬性规则 |
-| `feature_list.json` | 更新状态 |
-| `progress.md` | 更新 — 本文件 |
+| `AGENTS.md` | 工作指南 |
+| `feature_list.json` | 功能状态追踪 |
+| `progress.md` | 进度日志 — 本文件 |
 
 ---
 
 ## 完成证据 / Verification Evidence
 
 - [x] `npx tsc --noEmit` 通过
-- [x] `npx next build` 通过（12 个页面 + 10 个 API 路由）
-- [x] DeepSeek 流式对话测试通过（返回中文分析）
+- [x] `npx next build` 通过（13+ 个页面 + API 路由）
+- [x] DeepSeek 流式对话测试通过
 - [x] API 路由 POST/GET 全部返回 200
-- [x] 登录/注册页面 CSS 正常渲染
+- [x] Comet change `case-library-dedicated-page` 验证通过并归档（2026-05-28）
 
 ---
 

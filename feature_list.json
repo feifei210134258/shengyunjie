@@ -1,8 +1,8 @@
 {
   "project": "产品升云阶 — Product Thinking Enhancement Tool",
-  "last_updated": "2026-05-23",
+  "last_updated": "2026-05-28",
   "current_feature": "training-001",
-  "notes": "全栈编码阶段。已完成项目脚手架、Supabase + AI SDK 集成、认证、诊断模块（量表+访谈+案例+报告）、训练模块（首页+答题+AI分析）、设置页。所有页面前后端已打通。待做：工作台、画像引擎、案例库、特训冲刺。",
+  "notes": "全栈编码阶段。已完成项目脚手架、Supabase + AI SDK 集成、认证、诊断模块、训练模块（首页+答题+AI分析）、设置页、案例库独立页面。待做：工作台、画像引擎、案例库内容、特训冲刺。",
   "features": [
     {
       "id": "infra-001",
@@ -16,7 +16,9 @@
       "id": "infra-002",
       "name": "Supabase 集成",
       "description": "Supabase 项目初始化、账密登录、PostgreSQL schema（7 张表）、supabase-js + supabase-ssr 客户端封装",
-      "dependencies": ["infra-001"],
+      "dependencies": [
+        "infra-001"
+      ],
       "status": "completed",
       "evidence": "认证流程可用，schema.sql 已执行，API 路由读写正常"
     },
@@ -24,7 +26,9 @@
       "id": "infra-003",
       "name": "Vercel AI SDK 集成",
       "description": "DeepSeek V4 Flash 接入、流式输出、思考模式（reasoning_effort: max + thinking: enabled）、错误处理",
-      "dependencies": ["infra-001"],
+      "dependencies": [
+        "infra-001"
+      ],
       "status": "completed",
       "evidence": "chat + train 两个 API 路由流式返回正常"
     },
@@ -32,7 +36,9 @@
       "id": "infra-004",
       "name": "Prompt 管理体系",
       "description": "提示词策略文档（docs/2026-05-19-prompt-strategy.md）、训练出题官/评卷官/诊断师 prompt 实装",
-      "dependencies": ["infra-003"],
+      "dependencies": [
+        "infra-003"
+      ],
       "status": "in-progress",
       "evidence": "文档已编写，prompt 已按文档实装到 API 路由"
     },
@@ -40,7 +46,10 @@
       "id": "infra-005",
       "name": "AI 模型配置模块",
       "description": "内置 DeepSeek V4 Flash 默认、支持自定义 OpenAI 兼容 API。深度思考默认开启。API Key 存储在 user_settings 表。",
-      "dependencies": ["infra-002", "infra-003"],
+      "dependencies": [
+        "infra-002",
+        "infra-003"
+      ],
       "status": "completed",
       "evidence": "设置页 + /api/settings 路由读写正常"
     },
@@ -48,7 +57,9 @@
       "id": "profile-001",
       "name": "用户画像引擎 — 数据模型与展示",
       "description": "画像数据模型（维度等级、成长曲线、薄弱项、训练完成度）、Supabase 读写接口",
-      "dependencies": ["infra-002"],
+      "dependencies": [
+        "infra-002"
+      ],
       "status": "not-started",
       "evidence": ""
     },
@@ -56,7 +67,9 @@
       "id": "profile-002",
       "name": "用户画像引擎 — 推荐逻辑",
       "description": "基于画像的训练题推荐逻辑、薄弱项自动聚焦",
-      "dependencies": ["profile-001"],
+      "dependencies": [
+        "profile-001"
+      ],
       "status": "not-started",
       "evidence": ""
     },
@@ -64,7 +77,10 @@
       "id": "diag-001",
       "name": "诊断模块 — 能力量表初筛（阶段一）",
       "description": "5 维度 × 5 题自评量表、1-5 分制、维度评分计算、提交落库 + 创建诊断报告",
-      "dependencies": ["infra-003", "infra-004"],
+      "dependencies": [
+        "infra-003",
+        "infra-004"
+      ],
       "status": "completed",
       "evidence": "量表页 → POST /api/diagnosis/scale → DB 写入正常"
     },
@@ -72,7 +88,9 @@
       "id": "diag-002",
       "name": "诊断模块 — AI 深度访谈（阶段二）",
       "description": "多轮对话界面、AI 基于初筛结果深挖、对话摘要保存",
-      "dependencies": ["diag-001"],
+      "dependencies": [
+        "diag-001"
+      ],
       "status": "completed",
       "evidence": "访谈页 → POST /api/diagnosis/interview → DB 更新正常"
     },
@@ -80,7 +98,9 @@
       "id": "diag-003",
       "name": "诊断模块 — 案例实战验证（阶段三）",
       "description": "案例场景选择 + 逻辑论述提交、报告完成标记、成长快照创建",
-      "dependencies": ["diag-002"],
+      "dependencies": [
+        "diag-002"
+      ],
       "status": "completed",
       "evidence": "案例页 → POST /api/diagnosis/case → DB 更新正常"
     },
@@ -88,7 +108,10 @@
       "id": "training-001",
       "name": "日常训练 — 场景题库",
       "description": "看板式训练首页（连击统计+日历+历史）、AI 动态出题、答题→AI 评分反馈、记录落库",
-      "dependencies": ["infra-004", "profile-001"],
+      "dependencies": [
+        "infra-004",
+        "profile-001"
+      ],
       "status": "in-progress",
       "evidence": "训练首页 + 答题页 + /api/train 就绪。训练首页统计数据尚未从 API 读取（硬编码中）"
     },
@@ -96,15 +119,20 @@
       "id": "training-002",
       "name": "日常训练 — 案例库",
       "description": "经典 B 端产品拆解（AI 动态生成）、决策推演案例生成",
-      "dependencies": ["infra-004"],
-      "status": "not-started",
-      "evidence": ""
+      "dependencies": [
+        "infra-004"
+      ],
+      "status": "in-progress",
+      "evidence": "独立产品页 /training/cases/[product] 已实现，案例库列表页已简化。待做：经典 B 端产品拆解内容（AI 动态生成）、决策推演案例生成"
     },
     {
       "id": "bootcamp-001",
       "name": "特训冲刺 — 简历解析（Day 0）",
       "description": "简历上传、AI 简历解析、面试题生成",
-      "dependencies": ["infra-003", "infra-004"],
+      "dependencies": [
+        "infra-003",
+        "infra-004"
+      ],
       "status": "not-started",
       "evidence": ""
     },
@@ -112,7 +140,9 @@
       "id": "bootcamp-002",
       "name": "特训冲刺 — AI 模拟面试（Day 1-5）",
       "description": "每日面试循环、5 天难度递增、进度管理",
-      "dependencies": ["bootcamp-001"],
+      "dependencies": [
+        "bootcamp-001"
+      ],
       "status": "not-started",
       "evidence": ""
     },
@@ -120,7 +150,9 @@
       "id": "bootcamp-003",
       "name": "特训冲刺 — 面试诊断报告",
       "description": "每轮面试后诊断报告、5 天成长追踪",
-      "dependencies": ["bootcamp-002"],
+      "dependencies": [
+        "bootcamp-002"
+      ],
       "status": "not-started",
       "evidence": ""
     },
@@ -128,7 +160,10 @@
       "id": "ux-001",
       "name": "全局 UI 与导航",
       "description": "布局框架、侧边栏导航（工作台→诊断→训练）、认证流程（登录/注册/退出）、12 个页面路由",
-      "dependencies": ["infra-001", "infra-002"],
+      "dependencies": [
+        "infra-001",
+        "infra-002"
+      ],
       "status": "completed",
       "evidence": "所有页面路由可访问，侧边栏导航工作正常"
     },
@@ -136,7 +171,10 @@
       "id": "ux-002",
       "name": "AI 设置页",
       "description": "AI 模型配置页面：API Key 存储、模型选择、深度思考开关、保存到 user_settings 表",
-      "dependencies": ["infra-005", "ux-001"],
+      "dependencies": [
+        "infra-005",
+        "ux-001"
+      ],
       "status": "completed",
       "evidence": "设置页 + /api/settings 读写正常"
     }

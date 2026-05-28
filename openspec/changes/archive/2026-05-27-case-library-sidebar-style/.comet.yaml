@@ -1,0 +1,14 @@
+workflow: tweak
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+base_ref: 8e12cedbdc508326ea12b91caed62d3791185b38
+design_doc: null
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-27-case-library-sidebar-style-verify.md
+branch_status: handled
+created_at: 2026-05-27
+verified_at: 2026-05-27
+archived: true
