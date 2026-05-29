@@ -1,0 +1,14 @@
+workflow: tweak
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+base_ref: 0ae4181a8aace7d24f5f9b732097b1b55fa9dfc4
+design_doc: null
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-29-cases-ui-tweaks-verify.md
+branch_status: handled
+created_at: 2026-05-29
+verified_at: 2026-05-29
+archived: true
