@@ -1,0 +1,17 @@
+workflow: full
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: full
+base_ref: 3545edc77413b26efa7fc6cd7bae582ef0c0510c
+design_doc: docs/superpowers/specs/2026-05-29-case-library-web-search-design.md
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-29-case-library-web-search-verify.md
+branch_status: handled
+created_at: 2026-05-29
+verified_at: 2026-05-29
+archived: true
+handoff_context: openspec/changes/case-library-web-search/.comet/handoff/design-context.json
+handoff_hash: f7f0381d461b9ef7ce7444f4fb4eb67b621151332d67562d0b1323ab12f0ba3f
+direct_override: true
