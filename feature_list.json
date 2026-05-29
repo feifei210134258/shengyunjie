@@ -1,8 +1,8 @@
 {
   "project": "产品升云阶 — Product Thinking Enhancement Tool",
-  "last_updated": "2026-05-28",
+  "last_updated": "2026-05-29",
   "current_feature": "training-001",
-  "notes": "全栈编码阶段。已完成项目脚手架、Supabase + AI SDK 集成、认证、诊断模块、训练模块（首页+答题+AI分析）、设置页、案例库独立页面。待做：工作台、画像引擎、案例库内容、特训冲刺。",
+  "notes": "修复 4 个 bug（题目前缀 regex、切换视角重复请求、product_name 大小写、连击天数时区）。已完成全栈编码+修复迭代。",
   "features": [
     {
       "id": "infra-001",

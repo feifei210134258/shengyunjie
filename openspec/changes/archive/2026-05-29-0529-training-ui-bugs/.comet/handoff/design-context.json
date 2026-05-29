@@ -1,0 +1,13 @@
+{
+  "change": "0529-training-ui-bugs",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "6f64cf050e04c29c7871b170ab8812eac6abc179ba78f44b80bb3a9a8fb167f9",
+  "files": [
+    { "path": "openspec/changes/0529-training-ui-bugs/proposal.md", "sha256": "416f21ae91bfa195ae2d4fba5a7a2f4867fcf275cc9ef4abb30f13303c6942ff" },
+    { "path": "openspec/changes/0529-training-ui-bugs/design.md", "sha256": "447cfc3760189e76c5d406b8e31e0a576dce645e31ec247a6106c5d2353919fb" },
+    { "path": "openspec/changes/0529-training-ui-bugs/tasks.md", "sha256": "c8b9e65e6de5f646e085c8317d5cf4fb0e7f8b39c978bfcace2cf7cd6018f5da" }
+  ]
+}

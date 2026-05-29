@@ -1,0 +1,17 @@
+workflow: full
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: full
+base_ref: 248ff8682c6bb2253e8749e791902679c61adcb5
+design_doc: docs/superpowers/specs/2026-05-29-training-ui-bugs-fix-design.md
+plan: docs/superpowers/plans/2026-05-29-training-ui-bugs-fix.md
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-29-training-ui-bugs-fix-verify.md
+branch_status: handled
+created_at: 2026-05-29
+verified_at: 2026-05-29
+archived: true
+handoff_context: openspec/changes/0529-training-ui-bugs/.comet/handoff/design-context.json
+handoff_hash: 6f64cf050e04c29c7871b170ab8812eac6abc179ba78f44b80bb3a9a8fb167f9
+direct_override: true

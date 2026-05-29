@@ -1,0 +1,14 @@
+workflow: hotfix
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+base_ref: 584af085f1099cba1d123b50387abac6246cc6be
+design_doc: null
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-28-case-library-perspective-switch-verify.md
+branch_status: handled
+created_at: 2026-05-28
+verified_at: 2026-05-28
+archived: true

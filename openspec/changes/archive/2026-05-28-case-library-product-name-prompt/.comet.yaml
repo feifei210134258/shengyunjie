@@ -1,0 +1,14 @@
+workflow: hotfix
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+base_ref: e50c1c5e3139b2fabe43098e2497ae8aefdd25c9
+design_doc: null
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-28-case-library-product-name-prompt-verify.md
+branch_status: handled
+created_at: 2026-05-28
+verified_at: 2026-05-28
+archived: true

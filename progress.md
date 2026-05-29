@@ -88,3 +88,31 @@
 1. 工作台仪表盘 — 读取 training_stats + 诊断报告展示
 2. 用户画像引擎 — 画像卡片展示 + 成长曲线
 3. 训练首页统计数据从 API 读取（替代硬编码）
+
+---
+
+## 2026-05-29 热修复会话
+
+### 修复的 Bug
+
+- [x] **Bug 1：题目前缀 regex** — 两步清理代替单 regex，处理 `**题目：**` 边缘情况
+- [x] **Bug 2：切换视角重复请求** — 移除 `switchPerspective` 中的直接 `loadArticle()` 调用
+- [x] **Bug 3：product_name 大小写** — API 入口 `toLowerCase()` 归一化
+- [x] **Bug 4：连击天数显示错误（一直显示12天）** — API 端 streak 改用 `Asia/Shanghai` 本地日期；移除前端死代码
+
+### 相关文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/app/(app)/training/session/page.tsx` | regex 修复 |
+| `src/app/(app)/training/cases/[product]/page.tsx` | 移除重复请求 |
+| `src/app/api/cases/route.ts` | 大小写归一化 |
+| `src/app/api/training/stats/route.ts` | streak 时区修复 |
+| `src/app/api/training/sessions/route.ts` | session 日期时区修复 |
+| `src/app/api/dashboard/route.ts` | streak 时区修复 |
+| `src/app/(app)/training/page.tsx` | 移除 dead code |
+
+### Comet 状态
+
+- Change: `0529-training-ui-bugs` — 已验证归档（6/6 steps succeeded）
+- 分支 `0529-training-ui-bugs` 已合并到 master
