@@ -210,16 +210,19 @@ export async function GET(req: Request) {
         );
       }
 
-      // Check cache
-      const { data: cached } = await supabase
-        .from("case_articles")
-        .select("id, content, summary, created_at")
-        .ilike("product_name", productName)
-        .eq("perspective", perspectiveSlug)
-        .maybeSingle();
+      // Check cache (skip if refresh=true)
+      const refresh = searchParams.get("refresh") === "true";
+      if (!refresh) {
+        const { data: cached } = await supabase
+          .from("case_articles")
+          .select("id, content, summary, created_at")
+          .ilike("product_name", productName)
+          .eq("perspective", perspectiveSlug)
+          .maybeSingle();
 
-      if (cached) {
-        return NextResponse.json({ article: cached, cached: true });
+        if (cached) {
+          return NextResponse.json({ article: cached, cached: true });
+        }
       }
 
       // Generate new article
@@ -228,16 +231,16 @@ export async function GET(req: Request) {
       // Extract summary (first 80 chars as a rough summary)
       const summary = content.slice(0, 80).replace(/\n/g, " ");
 
-      // Write to cache
+      // Write to cache (upsert so refresh=true overwrites)
       const { data: inserted } = await supabase
         .from("case_articles")
-        .insert({
+        .upsert({
           product_name: productName,
           perspective: perspectiveSlug,
           perspective_label: perspective.label,
           content,
           summary,
-        })
+        }, { onConflict: "product_name,perspective" })
         .select("id, content, summary, created_at")
         .single();
 
