@@ -89,7 +89,7 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const action = searchParams.get("action");
-    const productName = searchParams.get("product");
+    const productName = searchParams.get("product")?.toLowerCase() || "";
     const perspectiveSlug = searchParams.get("perspective");
 
     /* ------ List products ------ */
