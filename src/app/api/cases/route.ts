@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase-server";
 import { generateText } from "ai";
 import { getChatModel } from "@/lib/ai";
+import { searchWeb } from "@/lib/tavily";
 import { NextResponse } from "next/server";
 
 /* ------------------------------------------------------------------ */
@@ -48,35 +49,55 @@ async function generateArticle(
   const isOverview = perspective.slug === "overview";
   const wordLimit = isOverview ? 1000 : 500;
 
-  const questions = isOverview
-    ? `请对「${productName}」进行全面的产品分析，涵盖产品定位、增长飞轮、商业模式、功能架构、竞争策略等方面。`
-    : `请从「${perspective.label}」视角分析「${productName}」。`;
+  // 搜索真实信息作为上下文
+  const searchQuery = productName + " " + (isOverview ? "产品分析 商业模式 功能" : perspective.label) + " 2024 2025 2026";
+  const searchResult = await searchWeb(searchQuery, { maxResults: 5, searchDepth: "basic" });
+
+  let searchContext = "";
+  if (searchResult.results.length > 0) {
+    const items = searchResult.results
+      .slice(0, 5)
+      .map((r: any, i: number) => "[" + (i + 1) + "] " + r.title + "\n" + r.content.slice(0, 500));
+    searchContext =
+      "\n\n## 搜索到的真实信息\n以下是从搜索结果中获取的关于「" +
+      productName +
+      "」的真实信息，请基于这些信息进行分析，不要编造：\n\n" +
+      items.join("\n\n");
+  }
+
+  const perspectiveLabel = perspective.label;
+  const questionText = isOverview
+    ? "请对「" + productName + "」进行全面的产品分析，涵盖产品定位、增长飞轮、商业模式、功能架构、竞争策略等方面。"
+    : "请从「" + perspectiveLabel + "」视角分析「" + productName + "」。";
+
+  const systemPrompt =
+    "你是资深 B 端产品分析专家。你的任务是对指定产品进行简洁、有洞察的拆解分析。" +
+    searchContext +
+    "\n\n要求：" +
+    "\n- 总字数控制在 " + wordLimit + " 字以内" +
+    "\n" + (isOverview
+      ? "- 从多个维度进行综合分析，包括产品定位、增长模式、商业逻辑、功能演进等\n- 给出对产品经理的实用启示"
+      : "- 聚焦于指定的分析视角（" + perspectiveLabel + "），不需要面面俱到") +
+    "\n- 优先使用搜索到的真实信息，不要编造数据或事实" +
+    "\n- 如果搜索信息不足，可以补充模型知识，但请标注\"基于模型知识\"" +
+    "\n- 每条观点要有具体事实或逻辑支撑，不空谈" +
+    "\n- 使用 Markdown 格式组织内容，适当使用标题、列表、加粗等增强可读性";
+
+  const userMsg = questionText + "写一篇约 " + wordLimit + " 字的产品拆解，使用 Markdown 格式。";
 
   const result = await generateText({
     model,
-    system: `你是资深 B 端产品分析专家。你的任务是对指定产品进行简洁、有洞察的拆解分析。
-
-要求：
-- 总字数控制在 ${wordLimit} 字以内
-${isOverview ? "- 从多个维度进行综合分析，包括产品定位、增长模式、商业逻辑、功能演进等\n- 给出对产品经理的实用启示" : `- 聚焦于指定的分析视角（${perspective.label}），不需要面面俱到`}
-- 每条观点要有具体事实或逻辑支撑，不空谈
-- 如果对产品了解有限，只写确信的部分，不编造
-- 使用 Markdown 格式组织内容，适当使用标题、列表、加粗等增强可读性`,
+    system: systemPrompt,
     messages: [
       {
         role: "user",
-        content: `${questions}写一篇约 ${wordLimit} 字的产品拆解，使用 Markdown 格式。`,
+        content: userMsg,
       },
     ],
   });
 
   return result.text;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Route handler                                                      */
-/* ------------------------------------------------------------------ */
-
 export async function GET(req: Request) {
   try {
     const supabase = await createServerClient();
