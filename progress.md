@@ -116,3 +116,15 @@
 
 - Change: `0529-training-ui-bugs` — 已验证归档（6/6 steps succeeded）
 - 分支 `0529-training-ui-bugs` 已合并到 master
+
+## [2026-05-29] RLS 修复 - case_articles 删除权限
+
+### 完成内容
+- 修复了 case_articles 表缺少 DELETE 和 UPDATE RLS 策略的问题
+- 通过 Kimi WebBridge 在 Supabase SQL Editor 中运行了正确的 SQL（去掉了 `if not exists` 语法）
+- 删除了 `src/app/api/admin/` 目录（未使用的管理路由）
+- 构建通过（`npm run build` 和 `npx tsc --noEmit` 均正常）
+
+### 技术细节
+- PostgreSQL 不支持 `CREATE POLICY if not exists`，改为 `drop policy if exists` + `create policy` 模式
+- 策略允许所有认证用户（`auth.role() = 'authenticated'`）删除和更新 case_articles

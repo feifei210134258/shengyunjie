@@ -266,3 +266,11 @@ create policy "所有认证用户可读案例文章"
 create policy "认证用户可创建案例文章"
   on public.case_articles for insert
   with check (auth.role() = 'authenticated');
+
+create policy "认证用户可删除案例文章"
+  on public.case_articles for delete
+  using (auth.role() = 'authenticated');
+
+create policy "认证用户可更新案例文章"
+  on public.case_articles for update
+  using (auth.role() = 'authenticated');
