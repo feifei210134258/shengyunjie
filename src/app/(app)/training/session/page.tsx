@@ -134,7 +134,7 @@ export default function TrainingSessionPage() {
       // 清理 AI 可能输出的前缀（难度标签、题目标题）
       let cleanText = text.replace(/^【难度：[^】]+】\s*/, "");
       // 覆盖多种"题目"前缀变体：**题目：**、题目：、题目、**题目** 等
-      cleanText = cleanText.replace(/^(\*\*?)?\s*题目\s*[：:]?\s*(\*\*?)\s*/i, "");
+            cleanText = cleanText.replace(/\*\*/g, "").replace(/^\s*题目\s*[：:]\s*/i, "");
       cleanText = cleanText.replace(/^【题目】\s*/i, "");
 
       setQuestions((prev) => ({ ...prev, [dim]: { text: cleanText, loading: false } }));
