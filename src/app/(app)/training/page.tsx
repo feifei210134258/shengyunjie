@@ -81,20 +81,8 @@ export default function TrainingPage() {
     else { setMonth(month + 1); }
   };
 
-  // 计算连击天数（从今天往前数连续有训练的日期）
-  const calcStreak = (): number => {
-    if (!trainedDays.length) return 0;
-    let streak = 0;
-    const d = new Date(year, month - 1, 1);
-    for (let i = 0; i < daysInMonth; i++) {
-      const day = d.getDate();
-      if (trainedDays.includes(day)) streak++;
-      else if (day < today.getDate()) streak = 0; // 中断
-      d.setDate(d.getDate() + 1);
-    }
-    // 简化：返回本月训练天数
-    return monthCount;
-  };
+  // 连击天数由 API stats.streak 提供，前端不再计算
+  // 保留 calcStreak 调用处兼容
 
   return (
     <>

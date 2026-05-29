@@ -19,8 +19,8 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
   const dates: string[] = data?.map((d: any) => d.session_date) || [];
   if (!dates.length) return 0;
 
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }).replace(/\//g, "-");
+  const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }).replace(/\//g, "-");
 
   let streak = 0;
   let checkDate = dates.includes(today) ? today : yesterday;
@@ -31,7 +31,7 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
     streak++;
     const d = new Date(checkDate);
     d.setDate(d.getDate() - 1);
-    checkDate = d.toISOString().slice(0, 10);
+    checkDate = d.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }).replace(/\//g, "-");
   }
 
   return streak;
