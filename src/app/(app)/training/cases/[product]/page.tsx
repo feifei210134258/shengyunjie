@@ -75,8 +75,9 @@ export default function ProductCasePage() {
       setArticle(null);
       setArticleError(null);
       setArticleLoading(true);
+      const refreshParam = searchParams.get("refresh") === "true" ? "&refresh=true" : "";
       fetch(
-        `/api/cases?product=${encodeURIComponent(productName)}&perspective=${perspectiveSlug}`
+        `/api/cases?product=${encodeURIComponent(productName)}&perspective=${perspectiveSlug}${refreshParam}`
       )
         .then(async (r) => {
           const data = await r.json();
