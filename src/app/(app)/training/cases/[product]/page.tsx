@@ -99,6 +99,23 @@ export default function ProductCasePage() {
     loadArticle(activePerspective);
   }, [activePerspective, loadArticle]);
 
+  // Delete article
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!article || !window.confirm("确定删除「" + productName + "」的这篇文章？")) return;
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/cases/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: productName, perspective: activePerspective }),
+      });
+      if (res.ok) router.push("/training/cases");
+    } catch {}
+    setDeleting(false);
+  }
+
   // Switch perspective
   function switchPerspective(slug: string) {
     router.replace(
@@ -119,15 +136,27 @@ export default function ProductCasePage() {
           <span className="material-symbols-outlined">arrow_back</span>
           返回案例库
         </Link>
-        <h1 className="text-headline-lg font-bold text-on-surface">
-          {productName}
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-headline-lg font-bold text-on-surface">
+            {productName}
+          </h1>
+          {article && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-body-sm text-error hover:bg-error-container rounded-lg transition-colors disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-lg">delete</span>
+              删除
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Content: sidebar + article */}
-      <div className="flex gap-8">
+      <div className="flex gap-8 overflow-hidden h-[calc(100vh-180px)]">
         {/* Perspective Sidebar */}
-        <aside className="w-[220px] shrink-0">
+        <aside className="w-[220px] shrink-0 sticky top-0 self-start">
           {perspectivesLoading ? (
             <div className="space-y-2 animate-pulse">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -169,7 +198,7 @@ export default function ProductCasePage() {
         </aside>
 
         {/* Article Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-y-auto h-full">
           {articleLoading ? (
             <div className="space-y-3 animate-pulse">
               <div className="h-6 bg-surface-container-high rounded w-1/3" />
