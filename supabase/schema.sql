@@ -23,6 +23,14 @@ create policy "用户可以更新自己的资料"
   on public.profiles for update
   using (auth.uid() = id);
 
+create policy "用户可以创建自己的资料"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
+create policy "用户可以删除自己的资料"
+  on public.profiles for delete
+  using (auth.uid() = id);
+
 -- 注册时自动创建资料
 create or replace function public.handle_new_user()
 returns trigger as $$
@@ -93,6 +101,22 @@ create policy "用户可以通过报告查看维度得分"
 create policy "用户可以创建维度得分"
   on public.dimension_scores for insert
   with check (exists (
+    select 1 from public.diagnosis_reports
+    where diagnosis_reports.id = dimension_scores.report_id
+    and diagnosis_reports.user_id = auth.uid()
+  ));
+
+create policy "用户可以更新自己的维度得分"
+  on public.dimension_scores for update
+  using (exists (
+    select 1 from public.diagnosis_reports
+    where diagnosis_reports.id = dimension_scores.report_id
+    and diagnosis_reports.user_id = auth.uid()
+  ));
+
+create policy "用户可以删除自己的维度得分"
+  on public.dimension_scores for delete
+  using (exists (
     select 1 from public.diagnosis_reports
     where diagnosis_reports.id = dimension_scores.report_id
     and diagnosis_reports.user_id = auth.uid()
@@ -195,6 +219,14 @@ create policy "用户可以创建成长快照"
   on public.growth_snapshots for insert
   with check (auth.uid() = user_id);
 
+create policy "用户可以更新自己的成长快照"
+  on public.growth_snapshots for update
+  using (auth.uid() = user_id);
+
+create policy "用户可以删除自己的成长快照"
+  on public.growth_snapshots for delete
+  using (auth.uid() = user_id);
+
 -- 8. 训练会话表（每日生成的 5 道题）
 create table if not exists public.training_sessions (
   id              uuid primary key default gen_random_uuid(),
@@ -218,6 +250,10 @@ create policy "用户可以创建自己的训练会话"
 
 create policy "用户可以更新自己的训练会话"
   on public.training_sessions for update
+  using (auth.uid() = user_id);
+
+create policy "用户可以删除自己的训练会话"
+  on public.training_sessions for delete
   using (auth.uid() = user_id);
 
 -- 9. 题目质量反馈表（点赞/点踩）
@@ -245,6 +281,10 @@ create policy "用户可以更新自己的反馈"
   on public.question_feedback for update
   using (auth.uid() = user_id);
 
+create policy "用户可以删除自己的反馈"
+  on public.question_feedback for delete
+  using (auth.uid() = user_id);
+
 -- Case Library: AI-generated product case study articles
 create table if not exists public.case_articles (
   id                uuid primary key default gen_random_uuid(),
@@ -267,6 +307,9 @@ create policy "认证用户可创建案例文章"
   on public.case_articles for insert
   with check (auth.role() = 'authenticated');
 
+-- 注意：案例文章表没有 user_id 字段，默认行为是共享内容池
+-- 所有认证用户均可读写删改。如需限制为仅创建者可删改，
+-- 需要新增 created_by 字段并调整策略。
 create policy "认证用户可删除案例文章"
   on public.case_articles for delete
   using (auth.role() = 'authenticated');
@@ -274,3 +317,136 @@ create policy "认证用户可删除案例文章"
 create policy "认证用户可更新案例文章"
   on public.case_articles for update
   using (auth.role() = 'authenticated');
+
+-- ==========================================================
+-- 10. 训练营会话表
+-- ==========================================================
+create table if not exists public.bootcamp_sessions (
+  id                  uuid primary key default gen_random_uuid(),
+  user_id             uuid references public.profiles(id) on delete cascade not null,
+  status              text default 'not_started',  -- not_started, in_progress, completed
+  current_day         smallint default 0,          -- 0-3 (0=简历上传阶段)
+  resume_text         text,                        -- 提取的原始简历文本
+  parsed_profile      jsonb,                       -- 结构化解析结果
+  weakness_prediction jsonb,                       -- 薄弱项预测报告
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now()
+);
+
+alter table public.bootcamp_sessions enable row level security;
+
+create policy "用户可以查看自己的训练营会话"
+  on public.bootcamp_sessions for select
+  using (auth.uid() = user_id);
+
+create policy "用户可以创建自己的训练营会话"
+  on public.bootcamp_sessions for insert
+  with check (auth.uid() = user_id);
+
+create policy "用户可以更新自己的训练营会话"
+  on public.bootcamp_sessions for update
+  using (auth.uid() = user_id);
+
+create policy "用户可以删除自己的训练营会话"
+  on public.bootcamp_sessions for delete
+  using (auth.uid() = user_id);
+
+-- ==========================================================
+-- 11. 训练营面试题表（每日 5 道题）
+-- ==========================================================
+create table if not exists public.bootcamp_interviews (
+  id              uuid primary key default gen_random_uuid(),
+  session_id      uuid references public.bootcamp_sessions(id) on delete cascade not null,
+  day_number      smallint not null,               -- 1-3
+  question_index  smallint not null,               -- 1-5
+  question_text   text not null,
+  question_type   text,                            -- strategy, system_design, data_driven, user_insight, business_thinking
+  difficulty      smallint default 1,              -- 1-5
+  user_answer     text,
+  ai_evaluation   jsonb,                           -- {overall_score, structure, logic, professionalism, innovation, feedback}
+  status          text default 'pending',          -- pending, answered, evaluated
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now(),
+  unique(session_id, day_number, question_index)
+);
+
+alter table public.bootcamp_interviews enable row level security;
+
+create policy "用户可以查看自己的面试题"
+  on public.bootcamp_interviews for select
+  using (exists (
+    select 1 from public.bootcamp_sessions
+    where bootcamp_sessions.id = bootcamp_interviews.session_id
+    and bootcamp_sessions.user_id = auth.uid()
+  ));
+
+create policy "用户可以创建自己的面试题"
+  on public.bootcamp_interviews for insert
+  with check (exists (
+    select 1 from public.bootcamp_sessions
+    where bootcamp_sessions.id = bootcamp_interviews.session_id
+    and bootcamp_sessions.user_id = auth.uid()
+  ));
+
+create policy "用户可以更新自己的面试题"
+  on public.bootcamp_interviews for update
+  using (exists (
+    select 1 from public.bootcamp_sessions
+    where bootcamp_sessions.id = bootcamp_interviews.session_id
+    and bootcamp_sessions.user_id = auth.uid()
+  ));
+
+create policy "用户可以删除自己的面试题"
+  on public.bootcamp_interviews for delete
+  using (exists (
+    select 1 from public.bootcamp_sessions
+    where bootcamp_sessions.id = bootcamp_interviews.session_id
+    and bootcamp_sessions.user_id = auth.uid()
+  ));
+
+-- ==========================================================
+-- 12. 训练营报告表（日报 + 综合报告）
+-- ==========================================================
+create table if not exists public.bootcamp_reports (
+  id              uuid primary key default gen_random_uuid(),
+  session_id      uuid references public.bootcamp_sessions(id) on delete cascade not null,
+  report_type     text not null,                   -- daily, comprehensive
+  day_number      smallint,                        -- 1-3 (日报)
+  content         jsonb not null,                  -- 报告内容
+  scores_snapshot jsonb,                           -- 分数快照（用于图表）
+  created_at      timestamptz default now()
+);
+
+alter table public.bootcamp_reports enable row level security;
+
+create policy "用户可以查看自己的训练营报告"
+  on public.bootcamp_reports for select
+  using (exists (
+    select 1 from public.bootcamp_sessions
+    where bootcamp_sessions.id = bootcamp_reports.session_id
+    and bootcamp_sessions.user_id = auth.uid()
+  ));
+
+create policy "用户可以创建自己的训练营报告"
+  on public.bootcamp_reports for insert
+  with check (exists (
+    select 1 from public.bootcamp_sessions
+    where bootcamp_sessions.id = bootcamp_reports.session_id
+    and bootcamp_sessions.user_id = auth.uid()
+  ));
+
+create policy "用户可以更新自己的训练营报告"
+  on public.bootcamp_reports for update
+  using (exists (
+    select 1 from public.bootcamp_sessions
+    where bootcamp_sessions.id = bootcamp_reports.session_id
+    and bootcamp_sessions.user_id = auth.uid()
+  ));
+
+create policy "用户可以删除自己的训练营报告"
+  on public.bootcamp_reports for delete
+  using (exists (
+    select 1 from public.bootcamp_sessions
+    where bootcamp_sessions.id = bootcamp_reports.session_id
+    and bootcamp_sessions.user_id = auth.uid()
+  ));
