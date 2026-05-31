@@ -1,12 +1,27 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { ParsedProfile } from "@/types/bootcamp";
 
 interface Props {
   profile: ParsedProfile;
+  rawMarkdown?: string;
 }
 
-export default function ResumePreview({ profile }: Props) {
+export default function ResumePreview({ profile, rawMarkdown }: Props) {
+  // 如果有原始 Markdown，优先用 react-markdown 渲染
+  if (rawMarkdown) {
+    return (
+      <div className="bg-surface-container p-6 rounded-xl">
+        <div className="prose prose-sm max-w-none dark:prose-invert">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{rawMarkdown}</ReactMarkdown>
+        </div>
+      </div>
+    );
+  }
+
+  // 否则用结构化展示
   return (
     <div className="space-y-6">
       {/* 工作经历 */}
@@ -20,9 +35,7 @@ export default function ResumePreview({ profile }: Props) {
                   <p className="font-label-bold text-on-surface">{work.company}</p>
                   <p className="text-body-sm text-on-surface-variant">{work.title}</p>
                 </div>
-                <span className="text-label-sm text-on-surface-variant">
-                  {work.duration}
-                </span>
+                <span className="text-label-sm text-on-surface-variant">{work.duration}</span>
               </div>
               <ul className="mt-2 space-y-1">
                 {work.highlights?.map((h, i) => (
@@ -50,9 +63,7 @@ export default function ResumePreview({ profile }: Props) {
               <p className="text-body-sm text-on-surface-variant mt-1">
                 {project.description}
               </p>
-              <p className="text-label-sm text-primary mt-2">
-                角色：{project.role}
-              </p>
+              <p className="text-label-sm text-primary mt-2">角色：{project.role}</p>
             </div>
           ))}
         </div>

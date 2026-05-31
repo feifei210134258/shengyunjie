@@ -18,10 +18,12 @@ export async function POST(req: NextRequest) {
     const allowedTypes = [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/markdown",
+      "text/plain",
     ];
-    if (!allowedTypes.includes(file.type)) {
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.md')) {
       return NextResponse.json(
-        { error: "请上传 PDF 或 Word 格式的简历" },
+        { error: "请上传 PDF、Word 或 Markdown 格式的简历" },
         { status: 400 }
       );
     }

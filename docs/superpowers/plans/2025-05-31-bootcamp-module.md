@@ -2,6 +2,7 @@
 change: bootcamp-module
 design-doc: docs/superpowers/specs/2025-05-31-bootcamp-module-design.md
 base-ref: 7e6ecba6c9179efeb7af43492f674ffade7ade42
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 # 特训冲刺模块实现计划
@@ -14,6 +15,7 @@ base-ref: 7e6ecba6c9179efeb7af43492f674ffade7ade42
 
 **Tech Stack:** Next.js 15 + TypeScript + Tailwind + shadcn/ui + Supabase + Vercel AI SDK (DeepSeek) + recharts
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## 文件结构
@@ -51,6 +53,7 @@ src/
     bootcamp.ts                 # 特训相关类型定义
 ```
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## Task 1: 数据库 Schema
@@ -186,6 +189,7 @@ git commit -m "feat(db): add bootcamp sessions, interviews, reports tables with 
 
 - [ ] **Step 1.4: 提交数据库变更**
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## Task 2: 类型定义与工具函数
@@ -348,6 +352,7 @@ git commit -m "feat(bootcamp): add types and utility functions"
 
 - [ ] **Step 2.3: 提交**
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## Task 3: AI Prompts
@@ -602,6 +607,7 @@ git commit -m "feat(bootcamp): add AI prompts for resume parse, interview, and r
 
 - [ ] **Step 3.7: 提交 Prompts**
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## Task 4: API Routes
@@ -1121,6 +1127,7 @@ git commit -m "feat(api): add bootcamp resume, interview, and report APIs"
 
 - [ ] **Step 4.5: 提交 API Routes**
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## Task 5: 前端组件
@@ -1717,6 +1724,7 @@ git commit -m "feat(bootcamp): add 7 UI components for resume, interview, and re
 
 - [ ] **Step 5.8: 提交组件**
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## Task 6: 前端页面
@@ -2238,6 +2246,7 @@ git commit -m "feat(bootcamp): add resume, interview, and report pages"
 
 - [ ] **Step 6.5: 提交页面**
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## Task 7: 集成与验证
@@ -2290,6 +2299,7 @@ git commit -m "feat(bootcamp): complete bootcamp module with tests and lint fixe
 
 - [ ] **Step 7.6: 最终提交**
 
+archived-with: 2026-05-31-bootcamp-module
 ---
 
 ## 自检清单

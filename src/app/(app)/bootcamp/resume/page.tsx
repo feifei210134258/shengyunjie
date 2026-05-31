@@ -15,6 +15,7 @@ export default function ResumePage() {
   );
   const [weaknessPrediction, setWeaknessPrediction] =
     useState<WeaknessPrediction | null>(null);
+  const [rawMarkdown, setRawMarkdown] = useState("");
   const [error, setError] = useState("");
 
   const handleUpload = async (file: File) => {
@@ -38,8 +39,42 @@ export default function ResumePage() {
 
       setParsedProfile(data.parsed_profile);
       setWeaknessPrediction(data.weakness_prediction);
+      setRawMarkdown("");
     } catch (err: any) {
       setError(err.message || "上传失败");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleTextSubmit = async (text: string) => {
+    setIsUploading(true);
+    setError("");
+
+    try {
+      // 创建 Blob 模拟文件上传
+      const blob = new Blob([text], { type: "text/markdown" });
+      const file = new File([blob], "resume.md", { type: "text/markdown" });
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/bootcamp/resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "提交失败");
+        return;
+      }
+
+      setParsedProfile(data.parsed_profile);
+      setWeaknessPrediction(data.weakness_prediction);
+      setRawMarkdown(text);
+    } catch (err: any) {
+      setError(err.message || "提交失败");
     } finally {
       setIsUploading(false);
     }
@@ -70,7 +105,11 @@ export default function ResumePage() {
         </div>
 
         {!parsedProfile && (
-          <ResumeUploader onUpload={handleUpload} isUploading={isUploading} />
+          <ResumeUploader
+            onUpload={handleUpload}
+            onTextSubmit={handleTextSubmit}
+            isUploading={isUploading}
+          />
         )}
 
         {error && (
@@ -81,7 +120,7 @@ export default function ResumePage() {
 
         {parsedProfile && (
           <div className="space-y-8">
-            <ResumePreview profile={parsedProfile} />
+            <ResumePreview profile={parsedProfile} rawMarkdown={rawMarkdown || undefined} />
 
             {weaknessPrediction && (
               <WeaknessReport prediction={weaknessPrediction} />

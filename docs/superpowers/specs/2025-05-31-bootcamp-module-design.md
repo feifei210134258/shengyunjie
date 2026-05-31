@@ -2,6 +2,8 @@
 comet_change: bootcamp-module
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-05-31-bootcamp-module
+status: final
 ---
 
 # Design Doc: 特训冲刺模块
