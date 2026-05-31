@@ -128,3 +128,55 @@
 ### 技术细节
 - PostgreSQL 不支持 `CREATE POLICY if not exists`，改为 `drop policy if exists` + `create policy` 模式
 - 策略允许所有认证用户（`auth.role() = 'authenticated'`）删除和更新 case_articles
+
+## [2026-05-31] 训练营模块数据库 Schema
+
+### 完成内容
+- **新增三张训练营表**：
+  - `bootcamp_sessions`：训练营会话状态（status, current_day, resume_text, parsed_profile, weakness_prediction）
+  - `bootcamp_interviews`：每日面试题（day_number 1-3, question_index 1-5, question_type, difficulty, ai_evaluation, status）
+  - `bootcamp_reports`：日报与综合报告（report_type, day_number, content, scores_snapshot）
+- **RLS 策略**：
+  - `bootcamp_sessions`：auth.uid() = user_id
+  - `bootcamp_interviews` / `bootcamp_reports`：EXISTS 子查询关联 bootcamp_sessions.user_id
+- **补充现有表缺失 RLS**：profiles INSERT/DELETE、dimension_scores UPDATE/DELETE、growth_snapshots UPDATE/DELETE、training_sessions DELETE、question_feedback DELETE
+
+### 验证结果
+- `./init.sh` ✅ 全部 9/9 通过
+- Schema 语法已人工审查，风格与现有表一致
+
+### 修改文件
+- `supabase/schema.sql`
+
+## [2026-05-30] Schema RLS 策略补全 + ESLint 配置 + 移除 console 语句
+
+### 完成内容
+- **补全 schema RLS 策略**：
+  - `dimension_scores`：新增 UPDATE、DELETE（用户仅可操作自己的）
+  - `training_sessions`：新增 DELETE
+  - `question_feedback`：新增 DELETE
+  - `growth_snapshots`：新增 UPDATE、DELETE
+  - `profiles`：新增 INSERT、DELETE
+  - `case_articles`：DELETE 策略添加注释说明（共享内容池，无 user_id 字段）
+- **创建 ESLint 配置**：新增 `.eslintrc.json`（Next.js core-web-vitals + no-console 规则）
+- **移除生产环境 console 语句**：
+  - `src/lib/tavily.ts`：移除 3 处 console.warn，保持静默失败
+  - `src/app/(app)/diagnosis/interview/page.tsx`：移除 console.error，改为界面错误提示
+- **修复 ESLint warning**：
+  - `src/app/(app)/training/cases/[product]/page.tsx`：补全 useCallback 依赖数组（添加 searchParams）
+  - `init.sh`：设置 `ESLINT_USE_FLAT_CONFIG=false` 兼容 ESLint 9.x 传统配置格式
+
+### 验证结果
+- `npx tsc --noEmit` ✅ 通过
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` ✅ 通过
+- `./init.sh` ✅ 全部 9/9 通过
+
+### 修改文件
+- `supabase/schema.sql`
+- `.eslintrc.json`（新增）
+- `init.sh`
+- `src/lib/tavily.ts`
+- `src/app/(app)/diagnosis/interview/page.tsx`
+- `src/app/(app)/training/cases/[product]/page.tsx`
+- `feature_list.json`
+- `progress.md`
