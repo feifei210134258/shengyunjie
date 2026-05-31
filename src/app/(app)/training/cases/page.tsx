@@ -16,24 +16,16 @@ interface Product {
   isCustom?: boolean;
 }
 
-interface Perspective {
-  slug: string;
-  label: string;
-  article?: { id: string; summary: string | null; created_at: string } | null;
-}
+
 
 export default function CasesPage() {
   const router = useRouter();
 
   // Data
   const [products, setProducts] = useState<Product[]>([]);
-  const [perspectives, setPerspectives] = useState<Perspective[]>([]);
   const [loading, setLoading] = useState(true);
 
   // UI state
-  const [selectedPerspective, setSelectedPerspective] = useState<
-    string | null
-  >(null);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customProduct, setCustomProduct] = useState("");
 
@@ -43,21 +35,9 @@ export default function CasesPage() {
       .then((r) => r.json())
       .then((data) => {
         setProducts(data.products || []);
-        setPerspectives(data.perspectives || []);
       })
       .finally(() => setLoading(false));
   }, []);
-
-  // Filter products by selected perspective
-  const filteredProducts =
-    selectedPerspective === null
-      ? products
-      : products.filter((p) => p.articleCount > 0); // approximate: if perspective selected, only show products with articles
-
-  const activePerspectiveLabel =
-    selectedPerspective === null
-      ? "全部"
-      : perspectives.find((p) => p.slug === selectedPerspective)?.label || "";
 
   /* ------ Custom product ------ */
 
@@ -76,14 +56,6 @@ export default function CasesPage() {
       <div className="max-w-5xl mx-auto py-10 px-6">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-surface-container-high rounded w-48" />
-          <div className="flex gap-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-9 w-20 bg-surface-container-high rounded-full"
-              />
-            ))}
-          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
@@ -107,41 +79,14 @@ export default function CasesPage() {
         </p>
       </div>
 
-      {/* Perspective tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-8 scrollbar-hide">
-        <button
-          onClick={() => setSelectedPerspective(null)}
-          className={`shrink-0 px-4 py-2 rounded-full text-body-sm transition-colors ${
-            selectedPerspective === null
-              ? "bg-primary text-white"
-              : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container"
-          }`}
-        >
-          全部
-        </button>
-        {perspectives.map((p) => (
-          <button
-            key={p.slug}
-            onClick={() => setSelectedPerspective(p.slug)}
-            className={`shrink-0 px-4 py-2 rounded-full text-body-sm transition-colors ${
-              selectedPerspective === p.slug
-                ? "bg-primary text-white"
-                : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container"
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-
       {/* Product cards */}
-      {filteredProducts.length === 0 ? (
+      {products.length === 0 ? (
         <div className="text-center py-16">
           <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-3 block">
             menu_book
           </span>
           <p className="text-body-lg text-on-surface-variant">
-            该视角下暂无案例
+            暂无案例
           </p>
           <p className="text-body-sm text-on-surface-variant mt-1">
             尝试自定义生成你感兴趣的产品分析
@@ -155,7 +100,7 @@ export default function CasesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {filteredProducts.map((product) => (
+          {products.map((product) => (
             <button
               key={product.name}
               onClick={() =>

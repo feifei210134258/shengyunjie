@@ -64,7 +64,7 @@ fi
 echo ""
 echo "【Lint 检查】"
 if [ -f ".eslintrc.json" ] || [ -f ".eslintrc.js" ] || [ -f "eslint.config.mjs" ]; then
-  check "ESLint 通过" npx eslint src/ --max-warnings 0
+  (export ESLINT_USE_FLAT_CONFIG=false; check "ESLint 通过" npx eslint src/ --max-warnings 0)
 else
   echo -e "  ${YELLOW}[SKIP]${NC} ESLint 配置不存在 — 跳过 lint 检查"
 fi

@@ -79,8 +79,8 @@ export default function InterviewPage() {
           }
         }
       }
-    } catch (err) {
-      console.error("Chat error:", err);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "抱歉，连接出现问题，请稍后重试。" }]);
     } finally {
       setIsLoading(false);
     }

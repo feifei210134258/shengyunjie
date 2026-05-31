@@ -5,6 +5,10 @@ import { NextResponse } from "next/server";
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
+function toBeijingDateString(date: Date): string {
+  return date.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }).replace(/\//g, "-");
+}
+
 async function calcStreak(supabase: any, userId: string): Promise<number> {
   const sixtyDaysAgo = new Date();
   sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
@@ -13,14 +17,14 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
     .from("training_sessions")
     .select("session_date")
     .eq("user_id", userId)
-    .gte("session_date", sixtyDaysAgo.toISOString().slice(0, 10))
+    .gte("session_date", toBeijingDateString(sixtyDaysAgo))
     .order("session_date", { ascending: false });
 
   const dates: string[] = data?.map((d: any) => d.session_date) || [];
   if (!dates.length) return 0;
 
-  const today = new Date().toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }).replace(/\//g, "-");
-  const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }).replace(/\//g, "-");
+  const today = toBeijingDateString(new Date());
+  const yesterday = toBeijingDateString(new Date(Date.now() - 86400000));
 
   let streak = 0;
   let checkDate = dates.includes(today) ? today : yesterday;
@@ -29,9 +33,9 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
 
   while (dates.includes(checkDate)) {
     streak++;
-    const d = new Date(checkDate);
+    const d = new Date(checkDate + "T12:00:00+08:00");
     d.setDate(d.getDate() - 1);
-    checkDate = d.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }).replace(/\//g, "-");
+    checkDate = toBeijingDateString(d);
   }
 
   return streak;

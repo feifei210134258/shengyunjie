@@ -145,7 +145,7 @@ export default function TrainingSessionPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ dimension: dim, question: cleanText }),
-        }).catch(() => {});
+        }).catch((err) => console.error("保存题目失败:", err));
       }
     } catch {
       setQuestions((prev) => ({
@@ -235,7 +235,7 @@ export default function TrainingSessionPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ questions: roundQuestions }),
-        }).catch(() => {});
+        }).catch((err) => console.error("保存训练会话失败:", err));
       }
 
       setRound((r) => r + 1);
@@ -361,7 +361,7 @@ export default function TrainingSessionPage() {
                 <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
                   local_fire_department
                 </span>
-                <span className="font-label-bold text-[10px]">已连续训练 12 天</span>
+                <span className="font-label-bold text-[10px]">日常训练</span>
               </div>
             </div>
 

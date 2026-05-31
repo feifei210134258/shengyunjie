@@ -117,7 +117,7 @@ export default function LatestReport({ report }: Props) {
 
           {/* Action */}
           <Link
-            href={`/diagnosis/report/${report.id}`}
+            href="/diagnosis/report"
             className="mt-auto bg-primary text-on-primary text-center px-6 py-2.5 rounded-xl text-body-md font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
           >
             查看完整报告

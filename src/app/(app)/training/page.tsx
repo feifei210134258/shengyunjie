@@ -59,7 +59,7 @@ export default function TrainingPage() {
     fetch("/api/training/stats")
       .then((r) => r.json())
       .then((data) => setStats(data))
-      .catch(() => {});
+      .catch((err) => console.error("获取训练统计失败:", err));
 
     // 获取当月训练日历
     fetch(`/api/training/sessions?month=${monthStr}`)
@@ -68,7 +68,7 @@ export default function TrainingPage() {
         setTrainedDays(data.days || []);
         setMonthCount(data.count || 0);
       })
-      .catch(() => {});
+      .catch((err) => console.error("获取训练日历失败:", err));
   }, [monthStr]);
 
   const prevMonth = () => {

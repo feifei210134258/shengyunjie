@@ -28,7 +28,6 @@ export async function searchWeb(
 ): Promise<TavilySearchResponse> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) {
-    console.warn("[Tavily] TAVILY_API_KEY 未配置，跳过搜索");
     return { results: [] };
   }
 
@@ -48,7 +47,6 @@ export async function searchWeb(
     });
 
     if (!res.ok) {
-      console.warn(`[Tavily] API 返回 ${res.status}: ${res.statusText}`);
       return { results: [] };
     }
 
@@ -62,8 +60,7 @@ export async function searchWeb(
       })),
       answer: data.answer,
     };
-  } catch (err) {
-    console.warn("[Tavily] 搜索请求失败:", err instanceof Error ? err.message : err);
+  } catch {
     return { results: [] };
   }
 }

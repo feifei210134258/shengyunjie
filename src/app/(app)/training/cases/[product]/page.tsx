@@ -92,7 +92,7 @@ export default function ProductCasePage() {
         })
         .finally(() => setArticleLoading(false));
     },
-    [productName]
+    [productName, searchParams]
   );
 
   useEffect(() => {

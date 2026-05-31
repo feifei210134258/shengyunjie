@@ -1,0 +1,16 @@
+{
+  "change": "bootcamp-module",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "8eb0da9450857dea0a6ad4511cbb26da45c48aaad7b48768c89a5833fe347b80",
+  "files": [
+    { "path": "openspec/changes/bootcamp-module/proposal.md", "sha256": "2ec72554799ad5b2bfb3636b8ff433bd77153e8877c9ffc07e5896732c8984ee" },
+    { "path": "openspec/changes/bootcamp-module/design.md", "sha256": "4f4961675f9347cb306638fd9a6a12bc66f2fe3c1c959a801ee7e62a1772052e" },
+    { "path": "openspec/changes/bootcamp-module/tasks.md", "sha256": "f9a8dd787768ed77f73daff7f10623a58cb595f15e0d0642a2343525de9f17d4" },
+    { "path": "openspec/changes/bootcamp-module/specs/bootcamp-interview-sim/spec.md", "sha256": "67f8a10b5479c2bb9022f8f03127ad1519989a986ef73e313176bef6cc36ad92" },
+    { "path": "openspec/changes/bootcamp-module/specs/bootcamp-report-generate/spec.md", "sha256": "bcd6dcb398f05cad5d6df355c9c167ff70e244d1cf628a096f233510c3e5f1e6" },
+    { "path": "openspec/changes/bootcamp-module/specs/bootcamp-resume-parse/spec.md", "sha256": "306e2d5591683cb5b868fdf128c86283409ce6e3144990da0c2181e9af7e9de7" }
+  ]
+}

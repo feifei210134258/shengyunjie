@@ -36,10 +36,35 @@ export default function CasePage() {
   const [logicInput, setLogicInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const reportId = typeof window !== "undefined" ? sessionStorage.getItem("reportId") : null;
+
+  if (!reportId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 max-w-md mx-auto text-center">
+          <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-4">
+            error_outline
+          </span>
+          <h3 className="text-headline-md font-bold text-on-surface mb-2">
+            尚未创建诊断报告
+          </h3>
+          <p className="text-body-md text-on-surface-variant mb-6">
+            你需要先完成能力量表测评，才能进入案例实战验证环节。
+          </p>
+          <button
+            onClick={() => router.push("/diagnosis/scale")}
+            className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-body-md hover:opacity-90 transition-all"
+          >
+            前往能力量表
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async () => {
     if (!selectedOption || !logicInput.trim()) return;
     setSubmitting(true);
-    const reportId = sessionStorage.getItem("reportId");
     try {
       const res = await fetch("/api/diagnosis/case", {
         method: "POST",
