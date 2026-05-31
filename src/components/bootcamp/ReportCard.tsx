@@ -85,7 +85,7 @@ export default function ReportCard({ report }: Props) {
       )}
 
       {/* 推荐资源 */}
-      {report.content.recommended_reading?.length > 0 && (
+      {report.content.recommended_reading && report.content.recommended_reading.length > 0 && (
         <div>
           <h4 className="font-label-bold text-on-surface mb-2">推荐学习资源</h4>
           <ul className="space-y-1">

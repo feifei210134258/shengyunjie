@@ -2,11 +2,11 @@
 
 ## 1. Database Schema
 
-- [ ] 1.1 Create `bootcamp_sessions` table (id, user_id, status, current_day, resume_text, parsed_profile, weakness_prediction, created_at, updated_at)
-- [ ] 1.2 Create `bootcamp_interviews` table (id, session_id, day_number, question_index, question_text, user_answer, ai_evaluation, scores, status, created_at)
-- [ ] 1.3 Create `bootcamp_reports` table (id, session_id, report_type, content, scores_snapshot, created_at)
-- [ ] 1.4 Add RLS policies for all three tables (authenticated users can only access their own data)
-- [ ] 1.5 Update `supabase/schema.sql` with new tables and policies
+- [x] 1.1 Create `bootcamp_sessions` table (id, user_id, status, current_day, resume_text, parsed_profile, weakness_prediction, created_at, updated_at)
+- [x] 1.2 Create `bootcamp_interviews` table (id, session_id, day_number, question_index, question_text, user_answer, ai_evaluation, scores, status, created_at)
+- [x] 1.3 Create `bootcamp_reports` table (id, session_id, report_type, content, scores_snapshot, created_at)
+- [x] 1.4 Add RLS policies for all three tables (authenticated users can only access their own data)
+- [x] 1.5 Update `supabase/schema.sql` with new tables and policies
 
 ## 2. API Routes
 
@@ -51,6 +51,6 @@
 - [ ] 6.4 Test 3-day progression logic (Day 1 → Day 3)
 - [ ] 6.5 Test session persistence (refresh, logout/login)
 - [ ] 6.6 Test error handling (invalid file, parse failure, AI timeout)
-- [ ] 6.7 Run `npx tsc --noEmit` and fix all type errors
-- [ ] 6.8 Run `npx eslint src/ --max-warnings 0` and fix all lint errors
-- [ ] 6.9 Run `./init.sh` to verify full environment health
+- [x] 6.7 Run `npx tsc --noEmit` and fix all type errors
+- [x] 6.8 Run `npx eslint src/ --max-warnings 0` and fix all lint errors
+- [x] 6.9 Run `./init.sh` to verify full environment health

@@ -11,6 +11,28 @@ export default function ResumeUploader({ onUpload, isUploading }: Props) {
   const [error, setError] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
 
+  const validateAndUpload = useCallback(
+    (file: File) => {
+      const allowedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        setError("请上传 PDF 或 Word 格式的简历");
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        setError("文件大小不能超过 10MB");
+        return;
+      }
+
+      onUpload(file);
+    },
+    [onUpload]
+  );
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragActive(true);
@@ -32,7 +54,7 @@ export default function ResumeUploader({ onUpload, isUploading }: Props) {
 
       validateAndUpload(files[0]);
     },
-    [onUpload]
+    [validateAndUpload]
   );
 
   const handleFileSelect = useCallback(
@@ -43,27 +65,8 @@ export default function ResumeUploader({ onUpload, isUploading }: Props) {
 
       validateAndUpload(file);
     },
-    [onUpload]
+    [validateAndUpload]
   );
-
-  const validateAndUpload = (file: File) => {
-    const allowedTypes = [
-      "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      setError("请上传 PDF 或 Word 格式的简历");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setError("文件大小不能超过 10MB");
-      return;
-    }
-
-    onUpload(file);
-  };
 
   return (
     <div className="space-y-4">
