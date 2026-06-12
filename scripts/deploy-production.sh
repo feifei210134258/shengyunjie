@@ -39,6 +39,23 @@ run_training_probe() {
   fi
 }
 
+wait_for_local_health() {
+  local url="http://127.0.0.1:${PORT}/training"
+  local attempts="${HEALTHCHECK_ATTEMPTS:-30}"
+  local delay="${HEALTHCHECK_DELAY_SECONDS:-1}"
+
+  log "Waiting for local app health: $url"
+  for attempt in $(seq 1 "$attempts"); do
+    if curl -fsS -I "$url" >/dev/null 2>&1; then
+      return 0
+    fi
+    printf 'Health check pending (%s/%s)\n' "$attempt" "$attempts"
+    sleep "$delay"
+  done
+
+  curl -fsS -I "$url"
+}
+
 purge_nginx_cache_if_configured() {
   local nginx_bin
   nginx_bin="$(command -v nginx || true)"
@@ -132,6 +149,7 @@ NODE_ENV=production PORT="$PORT" "$PM2_BIN" start node_modules/next/dist/bin/nex
 "$PM2_BIN" save || true
 
 log "Checking local app health"
+wait_for_local_health
 curl -fsS -I "http://127.0.0.1:${PORT}/training" | sed -n '1,12p'
 curl -fsS -I "http://127.0.0.1:${PORT}/training/session" | sed -n '1,12p'
 
