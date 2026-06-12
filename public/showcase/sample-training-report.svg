@@ -1,0 +1,30 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="32" fill="#F7F9FB"/>
+  <rect x="48" y="44" width="1104" height="672" rx="28" fill="white" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="88" y="105" fill="#111827" font-family="Arial, sans-serif" font-size="34" font-weight="700">训练复盘样例报告</text>
+  <text x="88" y="145" fill="#64748B" font-family="Arial, sans-serif" font-size="18">一次作答后，沉淀评分、反馈和下一题方向</text>
+
+  <rect x="88" y="190" width="424" height="444" rx="24" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="122" y="242" fill="#4338CA" font-family="Arial, sans-serif" font-size="17" font-weight="700">今日题目</text>
+  <text x="122" y="286" fill="#111827" font-family="Arial, sans-serif" font-size="27" font-weight="800">SaaS 套餐涨价前的</text>
+  <text x="122" y="324" fill="#111827" font-family="Arial, sans-serif" font-size="27" font-weight="800">客户分层判断</text>
+  <rect x="122" y="364" width="334" height="1" fill="#E2E8F0"/>
+  <text x="122" y="414" fill="#64748B" font-family="Arial, sans-serif" font-size="18">需要回答：</text>
+  <text x="122" y="452" fill="#111827" font-family="Arial, sans-serif" font-size="20" font-weight="700">先涨价、先分层、还是先补数据？</text>
+  <rect x="122" y="524" width="136" height="56" rx="16" fill="#EEF2FF"/>
+  <text x="152" y="559" fill="#4338CA" font-family="Arial, sans-serif" font-size="18" font-weight="700">商业思维</text>
+
+  <rect x="552" y="190" width="520" height="186" rx="24" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="2"/>
+  <text x="586" y="244" fill="#4338CA" font-family="Arial, sans-serif" font-size="17" font-weight="700">AI 评分</text>
+  <text x="586" y="318" fill="#111827" font-family="Arial, sans-serif" font-size="72" font-weight="800">7.8</text>
+  <text x="716" y="315" fill="#64748B" font-family="Arial, sans-serif" font-size="22">/ 10</text>
+  <rect x="836" y="246" width="184" height="56" rx="16" fill="#CCFBF1"/>
+  <text x="884" y="281" fill="#0F766E" font-family="Arial, sans-serif" font-size="18" font-weight="700">可继续提升</text>
+
+  <rect x="552" y="408" width="520" height="226" rx="24" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="586" y="462" fill="#111827" font-family="Arial, sans-serif" font-size="24" font-weight="700">关键反馈</text>
+  <circle cx="600" cy="512" r="6" fill="#4338CA"/>
+  <text x="622" y="519" fill="#111827" font-family="Arial, sans-serif" font-size="19" font-weight="700">判断框架清楚，但指标假设偏弱。</text>
+  <circle cx="600" cy="562" r="6" fill="#0F766E"/>
+  <text x="622" y="569" fill="#111827" font-family="Arial, sans-serif" font-size="19" font-weight="700">下一题建议练“收益测算和风险解释”。</text>
+</svg>

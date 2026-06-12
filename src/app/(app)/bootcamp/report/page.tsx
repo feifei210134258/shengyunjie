@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import ReportCard from "@/components/bootcamp/ReportCard";
 import { BootcampReport } from "@/types/bootcamp";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageSpinner } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { FileText } from "lucide-react";
 
-export default function ReportPage() {
+export default function BootcampReportPage() {
   const [reports, setReports] = useState<BootcampReport[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,24 +27,24 @@ export default function ReportPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (reports.length === 0) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-2xl mx-auto text-center space-y-4">
-          <span className="material-symbols-outlined text-6xl text-on-surface-variant">
-            description
-          </span>
-          <h2 className="text-headline-lg font-bold text-on-surface">尚未完成特训</h2>
-          <p className="text-body-md text-on-surface-variant">完成 3 天特训后将生成详细的成长报告</p>
-        </div>
-      </div>
+      <>
+        <PageHeader title="特训报告" backHref="/bootcamp" />
+        <EmptyState
+          icon={<FileText className="w-7 h-7" strokeWidth={1.5} />}
+          title="尚未完成特训"
+          description="完成 3 天特训后将生成详细的成长报告"
+          action={
+            <Link href="/bootcamp">
+              <Button>开始特训</Button>
+            </Link>
+          }
+        />
+      </>
     );
   }
 
@@ -48,25 +54,28 @@ export default function ReportPage() {
   const dailyReports = reports.filter((r) => r.report_type === "daily");
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-headline-lg font-bold text-on-surface">特训报告</h1>
-          <p className="text-body-md text-on-surface-variant mt-2">查看你的特训成果和能力成长轨迹</p>
-        </div>
+    <>
+      <PageHeader
+        title="特训报告"
+        subtitle="查看你的特训成果和能力成长轨迹"
+        backHref="/bootcamp"
+      />
 
-        {/* 综合报告 */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {comprehensiveReport && (
           <div className="space-y-4">
-            <h2 className="text-title-lg font-bold text-on-surface">综合成长报告</h2>
+            <h2 className="text-heading-lg font-semibold text-ink">
+              综合成长报告
+            </h2>
             <ReportCard report={comprehensiveReport} />
           </div>
         )}
 
-        {/* 日报列表 */}
         {dailyReports.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-title-lg font-bold text-on-surface">每日报告</h2>
+            <h2 className="text-heading-lg font-semibold text-ink">
+              每日报告
+            </h2>
             <div className="space-y-4">
               {dailyReports.map((report) => (
                 <ReportCard key={report.id} report={report} />
@@ -75,6 +84,6 @@ export default function ReportPage() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

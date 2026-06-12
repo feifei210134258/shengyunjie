@@ -323,7 +323,7 @@ create policy "认证用户可更新案例文章"
 -- ==========================================================
 create table if not exists public.bootcamp_sessions (
   id                  uuid primary key default gen_random_uuid(),
-  user_id             uuid references public.profiles(id) on delete cascade not null,
+  user_id             uuid references public.profiles(id) on delete cascade unique not null,
   status              text default 'not_started',  -- not_started, in_progress, completed
   current_day         smallint default 0,          -- 0-3 (0=简历上传阶段)
   resume_text         text,                        -- 提取的原始简历文本

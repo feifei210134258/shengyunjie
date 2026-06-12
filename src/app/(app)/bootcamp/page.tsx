@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageSpinner } from "@/components/ui/spinner";
+import { Rocket, FileUp, Brain, BarChart3, ArrowRight } from "lucide-react";
 
 export default function BootcampPage() {
   const [session, setSession] = useState<any>(null);
@@ -10,7 +15,9 @@ export default function BootcampPage() {
 
   useEffect(() => {
     async function fetchSession() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setLoading(false);
         return;
@@ -28,90 +35,117 @@ export default function BootcampPage() {
     fetchSession();
   }, []);
 
-  if (loading) return null;
+  if (loading) return <PageSpinner />;
 
-  // 根据状态决定跳转
   if (!session || session.status === "not_started") {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-2xl mx-auto text-center space-y-8">
-          <span className="material-symbols-outlined text-7xl text-primary">
-            rocket_launch
-          </span>
+      <>
+        <PageHeader title="特训冲刺" subtitle="3 天高强度面试特训" />
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 text-center space-y-8">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl bg-primary-soft">
+            <Rocket className="w-9 h-9 text-primary" />
+          </div>
           <div>
-            <h1 className="text-headline-lg font-bold text-on-surface">特训冲刺</h1>
-            <p className="text-body-lg text-on-surface-variant mt-2">
+            <h1 className="text-display-md font-bold text-ink">
+              特训冲刺
+            </h1>
+            <p className="text-body-lg text-ink-muted mt-3 max-w-md mx-auto">
               3 天高强度面试特训，基于你的履历定制题目，AI 实时评分反馈
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 text-left">
-            <div className="bg-surface-container p-4 rounded-xl">
-              <span className="material-symbols-outlined text-3xl text-primary">
-                upload_file
-              </span>
-              <h3 className="font-label-bold text-on-surface mt-2">Day 0</h3>
-              <p className="text-body-sm text-on-surface-variant">上传简历，AI 解析能力画像</p>
-            </div>
-            <div className="bg-surface-container p-4 rounded-xl">
-              <span className="material-symbols-outlined text-3xl text-primary">
-                psychology
-              </span>
-              <h3 className="font-label-bold text-on-surface mt-2">Day 1-3</h3>
-              <p className="text-body-sm text-on-surface-variant">每日 5 题，难度递增，AI 评分</p>
-            </div>
-            <div className="bg-surface-container p-4 rounded-xl">
-              <span className="material-symbols-outlined text-3xl text-primary">
-                assessment
-              </span>
-              <h3 className="font-label-bold text-on-surface mt-2">报告</h3>
-              <p className="text-body-sm text-on-surface-variant">综合成长报告与改进建议</p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+            <Card variant="subtle" size="sm">
+              <FileUp className="w-6 h-6 text-primary mb-2" strokeWidth={1.5} />
+              <h3 className="font-semibold text-ink mt-2">Day 0</h3>
+              <p className="text-body-sm text-ink-muted mt-1">
+                上传简历，AI 解析能力画像
+              </p>
+            </Card>
+            <Card variant="subtle" size="sm">
+              <Brain className="w-6 h-6 text-primary mb-2" strokeWidth={1.5} />
+              <h3 className="font-semibold text-ink mt-2">Day 1-3</h3>
+              <p className="text-body-sm text-ink-muted mt-1">
+                每日 5 题，难度递增，AI 评分
+              </p>
+            </Card>
+            <Card variant="subtle" size="sm">
+              <BarChart3 className="w-6 h-6 text-primary mb-2" strokeWidth={1.5} />
+              <h3 className="font-semibold text-ink mt-2">报告</h3>
+              <p className="text-body-sm text-ink-muted mt-1">
+                综合成长报告与改进建议
+              </p>
+            </Card>
           </div>
 
-          <Link
-            href="/bootcamp/resume"
-            className="inline-block px-8 py-4 bg-primary text-on-primary rounded-xl font-label-bold text-body-lg"
-          >
-            开始特训
+          <Link href="/bootcamp/resume">
+            <Button size="lg" icon={<ArrowRight className="w-4 h-4" />}>
+              开始特训
+            </Button>
           </Link>
         </div>
-      </div>
+      </>
     );
   }
 
-  // 有进行中的会话，跳转到对应页面
   if (session.status === "in_progress") {
-    if (session.current_day === 0) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Link
-            href="/bootcamp/resume"
-            className="text-primary text-body-lg"
-          >
-            继续简历上传 →
-          </Link>
-        </div>
-      );
-    }
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <>
+        <PageHeader title="特训冲刺" />
+        <div className="min-h-[60vh] flex items-center justify-center px-4">
+          <div className="w-full max-w-xl rounded-xl border border-line bg-surface p-6 text-center shadow-sm">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary-soft">
+              <Brain className="h-6 w-6 text-primary" strokeWidth={1.5} />
+            </div>
+            <h1 className="mt-4 text-heading-lg font-semibold text-ink">
+              特训已准备好
+            </h1>
+            <p className="mt-2 text-body-md text-ink-muted">
+              你可以先查看简历解析与弱点预测，再进入模拟面试。
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <Link
+                href="/bootcamp/resume"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-transparent px-5 py-2.5 text-body-md font-semibold text-ink transition-all hover:bg-bg active:scale-[0.97]"
+              >
+                查看简历解析
+              </Link>
+              {session.current_day > 0 ? (
+                <Link
+                  href="/bootcamp/interview"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
+                >
+                  继续特训
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <Link
+                  href="/bootcamp/resume"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
+                >
+                  生成 Day 1 题
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PageHeader title="特训冲刺" />
+      <div className="min-h-[60vh] flex items-center justify-center">
         <Link
-          href="/bootcamp/interview"
-          className="text-primary text-body-lg"
+          href="/bootcamp/report"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
         >
-          继续特训 →
+          查看报告
+          <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
-    );
-  }
-
-  // 已完成
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <Link href="/bootcamp/report" className="text-primary text-body-lg">
-        查看报告 →
-      </Link>
-    </div>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { streamText } from "ai";
 import { getChatModel, getThinkingModel } from "@/lib/ai";
+import { INTERVIEW_READY_MARKER } from "@/lib/diagnosis/interview-readiness";
 
 export async function POST(req: Request) {
   const { messages, model } = await req.json();
@@ -20,6 +21,9 @@ export async function POST(req: Request) {
 - 每次只问 1-2 个问题，不要连续炮轰
 - 如果对方回答模糊，礼貌追问"能举个具体例子吗？"
 - 不要评判对错，而是通过提问帮助对方自己发现盲区
+- 优先收集这 6 类信息：用户背景、最近负责项目、关键产品决策、业务理解、协作推进、复盘反思
+- 当用户已经完成至少 3 轮有效回答，且上述信息足以支撑下一阶段案例诊断时，在回复末尾单独追加内部标记：${INTERVIEW_READY_MARKER}
+- 只有信息足够时才追加该内部标记；不要向用户解释这个标记，也不要把它当成自然语言内容
 - 对话结束时，总结关键发现`,
     messages,
   });

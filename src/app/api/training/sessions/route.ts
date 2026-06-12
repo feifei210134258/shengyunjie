@@ -1,5 +1,9 @@
 import { createServerClient } from "@/lib/supabase-server";
 import { getBeijingDate } from "@/lib/date";
+import {
+  getBeijingMonthUtcRange,
+  getUniqueBeijingMonthDays,
+} from "@/lib/training/completion";
 import { NextRequest, NextResponse } from "next/server";
 
 // 查询训练会话
@@ -26,22 +30,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ session: data });
     }
 
-    // 按月查询 — 返回当月有训练的日期数组
+    // 按月查询 — 返回当月已提交训练答案的日期数组
     if (month) {
-      const start = `${month}-01`;
-      // 计算月末
-      const [y, m] = month.split("-").map(Number);
-      const end = `${y}-${String(m).padStart(2, "0")}-${new Date(y, m, 0).getDate()}`;
+      const { startIso, endIso } = getBeijingMonthUtcRange(month);
 
       const { data } = await supabase
-        .from("training_sessions")
-        .select("session_date")
+        .from("training_records")
+        .select("created_at")
         .eq("user_id", user.id)
-        .gte("session_date", start)
-        .lte("session_date", end)
-        .order("session_date", { ascending: true });
+        .gte("created_at", startIso)
+        .lt("created_at", endIso)
+        .order("created_at", { ascending: true });
 
-      const days = data?.map((r) => new Date(r.session_date).getDate()) || [];
+      const days = getUniqueBeijingMonthDays(data || [], month);
       return NextResponse.json({ days, count: days.length });
     }
 

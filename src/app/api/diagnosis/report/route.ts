@@ -1,4 +1,5 @@
 import { createServerClient } from "@/lib/supabase-server";
+import { getDiagnosisReportViewModel } from "@/lib/diagnosis/report-detail";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    return NextResponse.json(data);
+    return NextResponse.json(getDiagnosisReportViewModel(data));
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "服务器错误" }, { status: 500 });
   }

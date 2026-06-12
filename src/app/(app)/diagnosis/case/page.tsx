@@ -1,7 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageSpinner } from "@/components/ui/spinner";
+import { StepProgress } from "@/components/ui/step-progress";
+import { getPendingDiagnosisReportId } from "@/lib/browser/safe-storage";
+import { cn } from "@/lib/utils";
+import { Sparkles, Layers, GitBranch, AlertCircle } from "lucide-react";
 
 const CASE_SCENARIO = {
   title: "SaaS 平台多租户权限体系重构",
@@ -14,50 +24,54 @@ const OPTIONS = [
     id: "A",
     title: "方案 A：交互引导优化",
     desc: "引入分步式向导与配置引导，通过文案拆解降低技术理解门槛。",
-    icon: "auto_fix_high",
+    icon: Sparkles,
   },
   {
     id: "B",
     title: "方案 B：预置模版化",
     desc: "提供 5 种行业标准权限模版，将复杂配置推后至高级模式。",
-    icon: "layers",
+    icon: Layers,
   },
   {
     id: "C",
     title: "方案 C：解耦协作链",
     desc: "允许 HR 先完成非技术配置，通过系统邀请 IT 部门协作完成校验。",
-    icon: "account_tree",
+    icon: GitBranch,
   },
 ];
 
 export default function CasePage() {
   const router = useRouter();
+  const [reportId, setReportId] = useState<string | null>(null);
+  const [checkingReportId, setCheckingReportId] = useState(true);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [logicInput, setLogicInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const reportId = typeof window !== "undefined" ? sessionStorage.getItem("reportId") : null;
+  useEffect(() => {
+    setReportId(getPendingDiagnosisReportId());
+    setCheckingReportId(false);
+  }, []);
+
+  if (checkingReportId) {
+    return <PageSpinner />;
+  }
 
   if (!reportId) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 max-w-md mx-auto text-center">
-          <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-4">
-            error_outline
-          </span>
-          <h3 className="text-headline-md font-bold text-on-surface mb-2">
+      <div className="min-h-[100dvh] bg-bg flex items-center justify-center p-4">
+        <Card variant="elevated" size="lg" className="max-w-md text-center">
+          <AlertCircle className="w-12 h-12 text-ink-faint mx-auto mb-4" strokeWidth={1.5} />
+          <h3 className="text-heading-md font-semibold text-ink mb-2">
             尚未创建诊断报告
           </h3>
-          <p className="text-body-md text-on-surface-variant mb-6">
+          <p className="text-body-md text-ink-muted mb-6">
             你需要先完成能力量表测评，才能进入案例实战验证环节。
           </p>
-          <button
-            onClick={() => router.push("/diagnosis/scale")}
-            className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-body-md hover:opacity-90 transition-all"
-          >
+          <Button onClick={() => router.push("/diagnosis/scale")}>
             前往能力量表
-          </button>
-        </div>
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -85,116 +99,89 @@ export default function CasePage() {
       setSubmitting(false);
       return;
     }
-    router.push("/diagnosis/report");
+    router.push(`/diagnosis/report?reportId=${encodeURIComponent(reportId)}`);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="h-20 border-b border-outline-variant bg-white/80 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-8">
-        <div className="flex items-center gap-4">
-          <h2 className="text-headline-md font-bold text-on-surface">诊断模块</h2>
-          <div className="h-6 w-px bg-outline-variant mx-1" />
-          <span className="text-label-bold text-primary px-3 py-1 bg-primary/10 rounded-full">
-            阶段三：案例实战验证
-          </span>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] bg-bg">
+      <PageHeader
+        title="诊断模块"
+        actions={<Badge>阶段三：案例实战验证</Badge>}
+      />
 
-      <div className="max-w-4xl mx-auto px-8 py-8">
-        {/* Stepper */}
-        <div className="flex items-center justify-between mb-10">
-          <div className="flex-1 flex flex-col gap-2">
-            <div className="h-1.5 w-full bg-primary rounded-full" />
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary text-[10px] font-bold">
-                <span className="material-symbols-outlined text-[12px]">check</span>
-              </span>
-              <span className="text-body-sm text-on-surface">能力量表</span>
-            </div>
-          </div>
-          <div className="w-12 flex items-center justify-center"><div className="h-px w-full bg-primary" /></div>
-          <div className="flex-1 flex flex-col gap-2">
-            <div className="h-1.5 w-full bg-primary rounded-full" />
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary text-[10px] font-bold">
-                <span className="material-symbols-outlined text-[12px]">check</span>
-              </span>
-              <span className="text-body-sm text-on-surface">深度访谈</span>
-            </div>
-          </div>
-          <div className="w-12 flex items-center justify-center"><div className="h-px w-full bg-primary" /></div>
-          <div className="flex-1 flex flex-col gap-2">
-            <div className="h-1.5 w-full bg-primary rounded-full" />
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-on-primary text-[10px] font-bold">3</span>
-              <span className="text-body-sm font-bold text-primary">案例实战</span>
-            </div>
-          </div>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <StepProgress
+          steps={["能力量表", "深度访谈", "案例实战"]}
+          current={2}
+          variant="circle"
+          className="mb-8"
+        />
 
         {/* 案例场景 */}
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 mb-8">
-          <h3 className="text-headline-lg font-bold text-on-surface mb-4 text-center">
+        <Card size="lg" className="mb-8 bg-gradient-warm text-center">
+          <h3 className="text-display-md font-bold text-ink mb-4">
             {CASE_SCENARIO.title}
           </h3>
-          <p className="text-body-lg text-on-surface-variant leading-relaxed text-center max-w-3xl mx-auto">
+          <p className="text-body-lg text-ink-muted leading-relaxed max-w-3xl mx-auto">
             {CASE_SCENARIO.description}
           </p>
-        </div>
+        </Card>
 
         {/* 方案选择 */}
         <div className="mb-8">
-          <h4 className="text-headline-md font-bold text-on-surface mb-6">请选择你的核心解题思路</h4>
+          <h4 className="text-heading-md font-semibold text-ink mb-6">
+            请选择你的核心解题思路
+          </h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => setSelectedOption(opt.id)}
-                className={`text-left bg-surface-container-lowest border-2 p-6 rounded-xl transition-all ${
-                  selectedOption === opt.id
-                    ? "border-primary bg-primary/5"
-                    : "border-outline-variant hover:border-primary/50"
-                }`}
-              >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <span className="material-symbols-outlined text-primary">{opt.icon}</span>
-                </div>
-                <p className="font-bold text-on-surface mb-2">{opt.title}</p>
-                <p className="text-body-sm text-on-surface-variant">{opt.desc}</p>
-              </button>
-            ))}
+            {OPTIONS.map((opt) => {
+              const Icon = opt.icon;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setSelectedOption(opt.id)}
+                  className={cn(
+                    "rounded-xl border-2 bg-surface-raised p-6 text-left transition-all duration-200 active:scale-[0.98]",
+                    selectedOption === opt.id
+                      ? "border-primary bg-primary-soft"
+                      : "border-line hover:border-primary/40"
+                  )}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center mb-4">
+                    <Icon className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <p className="font-semibold text-ink mb-2">{opt.title}</p>
+                  <p className="text-body-sm text-ink-muted">
+                    {opt.desc}
+                  </p>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* 思维框架输入 */}
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 mb-8">
-          <label className="block text-headline-md font-bold text-on-surface mb-4">
-            补充你的思维框架与逻辑（必填）
-          </label>
-          <textarea
+        <Card size="lg" className="mb-8">
+          <Textarea
+            label="补充你的思维框架与逻辑（必填）"
             value={logicInput}
             onChange={(e) => setLogicInput(e.target.value)}
             placeholder="请详细描述你的核心决策逻辑，以及如何利用有限资源最大化 ROI..."
             rows={6}
-            className="w-full bg-surface border border-outline-variant rounded-lg p-4 focus:ring-2 focus:ring-primary focus:border-transparent text-body-md transition-all outline-none resize-none"
           />
-        </div>
+        </Card>
 
         {/* 提交 */}
         <div className="flex justify-end gap-4">
-          <button
-            onClick={() => router.push("/diagnosis/interview")}
-            className="px-8 py-3 rounded-lg border border-outline-variant text-on-surface font-bold text-body-sm hover:bg-surface-container transition-all"
-          >
+          <Button variant="secondary" onClick={() => router.push("/diagnosis/interview")}>
             返回访谈
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSubmit}
             disabled={!selectedOption || !logicInput.trim() || submitting}
-            className="px-10 py-3 rounded-lg bg-primary text-on-primary font-bold text-body-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all disabled:opacity-40"
+            loading={submitting}
           >
             {submitting ? "提交中..." : "提交方案并生成报告"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

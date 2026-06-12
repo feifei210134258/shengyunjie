@@ -1,5 +1,51 @@
 import { streamText } from "ai";
 import { getChatModel, getThinkingModel } from "@/lib/ai";
+import { createServerClient } from "@/lib/supabase-server";
+import { buildTrainingPersonalization } from "@/lib/training/personalization";
+
+async function getPersonalizationContext(dimension?: string) {
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return buildTrainingPersonalization({ requestedDimension: dimension });
+    }
+
+    const [{ data: latestReport }, { data: recentRecords }, { data: session }] =
+      await Promise.all([
+        supabase
+          .from("diagnosis_reports")
+          .select("*, dimension_scores(*)")
+          .eq("user_id", user.id)
+          .eq("status", "completed")
+          .order("completed_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("training_records")
+          .select("dimension, question_scenario, score, ai_feedback, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(8),
+        supabase
+          .from("bootcamp_sessions")
+          .select("weakness_prediction")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+
+    return buildTrainingPersonalization({
+      requestedDimension: dimension,
+      latestReport,
+      recentRecords: recentRecords || [],
+      latestBootcampSession: session,
+    });
+  } catch {
+    return buildTrainingPersonalization({ requestedDimension: dimension });
+  }
+}
 
 export async function POST(req: Request) {
   const { action, dimension, level, userAnswer, question } = await req.json();
@@ -21,6 +67,7 @@ export async function POST(req: Request) {
       "商业思维": "单位经济模型 / 商业模式画布推演",
     };
     const framework = frameworkMap[dimension] || "产品思维框架";
+    const personalization = await getPersonalizationContext(dimension);
 
     const result = streamText({
       model: chatModel,
@@ -33,12 +80,29 @@ export async function POST(req: Request) {
 
 当前维度：${dimension}
 对应思维框架：${framework}
+个性化上下文：
+- 本题聚焦维度：${personalization.focusDimension || dimension}
+- 用户当前短板：${personalization.weakDimensions.join("、") || "暂无明确画像"}
+- 最近低分维度：${personalization.recentLowDimensions.join("、") || "暂无"}
+- 最近训练盲区：${personalization.recentGaps.join("；") || "暂无"}
+- 近期训练均分：${personalization.averageScore ? `${personalization.averageScore}/10` : "暂无"}
+- 近期已练题目：${personalization.recentQuestions.join(" | ") || "暂无"}
+- 推荐理由：${personalization.recommendationReason}
 
 要求：
 - 必须围绕维度「${dimension}」出题
 - **每道题不超过 300 字**
-- 只出题，不加任何分析和引导`,
-      messages: [{ role: "user", content: `请出一道关于「${dimension}」维度的训练题，要求答题者运用「${framework}」思维框架。` }],
+- 避免与近期已练题目重复
+- 题目要自然嵌入用户短板，但不要暴露内部评分细节
+- 输出格式严格为两段：
+【为什么练这题：一句话说明这题如何对应用户短板】
+题目正文`,
+      messages: [
+        {
+          role: "user",
+          content: `请出一道关于「${dimension}」维度的训练题，要求答题者运用「${framework}」思维框架。`,
+        },
+      ],
     });
     return result.toDataStreamResponse();
   }
@@ -48,39 +112,40 @@ export async function POST(req: Request) {
     const thinkingModel = getThinkingModel(apiKey, "deepseek-v4-flash");
     const result = streamText({
       model: thinkingModel,
-      system: `你是一位要求严格但不刻薄的 B 端产品教练。你的反馈目标是：让学生知道自己哪里好、哪里不够、怎么改进。
-
-你必须使用深度思考模式来分析用户的答案，给出高质量、有深度的反馈。
-
-输出格式（Markdown，必须严格分为两大块）：
-
-## 诊断
-先写一段总体评价（2-3 句话），然后分两部分：
-
-### 核心亮点
-- 引用用户原文中做得好的地方，具体指出为什么好
-- 至少列出 1-2 个亮点
-
-### 思维盲区
-- 引用用户原文中不够的地方，具体指出缺了什么
-- 至少列出 1-2 个盲区
-- 批评要有建设性，说"具体缺什么"，而不是泛泛而谈
-
-## 建议
-给出 2-3 条具体、可操作的改进建议：
-- 每条建议都要具体，不能是空话
-- 建议要针对这道题的维度（战略思维/系统设计/数据决策/用户洞察/商业思维）
-- 如果可以，给出可参考的学习资源或思考框架
-
-约束：
-- 必须引用用户原文中的表述来支撑你的观点
-- 批评要有建设性，说"具体缺什么"
-- 答案过短时提示"思考再深入一些"
-- 保持专业、尊重的语气
-- 请在分析开头给出 1-10 分的综合评分，格式严格为「【评分：X/10】」
-- 评分标准：1-3 初级水平，4-6 中等水平，7-8 良好水平，9-10 优秀水平`,
+      system: `你是一位要求严格但不刻薄的 B 端产品教练。你的目标不是只打分，而是把用户的回答改到真实高阶 PM 训练可用。
+请只返回 JSON，不要使用 Markdown 代码块，不要添加解释。
+JSON 结构必须为：
+{
+  "overall_score": 0-10,
+  "understanding": 0-10,
+  "framework": 0-10,
+  "solution": 0-10,
+  "decision_logic": 0-10,
+  "feedback": "总体评价，必须具体指出这份回答为什么像或不像高级 PM",
+  "strengths": ["亮点，引用用户回答里的具体内容"],
+  "gaps": ["盲区，指出缺失的证据、取舍、指标、风险或复盘"],
+  "suggestions": ["可执行改进建议"],
+  "thinking_framework": ["这道题推荐的答题框架，4-6 条"],
+  "example_answer": "给一段 120-220 字的示例回答，示范高阶 PM 应该怎么答",
+  "improved_answer": "把用户原回答改写成更像训练复盘的版本，120-220 字",
+  "next_practice": "下一题前最该练的一件事"
+}
+评分标准：
+1. 理解问题：是否抓住真实业务矛盾和关键角色。
+2. 思维框架：是否有结构化分析路径，而不是罗列功能。
+3. 方案质量：是否具体、可落地，并考虑边界条件。
+4. 决策逻辑：是否解释为什么这样做，有取舍标准、证据和反证意识。
+反馈必须引用用户原文，避免空泛夸奖或空泛批评。`,
       messages: [
-        { role: "user", content: `题目：${question}\n\n用户的回答：${userAnswer}\n\n请给出诊断和建议。` },
+        {
+          role: "user",
+          content: `题目维度：${dimension || "未知"}
+题目：${question}
+
+用户的回答：${userAnswer}
+
+请给出结构化教练反馈。`,
+        },
       ],
     });
     return result.toDataStreamResponse();

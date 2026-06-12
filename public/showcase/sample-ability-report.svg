@@ -1,0 +1,37 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="32" fill="#F7F9FB"/>
+  <rect x="48" y="44" width="1104" height="672" rx="28" fill="white" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="88" y="105" fill="#111827" font-family="Arial, sans-serif" font-size="34" font-weight="700">能力诊断样例报告</text>
+  <text x="88" y="145" fill="#64748B" font-family="Arial, sans-serif" font-size="18">基于量表、访谈和案例实战生成的成长画像</text>
+  <rect x="88" y="188" width="228" height="112" rx="18" fill="#EEF2FF"/>
+  <text x="116" y="229" fill="#4338CA" font-family="Arial, sans-serif" font-size="16" font-weight="700">综合等级</text>
+  <text x="116" y="275" fill="#111827" font-family="Arial, sans-serif" font-size="48" font-weight="800">B+</text>
+  <rect x="340" y="188" width="228" height="112" rx="18" fill="#ECFEFF"/>
+  <text x="368" y="229" fill="#0F766E" font-family="Arial, sans-serif" font-size="16" font-weight="700">最强维度</text>
+  <text x="368" y="270" fill="#111827" font-family="Arial, sans-serif" font-size="28" font-weight="800">用户洞察</text>
+  <rect x="592" y="188" width="228" height="112" rx="18" fill="#FFF7ED"/>
+  <text x="620" y="229" fill="#C2410C" font-family="Arial, sans-serif" font-size="16" font-weight="700">优先补强</text>
+  <text x="620" y="270" fill="#111827" font-family="Arial, sans-serif" font-size="28" font-weight="800">商业思维</text>
+  <rect x="844" y="188" width="228" height="112" rx="18" fill="#F8FAFC"/>
+  <text x="872" y="229" fill="#475569" font-family="Arial, sans-serif" font-size="16" font-weight="700">建议周期</text>
+  <text x="872" y="270" fill="#111827" font-family="Arial, sans-serif" font-size="28" font-weight="800">7 天计划</text>
+
+  <rect x="88" y="344" width="482" height="290" rx="24" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="122" y="397" fill="#111827" font-family="Arial, sans-serif" font-size="24" font-weight="700">五维能力画像</text>
+  <circle cx="320" cy="505" r="112" fill="#EEF2FF" stroke="#CBD5E1" stroke-width="2"/>
+  <path d="M320 395 L407 465 L374 585 L266 585 L233 465 Z" stroke="#CBD5E1" stroke-width="2"/>
+  <path d="M320 430 L382 475 L354 558 L276 558 L252 480 Z" fill="#4338CA" fill-opacity="0.18" stroke="#4338CA" stroke-width="8" stroke-linejoin="round"/>
+  <text x="306" y="386" fill="#64748B" font-family="Arial, sans-serif" font-size="16">战略</text>
+  <text x="410" y="470" fill="#64748B" font-family="Arial, sans-serif" font-size="16">系统</text>
+  <text x="360" y="615" fill="#64748B" font-family="Arial, sans-serif" font-size="16">数据</text>
+  <text x="210" y="615" fill="#64748B" font-family="Arial, sans-serif" font-size="16">洞察</text>
+  <text x="174" y="470" fill="#64748B" font-family="Arial, sans-serif" font-size="16">商业</text>
+
+  <rect x="608" y="344" width="464" height="290" rx="24" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="642" y="397" fill="#111827" font-family="Arial, sans-serif" font-size="24" font-weight="700">AI 教练下一步建议</text>
+  <rect x="642" y="436" width="396" height="1" fill="#E2E8F0"/>
+  <text x="642" y="481" fill="#111827" font-family="Arial, sans-serif" font-size="21" font-weight="700">1. 先补商业论证</text>
+  <text x="642" y="514" fill="#64748B" font-family="Arial, sans-serif" font-size="17">每个方案至少说明收益、成本、风险和指标。</text>
+  <text x="642" y="565" fill="#111827" font-family="Arial, sans-serif" font-size="21" font-weight="700">2. 再练系统边界</text>
+  <text x="642" y="598" fill="#64748B" font-family="Arial, sans-serif" font-size="17">回答前先列角色、权限、流程和异常场景。</text>
+</svg>

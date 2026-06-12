@@ -1,67 +1,122 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import AbilityRadarChart from "@/components/training/RadarChart";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { DIMENSION_COLORS, DIM_LABELS } from "@/lib/constants";
+import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
+import {
+  ArrowRight,
+  CalendarCheck,
+  CheckCircle,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  ListChecks,
+  Target,
+} from "lucide-react";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-const DIM_COLORS: Record<string, string> = {
-  "战略思维": "bg-primary",
-  "系统设计能力": "bg-secondary",
-  "数据决策能力": "bg-tertiary",
-  "用户洞察与需求管理": "bg-primary",
-  "商业思维": "bg-secondary",
+type TrainingStats = {
+  totalCount: number;
+  todayCount: number;
+  streak: number;
+  dimStats: Record<string, number>;
+  dimAverages: Record<string, number>;
+  recent: {
+    id: string;
+    dimension: string;
+    question_scenario: string;
+    score: number | null;
+    ai_feedback?: {
+      source?: string;
+      product?: string;
+      next_practice?: string;
+    } | null;
+    created_at: string;
+  }[];
 };
 
-const DIM_LABELS: Record<string, string> = {
-  "战略思维": "战略思维",
-  "系统设计能力": "系统设计",
-  "数据决策能力": "数据决策",
-  "用户洞察与需求管理": "用户洞察",
-  "商业思维": "商业思维",
-};
+function getRecommendedDimension(stats: TrainingStats | null) {
+  const dimensionEntries = Object.entries(DIM_LABELS);
+  if (!stats) {
+    return { key: "商业思维", label: "商业思维" };
+  }
+
+  const zeroCount = dimensionEntries.find(
+    ([key]) => (stats.dimStats?.[key] ?? 0) === 0
+  );
+  if (zeroCount) return { key: zeroCount[0], label: zeroCount[1] };
+
+  const averages = dimensionEntries
+    .map(([key, label]) => ({
+      key,
+      label,
+      avg: stats.dimAverages?.[key],
+    }))
+    .filter((item) => item.avg != null)
+    .sort((a, b) => (a.avg ?? 0) - (b.avg ?? 0));
+
+  return averages[0] ?? { key: "商业思维", label: "商业思维" };
+}
+
+function StatTile({
+  label,
+  value,
+  meta,
+  icon,
+}: {
+  label: string;
+  value: string | number;
+  meta: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Card size="sm" className="flex min-h-[112px] flex-col justify-between">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-label font-semibold text-ink-muted">{label}</p>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-primary">
+          {icon}
+        </div>
+      </div>
+      <div className="mt-3 flex items-baseline gap-2">
+        <p className="font-mono text-data-md font-bold text-ink">{value}</p>
+        <p className="truncate text-body-sm text-ink-faint">{meta}</p>
+      </div>
+    </Card>
+  );
+}
 
 export default function TrainingPage() {
-  const router = useRouter();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
 
-  // 统计数据
-  const [stats, setStats] = useState<{
-    totalCount: number;
-    todayCount: number;
-    streak: number;
-    dimStats: Record<string, number>;
-    dimAverages: Record<string, number>;
-    recent: { id: string; dimension: string; question_scenario: string; created_at: string }[];
-  } | null>(null);
+  const [stats, setStats] = useState<TrainingStats | null>(null);
 
-  // 日历数据（有训练的日期）
   const [trainedDays, setTrainedDays] = useState<number[]>([]);
   const [monthCount, setMonthCount] = useState(0);
 
   const monthStr = `${year}-${String(month).padStart(2, "0")}`;
-
-  // 当月天数
   const daysInMonth = new Date(year, month, 0).getDate();
-  // 当月 1 号是星期几（0=日）
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
-
-  // 今天
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const recommendedDimension = getRecommendedDimension(stats);
+  const practicedDimensionCount = Object.values(stats?.dimStats ?? {}).filter(
+    (count) => count > 0
+  ).length;
 
   useEffect(() => {
-    // 获取统计
     fetch("/api/training/stats")
       .then((r) => r.json())
       .then((data) => setStats(data))
       .catch((err) => console.error("获取训练统计失败:", err));
 
-    // 获取当月训练日历
     fetch(`/api/training/sessions?month=${monthStr}`)
       .then((r) => r.json())
       .then((data) => {
@@ -72,188 +127,188 @@ export default function TrainingPage() {
   }, [monthStr]);
 
   const prevMonth = () => {
-    if (month === 1) { setYear(year - 1); setMonth(12); }
-    else { setMonth(month - 1); }
+    if (month === 1) {
+      setYear(year - 1);
+      setMonth(12);
+    } else {
+      setMonth(month - 1);
+    }
   };
 
   const nextMonth = () => {
-    if (month === 12) { setYear(year + 1); setMonth(1); }
-    else { setMonth(month + 1); }
+    if (month === 12) {
+      setYear(year + 1);
+      setMonth(1);
+    } else {
+      setMonth(month + 1);
+    }
   };
-
-  // 连击天数由 API stats.streak 提供，前端不再计算
-  // 保留 calcStreak 调用处兼容
 
   return (
     <>
-      {/* 顶部栏 */}
-      <header className="h-20 border-b border-outline-variant bg-white/80 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-8">
-        <div className="flex items-center gap-4">
-          <h2 className="text-headline-md font-bold text-on-surface">日常训练</h2>
-          <div className="h-6 w-px bg-outline-variant mx-1" />
-          <span className="text-body-sm text-on-surface-variant">持续成长，每日精进</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="w-9 h-9 flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-full transition-colors">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-full transition-colors">
-            <span className="material-symbols-outlined">settings</span>
-          </button>
-        </div>
-      </header>
+      <PageHeader title="日常训练" subtitle="围绕薄弱维度，每天完成一次高质量思考" />
 
-      <div className="max-w-[1440px] mx-auto px-8 py-8 space-y-8">
-        {/* Hero 统计区 */}
-        <section className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          {/* 连击卡片 */}
-          <div className="col-span-1 md:col-span-2 bg-primary text-on-primary rounded-xl p-6 relative overflow-hidden flex flex-col justify-between">
-            <div className="relative z-10">
-              <span className="bg-white/20 text-on-primary px-3 py-1 rounded-full text-label-bold">
-                {monthCount > 0 ? "本月已训练" : "尚未训练"}
-              </span>
-              <h3 className="text-headline-xl font-bold mt-3">
-                {monthCount} <span className="text-headline-md font-normal">天</span>
-              </h3>
-              <p className="opacity-80 text-body-md">
-                {monthCount > 0 ? "再接再厉，能成大器" : "今天就开始吧"}
-              </p>
-              {stats?.streak ? (
-                <p className="text-body-sm opacity-70 mt-1">
-                  已连续训练 {stats.streak} 天
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Primary practice focus */}
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
+          <Card size="lg" className="relative overflow-hidden">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <Badge>今日推荐训练</Badge>
+                  <Badge variant="neutral">{recommendedDimension.label}</Badge>
+                </div>
+                <h3 className="text-heading-lg font-bold text-ink">
+                  用一题校准 {recommendedDimension.label} 的判断链路
+                </h3>
+                <p className="mt-2 text-body-md text-ink-muted">
+                  先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。
                 </p>
-              ) : null}
+              </div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                <Target className="h-6 w-6" strokeWidth={1.5} />
+              </div>
             </div>
-            <button
-              onClick={() => router.push("/training/session")}
-              className="relative z-10 mt-6 w-fit bg-on-primary text-primary px-6 py-3 rounded-xl font-bold text-body-md hover:opacity-90 transition-all flex items-center gap-2"
-            >
-              开启今日训练
-              <span className="material-symbols-outlined">arrow_forward</span>
-            </button>
-            <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none translate-x-1/4 translate-y-1/4">
-              <span className="material-symbols-outlined text-[240px]">trending_up</span>
-            </div>
-          </div>
 
-          {/* 累计完成题数 */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
-            <div>
-              <span className="material-symbols-outlined text-secondary mb-2">task_alt</span>
-              <p className="text-label-bold text-on-surface-variant">累计完成题数</p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                href={TRAINING_SESSION_ROUTE}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
+              >
+                开始今日训练
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/training/cases"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-transparent px-5 py-2.5 text-body-md font-semibold text-ink transition-all hover:bg-surface active:scale-[0.97]"
+              >
+                去案例库找灵感
+                <BookOpen className="w-4 h-4" strokeWidth={1.5} />
+              </Link>
             </div>
-            <div className="mt-4">
-              <p className="text-headline-lg font-bold">
-                {stats?.totalCount ?? "—"}
-              </p>
-              <p className="text-body-sm text-on-surface-variant mt-1">
-                今日已答 {stats?.todayCount ?? 0} 题
-              </p>
-            </div>
-          </div>
+          </Card>
 
-          {/* 各维度完成情况 */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
-            <div>
-              <span className="material-symbols-outlined text-primary mb-2">donut_small</span>
-              <p className="text-label-bold text-on-surface-variant">各维度完成</p>
+          <Card size="lg">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <Badge variant={monthCount > 0 ? "default" : "neutral"}>
+                  本月节奏
+                </Badge>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <p className="font-mono text-data-lg font-bold text-ink">
+                    {monthCount}
+                  </p>
+                  <p className="text-heading-sm text-ink-muted">天</p>
+                </div>
+                <p className="mt-1 text-body-sm text-ink-muted">
+                  {monthCount > 0 ? "保持训练节奏，持续补齐薄弱维度" : "从一次训练建立今天的思考手感"}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-soft text-secondary">
+                <Flame className="h-5 w-5" strokeWidth={1.5} />
+              </div>
             </div>
-            <div className="mt-4 space-y-3">
+          </Card>
+        </section>
+
+        {/* Compact stats strip */}
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatTile
+            label="累计完成"
+            value={stats?.totalCount ?? "-"}
+            meta={`今日已答 ${stats?.todayCount ?? 0} 题`}
+            icon={<CheckCircle className="h-4 w-4" strokeWidth={1.5} />}
+          />
+          <StatTile
+            label="连续天数"
+            value={stats?.streak ?? 0}
+            meta="天"
+            icon={<CalendarCheck className="h-4 w-4" strokeWidth={1.5} />}
+          />
+          <StatTile
+            label="维度覆盖"
+            value={`${practicedDimensionCount}/5`}
+            meta="已训练维度"
+            icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
+          />
+        </section>
+
+        {/* Dimension coverage + Calendar + History */}
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Card size="md">
+            <h3 className="text-heading-sm font-semibold text-ink">维度训练分布</h3>
+            <p className="mt-0.5 text-body-sm text-ink-muted">
+              查看训练是否过度集中在某一类题目。
+            </p>
+            <div className="mt-5 space-y-2.5">
               {Object.entries(DIM_LABELS).map(([key, label]) => {
                 const count = stats?.dimStats?.[key] ?? 0;
                 const total = stats?.totalCount ?? 1;
-                const pct = Math.min(Math.round((count / Math.max(total, 1)) * 100), 100);
-                const color = DIM_COLORS[key] || "bg-primary";
+                const pct = Math.min(
+                  Math.round((count / Math.max(total, 1)) * 100),
+                  100
+                );
+                const color = DIMENSION_COLORS[key] || "#4338CA";
                 return (
                   <div key={key} className="flex items-center gap-2">
-                    <span className="text-body-sm text-on-surface-variant w-14 truncate">{label}</span>
-                    <div className="flex-1 h-1.5 bg-surface-container rounded-full overflow-hidden">
-                      <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
+                    <span className="w-16 truncate text-body-sm text-ink-muted">
+                      {label}
+                    </span>
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: color,
+                        }}
+                      />
                     </div>
-                    <span className="text-body-sm text-on-surface-variant w-8 text-right">{count}</span>
+                    <span className="w-8 text-right font-mono text-body-sm text-ink-muted">
+                      {count}
+                    </span>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </Card>
 
-          {/* 能力雷达图 */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
-            <div>
-              <span className="material-symbols-outlined text-secondary mb-2">radar</span>
-              <p className="text-label-bold text-on-surface-variant">能力雷达</p>
-            </div>
-            <div className="mt-4">
-              {stats?.dimAverages && Object.keys(stats.dimAverages).length >= 3 ? (
-                <AbilityRadarChart
-                  data={Object.entries(stats.dimAverages).map(([dim, score]) => ({
-                    dimension: DIM_LABELS[dim] || dim,
-                    score: Math.min(score, 10),
-                    fullMark: 10,
-                  }))}
-                />
-              ) : (
-                <p className="text-body-sm text-on-surface-variant text-center py-8">
-                  完成更多训练以解锁能力分析
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* 案例库入口 */}
-        <section>
-          <Link
-            href="/training/cases"
-            className="flex items-center gap-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-5 hover:bg-surface-container transition-colors"
-          >
-            <div className="w-12 h-12 bg-tertiary-container text-on-tertiary-container rounded-xl flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-2xl">menu_book</span>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-headline-md text-on-surface">案例库</h3>
-              <p className="text-body-sm text-on-surface-variant">
-                拆解经典 B 端产品，理解产品思维框架
-              </p>
-            </div>
-            <span className="material-symbols-outlined text-on-surface-variant">
-              arrow_forward
-            </span>
-          </Link>
-        </section>
-
-        {/* 日历 + 历史记录 */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 日历 */}
-          <div className="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
+          {/* Calendar */}
+          <Card size="md">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="text-headline-md font-bold">本月训练概览</h3>
-                <p className="text-body-sm text-on-surface-variant">
-                  {year}年{month}月 · 本月已训练 {monthCount} 天
+                <h3 className="text-heading-md font-semibold text-ink">本月训练概览</h3>
+                <p className="text-body-sm text-ink-muted mt-0.5">
+                  {year}年{month}月 / 本月已训练 {monthCount} 天
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={prevMonth} className="p-1.5 hover:bg-surface-container rounded-lg transition-colors">
-                  <span className="material-symbols-outlined">chevron_left</span>
+                <button
+                  onClick={prevMonth}
+                  className="p-1.5 hover:bg-surface rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-ink-muted" />
                 </button>
-                <span className="text-label-bold px-3">{month}月</span>
-                <button onClick={nextMonth} className="p-1.5 hover:bg-surface-container rounded-lg transition-colors">
-                  <span className="material-symbols-outlined">chevron_right</span>
+                <span className="text-label font-bold px-3 text-ink">
+                  {month}月
+                </span>
+                <button
+                  onClick={nextMonth}
+                  className="p-1.5 hover:bg-surface rounded-lg transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-ink-muted" />
                 </button>
               </div>
             </div>
 
-            {/* 星期行 */}
-            <div className="grid grid-cols-7 text-center text-label-bold text-on-surface-variant mb-2">
+            <div className="grid grid-cols-7 text-center text-label font-semibold text-ink-faint mb-2">
               {WEEKDAYS.map((d) => (
-                <div key={d} className="py-1">{d}</div>
+                <div key={d} className="py-1">
+                  {d}
+                </div>
               ))}
             </div>
 
-            {/* 日期网格 */}
             <div className="grid grid-cols-7">
-              {/* 前导空白 */}
               {Array.from({ length: firstDayOfWeek }, (_, i) => (
                 <div key={`pad-${i}`} className="h-10" />
               ))}
@@ -266,14 +321,14 @@ export default function TrainingPage() {
                 return (
                   <div
                     key={day}
-                    className={`h-10 flex items-center justify-center text-body-sm rounded-lg transition-colors ${
+                    className={`h-10 flex items-center justify-center text-body-sm rounded-xl transition-colors ${
                       isToday
-                        ? "bg-primary text-on-primary font-bold ring-4 ring-primary/20"
+                        ? "bg-primary text-white font-bold ring-4 ring-primary/15"
                         : isTrained
-                          ? "bg-secondary-container text-on-secondary-container font-bold"
+                          ? "bg-secondary-soft text-secondary font-bold"
                           : isFuture
-                            ? ""
-                            : "opacity-30"
+                            ? "text-ink-faint"
+                            : "text-ink-muted"
                     }`}
                   >
                     {day}
@@ -281,42 +336,75 @@ export default function TrainingPage() {
                 );
               })}
             </div>
-          </div>
+          </Card>
 
-          {/* 历史记录 */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-label-bold text-primary">历史记录</h4>
+          {/* Review archive */}
+          <Card size="md">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h4 className="text-heading-sm font-semibold text-ink">
+                  复盘归档
+                </h4>
+                <p className="mt-0.5 text-body-sm text-ink-muted">
+                  训练和案例推演会自动沉淀到这里。
+                </p>
+              </div>
+              <Link
+                href="/training/cases"
+                className="text-label font-bold text-primary hover:text-primary-hover"
+              >
+                做推演
+              </Link>
             </div>
             <div className="space-y-3">
               {stats?.recent && stats.recent.length > 0 ? (
-                stats.recent.slice(0, 5).map((r) => (
+                stats.recent.slice(0, 6).map((r) => {
+                  const isCase = r.ai_feedback?.source === "case_simulation";
+                  const score10 =
+                    typeof r.score === "number"
+                      ? Math.round((r.score / 10) * 10) / 10
+                      : null;
+                  return (
                   <Link
                     key={r.id}
                     href={`/training/history/${r.id}`}
-                    className="flex items-center gap-3 p-3 hover:bg-surface-container rounded-xl transition-all w-full text-left group"
+                    className="block rounded-xl border border-line bg-surface-raised p-3 transition-all hover:border-line-strong hover:bg-surface group"
                   >
-                    <div className="w-10 h-10 bg-tertiary-container text-on-tertiary-container rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                      <span className="material-symbols-outlined">data_object</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-body-sm font-bold text-on-surface truncate">
-                        {r.question_scenario.slice(0, 30)}
-                        {r.question_scenario.length > 30 ? "…" : ""}
-                      </p>
-                      <p className="text-body-sm text-on-surface-variant">
-                        {r.dimension} · {new Date(r.created_at).toLocaleDateString("zh-CN")}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent transition-transform group-hover:scale-105">
+                        <BookOpen className="w-4 h-4" strokeWidth={1.5} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
+                            {isCase ? "案例推演" : r.dimension}
+                          </span>
+                          {score10 != null && (
+                            <span className="rounded-md bg-primary-soft px-2 py-0.5 text-label font-semibold text-primary">
+                              {score10}/10
+                            </span>
+                          )}
+                        </div>
+                        <p className="line-clamp-2 text-body-sm font-semibold text-ink">
+                          {r.question_scenario.replace(/\n/g, " ").slice(0, 68)}
+                          {r.question_scenario.length > 68 ? "..." : ""}
+                        </p>
+                        <p className="mt-1 text-body-sm text-ink-muted">
+                          {r.ai_feedback?.next_practice ||
+                            new Date(r.created_at).toLocaleDateString("zh-CN")}
+                        </p>
+                      </div>
                     </div>
                   </Link>
-                ))
+                );
+                })
               ) : (
-                <p className="text-body-sm text-on-surface-variant text-center py-8">
+                <p className="text-body-sm text-ink-muted text-center py-8">
                   还没有训练记录，去完成第一题吧
                 </p>
               )}
             </div>
-          </div>
+          </Card>
         </section>
       </div>
     </>

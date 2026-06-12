@@ -1,22 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import { AuthShowcase } from "@/components/auth/AuthShowcase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { GraduationCap, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (user) router.push("/diagnosis/scale");
-  }, [user, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,60 +30,86 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/diagnosis/scale");
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      setError("登录成功但会话同步失败，请刷新后重试。");
+      setIsLoading(false);
+      return;
+    }
+
+    window.location.replace("/dashboard");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-sm mx-auto">
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm">
-          <div className="text-center mb-8">
-            <h1 className="text-headline-lg font-bold text-primary">产品升云阶</h1>
-            <p className="text-body-sm text-on-surface-variant mt-2">B 端产品经理成长平台</p>
+    <div className="min-h-[100dvh] flex">
+      <AuthShowcase mode="login" />
+
+      <div className="flex flex-1 items-center justify-center bg-bg p-6 sm:p-8">
+        <div className="w-full max-w-[380px] animate-fade-in">
+          {/* Mobile brand */}
+          <div className="lg:hidden flex items-center gap-2.5 mb-10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <GraduationCap className="w-4.5 h-4.5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-ink">升云阶</span>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-display-md font-bold text-ink">
+              欢迎回来
+            </h2>
+            <p className="text-body-md text-ink-muted mt-2">
+              登录后继续你的诊断、训练和案例拆解
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-label-bold text-on-surface mb-1.5">邮箱</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
-              />
-            </div>
+            <Input
+              label="邮箱"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+            />
 
-            <div>
-              <label className="block text-label-bold text-on-surface mb-1.5">密码</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
-              />
-            </div>
+            <Input
+              label="密码"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
 
             {error && (
-              <p className="text-body-sm text-error bg-error-container px-4 py-2 rounded-lg">{error}</p>
+              <div className="px-4 py-2.5 rounded-xl bg-danger-soft text-body-sm text-danger">
+                {error}
+              </div>
             )}
 
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full py-3 bg-primary text-on-primary rounded-lg font-label-bold text-body-md hover:opacity-90 transition-all disabled:opacity-50"
+              fullWidth
+              size="lg"
+              loading={isLoading}
+              icon={<ArrowRight className="w-4 h-4" />}
             >
               {isLoading ? "登录中..." : "登录"}
-            </button>
+            </Button>
           </form>
 
-          <p className="text-center text-body-sm text-on-surface-variant mt-6">
+          <p className="text-center text-body-sm text-ink-muted mt-8">
             还没有账号？{" "}
-            <Link href="/register" className="text-primary font-bold hover:underline">
-              注册
+            <Link
+              href="/register"
+              className="text-primary font-semibold hover:underline underline-offset-2"
+            >
+              创建账号
             </Link>
           </p>
         </div>

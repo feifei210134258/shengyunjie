@@ -1,0 +1,15 @@
+workflow: hotfix
+phase: archive
+build_mode: direct
+build_pause: null
+isolation: branch
+verify_mode: light
+base_ref: 358f90f374c0f53a183b9c69d8833c855f922b59
+design_doc: null
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-06-03-fix-md-resume-next-step-verify.md
+branch_status: handled
+created_at: 2026-06-03
+verified_at: 2026-06-03
+archived: true

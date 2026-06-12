@@ -10,15 +10,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-/* ------------------------------------------------------------------ */
-/*  Component
-/* ------------------------------------------------------------------ */
-
-interface TrendPoint {
-  date: string;
-  avgScore: number;
-}
+import { Card } from "@/components/ui/card";
+import { CHART_COLORS } from "@/lib/constants";
+import { getLatestTrendScore, type TrendPoint } from "@/lib/dashboard/trend";
+import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
+import { Activity, ArrowRight, TrendingUp } from "lucide-react";
 
 interface Props {
   trendData: TrendPoint[];
@@ -26,66 +22,84 @@ interface Props {
 
 export default function GrowthChart({ trendData }: Props) {
   const hasEnough = trendData.length >= 2;
+  const latest = getLatestTrendScore(trendData);
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
-      {/* Title */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="material-symbols-outlined text-primary">trending_up</span>
-        <h3 className="text-headline-md font-bold text-on-surface">成长趋势</h3>
+    <Card size="sm">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <TrendingUp className="h-4 w-4 text-primary" strokeWidth={1.5} />
+          <h3 className="text-heading-sm font-semibold text-ink">成长趋势</h3>
+        </div>
+        <div className="text-right">
+          <p className="font-mono text-data-md font-bold text-ink">
+            {latest != null ? latest.toFixed(1) : "-"}
+          </p>
+          <p className="text-label font-semibold text-ink-muted">最近均分</p>
+        </div>
       </div>
 
       {!hasEnough ? (
-        <div className="flex flex-col items-center justify-center min-h-[260px]">
-          <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-3">
-            show_chart
-          </span>
-          <p className="text-body-sm text-on-surface-variant mb-4">
-            完成更多训练以解锁成长曲线
+        <div className="flex min-h-[170px] flex-col justify-center rounded-xl border border-dashed border-line-strong bg-surface px-4 py-5">
+          <Activity className="mb-2 h-5 w-5 text-ink-faint" strokeWidth={1.5} />
+          <p className="text-body-sm font-semibold text-ink">
+            完成更多训练后生成曲线
           </p>
           <Link
-            href="/training"
-            className="text-primary text-label-bold hover:underline flex items-center gap-1"
+            href={TRAINING_SESSION_ROUTE}
+            className="mt-2 inline-flex items-center gap-1 text-body-sm font-semibold text-primary hover:underline underline-offset-2"
           >
-            前往训练
-            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            去做一题
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       ) : (
-        <div className="h-[260px] w-full">
+        <div className="h-[170px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={trendData}
-              margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={CHART_COLORS.grid}
+                vertical={false}
+              />
               <XAxis
                 dataKey="date"
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: CHART_COLORS.axis, fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
               />
               <YAxis
                 domain={[0, 10]}
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: CHART_COLORS.axis, fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                width={28}
               />
               <Tooltip
                 contentStyle={{
-                  borderRadius: "8px",
-                  border: "1px solid #e5e7eb",
+                  borderRadius: "10px",
+                  border: `1px solid ${CHART_COLORS.tooltipBorder}`,
+                  backgroundColor: CHART_COLORS.tooltip,
+                  boxShadow: "0 4px 12px rgba(28,25,23,0.08)",
+                  fontSize: "13px",
                 }}
-                formatter={(value: any) => [`${value} 分`, "日均评分"]}
+                formatter={(value) => [`${value} 分`, "日均评分"]}
               />
               <Line
                 type="monotone"
                 dataKey="avgScore"
-                stroke="#2a14b4"
-                strokeWidth={2}
-                dot={{ fill: "#2a14b4", r: 4 }}
-                activeDot={{ r: 6 }}
+                stroke={CHART_COLORS.primary}
+                strokeWidth={2.25}
+                dot={{ fill: CHART_COLORS.primary, r: 3, strokeWidth: 0 }}
+                activeDot={{ r: 4.5, strokeWidth: 2, stroke: "#fff" }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

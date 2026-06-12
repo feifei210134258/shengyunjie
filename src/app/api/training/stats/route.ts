@@ -1,5 +1,9 @@
 import { createServerClient } from "@/lib/supabase-server";
 import { getBeijingDate } from "@/lib/date";
+import {
+  calcStreakFromBeijingDates,
+  getUniqueBeijingDates,
+} from "@/lib/training/completion";
 import { NextResponse } from "next/server";
 
 async function calcStreak(supabase: any, userId: string): Promise<number> {
@@ -7,31 +11,14 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
   sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
   const { data } = await supabase
-    .from("training_sessions")
-    .select("session_date")
+    .from("training_records")
+    .select("created_at")
     .eq("user_id", userId)
-    .gte("session_date", getBeijingDate(sixtyDaysAgo))
-    .order("session_date", { ascending: false });
+    .gte("created_at", sixtyDaysAgo.toISOString())
+    .order("created_at", { ascending: false });
 
-  const dates = data?.map((d: any) => d.session_date) || [];
-  if (!dates.length) return 0;
-
-  const today = getBeijingDate();
-  const yesterday = getBeijingDate(new Date(Date.now() - 86400000));
-
-  let streak = 0;
-  let checkDate = dates.includes(today) ? today : yesterday;
-
-  if (!dates.includes(checkDate)) return 0;
-
-  while (dates.includes(checkDate)) {
-    streak++;
-    const d = new Date(checkDate + "T00:00:00+08:00");
-    d.setDate(d.getDate() - 1);
-    checkDate = getBeijingDate(d);
-  }
-
-  return streak;
+  const dates = getUniqueBeijingDates(data || []);
+  return calcStreakFromBeijingDates(dates, getBeijingDate());
 }
 
 export async function GET() {
@@ -69,10 +56,10 @@ export async function GET() {
     // 最近训练
     const { data: recent } = await supabase
       .from("training_records")
-      .select("id, dimension, question_scenario, score, created_at")
+      .select("id, dimension, question_scenario, score, ai_feedback, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(8);
 
     // 各维度平均分
     const { data: avgData } = await supabase

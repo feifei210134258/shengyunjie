@@ -3,22 +3,13 @@ import { generateText } from "ai";
 import { getChatModel } from "@/lib/ai";
 import { searchWeb } from "@/lib/tavily";
 import { NextResponse } from "next/server";
+import { CASE_PERSPECTIVES } from "@/lib/cases/perspectives";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const PERSPECTIVES = [
-  { slug: "overview", label: "全局分析" },
-  { slug: "positioning", label: "产品定位" },
-  { slug: "growth", label: "增长飞轮" },
-  { slug: "business-model", label: "商业模式" },
-  { slug: "pricing", label: "定价策略" },
-  { slug: "architecture", label: "功能架构" },
-  { slug: "competition", label: "竞争博弈" },
-  { slug: "retention", label: "留存激活" },
-  { slug: "ecosystem", label: "生态平台" },
-];
+const PERSPECTIVES = CASE_PERSPECTIVES;
 
 const PRESET_PRODUCTS = [
   { name: "飞书", enName: "Feishu/Lark", description: "字节跳动旗下企业协作平台" },
@@ -32,6 +23,13 @@ const PRESET_PRODUCTS = [
   { name: "Slack", enName: "Slack", description: "团队即时通讯与协作平台" },
   { name: "飞猪", enName: "Fliggy", description: "阿里巴巴旗下在线旅游平台" },
 ];
+
+const PRODUCT_ALIASES: Record<string, string[]> = {
+  飞书: ["飞书", "Feishu", "Lark"],
+  钉钉: ["钉钉", "DingTalk"],
+  企业微信: ["企业微信", "WeCom", "WeChat Work"],
+  飞猪: ["飞猪", "Fliggy"],
+};
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -72,6 +70,7 @@ async function generateArticle(
 
   const systemPrompt =
     "你是资深 B 端产品分析专家。你的任务是对指定产品进行简洁、有洞察的拆解分析。" +
+    "\n\n指定产品是「" + productName + "」。必须分析这个产品，不得改用 Slack、Notion、Salesforce 或其他产品作为替代案例。" +
     searchContext +
     "\n\n要求：" +
     "\n- 总字数控制在 " + wordLimit + " 字以内" +
@@ -83,7 +82,14 @@ async function generateArticle(
     "\n- 每条观点要有具体事实或逻辑支撑，不空谈" +
     "\n- 使用 Markdown 格式组织内容，适当使用标题、列表、加粗等增强可读性";
 
-  const userMsg = questionText + "写一篇约 " + wordLimit + " 字的产品拆解，使用 Markdown 格式。";
+  const userMsg =
+    "产品名称：「" +
+    productName +
+    "」。" +
+    questionText +
+    "写一篇约 " +
+    wordLimit +
+    " 字的产品拆解，使用 Markdown 格式。";
 
   const result = await generateText({
     model,
@@ -98,20 +104,56 @@ async function generateArticle(
 
   return result.text;
 }
+
+function getProductAliases(productName: string) {
+  const preset = PRESET_PRODUCTS.find(
+    (product) => product.name.toLowerCase() === productName.toLowerCase()
+  );
+  const baseName = preset?.name || productName;
+  return Array.from(
+    new Set([
+      baseName,
+      preset?.enName,
+      ...(PRODUCT_ALIASES[baseName] || []),
+    ].filter(Boolean) as string[])
+  );
+}
+
+function includesAnyAlias(content: string, aliases: string[]) {
+  const lowerContent = content.toLowerCase();
+  return aliases.some((alias) => lowerContent.includes(alias.toLowerCase()));
+}
+
+function isLikelyMismatchedArticle(productName: string, content: string) {
+  if (/未指定具体产品名称|以\s*slack\s*为例/i.test(content)) return true;
+  return !includesAnyAlias(content, getProductAliases(productName));
+}
+
 export async function GET(req: Request) {
   try {
     const supabase = await createServerClient();
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get("action");
+    const productName = searchParams.get("product")?.trim() || "";
+    const perspectiveSlug = searchParams.get("perspective");
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
+    if (!user && action === "list-products") {
+      return NextResponse.json({
+        products: PRESET_PRODUCTS.map((p) => ({
+          name: p.name,
+          enName: p.enName,
+          description: p.description,
+          articleCount: 0,
+        })),
+      });
+    }
+
     if (!user) {
       return NextResponse.json({ error: "未登录" }, { status: 401 });
     }
-
-    const { searchParams } = new URL(req.url);
-    const action = searchParams.get("action");
-    const productName = searchParams.get("product")?.toLowerCase() || "";
-    const perspectiveSlug = searchParams.get("perspective");
 
     /* ------ List products ------ */
 
@@ -219,13 +261,19 @@ export async function GET(req: Request) {
           .eq("perspective", perspectiveSlug)
           .maybeSingle();
 
-        if (cached) {
+        if (cached && !isLikelyMismatchedArticle(productName, cached.content)) {
           return NextResponse.json({ article: cached, cached: true });
         }
       }
 
       // Generate new article
       const content = await generateArticle(productName, perspective);
+      if (isLikelyMismatchedArticle(productName, content)) {
+        return NextResponse.json(
+          { error: "AI 返回内容与当前产品不匹配，请重试生成" },
+          { status: 502 }
+        );
+      }
 
       // Extract summary (first 80 chars as a rough summary)
       const summary = content.slice(0, 80).replace(/\n/g, " ");

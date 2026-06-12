@@ -2,12 +2,25 @@
 
 import { useState } from "react";
 import { InterviewQuestion as InterviewQuestionType } from "@/types/bootcamp";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 
 interface Props {
   question: InterviewQuestionType;
   onSubmit: (answer: string) => void;
   isEvaluating: boolean;
 }
+
+const typeLabels: Record<string, string> = {
+  strategy: "战略思维",
+  system_design: "系统设计",
+  data_driven: "数据驱动",
+  user_insight: "用户洞察",
+  business_thinking: "商业思维",
+};
 
 export default function InterviewQuestion({
   question,
@@ -26,60 +39,53 @@ export default function InterviewQuestion({
     onSubmit(answer);
   };
 
-  const typeLabels: Record<string, string> = {
-    strategy: "战略思维",
-    system_design: "系统设计",
-    data_driven: "数据驱动",
-    user_insight: "用户洞察",
-    business_thinking: "商业思维",
-  };
-
   return (
-    <div className="space-y-6">
-      {/* 题目卡片 */}
-      <div className="bg-surface-container p-6 rounded-xl">
+    <div className="space-y-5">
+      <Card variant="subtle" size="md">
         <div className="flex items-center gap-2 mb-4">
-          <span className="px-2 py-1 bg-secondary-container text-on-secondary-container rounded text-label-sm">
+          <Badge variant="default">
             {typeLabels[question.question_type] || question.question_type}
-          </span>
-          <span className="px-2 py-1 bg-tertiary-container text-on-tertiary-container rounded text-label-sm">
+          </Badge>
+          <Badge variant="neutral">
             难度 {question.difficulty}/5
-          </span>
+          </Badge>
         </div>
-        <h3 className="text-headline-sm font-bold text-on-surface">{question.question_text}</h3>
-      </div>
+        <h3 className="text-body-lg font-semibold text-ink">
+          {question.question_text}
+        </h3>
+      </Card>
 
-      {/* 作答区 */}
-      {!question.ai_evaluation && (
+      {question.ai_evaluation && question.user_answer ? (
+        <Card variant="subtle" size="sm">
+          <p className="text-label font-semibold text-ink-muted">你的原回答</p>
+          <p className="mt-2 whitespace-pre-wrap text-body-sm leading-relaxed text-ink-muted">
+            {question.user_answer}
+          </p>
+        </Card>
+      ) : (
         <div className="space-y-3">
-          <textarea
+          <Textarea
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             placeholder="请详细阐述你的思路和解决方案..."
-            className="w-full h-48 p-4 bg-surface-container rounded-xl border border-outline-variant text-on-surface placeholder-on-surface-variant resize-none focus:outline-none focus:border-primary"
+            rows={12}
           />
 
           {warning && (
             <div className="flex items-center gap-2 text-warning text-body-sm">
-              <span className="material-symbols-outlined">warning</span>
+              <AlertTriangle className="w-4 h-4" />
               {warning}
             </div>
           )}
 
-          <button
+          <Button
+            fullWidth
             onClick={handleSubmit}
             disabled={isEvaluating || !answer.trim()}
-            className="w-full py-3 bg-primary text-on-primary rounded-xl font-label-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            loading={isEvaluating}
           >
-            {isEvaluating ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="animate-spin rounded-full h-5 w-5 border-2 border-on-primary border-t-transparent" />
-                AI 评分中...
-              </span>
-            ) : (
-              "提交回答"
-            )}
-          </button>
+            {isEvaluating ? "AI 评分中..." : "提交回答"}
+          </Button>
         </div>
       )}
     </div>

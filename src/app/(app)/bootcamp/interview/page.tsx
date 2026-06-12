@@ -7,15 +7,22 @@ import AnswerEvaluation from "@/components/bootcamp/AnswerEvaluation";
 import DailySummary from "@/components/bootcamp/DailySummary";
 import { InterviewQuestion as InterviewQuestionType } from "@/types/bootcamp";
 import { calculateDayProgress } from "@/lib/bootcamp";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { PageSpinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 
-export default function InterviewPage() {
+export default function BootcampInterviewPage() {
   const router = useRouter();
   const [questions, setQuestions] = useState<InterviewQuestionType[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentDay, setCurrentDay] = useState(1);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [isRegeneratingEvaluation, setIsRegeneratingEvaluation] =
+    useState(false);
   const [loading, setLoading] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -34,6 +41,7 @@ export default function InterviewPage() {
     if (!question) return;
 
     setIsEvaluating(true);
+    setError("");
     try {
       const res = await fetch("/api/bootcamp/interview/answer", {
         method: "POST",
@@ -43,7 +51,6 @@ export default function InterviewPage() {
 
       const data = await res.json();
       if (res.ok && data.evaluation) {
-        // 更新本地状态
         const updated = [...questions];
         updated[currentIndex] = {
           ...question,
@@ -52,15 +59,48 @@ export default function InterviewPage() {
           status: "evaluated",
         };
         setQuestions(updated);
+        return;
       }
+
+      setError(data.error || "评分失败，请稍后重试");
     } finally {
       setIsEvaluating(false);
     }
   };
 
+  const handleRegenerateEvaluation = async () => {
+    const question = questions[currentIndex];
+    if (!question) return;
+
+    setIsRegeneratingEvaluation(true);
+    setError("");
+    try {
+      const res = await fetch("/api/bootcamp/interview/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interview_id: question.id }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.evaluation) {
+        const updated = [...questions];
+        updated[currentIndex] = {
+          ...question,
+          ai_evaluation: data.evaluation,
+          status: "evaluated",
+        };
+        setQuestions(updated);
+        return;
+      }
+
+      setError(data.error || "重新生成反馈失败，请稍后重试");
+    } finally {
+      setIsRegeneratingEvaluation(false);
+    }
+  };
+
   const handleNextDay = async () => {
     if (currentDay >= 3) {
-      // 生成综合报告
       await fetch("/api/bootcamp/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,14 +110,12 @@ export default function InterviewPage() {
       return;
     }
 
-    // 生成日报并进入下一天
     await fetch("/api/bootcamp/report", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ report_type: "daily", day_number: currentDay }),
     });
 
-    // 生成下一天题目
     const nextDay = currentDay + 1;
     await fetch("/api/bootcamp/interview", {
       method: "POST",
@@ -90,7 +128,6 @@ export default function InterviewPage() {
     setShowSummary(false);
     setLoading(true);
 
-    // 重新获取题目
     const res = await fetch(`/api/bootcamp/interview?day=${nextDay}`);
     const data = await res.json();
     if (data.questions) {
@@ -100,11 +137,7 @@ export default function InterviewPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   const progress = calculateDayProgress(questions);
@@ -117,8 +150,9 @@ export default function InterviewPage() {
         0
       ) / questions.length;
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-2xl mx-auto">
+      <>
+        <PageHeader title={`Day ${currentDay} 完成`} backHref="/bootcamp" />
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <DailySummary
             dayNumber={currentDay}
             averageScore={avgScore}
@@ -126,93 +160,138 @@ export default function InterviewPage() {
             isLastDay={currentDay >= 3}
           />
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* 进度条 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-label-sm text-on-surface-variant">Day {currentDay} / 3</span>
-            <span className="text-label-sm text-primary">({getDifficultyLabel(currentDay)})</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-label-sm text-on-surface-variant">第 {currentIndex + 1} / {questions.length} 题</span>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        title={`Day ${currentDay} / ${getDifficultyLabel(currentDay)}`}
+        subtitle={`第 ${currentIndex + 1} / ${questions.length} 题`}
+        backHref="/bootcamp"
+      />
 
-        {/* 进度指示器 */}
-        <div className="flex gap-2">
-          {questions.map((q, idx) => (
-            <button
-              key={q.id}
-              onClick={() => setCurrentIndex(idx)}
-              className={`flex-1 h-2 rounded-full transition-colors ${
-                idx === currentIndex
-                  ? "bg-primary"
-                  : q.status === "evaluated"
-                  ? "bg-success"
-                  : "bg-outline-variant"
-              }`}
+      <div className="mx-auto grid max-w-[1480px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(360px,0.82fr)_minmax(560px,1.18fr)] lg:px-8">
+        <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+          <div className="rounded-xl border border-line bg-surface p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-label font-semibold text-ink-muted">
+                今日进度
+              </span>
+              <span className="font-mono text-label font-semibold text-ink-muted">
+                {progress.completed}/{questions.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {questions.map((q, idx) => (
+                <button
+                  key={q.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={cn(
+                    "h-2.5 rounded-full transition-colors",
+                    idx === currentIndex
+                      ? "bg-primary"
+                      : q.status === "evaluated"
+                        ? "bg-success"
+                        : "bg-line"
+                  )}
+                  aria-label={`第 ${idx + 1} 题`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {currentQuestion && (
+            <InterviewQuestion
+              question={currentQuestion}
+              onSubmit={handleSubmitAnswer}
+              isEvaluating={isEvaluating}
             />
-          ))}
-        </div>
+          )}
 
-        {/* 题目 */}
-        {currentQuestion && (
-          <InterviewQuestion
-            question={currentQuestion}
-            onSubmit={handleSubmitAnswer}
-            isEvaluating={isEvaluating}
-          />
-        )}
+          {error && (
+            <div className="rounded-xl border border-danger/20 bg-danger-soft p-4 text-body-sm text-danger">
+              {error}
+            </div>
+          )}
 
-        {/* 评分结果 */}
-        {currentQuestion?.ai_evaluation && (
-          <AnswerEvaluation evaluation={currentQuestion.ai_evaluation} />
-        )}
-
-        {/* 导航按钮 */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-            disabled={currentIndex === 0}
-            className="flex-1 py-3 border border-outline-variant text-on-surface rounded-xl font-label-bold disabled:opacity-50"
-          >上一题</button>
-          <button
-            onClick={() => {
-              if (currentIndex < questions.length - 1) {
-                setCurrentIndex((prev) => prev + 1);
-              } else if (progress.allEvaluated) {
-                setShowSummary(true);
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+              disabled={currentIndex === 0}
+            >
+              上一题
+            </Button>
+            <Button
+              fullWidth
+              onClick={() => {
+                if (currentIndex < questions.length - 1) {
+                  setCurrentIndex((prev) => prev + 1);
+                } else if (progress.allEvaluated) {
+                  setShowSummary(true);
+                }
+              }}
+              disabled={
+                currentIndex < questions.length - 1 &&
+                currentQuestion?.status !== "evaluated"
               }
-            }}
-            disabled={
-              currentIndex < questions.length - 1 &&
-              currentQuestion?.status !== "evaluated"
-            }
-            className="flex-1 py-3 bg-primary text-on-primary rounded-xl font-label-bold disabled:opacity-50"
-          >
-            {currentIndex < questions.length - 1 ? "下一题" : "完成今日特训"}
-          </button>
-        </div>
+            >
+              {currentIndex < questions.length - 1
+                ? "下一题"
+                : "完成今日特训"}
+            </Button>
+          </div>
+        </aside>
+
+        <main className="min-w-0">
+          {currentQuestion?.ai_evaluation ? (
+            <AnswerEvaluation
+              evaluation={currentQuestion.ai_evaluation}
+              onRegenerate={handleRegenerateEvaluation}
+              isRegenerating={isRegeneratingEvaluation}
+            />
+          ) : (
+            <section className="rounded-xl border border-line bg-surface p-6">
+              <p className="text-label font-semibold text-primary">
+                作答抓手
+              </p>
+              <h2 className="mt-2 text-heading-lg font-semibold text-ink">
+                先把面试官想听的证据摆上桌
+              </h2>
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {[
+                  ["背景", "一句话说明业务目标、用户角色和当时的约束。"],
+                  ["证据", "讲清你用了哪些调研、数据或客户现场信息。"],
+                  ["取舍", "至少对比两个方案，说出选择和放弃的理由。"],
+                  ["结果", "用指标、反馈或复盘说明这个判断是否成立。"],
+                ].map(([title, description]) => (
+                  <div
+                    key={title}
+                    className="rounded-lg bg-surface-raised p-4"
+                  >
+                    <h3 className="font-semibold text-ink">{title}</h3>
+                    <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                      {description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </main>
       </div>
-    </div>
+    </>
   );
 }
 
 function getDifficultyLabel(day: number): string {
   switch (day) {
-    case 1:
-      return "基础";
-    case 2:
-      return "进阶";
-    case 3:
-      return "实战";
-    default:
-      return "基础";
+    case 1: return "基础";
+    case 2: return "进阶";
+    case 3: return "实战";
+    default: return "基础";
   }
 }

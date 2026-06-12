@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AuthShowcase } from "@/components/auth/AuthShowcase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { GraduationCap, ArrowRight } from "lucide-react";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -11,7 +14,6 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,71 +40,82 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/diagnosis/scale");
+    window.location.assign(`/diagnosis/scale?entry=register&t=${Date.now()}`);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-sm mx-auto">
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm">
-          <div className="text-center mb-8">
-            <h1 className="text-headline-lg font-bold text-primary">产品升云阶</h1>
-            <p className="text-body-sm text-on-surface-variant mt-2">创建你的账号</p>
+    <div className="min-h-[100dvh] flex">
+      <AuthShowcase mode="register" />
+
+      <div className="flex flex-1 items-center justify-center bg-bg p-6 sm:p-8">
+        <div className="w-full max-w-[380px] animate-fade-in">
+          <div className="lg:hidden flex items-center gap-2.5 mb-10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <GraduationCap className="w-4.5 h-4.5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-ink">升云阶</span>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-display-md font-bold text-ink">
+              创建账号
+            </h2>
+            <p className="text-body-md text-ink-muted mt-2">
+              先建立能力画像，再开始针对性训练
+            </p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-5">
-            <div>
-              <label className="block text-label-bold text-on-surface mb-1.5">昵称</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="你的名字"
-                className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
-              />
-            </div>
+            <Input
+              label="昵称"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="你的名字"
+            />
 
-            <div>
-              <label className="block text-label-bold text-on-surface mb-1.5">邮箱</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
-              />
-            </div>
+            <Input
+              label="邮箱"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+            />
 
-            <div>
-              <label className="block text-label-bold text-on-surface mb-1.5">密码</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="至少 6 位"
-                required
-                minLength={6}
-                className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white text-body-md focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all"
-              />
-            </div>
+            <Input
+              label="密码"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="至少 6 位"
+              required
+              minLength={6}
+            />
 
             {error && (
-              <p className="text-body-sm text-error bg-error-container px-4 py-2 rounded-lg">{error}</p>
+              <div className="px-4 py-2.5 rounded-xl bg-danger-soft text-body-sm text-danger">
+                {error}
+              </div>
             )}
 
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-primary text-on-primary rounded-lg font-label-bold text-body-md hover:opacity-90 transition-all disabled:opacity-50"
+              fullWidth
+              size="lg"
+              loading={loading}
+              icon={<ArrowRight className="w-4 h-4" />}
             >
-              {loading ? "注册中..." : "注册"}
-            </button>
+              {loading ? "注册中..." : "开始成长之旅"}
+            </Button>
           </form>
 
-          <p className="text-center text-body-sm text-on-surface-variant mt-6">
+          <p className="text-center text-body-sm text-ink-muted mt-8">
             已有账号？{" "}
-            <Link href="/login" className="text-primary font-bold hover:underline">
+            <Link
+              href="/login"
+              className="text-primary font-semibold hover:underline underline-offset-2"
+            >
               登录
             </Link>
           </p>

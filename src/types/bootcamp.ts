@@ -38,6 +38,10 @@ export interface AIEvaluation {
   strengths: string[];
   gaps: string[];
   suggestions: string[];
+  thinking_framework?: string[];
+  example_answer?: string;
+  improved_answer?: string;
+  next_practice?: string;
 }
 
 export interface InterviewQuestion {

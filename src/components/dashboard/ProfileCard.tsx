@@ -1,37 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import {
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-} from "recharts";
-
-/* ------------------------------------------------------------------ */
-/*  Constants
-/* ------------------------------------------------------------------ */
-
-const DIM_LABELS: Record<string, string> = {
-  "战略思维": "战略思维",
-  "系统设计能力": "系统设计",
-  "数据决策能力": "数据决策",
-  "用户洞察与需求管理": "用户洞察",
-  "商业思维": "商业思维",
-};
-
-const GRADE_COLORS: Record<string, string> = {
-  A: "bg-green-100 text-green-800",
-  B: "bg-blue-100 text-blue-800",
-  C: "bg-yellow-100 text-yellow-800",
-  D: "bg-red-100 text-red-800",
-};
-
-/* ------------------------------------------------------------------ */
-/*  Component
-/* ------------------------------------------------------------------ */
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DIMENSION_COLORS, getDimensionShortLabel } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { Brain, ArrowRight, AlertTriangle, Target } from "lucide-react";
 
 interface ProfileData {
   dimensions: { name: string; score: number; grade: string }[];
@@ -40,104 +15,118 @@ interface ProfileData {
 
 interface Props {
   profile: ProfileData | null;
+  className?: string;
 }
 
-export default function ProfileCard({ profile }: Props) {
-  // ---------- Empty state ----------
+export default function ProfileCard({ profile, className }: Props) {
   if (!profile) {
     return (
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center min-h-[320px]">
-        <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-3">
-          psychology
-        </span>
-        <h3 className="text-headline-md font-bold text-on-surface mb-2">能力画像</h3>
-        <p className="text-body-sm text-on-surface-variant mb-6 text-center">
-          完成 AI 诊断，了解你的产品能力水平
-        </p>
-        <Link
-          href="/diagnosis/scale"
-          className="bg-primary text-on-primary px-6 py-3 rounded-xl text-body-md font-bold hover:opacity-90 transition-all flex items-center gap-2"
-        >
-          开始诊断
-          <span className="material-symbols-outlined">arrow_forward</span>
+      <Card
+        className={cn("flex min-h-[280px] flex-col justify-between", className)}
+      >
+        <div>
+          <div className="mb-4 flex items-center gap-2.5">
+            <Brain className="h-5 w-5 text-primary" strokeWidth={1.5} />
+            <h3 className="text-heading-md font-semibold text-ink">能力画像</h3>
+          </div>
+          <div className="rounded-xl border border-dashed border-line-strong bg-surface px-4 py-5">
+            <p className="text-body-sm font-semibold text-ink">
+              还没有可用画像
+            </p>
+            <p className="mt-1 text-body-sm text-ink-muted">
+              完成一次三阶段诊断后，这里会展示 5 个产品能力维度、等级和优先补强项。
+            </p>
+          </div>
+        </div>
+        <Link href="/diagnosis/scale" className="mt-4">
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<ArrowRight className="h-4 w-4" />}
+          >
+            开始诊断
+          </Button>
         </Link>
-      </div>
+      </Card>
     );
   }
 
-  // ---------- Data ----------
-  const radarData = profile.dimensions.map((d) => ({
-    dimension: DIM_LABELS[d.name] || d.name,
-    score: d.score,
-    fullMark: 100,
-  }));
+  const sortedDimensions = [...profile.dimensions].sort(
+    (a, b) => a.score - b.score
+  );
+  const weakest = sortedDimensions[0];
+  const averageScore =
+    profile.dimensions.length > 0
+      ? Math.round(
+          profile.dimensions.reduce((sum, d) => sum + d.score, 0) /
+            profile.dimensions.length
+        )
+      : 0;
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
-      {/* Title */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="material-symbols-outlined text-primary">radar</span>
-        <h3 className="text-headline-md font-bold text-on-surface">能力画像</h3>
+    <Card className={cn("min-h-[320px]", className)}>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Brain className="h-5 w-5 text-primary" strokeWidth={1.5} />
+          <h3 className="text-heading-md font-semibold text-ink">能力画像</h3>
+        </div>
+        <div className="rounded-lg bg-primary-soft px-3 py-1.5 text-right">
+          <p className="font-mono text-data-md font-bold text-primary">
+            {averageScore}
+          </p>
+          <p className="text-label font-semibold text-primary">均分</p>
+        </div>
       </div>
 
-      {/* Radar Chart (0-100) */}
-      <div className="h-[220px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-            <PolarGrid stroke="#e5e7eb" />
-            <PolarAngleAxis
-              dataKey="dimension"
-              tick={{ fill: "#6b7280", fontSize: 12 }}
-            />
-            <PolarRadiusAxis
-              angle={90}
-              domain={[0, 100]}
-              tick={false}
-              axisLine={false}
-            />
-            <Radar
-              name="能力评分"
-              dataKey="score"
-              stroke="#2a14b4"
-              fill="#2a14b4"
-              fillOpacity={0.15}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Dimension list with scores & grades */}
-      <div className="mt-4 space-y-2">
-        {profile.dimensions.map((d) => {
-          const isWeak = profile.weaknesses.includes(d.name);
-          return (
-            <div key={d.name} className="flex items-center gap-2">
-              <span className="text-body-sm text-on-surface w-16 shrink-0 truncate">
-                {DIM_LABELS[d.name] || d.name}
+      {weakest && (
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-warning-soft bg-warning-soft/45 px-3 py-2.5">
+          <Target className="h-4 w-4 shrink-0 text-warning" strokeWidth={1.5} />
+          <div className="min-w-0">
+            <p className="text-label font-semibold text-warning">优先补强</p>
+            <p className="truncate text-body-sm font-semibold text-ink">
+              {getDimensionShortLabel(weakest.name) || weakest.name}
+              <span className="ml-2 font-mono text-ink-muted">
+                {weakest.score}分
               </span>
-              <div className="flex-1 h-1.5 bg-surface-container rounded-full overflow-hidden">
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2.5">
+        {sortedDimensions.map((d) => {
+          const isWeak = profile.weaknesses.includes(d.name);
+          const color = DIMENSION_COLORS[d.name] || "#4338CA";
+
+          return (
+            <div key = {d.name} className="rounded-lg bg-surface px-3 py-2">
+              <div className="mb-1.5 flex items-center gap-2.5">
+                <span className="min-w-0 flex-1 truncate text-body-sm font-semibold text-ink">
+                  {getDimensionShortLabel(d.name) || d.name}
+                </span>
+                {isWeak && (
+                  <AlertTriangle
+                    className="h-3.5 w-3.5 shrink-0 text-danger"
+                    strokeWidth={1.5}
+                  />
+                )}
+                <span className="w-9 text-right font-mono text-body-sm text-ink-muted">
+                  {d.score}
+                </span>
+                <Badge grade={d.grade as "A" | "B" | "C" | "D"}>
+                  {d.grade}
+                </Badge>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-line">
                 <div
-                  className="h-full bg-primary rounded-full transition-all"
-                  style={{ width: `${d.score}%` }}
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${d.score}%`, backgroundColor: color }}
                 />
               </div>
-              <span
-                className={`text-label-bold px-2 py-0.5 rounded-full ${GRADE_COLORS[d.grade] || "bg-gray-100 text-gray-700"}`}
-              >
-                {d.grade}
-              </span>
-              {isWeak && (
-                <span
-                  className="material-symbols-outlined text-sm text-red-500"
-                  title="薄弱项"
-                >
-                  warning
-                </span>
-              )}
             </div>
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }

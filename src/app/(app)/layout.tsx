@@ -1,27 +1,26 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import Sidebar from "@/components/Sidebar";
+import TopNav from "@/components/TopNav";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isPublicPreview = pathname === "/training/cases";
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.replace("/login");
-      }
+    if (!loading && !user && !isPublicPreview) {
+      router.replace("/login");
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isPublicPreview]);
 
-  // 不阻塞渲染，直接显示页面
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="ml-[280px] flex-1 min-h-screen">{children}</main>
+    <div className="min-h-[100dvh] bg-bg">
+      <TopNav />
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

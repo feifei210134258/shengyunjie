@@ -1,130 +1,156 @@
 "use client";
 
 import Link from "next/link";
-
-/* ------------------------------------------------------------------ */
-/*  Constants
-/* ------------------------------------------------------------------ */
-
-const GRADE_COLORS: Record<string, string> = {
-  A: "bg-green-100 text-green-800",
-  B: "bg-blue-100 text-blue-800",
-  C: "bg-yellow-100 text-yellow-800",
-  D: "bg-red-100 text-red-800",
-};
-
-/* ------------------------------------------------------------------ */
-/*  Component
-/* ------------------------------------------------------------------ */
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { getDimensionShortLabel } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { ArrowRight, ClipboardList, FileText, Lightbulb } from "lucide-react";
 
 interface ReportData {
   id: string;
   completed_at: string;
-  overall_score: number;
-  overall_grade: string;
+  overall_score: number | null;
+  overall_grade: string | null;
   strengths: string[];
   weaknesses: string[];
 }
 
 interface Props {
   report: ReportData | null;
+  focusAreas?: string[];
+  className?: string;
 }
 
-export default function LatestReport({ report }: Props) {
+function takeTop(items: string[], count: number) {
+  return items.filter(Boolean).slice(0, count);
+}
+
+function DimensionBadge({
+  item,
+  variant,
+}: {
+  item: string;
+  variant: "success" | "warning" | "error";
+}) {
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col">
-      {/* Title */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="material-symbols-outlined text-primary">description</span>
-        <h3 className="text-headline-md font-bold text-on-surface">最近诊断</h3>
+    <Badge variant={variant}>
+      {getDimensionShortLabel(item) || item}
+    </Badge>
+  );
+}
+
+export default function LatestReport({
+  report,
+  focusAreas = [],
+  className,
+}: Props) {
+  const focusList = takeTop(focusAreas.length > 0 ? focusAreas : report?.weaknesses ?? [], 3);
+  const strengths = takeTop(report?.strengths ?? [], 2);
+  const reportWeaknesses = takeTop(report?.weaknesses ?? [], 3);
+
+  return (
+    <Card className={cn("flex min-h-[320px] flex-col", className)}>
+      <div className="mb-4 flex items-center gap-2.5">
+        <FileText className="h-5 w-5 text-primary" strokeWidth={1.5} />
+        <h3 className="text-heading-md font-semibold text-ink">最近诊断</h3>
       </div>
 
       {!report ? (
-        /* Empty state */
-        <div className="flex flex-col items-center justify-center flex-1">
-          <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-3">
-            clinical_notes
-          </span>
-          <p className="text-body-sm text-on-surface-variant mb-4">暂无诊断报告</p>
-          <Link
-            href="/diagnosis/scale"
-            className="text-primary text-label-bold hover:underline flex items-center gap-1"
-          >
-            开始诊断
-            <span className="material-symbols-outlined text-sm">arrow_forward</span>
-          </Link>
+        <div className="flex flex-1 flex-col">
+          <div className="rounded-xl border border-dashed border-line-strong bg-surface px-4 py-5">
+            <ClipboardList
+              className="mb-3 h-5 w-5 text-ink-faint"
+              strokeWidth={1.5}
+            />
+            <p className="text-body-sm font-semibold text-ink">暂无诊断报告</p>
+            <p className="mt-1 text-body-sm text-ink-muted">
+              先完成一次诊断，首页会把你的短板和训练方向自动收拢到这里。
+            </p>
+          </div>
+          <p className="mt-4 text-body-sm text-ink-muted">
+            入口已放在页面顶部的主行动里，这里只保留诊断状态。
+          </p>
         </div>
       ) : (
-        /* Has report */
-        <>
-          {/* Score + Grade */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-headline-lg font-bold text-on-surface">
-                {report.overall_score}
-                <span className="text-body-md font-normal text-on-surface-variant">
-                  {" "}分
-                </span>
-              </p>
-              <p className="text-body-sm text-on-surface-variant">
-                {new Date(report.completed_at).toLocaleDateString("zh-CN")}
-              </p>
+        <div className="flex flex-1 flex-col">
+          <div className="mb-4 rounded-xl bg-surface px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-data-lg font-bold text-ink">
+                  {report.overall_score ?? "-"}
+                  {report.overall_score != null && (
+                    <span className="ml-1 text-body-md font-normal text-ink-muted">
+                      分
+                    </span>
+                  )}
+                </p>
+                <p className="text-body-sm text-ink-muted">
+                  {new Date(report.completed_at).toLocaleDateString("zh-CN")}
+                </p>
+              </div>
+              {report.overall_grade && (
+                <Badge grade={report.overall_grade as "A" | "B" | "C" | "D"}>
+                  {report.overall_grade}
+                </Badge>
+              )}
             </div>
-            <span
-              className={`text-headline-md font-bold px-3 py-1 rounded-full ${GRADE_COLORS[report.overall_grade] || "bg-gray-100 text-gray-700"}`}
-            >
-              {report.overall_grade}
-            </span>
           </div>
 
-          {/* Strengths */}
-          {report.strengths.length > 0 && (
+          {focusList.length > 0 && (
+            <div className="mb-4 rounded-xl border border-warning-soft bg-warning-soft/40 px-3 py-3">
+              <div className="mb-2 flex items-center gap-2">
+                <Lightbulb
+                  className="h-4 w-4 text-warning"
+                  strokeWidth={1.5}
+                />
+                <p className="text-label font-semibold text-warning">
+                  下一步建议
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {focusList.map((item) => (
+                  <DimensionBadge key={item} item={item} variant="warning" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {strengths.length > 0 && (
             <div className="mb-3">
-              <p className="text-label-bold text-on-surface-variant mb-1.5">
+              <p className="mb-1.5 text-label font-semibold text-ink-muted">
                 优势能力
               </p>
-              <div className="flex flex-wrap gap-1">
-                {report.strengths.map((s) => (
-                  <span
-                    key={s}
-                    className="text-body-sm px-2 py-0.5 bg-green-50 text-green-700 rounded-md"
-                  >
-                    {s}
-                  </span>
+              <div className="flex flex-wrap gap-1.5">
+                {strengths.map((item) => (
+                  <DimensionBadge key={item} item={item} variant="success" />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Weaknesses */}
-          {report.weaknesses.length > 0 && (
+          {reportWeaknesses.length > 0 && (
             <div className="mb-4">
-              <p className="text-label-bold text-on-surface-variant mb-1.5">
+              <p className="mb-1.5 text-label font-semibold text-ink-muted">
                 待提升
               </p>
-              <div className="flex flex-wrap gap-1">
-                {report.weaknesses.map((w) => (
-                  <span
-                    key={w}
-                    className="text-body-sm px-2 py-0.5 bg-red-50 text-red-700 rounded-md"
-                  >
-                    {w}
-                  </span>
+              <div className="flex flex-wrap gap-1.5">
+                {reportWeaknesses.map((item) => (
+                  <DimensionBadge key={item} item={item} variant="error" />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Action */}
           <Link
-            href="/diagnosis/report"
-            className="mt-auto bg-primary text-on-primary text-center px-6 py-2.5 rounded-xl text-body-md font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
+            href={`/diagnosis/report?reportId=${encodeURIComponent(report.id)}`}
+            className="mt-auto inline-flex items-center gap-1.5 text-body-sm font-semibold text-primary transition-colors hover:text-primary-hover"
           >
             查看完整报告
-            <span className="material-symbols-outlined">open_in_new</span>
+            <ArrowRight className="h-4 w-4" />
           </Link>
-        </>
+        </div>
       )}
-    </div>
+    </Card>
   );
 }

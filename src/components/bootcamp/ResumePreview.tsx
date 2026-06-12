@@ -10,38 +10,36 @@ interface Props {
 }
 
 export default function ResumePreview({ profile, rawMarkdown }: Props) {
-  // 如果有原始 Markdown，优先用 react-markdown 渲染
   if (rawMarkdown) {
     return (
-      <div className="bg-surface-container p-6 rounded-xl">
-        <div className="prose prose-sm max-w-none dark:prose-invert">
+      <div className="rounded-xl bg-surface p-6">
+        <div className="markdown-content">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{rawMarkdown}</ReactMarkdown>
         </div>
       </div>
     );
   }
 
-  // 否则用结构化展示
   return (
     <div className="space-y-6">
-      {/* 工作经历 */}
+      {/* Work experience */}
       <section>
-        <h3 className="text-title-md font-bold text-on-surface mb-3">工作经历</h3>
+        <h3 className="text-heading-md font-semibold text-ink mb-3">工作经历</h3>
         <div className="space-y-3">
           {profile.work_experience?.map((work, idx) => (
-            <div key={idx} className="bg-surface-container p-4 rounded-lg">
+            <div key={idx} className="bg-surface p-4 rounded-xl">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-label-bold text-on-surface">{work.company}</p>
-                  <p className="text-body-sm text-on-surface-variant">{work.title}</p>
+                  <p className="font-semibold text-ink">{work.company}</p>
+                  <p className="text-body-sm text-ink-muted">{work.title}</p>
                 </div>
-                <span className="text-label-sm text-on-surface-variant">{work.duration}</span>
+                <span className="text-label text-ink-faint">{work.duration}</span>
               </div>
               <ul className="mt-2 space-y-1">
                 {work.highlights?.map((h, i) => (
                   <li
                     key={i}
-                    className="text-body-sm text-on-surface-variant flex items-start gap-2"
+                    className="text-body-sm text-ink-muted flex items-start gap-2"
                   >
                     <span className="text-primary mt-1">•</span>
                     {h}
@@ -53,30 +51,30 @@ export default function ResumePreview({ profile, rawMarkdown }: Props) {
         </div>
       </section>
 
-      {/* 项目经历 */}
+      {/* Projects */}
       <section>
-        <h3 className="text-title-md font-bold text-on-surface mb-3">项目经历</h3>
+        <h3 className="text-heading-md font-semibold text-ink mb-3">项目经历</h3>
         <div className="space-y-3">
           {profile.projects?.map((project, idx) => (
-            <div key={idx} className="bg-surface-container p-4 rounded-lg">
-              <p className="font-label-bold text-on-surface">{project.name}</p>
-              <p className="text-body-sm text-on-surface-variant mt-1">
+            <div key={idx} className="bg-surface p-4 rounded-xl">
+              <p className="font-semibold text-ink">{project.name}</p>
+              <p className="text-body-sm text-ink-muted mt-1">
                 {project.description}
               </p>
-              <p className="text-label-sm text-primary mt-2">角色：{project.role}</p>
+              <p className="text-label text-primary mt-2">角色：{project.role}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 技能栈 */}
+      {/* Skills */}
       <section>
-        <h3 className="text-title-md font-bold text-on-surface mb-3">技能栈</h3>
+        <h3 className="text-heading-md font-semibold text-ink mb-3">技能栈</h3>
         <div className="flex flex-wrap gap-2">
           {profile.skills?.map((skill, idx) => (
             <span
               key={idx}
-              className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-sm"
+              className="px-3 py-1 bg-secondary-soft text-secondary rounded-lg text-label font-medium"
             >
               {skill}
             </span>

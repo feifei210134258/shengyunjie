@@ -4,6 +4,13 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { PageSpinner } from "@/components/ui/spinner";
+import TrainingEvaluationPanel from "@/components/training/TrainingEvaluationPanel";
+import { normalizeTrainingEvaluation } from "@/lib/training/personalization";
+import { Sparkles, Activity, Lightbulb, BookOpen, FileCheck2, Target } from "lucide-react";
 
 export default function HistoryDetailPage() {
   const params = useParams();
@@ -24,107 +31,222 @@ export default function HistoryDetailPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span className="animate-spin w-8 h-8 border-3 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (!record) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-on-surface-variant">
-        记录不存在或无权查看
-      </div>
+      <>
+        <PageHeader title="训练记录" backHref="/training" />
+        <div className="min-h-[60vh] flex items-center justify-center text-ink-muted">
+          记录不存在或无权查看
+        </div>
+      </>
     );
   }
 
+  const hasStructuredEvaluation =
+    record.ai_feedback?.overall_score != null || record.ai_feedback?.scores;
+  const evaluation = hasStructuredEvaluation
+    ? normalizeTrainingEvaluation(record.ai_feedback)
+    : null;
   const analysis = record.ai_feedback?.analysis || "";
-  const score = record.score ? Math.round(record.score / 10) : 0;
+  const score = record.score ? Math.round((record.score / 10) * 10) / 10 : 0;
+  const isCaseSimulation = record.ai_feedback?.source === "case_simulation";
+  const sourceLabel = isCaseSimulation ? "案例推演" : "日常训练";
+  const productName = record.ai_feedback?.product;
 
-  // 解析诊断和建议
   const extractSections = (text: string) => {
-    const diagnosisMatch = text.match(/#{1,2}\s*诊断[\s\S]*?(?=#{1,2}\s*建议|$)/i);
-    const suggestionMatch = text.match(/#{1,2}\s*建议[\s\S]*?(?=#{1,2}|$)/i);
+    const diagnosisMatch = text.match(
+      /#{1,2}\s*诊断[\s\S]*?(?=#{1,2}\s*建议|$)/i
+    );
+    const suggestionMatch = text.match(
+      /#{1,2}\s*建议[\s\S]*?(?=#{1,2}|$)/i
+    );
     return {
-      diagnosis: diagnosisMatch ? diagnosisMatch[0].replace(/^#{1,2}\s*诊断\s*/, "").trim() : text,
-      suggestion: suggestionMatch ? suggestionMatch[0].replace(/^#{1,2}\s*建议\s*/, "").trim() : "",
+      diagnosis: diagnosisMatch
+        ? diagnosisMatch[0].replace(/^#{1,2}\s*诊断\s*/, "").trim()
+        : text,
+      suggestion: suggestionMatch
+        ? suggestionMatch[0].replace(/^#{1,2}\s*建议\s*/, "").trim()
+        : "",
     };
   };
 
   const sections = extractSections(analysis);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-[1040px] mx-auto py-8 px-6">
-        <div className="max-w-3xl mx-auto space-y-6">
-          {/* 标题 */}
-          <div className="flex items-center gap-3">
-            <span className="px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant font-label-bold text-xs rounded uppercase">
-              {record.dimension}
-            </span>
-            {score > 0 && (
-              <span className="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant font-label-bold text-xs rounded uppercase">
-                评分：{score}/10
-              </span>
-            )}
-            <span className="text-body-sm text-on-surface-variant">
-              {new Date(record.created_at).toLocaleDateString("zh-CN")}
-            </span>
-          </div>
+    <>
+      <PageHeader
+        title="复盘归档"
+        subtitle="把一次作答沉淀成可复用的判断框架"
+        backHref="/training"
+      />
 
-          {/* 题目 */}
-          <div className="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl">
-            <h3 className="text-label-bold text-on-surface-variant mb-3">题目</h3>
-            <div className="text-base text-on-surface leading-snug">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{record.question_scenario}</ReactMarkdown>
+      <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+        <section className="mb-6 rounded-xl border border-line bg-surface-raised px-5 py-4 shadow-xs">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Badge>{sourceLabel}</Badge>
+                <Badge variant="neutral">{record.dimension}</Badge>
+                {productName && <Badge variant="outline">{productName}</Badge>}
+                {score > 0 && <Badge variant="success">评分：{score}/10</Badge>}
+              </div>
+              <h1 className="line-clamp-2 text-heading-lg font-bold text-ink">
+                {record.ai_feedback?.scenario_title ||
+                  record.question_scenario.replace(/\n/g, " ").slice(0, 82)}
+              </h1>
+              <p className="mt-2 text-body-sm text-ink-muted">
+                {new Date(record.created_at).toLocaleString("zh-CN")}
+              </p>
+            </div>
+            <div className="grid min-w-[280px] grid-cols-3 gap-2">
+              <div className="rounded-lg bg-surface px-3 py-2">
+                <p className="text-label font-bold text-ink-muted">来源</p>
+                <p className="mt-1 text-body-sm font-semibold text-ink">
+                  {sourceLabel}
+                </p>
+              </div>
+              <div className="rounded-lg bg-surface px-3 py-2">
+                <p className="text-label font-bold text-ink-muted">难度</p>
+                <p className="mt-1 font-mono text-body-sm font-bold text-ink">
+                  {record.difficulty || 3}/5
+                </p>
+              </div>
+              <div className="rounded-lg bg-surface px-3 py-2">
+                <p className="text-label font-bold text-ink-muted">评分</p>
+                <p className="mt-1 font-mono text-body-sm font-bold text-ink">
+                  {score || "-"}
+                </p>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* 用户答案 */}
-          <div className="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl">
-            <h3 className="text-label-bold text-on-surface-variant mb-3">你的回答</h3>
-            <div className="text-sm text-on-surface leading-snug whitespace-pre-wrap">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="space-y-6">
+          {/* Question */}
+          <Card size="md">
+            <div className="mb-3 flex items-center gap-2 text-label font-bold text-ink-muted">
+              <BookOpen className="h-4 w-4 text-primary" />
+              题目
+            </div>
+            <div className="text-body-md text-ink leading-relaxed">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {record.question_scenario}
+              </ReactMarkdown>
+            </div>
+          </Card>
+
+          {/* User answer */}
+          <Card size="md">
+            <div className="mb-3 flex items-center gap-2 text-label font-bold text-ink-muted">
+              <FileCheck2 className="h-4 w-4 text-secondary" />
+              你的回答
+            </div>
+            <div className="text-body-md text-ink leading-relaxed whitespace-pre-wrap">
               {record.user_answer}
             </div>
+          </Card>
           </div>
 
-          {/* AI 分析 */}
-          {analysis && (
-            <div className="bg-surface-container-lowest border border-primary/20 rounded-xl p-6 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary" />
-              <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-primary text-xl">auto_awesome</span>
-                <div className="text-sm text-on-surface font-bold">AI 深度解析</div>
-              </div>
-
-              {sections.diagnosis && (
-                <section className="mb-4">
-                  <div className="text-sm text-on-surface flex items-center gap-2 mb-2">
-                    <span className="material-symbols-outlined text-primary text-[20px]">analytics</span>
-                    诊断
-                  </div>
-                  <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant/30">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{sections.diagnosis}</ReactMarkdown>
-                  </div>
-                </section>
-              )}
-
-              {sections.suggestion && (
-                <section>
-                  <div className="text-sm text-on-surface flex items-center gap-2 mb-2">
-                    <span className="material-symbols-outlined text-primary text-[20px]">lightbulb</span>
-                    建议
-                  </div>
-                  <div className="bg-primary-fixed/20 rounded-lg p-4 border border-primary-fixed/40">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{sections.suggestion}</ReactMarkdown>
-                  </div>
-                </section>
-              )}
+          {/* AI analysis */}
+          <div className="space-y-6">
+          {evaluation && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Card size="sm" className="bg-primary-soft">
+                <p className="text-label font-bold text-primary">下一步</p>
+                <p className="mt-2 line-clamp-3 text-body-sm text-ink">
+                  {evaluation.next_practice}
+                </p>
+              </Card>
+              <Card size="sm">
+                <p className="text-label font-bold text-ink-muted">最该补</p>
+                <p className="mt-2 line-clamp-3 text-body-sm text-ink">
+                  {evaluation.gaps[0]}
+                </p>
+              </Card>
+              <Card size="sm">
+                <p className="text-label font-bold text-ink-muted">可复用框架</p>
+                <p className="mt-2 line-clamp-3 text-body-sm text-ink">
+                  {evaluation.thinking_framework[0]}
+                </p>
+              </Card>
             </div>
           )}
+
+          {(analysis || evaluation) && (
+            <Card size="md" className="relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary" />
+              <div className="flex items-center gap-2 mb-4 pt-1">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <span className="text-body-md font-bold text-ink">
+                  AI 深度解析
+                </span>
+              </div>
+
+              {evaluation ? (
+                <TrainingEvaluationPanel evaluation={evaluation} />
+              ) : (
+                <>
+                  {sections.diagnosis && (
+                    <section className="mb-4">
+                      <div className="text-body-sm text-ink flex items-center gap-2 mb-2">
+                        <Activity className="w-4 h-4 text-primary" />
+                        诊断
+                      </div>
+                      <div className="bg-surface rounded-xl p-4 border border-line">
+                        <div className="markdown-content text-body-sm">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {sections.diagnosis}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+
+                  {sections.suggestion && (
+                    <section>
+                      <div className="text-body-sm text-ink flex items-center gap-2 mb-2">
+                        <Lightbulb className="w-4 h-4 text-primary" />
+                        建议
+                      </div>
+                      <div className="bg-primary-soft rounded-xl p-4 border border-primary-muted">
+                        <div className="markdown-content text-body-sm">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {sections.suggestion}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+                </>
+              )}
+            </Card>
+          )}
+
+          {record.ai_feedback?.hidden_risks?.length > 0 && (
+            <Card size="md">
+              <div className="mb-3 flex items-center gap-2 text-label font-bold text-ink-muted">
+                <Target className="h-4 w-4 text-warning" />
+                案例推演隐藏风险
+              </div>
+              <div className="space-y-2">
+                {record.ai_feedback.hidden_risks.map((risk: string) => (
+                  <p
+                    key={risk}
+                    className="rounded-lg bg-warning-soft px-3 py-2 text-body-sm text-ink"
+                  >
+                    {risk}
+                  </p>
+                ))}
+              </div>
+            </Card>
+          )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

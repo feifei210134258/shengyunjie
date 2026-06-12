@@ -1,0 +1,14 @@
+workflow: tweak
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+base_ref: 68bfd072931017491a7c00a7091569566a15e37e
+design_doc: null
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2025-05-31-resume-markdown-verify.md
+branch_status: handled
+created_at: 2026-05-31
+verified_at: 2026-05-31
+archived: true

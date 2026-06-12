@@ -1,68 +1,204 @@
 "use client";
 
 import { AIEvaluation } from "@/types/bootcamp";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import {
+  ArrowRight,
+  Check,
+  Lightbulb,
+  MessageSquare,
+  PenLine,
+  Target,
+  X,
+} from "lucide-react";
 
 interface Props {
   evaluation: AIEvaluation;
+  onRegenerate?: () => void;
+  isRegenerating?: boolean;
 }
 
-export default function AnswerEvaluation({ evaluation }: Props) {
+export default function AnswerEvaluation({
+  evaluation,
+  onRegenerate,
+  isRegenerating = false,
+}: Props) {
   const dimensions = [
     { key: "structure", label: "结构化", score: evaluation.structure },
     { key: "logic", label: "逻辑性", score: evaluation.logic },
-    { key: "professionalism", label: "专业度", score: evaluation.professionalism },
+    {
+      key: "professionalism",
+      label: "专业度",
+      score: evaluation.professionalism,
+    },
     { key: "innovation", label: "创新性", score: evaluation.innovation },
   ];
 
   const getScoreColor = (score: number) => {
     if (score >= 8) return "text-success";
     if (score >= 6) return "text-warning";
-    return "text-error";
+    return "text-danger";
   };
 
+  const formatScore = (score: number) =>
+    Number.isFinite(score) ? score.toFixed(1).replace(/\.0$/, "") : "-";
+  const cleanListItem = (item: string) =>
+    String(item || "")
+      .trim()
+      .replace(/^\d+[.、]\s*/, "");
+  const isIncomplete =
+    !Number.isFinite(evaluation.overall_score) ||
+    !evaluation.feedback ||
+    !evaluation.thinking_framework?.length ||
+    !evaluation.example_answer;
+
   return (
-    <div className="bg-surface-container p-6 rounded-xl space-y-6">
-      {/* 总分 */}
-      <div className="text-center">
-        <div
-          className={`text-display-lg font-bold ${getScoreColor(evaluation.overall_score)}`}
-        >
-          {evaluation.overall_score}
+    <Card variant="subtle" size="md" className="space-y-6">
+      {isIncomplete && onRegenerate && (
+        <div className="rounded-xl border border-warning/30 bg-warning-soft p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h4 className="font-semibold text-ink">这条反馈内容不完整</h4>
+              <p className="mt-1 text-body-sm text-ink-muted">
+                这是旧版评分留下的空结果，可以基于你的原回答重新生成一版带思路和示例的教练反馈。
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onRegenerate}
+              disabled={isRegenerating}
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-4 py-2 text-body-sm font-semibold text-white transition-all hover:bg-primary-hover disabled:pointer-events-none disabled:opacity-40"
+            >
+              {isRegenerating ? "正在重新生成..." : "重新生成反馈"}
+            </button>
+          </div>
         </div>
-        <p className="text-body-sm text-on-surface-variant">综合评分 / 10</p>
+      )}
+
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-label font-semibold uppercase text-primary">
+            AI 面试教练反馈
+          </p>
+          <h3 className="mt-2 text-heading-lg font-semibold text-ink">
+            先补证据链，再升级表达
+          </h3>
+          <p className="mt-2 text-body-md leading-relaxed text-ink-muted">
+            {evaluation.feedback}
+          </p>
+          {!isIncomplete && onRegenerate && (
+            <button
+              type="button"
+              onClick={onRegenerate}
+              disabled={isRegenerating}
+              className="mt-3 inline-flex items-center rounded-lg border border-line-strong px-3 py-1.5 text-label font-semibold text-ink-muted transition-colors hover:bg-surface-raised hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+            >
+              {isRegenerating ? "正在重新生成..." : "重新生成反馈"}
+            </button>
+          )}
+        </div>
+        <div className="shrink-0 rounded-xl border border-line bg-surface-raised px-5 py-4 text-center">
+          <div
+            className={cn(
+              "text-display-md font-bold",
+              getScoreColor(evaluation.overall_score)
+            )}
+          >
+            {formatScore(evaluation.overall_score)}
+          </div>
+          <p className="text-label font-semibold text-ink-muted">
+            综合评分 / 10
+          </p>
+        </div>
       </div>
 
-      {/* 维度拆解 */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {dimensions.map((dim) => (
-          <div key={dim.key} className="bg-surface p-3 rounded-lg text-center">
+          <div
+            key={dim.key}
+            className="rounded-lg border border-line bg-surface-raised p-3"
+          >
             <div
-              className={`text-headline-sm font-bold ${getScoreColor(dim.score)}`}
+              className={cn(
+                "font-mono text-data-md font-bold",
+                getScoreColor(dim.score)
+              )}
             >
-              {dim.score}
+              {formatScore(dim.score)}
             </div>
-            <p className="text-label-sm text-on-surface-variant">{dim.label}</p>
+            <p className="mt-1 text-label font-semibold text-ink-muted">
+              {dim.label}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* 评价反馈 */}
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-label-bold text-on-surface mb-2">总体评价</h4>
-          <p className="text-body-md text-on-surface-variant">{evaluation.feedback}</p>
-        </div>
+      {evaluation.thinking_framework?.length ? (
+        <section className="rounded-xl border border-primary/15 bg-primary-soft p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-primary" strokeWidth={1.8} />
+            <h4 className="font-semibold text-primary">这道题建议这样答</h4>
+          </div>
+          <ol className="space-y-2">
+            {evaluation.thinking_framework.map((item, idx) => (
+              <li
+                key={idx}
+                className="grid grid-cols-[1.5rem_1fr] gap-2 text-body-sm leading-relaxed text-ink-muted"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-label font-semibold text-white">
+                  {idx + 1}
+                </span>
+                <span>{cleanListItem(item)}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
 
+      <div className="grid gap-4 lg:grid-cols-2">
+        {evaluation.example_answer && (
+          <section className="rounded-xl border border-line bg-surface-raised p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <MessageSquare
+                className="h-4 w-4 text-primary"
+                strokeWidth={1.8}
+              />
+              <h4 className="font-semibold text-ink">示例回答</h4>
+            </div>
+            <p className="text-body-sm leading-relaxed text-ink-muted">
+              {evaluation.example_answer}
+            </p>
+          </section>
+        )}
+
+        {evaluation.improved_answer && (
+          <section className="rounded-xl border border-line bg-surface-raised p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <PenLine className="h-4 w-4 text-primary" strokeWidth={1.8} />
+              <h4 className="font-semibold text-ink">把你的回答改成这样</h4>
+            </div>
+            <p className="text-body-sm leading-relaxed text-ink-muted">
+              {evaluation.improved_answer}
+            </p>
+          </section>
+        )}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
         {evaluation.strengths?.length > 0 && (
           <div>
-            <h4 className="font-label-bold text-success mb-2">亮点</h4>
+            <h4 className="font-semibold text-success mb-2">亮点</h4>
             <ul className="space-y-1">
               {evaluation.strengths.map((s, idx) => (
                 <li
                   key={idx}
-                  className="text-body-sm text-on-surface-variant flex items-start gap-2"
+                  className="text-body-sm text-ink-muted flex items-start gap-2"
                 >
-                  <span className="text-success mt-1">✓</span>
+                  <Check
+                    className="mt-0.5 h-4 w-4 shrink-0 text-success"
+                    strokeWidth={1.8}
+                  />
                   {s}
                 </li>
               ))}
@@ -72,38 +208,59 @@ export default function AnswerEvaluation({ evaluation }: Props) {
 
         {evaluation.gaps?.length > 0 && (
           <div>
-            <h4 className="font-label-bold text-error mb-2">不足</h4>
+            <h4 className="font-semibold text-danger mb-2">不足</h4>
             <ul className="space-y-1">
               {evaluation.gaps.map((g, idx) => (
                 <li
                   key={idx}
-                  className="text-body-sm text-on-surface-variant flex items-start gap-2"
+                  className="text-body-sm text-ink-muted flex items-start gap-2"
                 >
-                  <span className="text-error mt-1">✗</span>
+                  <X
+                    className="mt-0.5 h-4 w-4 shrink-0 text-danger"
+                    strokeWidth={1.8}
+                  />
                   {g}
                 </li>
               ))}
             </ul>
           </div>
         )}
-
-        {evaluation.suggestions?.length > 0 && (
-          <div className="bg-primary-container p-4 rounded-lg">
-            <h4 className="font-label-bold text-on-primary-container mb-2">改进建议</h4>
-            <ul className="space-y-1">
-              {evaluation.suggestions.map((s, idx) => (
-                <li
-                  key={idx}
-                  className="text-body-sm text-on-primary-container flex items-start gap-2"
-                >
-                  <span className="mt-1">→</span>
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
-    </div>
+
+      {evaluation.suggestions?.length > 0 && (
+        <section className="rounded-xl border border-line bg-surface-raised p-4">
+          <h4 className="font-semibold text-ink mb-2">下一轮立刻这样改</h4>
+          <ul className="space-y-2">
+            {evaluation.suggestions.map((s, idx) => (
+              <li
+                key={idx}
+                className="text-body-sm text-ink-muted flex items-start gap-2"
+              >
+                <ArrowRight
+                  className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                  strokeWidth={1.8}
+                />
+                {s}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {evaluation.next_practice && (
+        <section className="flex items-start gap-3 rounded-xl border border-line bg-surface-raised p-4">
+          <Target
+            className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+            strokeWidth={1.8}
+          />
+          <div>
+            <h4 className="font-semibold text-ink">下一题前练什么</h4>
+            <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+              {evaluation.next_practice}
+            </p>
+          </div>
+        </section>
+      )}
+    </Card>
   );
 }
