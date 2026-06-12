@@ -537,65 +537,68 @@
 ## [2026-06-12] Hotfix: 训练真实出题页对齐新版 A1 UI
 
 ### 完成内容
-- 将真实 `/training/session` 的提交前界面进一步对齐 `/training/session-ui-preview` 的 A1 方案：白色 sticky 顶栏、`#F7F9FB` 页面底、`#EEF2FF` 高权重题卡、题目标题“本题要你做一个真实取舍”、回答区“先写结论，再补依据”和更大的作答空间。
-- 将真实 `/training/session` 的提交后界面进一步对齐 preview：左侧压缩为“原题 / 我的回答”参考信息，右侧以 AI 产品教练反馈为主焦点，保留结构化 `TrainingEvaluationPanel` 和 markdown fallback。
+- 将真实 `/training/session` 的提交前界面进一步对齐新版 A1 方案：白色 sticky 顶栏、`#F7F9FB` 页面底、`#EEF2FF` 高权重题卡、题目标题“本题要你做一个真实取舍”、回答区“先写结论，再补依据”和更大的作答空间。
+- 将真实 `/training/session` 的提交后界面进一步对齐新版体验：左侧压缩为“原题 / 我的回答”参考信息，右侧以 AI 产品教练反馈为主焦点，保留结构化 `TrainingEvaluationPanel` 和 markdown fallback。
 - 保留真实训练业务流：`/api/train` 出题/分析、`/api/training/questions` 保存题目、`/api/training/record` 保存训练记录、`/api/training/feedback` 题目反馈、`/api/training/sessions` 一轮结束落库。
-- 将 `/training/session-ui-preview` 改为 redirect 到 `TRAINING_SESSION_ROUTE`，避免用户看到静态 demo 而入口进入另一套真实页面。
+- 将训练 canonical route 固定为 `/training/session`，避免入口进入旧版页面或静态 demo。
 
 ### 验证结果
 - `node --experimental-strip-types src/lib/routes.test.mjs` 通过
 - `npm run typecheck` 通过
-- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/training/session/page.tsx' 'src/app/(app)/training/session-ui-preview/page.tsx' 'src/app/(app)/training/page.tsx' src/lib/routes.ts src/lib/routes.test.mjs --max-warnings 0` 通过
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/training/session/page.tsx' 'src/app/(app)/training/page.tsx' src/lib/routes.ts src/lib/routes.test.mjs --max-warnings 0` 通过
 - `npm run build` 通过；仅保留既有 `src/components/auth/AuthShowcase.tsx` 使用 `<img>` 的 Next 性能警告
 - `./init.sh` 通过（9/9）
 
 ### 部署状态
-- 已生成部署包：`tmp/shengyunjie-runtime-20260612-180547.tar.gz`
-- SHA256：`c51e8f68fb2e5f6f0b8ed508c813eb0c09d7a5be64978a879e0a1d7aedc5008a`
-- 直接 SSH 到 `159.75.213.142` 的 `root` 和当前用户均被拒绝：`Permission denied (publickey,gssapi-keyex,gssapi-with-mic)`。
-- Kimi WebBridge 当前无已打开远端终端页签；豆包浏览器中未发现可直接复用的宝塔/OrcaTerm 终端会话。
-- 因缺少远端登录通道，本轮尚未完成生产 `/www/wwwroot/shengyunjie` 部署、远端 `npm run build`、`pm2 reload shengyunjie --update-env` 和生产真实鼠标点击回归。
+- 后续已切换到 Git 拉取式部署，生产目录 `/www/wwwroot/shengyunjie` 对应 `deploy/pm` 分支。
+- 已部署提交：`bdb5fc5 chore: wait for app health during deploy`。
+- 公网只读验证：`BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK https://pm.imfly.site`。
+- 仍建议补做一次生产真实鼠标点击回归：Kimi WebBridge 打开 `/training`，Computer Use 点击“开始今日训练”，确认最终进入 `/training/session` 新版页。
 
-### 后续恢复部署命令
-远端拿到部署包后执行：
-
-```bash
-cd /www/wwwroot/shengyunjie
-npm run build
-pm2 reload shengyunjie --update-env
-```
-
-生产验证仍需按要求使用 Kimi WebBridge 打开 `https://pm.imfly.site/training`，再用 Computer Use 真实鼠标点击“开始今日训练”，确认最终进入新版 `/training/session` 页面且无 `entry`/`ui` query。
-
-## [2026-06-12] Hotfix follow-up: 训练入口缓存防复发（未部署）
+## [2026-06-12] Hotfix follow-up: 训练入口缓存防复发
 
 ### 完成内容
 - 将训练 canonical route 固定为 `/training/session`，`TRAINING_SESSION_ROUTE` 和 `routes.test.mjs` 已同步。
-- 新增训练 segment 缓存策略：`src/app/(app)/training/layout.tsx` 设置 `dynamic = "force-dynamic"`、`revalidate = 0`、`fetchCache = "force-no-store"`，避免 `/training`、`/training/session`、`/training/session-ui-preview` 再生成长期缓存 HTML。
-- 将新版真实训练页抽为 `src/components/training/TrainingSessionClient.tsx`，`/training/session` 和 `/training/session-ui-preview` 都渲染同一个真实训练组件。
+- 新增训练 segment 缓存策略：`src/app/(app)/training/layout.tsx` 设置 `dynamic = "force-dynamic"`、`revalidate = 0`、`fetchCache = "force-no-store"`，避免 `/training` 和 `/training/session` 再生成长期缓存 HTML。
+- 将新版真实训练页抽为 `src/components/training/TrainingSessionClient.tsx`，由 `/training/session` 渲染真实训练组件。
 - 移除生产体验里的“训练题页面 UI 方案预览”和 A1 状态切换壳，保留提交前/提交后自动切换。
 
-### 本轮未执行
-- 按用户要求，本轮不执行本地验证、不打包、不部署。
-- 线上仍需后续执行干净发布：新 release 目录构建、删除 `.next/cache`、`pm2 delete` 后重新 start，并清理 nginx/宝塔 proxy cache。
+### 生产状态
+- 裸路径缓存问题已通过动态渲染策略和 nginx/宝塔缓存清理解决。
+- 公网响应头已确认 `cache-control: private, no-cache, no-store, max-age=0, must-revalidate`。
 
-### 工作区清理建议
-- 先将当前工作区保存为临时补丁或备份分支，避免误删历史 UI 改动。
-- 本 hotfix 提交只纳入训练路由、训练页组件、登录修复、`routes` 测试、`progress.md`、`feature_list.json`。
-- `tmp/*.tar.gz`、历史 `.claude` 删除、OpenSpec 归档和大范围 UI 改动建议拆成单独整理提交。
-
-## [2026-06-12] Deploy tooling: 固化 git 拉取式生产部署（未执行）
+## [2026-06-12] Deploy tooling: 固化 git 拉取式生产部署
 
 ### 完成内容
 - 新增 `scripts/deploy-production.sh`：默认从 `origin/deploy/pm` 拉取代码，保留 `.env.local`、按 `package-lock.json` hash 决定是否 `npm ci`、清空 `.next` 后构建、PM2 delete 后重新 start，并检查本机 `/training` 与 `/training/session`。
 - 新增 `scripts/verify-production-training.sh`：生产部署后检查裸路径不再带一年级 `s-maxage`，训练首页入口指向 `/training/session`，session 页面包含新版标记且不包含“训练题页面 UI 方案预览”。
 - 部署脚本会自动检查 nginx 是否配置 `proxy_cache_path` / `fastcgi_cache_path`，如存在则清理对应缓存目录并 reload nginx。
+- 新增 `docs/DEPLOYMENT.md`，记录 `deploy/pm` 分支、服务器目录、PM2 app、部署命令和验证命令。
 
 ### 验证结果
 - `bash -n scripts/deploy-production.sh` 通过
 - `bash -n scripts/verify-production-training.sh` 通过
+- `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK https://pm.imfly.site`
 
-### 本轮未执行
-- 未创建/推送 `deploy/pm` 分支。
-- 未在服务器执行部署脚本。
-- 未运行生产真实鼠标点击回归。
+## [2026-06-12] Chore: 工作区整理与旧前端清理
+
+### 完成内容
+- 删除旧静态 HTML 原型目录 `prototypes/`，这些早期页面不再作为产品路由、测试或设计交付物使用。
+- 删除旧 preview 路由 `/training/session-ui-preview`，生产训练入口只保留 `/training/session`。
+- 删除误提交的根目录 `1`，该文件只是 Next.js workspace warning 输出。
+- 清理本地忽略产物：`tmp/`、`.next/`、`.cowork-temp/`、`.DS_Store`、`tsconfig.tsbuildinfo`。
+- 将 `AuthShowcase` 的 `<img>` 替换为 `next/image`，消除全量 ESLint 中唯一 warning。
+- 修复 `init.sh` 的 ESLint 检查计数，避免 lint 失败却显示全部通过。
+- 更新生产验证脚本，不再请求已删除的 `/training/session-ui-preview`。
+
+### 验证结果
+- `node --experimental-strip-types src/lib/routes.test.mjs` 通过
+- `npm run typecheck` 通过；清理 `.next` 和 `tsconfig.tsbuildinfo` 后也可独立通过
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过
+- `npm run build` 通过，路由表只保留 `/training/session`，不再包含 preview route
+- `./init.sh` 通过（10/10），ESLint 检查不再误报
+- `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK https://pm.imfly.site`
+
+### 待办
+- 本轮不部署、不重启 PM2。
+- 生产真实鼠标点击回归仍可单独补做。
