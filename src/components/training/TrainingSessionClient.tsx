@@ -26,20 +26,20 @@ import { cn } from "@/lib/utils";
 
 const sample = {
   question:
-    "你负责一个 B 端零售 SaaS 产品，团队 6 人，3 个月内只能做一个方向：A. 优化核心客户续费链路；B. 启动制造业 PoC。两者都被业务方认为紧急。你会如何判断优先级，并说明取舍依据、风险和验证方式？",
+    "某 B 端 SaaS 产品把免费试用从 30 天改成 7 天，并要求预约顾问后才能开通。你认为这个动作想优化什么业务指标？可能牺牲什么转化机会？你会看哪 2 个数据判断是否继续？",
   answer:
-    "我需要做战略取舍：当前团队 6 人，3 个月不可并行。零售优化可提升核心客户续费率，直接减少流失损失，并带来确定性收入；制造业 PoC 有新市场机会，但成功率和交付复杂度更不确定。因此先投入续费链路优化，第 3 个月再用最小团队试水制造业 PoC。",
+    "我会先判断它是否在提升销售线索质量，而不是单纯压缩试用成本。预约开通可能提高顾问触达率和商机转化率，但会牺牲自助试用启动率，尤其影响低意向但可能转化的长尾客户。我会重点看预约完成率、试用到付费转化率，并对比试用启动率是否明显下滑。",
   framework: [
-    "明确约束：资源、时间、技能矩阵、项目不可并行",
-    "量化每个选项的预期价值：收入影响、客户生命周期价值、市场战略权重",
-    "计算机会成本：选择 A 意味着放弃 B 带来的净收益",
-    "评估隐性成本：团队学习成本、品牌定位、客户信任、技术债务",
-    "制定决策后验证指标：先行指标、损点和复盘窗口",
+    "识别产品动作：试用周期缩短、开通门槛提高、销售介入提前",
+    "反推业务意图：线索质量、销售效率、成交率或试用成本",
+    "拆出牺牲项：自助转化、低意向用户探索、试用启动率和品牌感受",
+    "选择验证指标：过程指标 + 结果指标 + 反向护栏指标",
+    "设定复盘窗口：看指标组合，而不是只看单个转化率",
   ],
   feedback:
-    "你的回答已经体现资源约束和阶段性推进意识，但还缺少显性机会成本计算，以及对客户流失、市场潜力、团队专注力的并列比较。",
-  strengths: ["意识到资源有限需要取舍", "能提出阶段性推进，而不是两线并行"],
-  gaps: ["没有把收入、流失、市场潜力放到同一张账上比较", "制造业 PoC 的失败成本没有被拆出来"],
+    "你的回答已经抓到线索质量和转化率，但还可以补充牺牲项：试用启动率下降、低意向用户被挡在门外，以及销售团队是否能承接更多预约。",
+  strengths: ["能从产品动作反推业务目标", "能用指标验证判断"],
+  gaps: ["牺牲项还可以拆得更细", "缺少反向护栏指标"],
 };
 
 type VariantId = "before" | "after";
@@ -53,7 +53,7 @@ const ALL_DIMS = [
 ];
 
 const DIM_FRAMEWORKS: Record<string, string> = {
-  "战略思维": "机会成本分析",
+  "战略思维": "业务判断",
   "系统设计能力": "系统思维",
   "数据决策能力": "假设验证",
   "用户洞察与需求管理": "第一性原理",
@@ -143,7 +143,7 @@ function QuestionCard({ compact = false }: { compact?: boolean }) {
           战略思维
         </span>
         <span className="rounded-md bg-primary px-2.5 py-1 text-label font-semibold text-white">
-          机会成本分析
+          业务意图识别
         </span>
         <button className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-label font-semibold text-ink-muted hover:bg-white">
           <RefreshCw className="h-3.5 w-3.5" />
@@ -232,7 +232,7 @@ function CompareCards({ tinted = false }: { tinted?: boolean }) {
           <h4 className="font-semibold text-ink">把你的回答改成这样</h4>
         </div>
         <p className="text-body-sm leading-7 text-ink-muted">
-          我会先把 A/B 放进同一套机会成本账本：续费链路看流失减少、客户生命周期价值和交付确定性；制造业 PoC 看潜在市场、学习成本和失败损失。若续费可在 2 个月内验证，我先做 A。
+          我会先判断这个动作是在提升线索质量还是降低试用成本，再看预约完成率、试用启动率和试用到付费转化率是否一起改善。
         </p>
       </section>
     </div>
@@ -361,7 +361,7 @@ function FocusedWorkspace() {
                 战略思维
               </span>
               <span className="rounded-md bg-[#F3F6FA] px-2.5 py-1 text-label font-semibold text-ink-muted">
-                机会成本分析
+                业务意图识别
               </span>
               <button className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-label font-semibold text-ink-muted hover:bg-surface">
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -423,7 +423,7 @@ function FocusedWorkspace() {
               <h3 className="font-semibold">优先补这一点</h3>
             </div>
             <p className="text-body-sm leading-relaxed text-ink-muted">
-              把 A/B 两个选项放进同一套机会成本账本，再做取舍。先不要展开所有反馈。
+              先判断产品动作背后的业务意图，再写牺牲项和验证指标。先不要展开所有反馈。
             </p>
           </section>
           <StrengthGap boxed />
@@ -806,7 +806,7 @@ function A1StateCompare() {
                 {sample.feedback}
               </p>
               <div className="mt-4 rounded-lg bg-white/75 p-3 text-body-sm text-ink-muted">
-                下一步：补 A/B 两个选项的机会成本账。
+                下一步：补一个反向护栏指标，避免只看转化率。
               </div>
             </div>
           </div>
@@ -824,7 +824,7 @@ function WritingFirstWorkspace() {
           <section className="rounded-xl border border-line bg-white p-4">
             <p className="text-label font-semibold text-primary">当前题目</p>
             <h2 className="mt-2 text-heading-sm font-semibold text-ink">
-              战略取舍题
+              业务判断题
             </h2>
             <p className="mt-3 text-body-sm leading-7 text-ink-muted">
               {sample.question}
@@ -923,7 +923,7 @@ function LightCoachWorkspace() {
               <h3 className="font-semibold text-ink">改写示范</h3>
             </div>
             <p className="text-body-sm leading-7 text-ink-muted">
-              我会先把 A/B 放进同一套机会成本账本：续费链路看流失减少、客户生命周期价值和交付确定性；制造业 PoC 看潜在市场、学习成本和失败损失。若续费可在 2 个月内验证，我先做 A。
+              我会先判断这个动作是在提升线索质量还是降低试用成本，再看预约完成率、试用启动率和试用到付费转化率是否一起改善。
             </p>
           </section>
           <StrengthGap boxed />
@@ -934,7 +934,7 @@ function LightCoachWorkspace() {
             下一步最重要
           </p>
           <h3 className="mt-2 text-heading-sm font-semibold text-ink">
-            补一张机会成本账
+            补一组验证指标
           </h3>
           <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
             不需要先重写全文。先补 A/B 两个选项的显性收益、隐性成本和验证指标。

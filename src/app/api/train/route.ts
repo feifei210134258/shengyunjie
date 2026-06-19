@@ -1,6 +1,10 @@
 import { streamText } from "ai";
 import { getChatModel, getThinkingModel } from "@/lib/ai";
 import { createServerClient } from "@/lib/supabase-server";
+import {
+  formatTrainingDimensionStrategy,
+  getTrainingDimensionStrategy,
+} from "@/lib/training/dimension-strategy";
 import { buildTrainingPersonalization } from "@/lib/training/personalization";
 
 async function getPersonalizationContext(dimension?: string) {
@@ -58,15 +62,8 @@ export async function POST(req: Request) {
   const chatModel = getChatModel(apiKey, "deepseek-v4-flash");
 
   if (action === "generate") {
-    // 维度 → 思维框架映射
-    const frameworkMap: Record<string, string> = {
-      "战略思维": "机会成本分析 / 战略取舍框架",
-      "系统设计能力": "系统思维 / 模块化与依赖关系梳理",
-      "数据决策能力": "假设验证 / 因果推断",
-      "用户洞察与需求管理": "第一性原理 / JTBD（Jobs-to-be-Done）",
-      "商业思维": "单位经济模型 / 商业模式画布推演",
-    };
-    const framework = frameworkMap[dimension] || "产品思维框架";
+    const dimensionStrategy = getTrainingDimensionStrategy(dimension);
+    const framework = dimensionStrategy.framework;
     const personalization = await getPersonalizationContext(dimension);
 
     const result = streamText({
@@ -80,6 +77,9 @@ export async function POST(req: Request) {
 
 当前维度：${dimension}
 对应思维框架：${framework}
+维度出题策略：
+${formatTrainingDimensionStrategy(dimensionStrategy)}
+
 个性化上下文：
 - 本题聚焦维度：${personalization.focusDimension || dimension}
 - 用户当前短板：${personalization.weakDimensions.join("、") || "暂无明确画像"}
@@ -94,6 +94,8 @@ export async function POST(req: Request) {
 - **每道题不超过 300 字**
 - 避免与近期已练题目重复
 - 题目要自然嵌入用户短板，但不要暴露内部评分细节
+- 只能从上面的“允许题型”里选择一个小场景出题
+- 题目必须让用户回答 2-3 个具体判断问题，避免开放式大作文
 - 输出格式严格为两段：
 【为什么练这题：一句话说明这题如何对应用户短板】
 题目正文`,
@@ -110,9 +112,13 @@ export async function POST(req: Request) {
   if (action === "analyze") {
     // 使用深度思考模型
     const thinkingModel = getThinkingModel(apiKey, "deepseek-v4-flash");
+    const dimensionStrategy = getTrainingDimensionStrategy(dimension);
     const result = streamText({
       model: thinkingModel,
       system: `你是一位要求严格但不刻薄的 B 端产品教练。你的目标不是只打分，而是把用户的回答改到真实高阶 PM 训练可用。
+当前题目维度的训练策略：
+${formatTrainingDimensionStrategy(dimensionStrategy)}
+
 请只返回 JSON，不要使用 Markdown 代码块，不要添加解释。
 JSON 结构必须为：
 {
@@ -135,6 +141,7 @@ JSON 结构必须为：
 2. 思维框架：是否有结构化分析路径，而不是罗列功能。
 3. 方案质量：是否具体、可落地，并考虑边界条件。
 4. 决策逻辑：是否解释为什么这样做，有取舍标准、证据和反证意识。
+5. 维度专项：必须优先参考上面的“回答应训练”，指出用户在哪些专项动作上做到了或缺失了什么。
 反馈必须引用用户原文，避免空泛夸奖或空泛批评。`,
       messages: [
         {

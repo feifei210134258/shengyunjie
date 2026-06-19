@@ -602,3 +602,27 @@
 ### 待办
 - 本轮不部署、不重启 PM2。
 - 生产真实鼠标点击回归仍可单独补做。
+
+## [2026-06-19] 日常训练: 维度出题方向收敛
+
+### 背景判断
+- 用户反馈日常训练第一题“战略思维”体感过复杂，不够像可提升能力的训练。
+- 重新审视后确认：5 个能力维度总体保留，但需要把维度名翻译成“可训练的小动作”，避免按“战略思维”直接生成宏大战略作文题。
+
+### 完成内容
+- 新增 `src/lib/training/dimension-strategy.ts`：定义 5 个维度的能力定位、推荐框架、允许题型、回答训练重点和禁止题型。
+- 战略思维重新收敛为“业务判断与取舍”：训练产品动作反推业务意图、识别牺牲项/机会成本、选择验证指标。
+- `/api/train` 生成题接入维度策略：出题时只能从对应维度的允许题型中选择小场景，并要求用户回答 2-3 个具体判断问题。
+- `/api/train` 分析反馈接入维度策略：评分除通用理解/框架/方案/决策逻辑外，优先参考该维度的专项训练重点。
+- `docs/2026-05-19-prompt-strategy.md` 同步更新 5 个维度定义和出题规则。
+- `/training/session` 示例题从 A/B 大战略取舍改为“免费试用 30 天改 7 天 + 预约顾问”的业务判断题，页面标签改为“业务判断题 / 业务意图识别 / 验证指标”。
+- 将旧的 `src/lib/training/personalization.test.ts` 迁移为 `.mjs` 测试文件，和项目其他 Node 内置测试风格一致，避免 Node 直接执行与 `tsc` 的扩展名规则冲突。
+
+### 验证结果
+- `node --test src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs` 通过（Node 对 TS ESM 有既有 MODULE_TYPELESS_PACKAGE_JSON warning，不影响结果）
+- `npx tsc --noEmit` 通过
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/lib/training/dimension-strategy.ts src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs src/components/training/TrainingSessionClient.tsx --max-warnings 0` 通过
+- `git diff --check` 通过
+
+### 后续建议
+- 可以补一个真实出题接口验证：登录态调用 `/api/train` 生成“战略思维”题，确认题面落在业务动作、取舍和指标验证，而不是战略路线图。
