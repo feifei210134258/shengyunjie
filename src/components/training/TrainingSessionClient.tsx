@@ -386,10 +386,7 @@ function FocusedWorkspace() {
               className="min-h-56 w-full resize-none rounded-xl border border-line bg-[#FAFBFC] p-4 text-body-md leading-8 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               defaultValue={sample.answer}
             />
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-body-sm text-ink-faint">
-                推荐结构：结论 / 依据 / 风险 / 验证
-              </p>
+            <div className="mt-4 flex justify-end">
               <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover">
                 <Zap className="h-4 w-4" />
                 提交并获取分析
@@ -528,7 +525,7 @@ function A1BeforeSubmit({
                   我的回答
                 </p>
                 <h3 className="mt-0.5 text-body-md font-semibold text-ink">
-                  先写结论，再补依据
+                  写下你的判断
                 </h3>
               </div>
               <span className="rounded-lg bg-[#F3F6FA] px-3 py-2 text-label font-semibold text-ink-faint">
@@ -542,10 +539,7 @@ function A1BeforeSubmit({
               className="min-h-[170px] w-full resize-none rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-sm leading-7 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               placeholder="写下你的思考..."
             />
-            <div className="mt-3 flex items-center justify-between">
-              <p className="text-body-sm text-ink-faint">
-                推荐结构：结论 / 依据 / 风险 / 验证
-              </p>
+            <div className="mt-3 flex justify-end">
               <button
                 onClick={onSubmit}
                 disabled={!answerText.trim() || answer?.submitting || isQuestionLoading}
@@ -836,8 +830,8 @@ function WritingFirstWorkspace() {
             </p>
             <ul className="mt-3 space-y-2 text-body-sm leading-relaxed text-ink-muted">
               <li>结论是否明确</li>
-              <li>有没有比较收益</li>
-              <li>有没有写出隐性成本</li>
+              <li>有没有说明判断依据</li>
+              <li>有没有写出暂不做什么</li>
               <li>有没有验证闭环</li>
             </ul>
           </section>
@@ -937,7 +931,7 @@ function LightCoachWorkspace() {
             补一组验证指标
           </h3>
           <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-            不需要先重写全文。先补 A/B 两个选项的显性收益、隐性成本和验证指标。
+            不需要先重写全文。先补 A/B 两个选项的业务目标、暂不做什么和验证指标。
           </p>
           <div className="mt-4 rounded-xl bg-[#F3F6FA] p-4">
             <p className="text-label font-semibold text-ink-muted">评分</p>
@@ -1055,7 +1049,7 @@ function ReviewBoard() {
                   下一轮立刻这样改
                 </h4>
                 <p className="text-body-sm leading-relaxed text-ink-muted">
-                  先写出 A/B 两个选项的显性收益，再补一行隐性成本，最后给出验证指标和回滚条件。
+                  先写出 A/B 两个选项分别服务哪个业务目标，再补一行暂不做什么，最后给出验证指标和回滚条件。
                 </p>
                 <button className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-body-sm font-semibold text-white">
                   下一题
