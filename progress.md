@@ -626,3 +626,20 @@
 
 ### 后续建议
 - 可以补一个真实出题接口验证：登录态调用 `/api/train` 生成“战略思维”题，确认题面落在业务动作、取舍和指标验证，而不是战略路线图。
+
+## [2026-06-19] Deploy: 日常训练维度出题策略上线
+
+### 部署内容
+- 本地提交 `e5a35fe refine training dimension question strategy` 已推送到 `origin/deploy/pm`。
+- 通过腾讯云 OrcaTerm root shell 在生产目录 `/www/wwwroot/shengyunjie` 执行 `bash scripts/deploy-production.sh`。
+- 生产部署脚本拉取 `origin/deploy/pm`，重置到 `e5a35fe`，跳过未变化依赖安装，重新构建 Next.js，重启 PM2 `shengyunjie`，清理 nginx cache。
+
+### 验证结果
+- 本地上线前 `./init.sh` 通过（10/10）。
+- 服务器部署输出：`DEPLOY_OK deploy/pm e5a35fe`。
+- 服务器脚本内公网验证：`VERIFY_OK https://pm.imfly.site`。
+- 本机公网复验：`BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK https://pm.imfly.site`。
+- 本机 `curl https://pm.imfly.site/training/session` 确认生产页已使用新 chunk `page-ac33fcca71e41c94.js`，并包含新文案“业务判断”，不再是旧的“机会成本分析”标签。
+
+### 状态
+- 生产环境已上线本次日常训练出题方向调整。
