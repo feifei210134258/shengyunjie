@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "升云阶 - B端产品经理智能成长平台",
   description:
     "深度诊断、画像建模、针对性训练与反馈迭代，帮助 B 端产品经理从执行层向高级 PM 跃迁。",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 const hanken = Hanken_Grotesk({

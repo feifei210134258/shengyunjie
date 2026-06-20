@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { BarChart3, GraduationCap } from "lucide-react";
+import { BrandMark } from "@/components/brand/BrandMark";
+import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AuthShowcaseProps {
@@ -56,9 +57,10 @@ export function AuthShowcase({ mode }: AuthShowcaseProps) {
 
       <div className="relative z-10 flex w-full flex-col justify-between p-10 text-ink-inverse xl:p-12">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/16">
-            <GraduationCap className="h-5 w-5 text-white" strokeWidth={1.8} />
-          </div>
+          <BrandMark
+            className="h-10 w-10 bg-[#164e63]/80 ring-1 ring-white/16"
+            iconClassName="h-6 w-6"
+          />
           <div>
             <p className="text-heading-sm font-bold text-white">升云阶</p>
             <p className="text-label text-white/52">PM growth cockpit</p>

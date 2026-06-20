@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -12,7 +13,6 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  GraduationCap,
   Menu,
   X,
 } from "lucide-react";
@@ -54,9 +54,7 @@ export default function TopNav() {
         <div className="flex items-center justify-between h-16">
           {/* Brand */}
           <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-glow">
-              <GraduationCap className="w-4.5 h-4.5 text-white" strokeWidth={2} />
-            </div>
+            <BrandMark className="h-8 w-8" iconClassName="h-[18px] w-[18px]" />
             <span className="hidden text-xl font-bold tracking-[-0.01em] text-ink sm:block">
               升云阶
             </span>

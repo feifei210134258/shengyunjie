@@ -664,3 +664,18 @@
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/training/dimension-strategy.ts src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs src/components/training/TrainingSessionClient.tsx --max-warnings 0` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-20] UX: 品牌阶梯图标替换
+
+### 完成内容
+- 根据用户确认的“阶梯 + 平台”方向，新增复用组件 `src/components/brand/BrandMark.tsx`。
+- 顶部导航、登录页、注册页和认证展示区不再使用 `GraduationCap`，统一替换为深青色阶梯平台品牌标志。
+- 新增 `src/app/icon.svg`，并在 `src/app/layout.tsx` metadata 中声明 `/icon.svg` 作为浏览器标签页图标。
+- 新增 `src/components/brand/brand-mark.test.mjs` 回归检查，防止品牌位重新出现毕业帽图标或 favicon 丢失阶梯图形。
+- 将 `.superpowers/` 加入 `.gitignore`，避免视觉草案工具产物进入部署提交。
+
+### 验证结果
+- `node --test src/components/brand/brand-mark.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/brand/BrandMark.tsx src/components/TopNav.tsx 'src/app/(auth)/login/page.tsx' 'src/app/(auth)/register/page.tsx' src/components/auth/AuthShowcase.tsx src/app/layout.tsx --max-warnings 0` 通过。
+- `npm run build` 通过，构建路由包含 `/icon.svg`。

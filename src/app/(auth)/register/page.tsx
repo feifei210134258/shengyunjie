@@ -4,9 +4,10 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { AuthShowcase } from "@/components/auth/AuthShowcase";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GraduationCap, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -50,9 +51,7 @@ export default function RegisterPage() {
       <div className="flex flex-1 items-center justify-center bg-bg p-6 sm:p-8">
         <div className="w-full max-w-[380px] animate-fade-in">
           <div className="lg:hidden flex items-center gap-2.5 mb-10">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <GraduationCap className="w-4.5 h-4.5 text-white" />
-            </div>
+            <BrandMark className="h-9 w-9" iconClassName="h-[19px] w-[19px]" />
             <span className="text-xl font-bold text-ink">升云阶</span>
           </div>
 
