@@ -33,14 +33,32 @@ test("training generation prompt limits each question to exactly two judgment pr
   assert.match(routeSource, /一个落地、风险或验证追问/);
 });
 
-test("training generation prompt asks for a concise answer hint", () => {
+test("training generation prompt asks for framework-level answer guidance", () => {
   const routeSource = readFileSync(
     new URL("../../app/api/train/route.ts", import.meta.url),
     "utf8"
   );
 
   assert.match(routeSource, /答题提点/);
-  assert.match(routeSource, /不超过\s*25\s*字/);
-  assert.match(routeSource, /只提示思考入口/);
+  assert.match(routeSource, /框架思维引导/);
+  assert.match(routeSource, /降低.*上手门槛/);
+  assert.match(routeSource, /可迁移/);
+  assert.match(routeSource, /问题本质/);
+  assert.match(routeSource, /拆解路径/);
+  assert.match(routeSource, /判断闭环/);
+  assert.doesNotMatch(routeSource, /不超过\s*25\s*字/);
+  assert.doesNotMatch(routeSource, /极简提示/);
   assert.doesNotMatch(routeSource, /写下你的判断/);
+});
+
+test("training answer area presents guidance as a thinking framework", () => {
+  const componentSource = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(componentSource, /思考框架/);
+  assert.match(componentSource, /text-body-sm/);
+  assert.match(componentSource, /hint\.length >= 30/);
+  assert.doesNotMatch(componentSource, /先拆角色边界，再补异常护栏/);
 });

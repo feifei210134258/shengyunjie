@@ -839,3 +839,25 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/lib/training/session-progress.test.mjs --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-21] Tweak: 答题区升级为框架思维引导
+
+### 背景判断
+- 用户认为短句“提点”容易变成题目细节摘要，不能帮助用户形成可迁移的框架思维。
+- 当前阶段应先降低初阶用户上手门槛，帮助用户识别问题本质、建立拆解路径和判断闭环；后续用户水平提高后，再考虑根据弱项做个性化纠偏提点。
+
+### 完成内容
+- `/api/train` 的“答题提点”规则升级为框架思维引导：明确生成原因是降低上手门槛、沉淀可迁移产品思维，而不是提示当前题答案。
+- 引导长度从 25 字以内放宽为 40-90 字，允许 AI 自由组织结构，不固定句式。
+- Prompt 要求引导覆盖问题本质、拆解路径和判断闭环，禁止复述题干细节、给具体答案或替用户选择方案。
+- `/training/session` 答题区改为独立“思考框架”引导区，小字号、舒适行高展示几十字内容，避免长文本挤在标题里。
+- 旧缓存题如果仍带短 hint，会自动使用新的维度框架兜底，避免继续露出旧短句风格。
+- `docs/2026-05-19-prompt-strategy.md` 同步更新出题策略记录。
+
+### 验证结果
+- TDD 红灯：新增测试先因 `/api/train` 仍包含“不超过 25 字/极简提示”失败。
+- `node --test src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/components/training/TrainingSessionClient.tsx src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。

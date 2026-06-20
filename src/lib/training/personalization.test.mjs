@@ -54,13 +54,16 @@ test("extracts block style generated question reason", () => {
   assert.doesNotMatch(result.question, /为什么练这题|题目正文/);
 });
 
-test("extracts a short answer hint from generated question text", () => {
+test("extracts framework guidance from generated question text", () => {
   const result = parseGeneratedQuestionText(`【为什么练这题】你需要训练权限边界和异常场景。
-【答题提点】先拆角色边界，再写一个风险护栏。
+【答题提点】把这题看成边界治理问题：先识别参与者、资源和信任边界，再说明规则如何生效、异常如何回收，以及风险如何被持续治理。
 题目正文：你负责外部协作者权限模块。请说明你会如何定义外部角色，以及如何处理离职和超期权限。`);
 
   assert.equal(result.reason, "你需要训练权限边界和异常场景。");
-  assert.equal(result.hint, "先拆角色边界，再写一个风险护栏。");
+  assert.equal(
+    result.hint,
+    "把这题看成边界治理问题：先识别参与者、资源和信任边界，再说明规则如何生效、异常如何回收，以及风险如何被持续治理。"
+  );
   assert.match(result.question, /外部协作者权限模块/);
   assert.doesNotMatch(result.question, /答题提点|为什么练这题|题目正文/);
 });
