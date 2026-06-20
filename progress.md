@@ -776,3 +776,24 @@
 - 首次生产部署已构建并重启 PM2 到 `cefa72a`，但旧验证脚本仍要求页面包含已删除文案“本题要你做一个真实取舍”，因此脚本末尾校验失败。
 - 已同步更新 `scripts/verify-production-training.sh`：改为校验“重新开始”“结束”存在，并禁止旧提示文案出现。
 - `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK https://pm.imfly.site`。
+
+## [2026-06-20] Tweak: 日常训练每题收敛为两问
+
+### 背景判断
+- 用户截图指出当前题干通常包含 3 个追问，单题压力过大，不利于循序渐进训练。
+- 日常训练的目标应是稳定练一个小判断动作，而不是把每题做成一次小面试。
+
+### 完成内容
+- `/api/train` 生成题 prompt 从“回答 2-3 个具体判断问题”改为“严格包含 2 个具体判断问题”。
+- 两问结构固定为：一个核心判断 + 一个落地、风险或验证追问。
+- 明确禁止第 3 个问题，也禁止通过“注意/补充要求/额外思考”形成隐性第三问。
+- 同步更新 `docs/2026-05-19-prompt-strategy.md` 和 `docs/superpowers/specs/2026-06-19-training-dimension-strategy-design.md`。
+- 增加回归测试，防止出题 prompt 重新出现 `2-3 个具体判断问题`。
+
+### 验证结果
+- TDD 红灯：新增测试先因 `/api/train` 仍包含 `2-3 个具体判断问题` 失败。
+- `node --test src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs` 通过。
+- `rg -n "2-3 个具体判断问题|2-3个具体判断问题" src docs -S` 无匹配。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/lib/training/dimension-strategy.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。

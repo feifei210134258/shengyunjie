@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   formatTrainingDimensionStrategy,
   getTrainingDimensionStrategy,
@@ -18,4 +19,16 @@ test("strategic thinking is scoped to business judgment instead of broad strateg
   assert.match(prompt, /禁止题型：[\s\S]*寻找第二增长曲线/);
   assert.match(prompt, /禁止题型：[\s\S]*泛泛分析市场规模/);
   assert.match(prompt, /禁止题型：[\s\S]*抽象成本计算题/);
+});
+
+test("training generation prompt limits each question to exactly two judgment prompts", () => {
+  const routeSource = readFileSync(
+    new URL("../../app/api/train/route.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.doesNotMatch(routeSource, /2-3\s*个具体判断问题/);
+  assert.match(routeSource, /严格(?:包含|回答|要求用户回答)?\s*2\s*个具体判断问题/);
+  assert.match(routeSource, /一个核心判断/);
+  assert.match(routeSource, /一个落地、风险或验证追问/);
 });
