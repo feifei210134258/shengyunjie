@@ -11,6 +11,7 @@ import {
   parseJsonFromAiText,
   TrainingEvaluation,
 } from "@/lib/training/personalization";
+import { TRAINING_DIMENSIONS } from "@/lib/training/session-progress";
 import {
   ArrowRight,
   Check,
@@ -44,13 +45,7 @@ const sample = {
 
 type VariantId = "before" | "after";
 
-const ALL_DIMS = [
-  "战略思维",
-  "系统设计能力",
-  "数据决策能力",
-  "用户洞察与需求管理",
-  "商业思维",
-];
+const ALL_DIMS = [...TRAINING_DIMENSIONS];
 
 const DIM_FRAMEWORKS: Record<string, string> = {
   "战略思维": "业务判断",
@@ -68,6 +63,14 @@ type AnalysisState = {
   evaluation?: TrainingEvaluation;
 };
 
+type DailySessionResponse = {
+  session?: {
+    questions?: Record<string, string>;
+  } | null;
+  completedDimensions?: string[];
+  nextIndex?: number;
+};
+
 interface RealTrainingProps {
   currentIndex: number;
   currentDim: string;
@@ -80,6 +83,7 @@ interface RealTrainingProps {
   onSubmit: () => void;
   onNext: () => void;
   onRegenerate: () => void;
+  onRestart: () => void;
   onFinish: () => void;
 }
 
@@ -102,10 +106,12 @@ function MiniProgress({ current = 0 }: { current?: number }) {
 function Frame({
   children,
   currentIndex = 0,
+  onRestart,
   onFinish,
 }: {
   children: React.ReactNode;
   currentIndex?: number;
+  onRestart?: () => void;
   onFinish?: () => void;
 }) {
   return (
@@ -117,13 +123,24 @@ function Frame({
           </span>
           <MiniProgress current={currentIndex} />
         </div>
-        <button
-          onClick={onFinish}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-body-sm font-semibold text-ink hover:bg-surface"
-        >
-          <X className="h-4 w-4" />
-          结束
-        </button>
+        <div className="flex items-center gap-2">
+          {onRestart && (
+            <button
+              onClick={onRestart}
+              className="flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-body-sm font-semibold text-ink-muted transition hover:bg-surface hover:text-ink"
+            >
+              <RefreshCw className="h-4 w-4" />
+              重新开始
+            </button>
+          )}
+          <button
+            onClick={onFinish}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-body-sm font-semibold text-ink hover:bg-surface"
+          >
+            <X className="h-4 w-4" />
+            结束
+          </button>
+        </div>
       </header>
       {children}
     </div>
@@ -424,13 +441,14 @@ function A1BeforeSubmit({
   onAnswerChange,
   onSubmit,
   onRegenerate,
+  onRestart,
   onFinish,
 }: RealTrainingProps) {
   const isQuestionLoading = question?.loading || !question?.text;
   const answerText = answer?.text || "";
 
   return (
-    <Frame currentIndex={currentIndex} onFinish={onFinish}>
+    <Frame currentIndex={currentIndex} onRestart={onRestart} onFinish={onFinish}>
       <main className="mx-auto max-w-[1080px] px-6 py-3">
         <div className="mb-2 flex items-end justify-between">
           <div>
@@ -608,13 +626,14 @@ function A1AfterSubmit({
   score,
   onSubmit,
   onNext,
+  onRestart,
   onFinish,
 }: RealTrainingProps) {
   const evaluation = analysis?.evaluation;
   const sections = extractSections(analysis?.text || "");
 
   return (
-    <Frame currentIndex={currentIndex} onFinish={onFinish}>
+    <Frame currentIndex={currentIndex} onRestart={onRestart} onFinish={onFinish}>
       <main className="mx-auto grid max-w-[1440px] gap-5 px-6 py-5 lg:grid-cols-[320px_minmax(0,1fr)]">
         <CompactReference question={question?.text} answer={answer?.text} />
 
@@ -1059,6 +1078,7 @@ export default function TrainingSessionClient() {
   const [score, setScore] = useState(0);
   const [, setRound] = useState(1);
   const [streamedText, setStreamedText] = useState("");
+  const [initializing, setInitializing] = useState(true);
 
   const question = questions[currentDim];
   const answer = answers[currentDim];
@@ -1133,10 +1153,57 @@ export default function TrainingSessionClient() {
   }, []);
 
   useEffect(() => {
-    if (!questions[currentDim]?.text && !questions[currentDim]?.loading) {
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Shanghai",
+    });
+    const dimensionSet = new Set<string>(ALL_DIMS);
+    let cancelled = false;
+
+    fetch(`/api/training/sessions?date=${today}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: DailySessionResponse | null) => {
+        if (cancelled || !data) return;
+        const cachedQuestions = data.session?.questions || {};
+        const restoredQuestions = Object.fromEntries(
+          Object.entries(cachedQuestions)
+            .filter(
+              ([dim, text]) =>
+                dimensionSet.has(dim) && typeof text === "string" && text.trim()
+            )
+            .map(([dim, text]) => [dim, { text, loading: false }])
+        ) as Record<string, QuestionState>;
+
+        if (Object.keys(restoredQuestions).length) {
+          setQuestions((prev) => ({ ...restoredQuestions, ...prev }));
+        }
+
+        const nextIndex =
+          typeof data.nextIndex === "number" &&
+          data.nextIndex >= 0 &&
+          data.nextIndex < ALL_DIMS.length
+            ? data.nextIndex
+            : 0;
+        setCurrentIndex(nextIndex);
+      })
+      .catch((err) => console.error("恢复今日训练进度失败:", err))
+      .finally(() => {
+        if (!cancelled) setInitializing(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !initializing &&
+      !questions[currentDim]?.text &&
+      !questions[currentDim]?.loading
+    ) {
       generateQuestion(currentDim);
     }
-  }, [currentDim, generateQuestion, questions]);
+  }, [currentDim, generateQuestion, initializing, questions]);
 
   useEffect(() => {
     if (hasAnalysis) {
@@ -1291,6 +1358,17 @@ export default function TrainingSessionClient() {
     generateQuestion(currentDim);
   };
 
+  const handleRestart = () => {
+    setCurrentIndex(0);
+    setQuestions({});
+    setAnswers({});
+    setAnalyses({});
+    setScore(0);
+    setStreamedText("");
+    setActive("before");
+    setRound((value) => value + 1);
+  };
+
   const realProps: RealTrainingProps = {
     currentIndex,
     currentDim,
@@ -1303,6 +1381,7 @@ export default function TrainingSessionClient() {
     onSubmit: handleSubmit,
     onNext: handleNext,
     onRegenerate: handleRegenerate,
+    onRestart: handleRestart,
     onFinish: () => router.push("/training"),
   };
 

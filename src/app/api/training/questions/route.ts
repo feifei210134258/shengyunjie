@@ -16,13 +16,25 @@ export async function POST(req: NextRequest) {
 
     const today = getBeijingDate();
 
+    const { data: existing } = await supabase
+      .from("training_sessions")
+      .select("questions")
+      .eq("user_id", user.id)
+      .eq("session_date", today)
+      .maybeSingle();
+
+    const mergedQuestions = {
+      ...(existing?.questions || {}),
+      [dimension]: question,
+    };
+
     const { error } = await supabase
       .from("training_sessions")
       .upsert(
         {
           user_id: user.id,
           session_date: today,
-          questions: { [dimension]: question },
+          questions: mergedQuestions,
         },
         { onConflict: "user_id,session_date" }
       );

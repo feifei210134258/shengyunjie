@@ -729,3 +729,27 @@
 
 ### 备注
 - 内置浏览器连接在本轮出现工具层错误：`codex/sandbox-state-meta: missing field sandboxPolicy`，未能做浏览器截图复验；本轮已用源码、类型、lint 和构建完成验证。
+
+## [2026-06-20] Feature: 当天训练进度恢复
+
+### 背景判断
+- 用户希望当天已做过的题目不要因误点击或跳失而重复从第一题开始。
+- 现有 `training_records` 已记录用户当天提交过的维度，`training_sessions` 已按天缓存题目，因此不需要新增 Supabase 表或 schema 字段。
+
+### 完成内容
+- 新增 `src/lib/training/session-progress.ts`，用标准五维度顺序根据当天已完成维度计算下一题索引。
+- `/api/training/sessions?date=YYYY-MM-DD` 现在返回 `completedDimensions` 和 `nextIndex`，并按北京时间查询当天 `training_records`。
+- `/training/session` 首次进入会读取当天状态，复用 `training_sessions.questions` 中已生成的题目，并自动跳到下一道未完成题。
+- 顶部“结束”按钮左侧新增“重新开始”，仅重置当前页面状态并从第一题开始，不删除有效训练历史。
+- `/api/training/questions` 保存题目时改为先读旧 `questions` 再合并写入，避免后续维度题目覆盖当天已缓存题目。
+
+### 验证结果
+- TDD 红灯：`node --test src/lib/training/session-progress.test.mjs` 先因缺少模块失败。
+- `node --test src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/app/api/training/sessions/route.ts src/app/api/training/questions/route.ts src/lib/training/session-progress.ts src/lib/training/session-progress.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
+
+### 备注
+- 本次未新增数据库 schema，避免 RLS / Data API 暴露范围变化。

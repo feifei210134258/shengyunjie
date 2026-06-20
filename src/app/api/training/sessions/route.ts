@@ -4,6 +4,10 @@ import {
   getBeijingMonthUtcRange,
   getUniqueBeijingMonthDays,
 } from "@/lib/training/completion";
+import {
+  getCompletedTrainingDimensions,
+  getNextTrainingIndexFromCompleted,
+} from "@/lib/training/session-progress";
 import { NextRequest, NextResponse } from "next/server";
 
 // 查询训练会话
@@ -21,13 +25,29 @@ export async function GET(req: NextRequest) {
 
     // 按日查询
     if (date) {
-      const { data } = await supabase
-        .from("training_sessions")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("session_date", date)
-        .single();
-      return NextResponse.json({ session: data });
+      const startUtc = new Date(`${date}T00:00:00+08:00`);
+      const endUtc = new Date(startUtc);
+      endUtc.setDate(endUtc.getDate() + 1);
+
+      const [{ data: session }, { data: records }] = await Promise.all([
+        supabase
+          .from("training_sessions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("session_date", date)
+          .maybeSingle(),
+        supabase
+          .from("training_records")
+          .select("dimension, created_at")
+          .eq("user_id", user.id)
+          .gte("created_at", startUtc.toISOString())
+          .lt("created_at", endUtc.toISOString())
+          .order("created_at", { ascending: true }),
+      ]);
+
+      const completedDimensions = getCompletedTrainingDimensions(records || []);
+      const nextIndex = getNextTrainingIndexFromCompleted(completedDimensions);
+      return NextResponse.json({ session, completedDimensions, nextIndex });
     }
 
     // 按月查询 — 返回当月已提交训练答案的日期数组
