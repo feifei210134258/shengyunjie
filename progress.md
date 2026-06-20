@@ -771,3 +771,8 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+### 部署记录
+- 首次生产部署已构建并重启 PM2 到 `cefa72a`，但旧验证脚本仍要求页面包含已删除文案“本题要你做一个真实取舍”，因此脚本末尾校验失败。
+- 已同步更新 `scripts/verify-production-training.sh`：改为校验“重新开始”“结束”存在，并禁止旧提示文案出现。
+- `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK https://pm.imfly.site`。
