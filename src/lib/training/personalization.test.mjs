@@ -53,3 +53,14 @@ test("extracts block style generated question reason", () => {
   assert.match(result.question, /企业文档工具/);
   assert.doesNotMatch(result.question, /为什么练这题|题目正文/);
 });
+
+test("extracts a short answer hint from generated question text", () => {
+  const result = parseGeneratedQuestionText(`【为什么练这题】你需要训练权限边界和异常场景。
+【答题提点】先拆角色边界，再写一个风险护栏。
+题目正文：你负责外部协作者权限模块。请说明你会如何定义外部角色，以及如何处理离职和超期权限。`);
+
+  assert.equal(result.reason, "你需要训练权限边界和异常场景。");
+  assert.equal(result.hint, "先拆角色边界，再写一个风险护栏。");
+  assert.match(result.question, /外部协作者权限模块/);
+  assert.doesNotMatch(result.question, /答题提点|为什么练这题|题目正文/);
+});

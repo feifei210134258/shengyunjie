@@ -55,7 +55,12 @@ const DIM_FRAMEWORKS: Record<string, string> = {
   "商业思维": "单位经济模型",
 };
 
-type QuestionState = { text: string; loading: boolean; reason?: string };
+type QuestionState = {
+  text: string;
+  loading: boolean;
+  reason?: string;
+  hint?: string;
+};
 type AnswerState = { text: string; submitting: boolean };
 type AnalysisState = {
   text: string;
@@ -65,11 +70,45 @@ type AnalysisState = {
 
 type DailySessionResponse = {
   session?: {
-    questions?: Record<string, string>;
+    questions?: Record<string, string | StoredQuestion>;
   } | null;
   completedDimensions?: string[];
   nextIndex?: number;
 };
+
+type StoredQuestion = {
+  text?: string;
+  question?: string;
+  reason?: string;
+  hint?: string;
+};
+
+const DIM_HINTS: Record<string, string> = {
+  "战略思维": "先写取舍标准，再写验证指标。",
+  "系统设计能力": "先拆角色边界，再补异常护栏。",
+  "数据决策能力": "先定核心假设，再看反向指标。",
+  "用户洞察与需求管理": "先追问真实任务，再定 MVP 边界。",
+  "商业思维": "先判断客户价值，再估交付成本。",
+};
+
+function getQuestionHint(question: QuestionState | undefined, dim: string) {
+  return question?.hint?.trim() || DIM_HINTS[dim] || "先写判断依据，再补验证方式。";
+}
+
+function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState | null {
+  if (typeof value === "string") {
+    const text = value.trim();
+    return text ? { text, loading: false } : null;
+  }
+  const text = String(value?.text || value?.question || "").trim();
+  if (!text) return null;
+  return {
+    text,
+    loading: false,
+    reason: String(value.reason || "").trim() || undefined,
+    hint: String(value.hint || "").trim() || undefined,
+  };
+}
 
 interface RealTrainingProps {
   currentIndex: number;
@@ -446,6 +485,7 @@ function A1BeforeSubmit({
 }: RealTrainingProps) {
   const isQuestionLoading = question?.loading || !question?.text;
   const answerText = answer?.text || "";
+  const answerHint = getQuestionHint(question, currentDim);
 
   return (
     <Frame currentIndex={currentIndex} onRestart={onRestart} onFinish={onFinish}>
@@ -524,7 +564,7 @@ function A1BeforeSubmit({
                   我的回答
                 </p>
                 <h3 className="mt-0.5 text-body-md font-semibold text-ink">
-                  写下你的判断
+                  {answerHint}
                 </h3>
               </div>
               <span className="rounded-lg bg-[#F3F6FA] px-3 py-2 text-label font-semibold text-ink-faint">
@@ -1126,6 +1166,7 @@ export default function TrainingSessionClient() {
           text: parsedQuestion.question,
           loading: false,
           reason: parsedQuestion.reason,
+          hint: parsedQuestion.hint,
         },
       }));
       setStreamedText("");
@@ -1136,7 +1177,11 @@ export default function TrainingSessionClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             dimension: dim,
-            question: parsedQuestion.question,
+            question: {
+              text: parsedQuestion.question,
+              reason: parsedQuestion.reason,
+              hint: parsedQuestion.hint,
+            },
           }),
         }).catch((err) => console.error("保存题目失败:", err));
       }
@@ -1161,14 +1206,19 @@ export default function TrainingSessionClient() {
       .then((data: DailySessionResponse | null) => {
         if (cancelled || !data) return;
         const cachedQuestions = data.session?.questions || {};
-        const restoredQuestions = Object.fromEntries(
-          Object.entries(cachedQuestions)
-            .filter(
-              ([dim, text]) =>
-                dimensionSet.has(dim) && typeof text === "string" && text.trim()
-            )
-            .map(([dim, text]) => [dim, { text, loading: false }])
-        ) as Record<string, QuestionState>;
+        const restoredEntries = Object.entries(cachedQuestions)
+          .map(([dim, value]): [string, QuestionState | null] => [
+            dim,
+            normalizeStoredQuestion(value),
+          ])
+          .filter(
+            (entry): entry is [string, QuestionState] =>
+              dimensionSet.has(entry[0]) && Boolean(entry[1])
+          );
+        const restoredQuestions = Object.fromEntries(restoredEntries) as Record<
+          string,
+          QuestionState
+        >;
 
         if (Object.keys(restoredQuestions).length) {
           setQuestions((prev) => ({ ...restoredQuestions, ...prev }));

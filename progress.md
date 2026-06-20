@@ -797,3 +797,25 @@
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/lib/training/dimension-strategy.test.mjs --max-warnings 0` 通过。
 - `npm run build` 通过。
+
+## [2026-06-20] Tweak: 答题区显示 AI 极简提点
+
+### 背景判断
+- 用户指出“写下你的判断”没有信息价值，初阶产品容易不知道从哪里下手。
+- 答题前适合给“思考入口”，但不能给结论或示范答案，否则会削弱训练判断力。
+
+### 完成内容
+- `/api/train` 出题输出从两段扩展为三段：`为什么练这题`、`答题提点`、`题目正文`。
+- `答题提点` 限制为不超过 25 字，只提示思考入口，不给结论、不替用户作答。
+- `parseGeneratedQuestionText` 新增 `hint` 解析，兼容旧的原因 + 题目格式。
+- `/training/session` 答题区标题从固定“写下你的判断”改为显示 AI 生成提点。
+- `/api/training/questions` 支持保存 `{ text, reason, hint }`，继续写入既有 `training_sessions.questions` JSON，不改 schema。
+- 今日进度恢复兼容旧字符串题目；旧题没有 hint 时按维度给兜底提点。
+- `docs/2026-05-19-prompt-strategy.md` 同步记录答题提点规则。
+
+### 验证结果
+- TDD 红灯：新增测试先因缺少 `答题提点` prompt 约束、解析器误吞提点而失败。
+- `node --test src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/app/api/training/questions/route.ts src/components/training/TrainingSessionClient.tsx src/lib/training/personalization.ts src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。

@@ -138,7 +138,37 @@ export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation
 export function parseGeneratedQuestionText(text: string) {
   const raw = String(text || "").trim();
   let reason = "";
+  let hint = "";
   let question = raw;
+
+  const sectionPattern =
+    /(?:^|\n)【(为什么练这题|推荐理由|答题提点)[:：]?([^】]*)】\s*([\s\S]*?)(?=\n【(?:为什么练这题|推荐理由|答题提点)[:：]?[^】]*】|\n{0,2}题目正文\s*[：:]|$)/gi;
+  const sections = Array.from(raw.matchAll(sectionPattern));
+
+  if (sections.length) {
+    for (const match of sections) {
+      const label = match[1];
+      const inlineValue = match[2]?.trim() || "";
+      const blockValue = match[3]?.trim() || "";
+      const value = inlineValue || blockValue;
+      if (/为什么练这题|推荐理由/.test(label) && value) reason = value;
+      if (/答题提点/.test(label) && value) hint = value;
+    }
+
+    const lastSection = sections[sections.length - 1];
+    const afterSections = raw.slice(
+      (lastSection.index || 0) + lastSection[0].length
+    );
+    const explicitQuestionMatch =
+      raw.match(/(?:^|\n)题目正文\s*[：:]\s*([\s\S]*)/i) ||
+      raw.match(/(?:^|\n)题目\s*[：:]\s*([\s\S]*)/i);
+    const lastInlineValue = lastSection[2]?.trim() || "";
+    const lastBlockValue = lastSection[3]?.trim() || "";
+    question =
+      explicitQuestionMatch?.[1]?.trim() ||
+      (lastInlineValue ? lastBlockValue : "") ||
+      afterSections.trim();
+  }
 
   const inlineReasonMatch = raw.match(
     /^【(?:为什么练这题|推荐理由)[:：]\s*([^】]+)】\s*/i
@@ -150,13 +180,13 @@ export function parseGeneratedQuestionText(text: string) {
     /^(?:为什么练这题|推荐理由)\s*[：:]\s*([\s\S]*?)(?:\n{2,}|(?:\r?\n)?题目正文\s*[：:])/i
   );
 
-  if (inlineReasonMatch) {
+  if (!sections.length && inlineReasonMatch) {
     reason = inlineReasonMatch[1]?.trim() || "";
     question = raw.slice(inlineReasonMatch[0].length).trim();
-  } else if (blockReasonMatch) {
+  } else if (!sections.length && blockReasonMatch) {
     reason = blockReasonMatch[1]?.trim() || "";
     question = raw.slice(blockReasonMatch[0].length).trim();
-  } else if (plainReasonMatch) {
+  } else if (!sections.length && plainReasonMatch) {
     reason = plainReasonMatch[1]?.trim() || "";
     question = raw.slice(plainReasonMatch[0].length).trim();
   }
@@ -170,7 +200,9 @@ export function parseGeneratedQuestionText(text: string) {
     .replace(/^【题目】\s*/i, "")
     .trim();
 
-  return { reason, question };
+  hint = hint.replace(/\s+/g, " ").trim();
+
+  return { reason, hint, question };
 }
 
 export function buildTrainingPersonalization(input: {

@@ -10,7 +10,12 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
     const { dimension, question } = await req.json();
-    if (!dimension || !question) {
+    const questionText =
+      typeof question === "string"
+        ? question.trim()
+        : String(question?.text || question?.question || "").trim();
+
+    if (!dimension || !questionText) {
       return NextResponse.json({ error: "缺少 dimension 或 question" }, { status: 400 });
     }
 
@@ -25,7 +30,14 @@ export async function POST(req: NextRequest) {
 
     const mergedQuestions = {
       ...(existing?.questions || {}),
-      [dimension]: question,
+      [dimension]:
+        typeof question === "string"
+          ? questionText
+          : {
+              text: questionText,
+              reason: String(question?.reason || "").trim(),
+              hint: String(question?.hint || "").trim(),
+            },
     };
 
     const { error } = await supabase

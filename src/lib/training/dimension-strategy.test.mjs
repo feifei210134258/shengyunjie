@@ -32,3 +32,15 @@ test("training generation prompt limits each question to exactly two judgment pr
   assert.match(routeSource, /一个核心判断/);
   assert.match(routeSource, /一个落地、风险或验证追问/);
 });
+
+test("training generation prompt asks for a concise answer hint", () => {
+  const routeSource = readFileSync(
+    new URL("../../app/api/train/route.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(routeSource, /答题提点/);
+  assert.match(routeSource, /不超过\s*25\s*字/);
+  assert.match(routeSource, /只提示思考入口/);
+  assert.doesNotMatch(routeSource, /写下你的判断/);
+});
