@@ -127,7 +127,7 @@ function Frame({
           {onRestart && (
             <button
               onClick={onRestart}
-              className="flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-body-sm font-semibold text-ink-muted transition hover:bg-surface hover:text-ink"
+              className="flex h-10 items-center gap-2 rounded-lg px-3 text-body-sm font-semibold text-ink hover:bg-surface"
             >
               <RefreshCw className="h-4 w-4" />
               重新开始
@@ -135,7 +135,7 @@ function Frame({
           )}
           <button
             onClick={onFinish}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-body-sm font-semibold text-ink hover:bg-surface"
+            className="flex h-10 items-center gap-2 rounded-lg px-3 text-body-sm font-semibold text-ink hover:bg-surface"
           >
             <X className="h-4 w-4" />
             结束
@@ -485,12 +485,9 @@ function A1BeforeSubmit({
               </button>
             </div>
             <div className="mt-3">
-              <h3 className="text-body-md font-semibold text-ink">
-                本题要你做一个真实取舍
-              </h3>
               {isQuestionLoading ? (
                 streamedText ? (
-                  <div className="mt-2 max-h-[320px] overflow-y-auto pr-1 text-body-md leading-7 text-ink">
+                  <div className="max-h-[320px] overflow-y-auto pr-1 text-body-md leading-7 text-ink">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {streamedText}
                     </ReactMarkdown>
@@ -504,7 +501,7 @@ function A1BeforeSubmit({
                 )
               ) : (
                 <>
-                  <div className="mt-2 max-h-[320px] overflow-y-auto pr-1 text-body-md leading-7 text-ink [&_p]:my-0 [&_p+_p]:mt-2 [&_strong]:font-semibold">
+                  <div className="max-h-[320px] overflow-y-auto pr-1 text-body-md leading-7 text-ink [&_p]:my-0 [&_p+_p]:mt-2 [&_strong]:font-semibold">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {question?.text || ""}
                     </ReactMarkdown>

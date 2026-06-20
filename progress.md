@@ -753,3 +753,21 @@
 
 ### 备注
 - 本次未新增数据库 schema，避免 RLS / Data API 暴露范围变化。
+
+## [2026-06-20] UX: 训练题页按钮与固定提示清理
+
+### 背景判断
+- 用户截图指出顶部“重新开始”和“结束”按钮视觉权重不统一。
+- 题目卡里的固定句子“本题要你做一个真实取舍”每题重复出现，信息价值不高，会干扰阅读题干。
+
+### 完成内容
+- `/training/session` 顶部“重新开始”和“结束”统一为同高度、同间距、同 hover 的文本按钮样式。
+- 移除题目卡固定标题“本题要你做一个真实取舍”。
+- 同步移除题干 Markdown 上方多余 `mt-2`，让标签下方直接进入题目正文。
+
+### 验证结果
+- `rg -n "本题要你做一个真实取舍" src/components/training/TrainingSessionClient.tsx src` 无匹配。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
