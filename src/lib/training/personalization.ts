@@ -12,7 +12,6 @@ export interface TrainingEvaluation {
   suggestions: string[];
   thinking_framework: string[];
   example_answer: string;
-  improved_answer: string;
   next_practice: string;
 }
 
@@ -128,10 +127,6 @@ export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation
     example_answer: normalizeText(
       data.example_answer,
       "示例：我会先把问题定义为某类客户在关键流程中的转化或效率损失，再用访谈、工单和行为数据确认影响面。方案上先对比轻量提示、流程改造和机制沉淀三种路径，选择能最快验证价值且不破坏现有流程的一种，最后用核心指标和客户反馈复盘是否继续投入。"
-    ),
-    improved_answer: normalizeText(
-      data.improved_answer ?? data.rewrite_example,
-      "改写示范：我不会先急着列功能，而是先确认这个问题影响的是哪类客户、哪个流程节点和哪个业务指标。确认影响面后，我会把方案拆成快速验证和长期机制两层，先用低成本方案验证价值，再决定是否沉淀成平台能力。"
     ),
     next_practice: normalizeText(
       data.next_practice ?? data.next_exercise,

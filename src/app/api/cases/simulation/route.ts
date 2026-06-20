@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
       const result = await generateText({
         model,
         system:
-          "你是严格但具体的 B 端产品决策教练。请评估用户在案例推演中的回答。只返回 JSON，不要使用 Markdown 代码块。JSON 结构必须为：overall_score, understanding, framework, solution, decision_logic, feedback, strengths, gaps, suggestions, thinking_framework, example_answer, improved_answer, next_practice。评分 0-10，反馈必须引用用户回答里的具体内容，并指出决策依据、取舍、指标、风险和验证闭环。",
+          "你是严格但具体的 B 端产品决策教练。请评估用户在案例推演中的回答。只返回 JSON，不要使用 Markdown 代码块。JSON 结构必须为：overall_score, understanding, framework, solution, decision_logic, feedback, strengths, gaps, suggestions, thinking_framework, example_answer, next_practice。评分 0-10，反馈必须引用用户回答里的具体内容，并指出决策依据、取舍、指标、风险和验证闭环。",
         messages: [
           {
             role: "user",

@@ -133,7 +133,6 @@ JSON 结构必须为：
   "suggestions": ["可执行改进建议"],
   "thinking_framework": ["这道题推荐的答题框架，4-6 条"],
   "example_answer": "给一段 120-220 字的示例回答，示范高阶 PM 应该怎么答",
-  "improved_answer": "把用户原回答改写成更像训练复盘的版本，120-220 字",
   "next_practice": "下一题前最该练的一件事"
 }
 评分标准：

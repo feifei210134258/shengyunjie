@@ -706,3 +706,26 @@
 ### 验证结果
 - `feature_list.json` JSON 解析通过。
 - 新增文档均指向已有提交、命令和生产验证证据，不改变运行代码。
+
+## [2026-06-20] Fix: 训练提交后分析结果页复盘体验
+
+### 背景判断
+- 用户截图指出提交后结果页有三处问题：左侧“题目/回答”被截断且无法查看全文；“AI 产品教练反馈”同一段反馈上下重复；“示例回答”和“把你的回答改成这样”信息价值重叠。
+- 判断后保留“示例回答”作为唯一高质量答案示范，把可执行修改动作继续放在“下一轮立刻这样改”，不再展示第二个改写答案。
+
+### 完成内容
+- `TrainingSessionClient` 提交后左侧参考区从 `line-clamp` 改为固定阅读区 + 内部滚动，原题和我的回答都可完整回看。
+- `TrainingEvaluationPanel` 增加 `hideSummary`，训练提交后的外层摘要保留一处，面板内部不再重复渲染同一段教练反馈。
+- 训练反馈 UI 删除“把你的回答改成这样”，示例回答改为单列重点展示。
+- `TrainingEvaluation` 契约移除 `improved_answer`，`/api/train` 和案例推演评估 prompt 不再要求 AI 生成该字段，减少无用输出。
+- 增加回归测试，确认即使 AI 旧响应带 `improved_answer`，归一化后的训练反馈也不再暴露该字段。
+
+### 验证结果
+- `node --test src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/components/training/TrainingEvaluationPanel.tsx src/lib/training/personalization.ts src/app/api/train/route.ts src/app/api/cases/simulation/route.ts --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
+
+### 备注
+- 内置浏览器连接在本轮出现工具层错误：`codex/sandbox-state-meta: missing field sandboxPolicy`，未能做浏览器截图复验；本轮已用源码、类型、lint 和构建完成验证。

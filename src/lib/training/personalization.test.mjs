@@ -31,6 +31,7 @@ test("normalizes structured training evaluation from fenced AI JSON", () => {
   assert.equal(evaluation.scores.understanding, 8);
   assert.equal(evaluation.scores.decision_logic, 6);
   assert.deepEqual(evaluation.strengths, ["提到了客户分层"]);
+  assert.equal("improved_answer" in evaluation, false);
   assert.equal(evaluation.next_practice, "下一题练指标归因");
 });
 

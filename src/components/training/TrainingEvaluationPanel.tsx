@@ -8,7 +8,6 @@ import {
   Check,
   Lightbulb,
   MessageSquare,
-  PenLine,
   Target,
   X,
 } from "lucide-react";
@@ -16,6 +15,7 @@ import {
 interface Props {
   evaluation: TrainingEvaluation;
   className?: string;
+  hideSummary?: boolean;
 }
 
 const scoreItems = [
@@ -41,35 +41,41 @@ function cleanItem(item: string) {
     .replace(/^\d+[.、]\s*/, "");
 }
 
-export default function TrainingEvaluationPanel({ evaluation, className }: Props) {
+export default function TrainingEvaluationPanel({
+  evaluation,
+  className,
+  hideSummary = false,
+}: Props) {
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-label font-semibold uppercase text-primary">
-            AI 产品教练反馈
-          </p>
-          <h3 className="mt-2 text-heading-md font-semibold leading-tight text-ink">
-            先补证据链，再升级取舍表达
-          </h3>
-          <p className="mt-2 text-body-sm leading-6 text-ink-muted">
-            {evaluation.feedback}
-          </p>
-        </div>
-        <div className="shrink-0 rounded-xl border border-line bg-surface-raised px-5 py-4 text-center">
-          <div
-            className={cn(
-              "font-mono text-data-md font-bold",
-              scoreColor(evaluation.overall_score)
-            )}
-          >
-            {formatScore(evaluation.overall_score)}
+      {!hideSummary && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-label font-semibold uppercase text-primary">
+              AI 产品教练反馈
+            </p>
+            <h3 className="mt-2 text-heading-md font-semibold leading-tight text-ink">
+              先补证据链，再升级取舍表达
+            </h3>
+            <p className="mt-2 text-body-sm leading-6 text-ink-muted">
+              {evaluation.feedback}
+            </p>
           </div>
-          <p className="text-label font-semibold text-ink-muted">
-            综合评分 / 10
-          </p>
+          <div className="shrink-0 rounded-xl border border-line bg-surface-raised px-5 py-4 text-center">
+            <div
+              className={cn(
+                "font-mono text-data-md font-bold",
+                scoreColor(evaluation.overall_score)
+              )}
+            >
+              {formatScore(evaluation.overall_score)}
+            </div>
+            <p className="text-label font-semibold text-ink-muted">
+              综合评分 / 10
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {scoreItems.map((item) => (
@@ -92,7 +98,7 @@ export default function TrainingEvaluationPanel({ evaluation, className }: Props
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4">
         <section className="rounded-xl border border-sky-200 bg-sky-50 p-5">
           <div className="mb-2 flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-primary" strokeWidth={1.8} />
@@ -100,16 +106,6 @@ export default function TrainingEvaluationPanel({ evaluation, className }: Props
           </div>
           <p className="text-body-sm leading-7 text-ink-muted">
             {evaluation.example_answer}
-          </p>
-        </section>
-
-        <section className="rounded-xl border border-violet-200 bg-violet-50 p-5">
-          <div className="mb-2 flex items-center gap-2">
-            <PenLine className="h-4 w-4 text-primary" strokeWidth={1.8} />
-            <h4 className="font-semibold text-ink">把你的回答改成这样</h4>
-          </div>
-          <p className="text-body-sm leading-7 text-ink-muted">
-            {evaluation.improved_answer}
           </p>
         </section>
       </div>

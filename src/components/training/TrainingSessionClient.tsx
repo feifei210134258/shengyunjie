@@ -202,7 +202,7 @@ function FrameworkCard() {
 
 function CompareCards({ tinted = false }: { tinted?: boolean }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4">
       <section
         className={cn(
           "rounded-xl border p-5",
@@ -217,22 +217,6 @@ function CompareCards({ tinted = false }: { tinted?: boolean }) {
         </div>
         <p className="text-body-sm leading-7 text-ink-muted">
           我会优先投入全部 6 人做核心功能性能优化，用 2 个月完成，剩余 1 个月启动制造业最小可行版本。理由是续费链路的收益更确定，制造业定制存在需求不稳定和交付风险。
-        </p>
-      </section>
-      <section
-        className={cn(
-          "rounded-xl border p-5",
-          tinted
-            ? "border-violet-200 bg-violet-50"
-            : "border-line bg-white"
-        )}
-      >
-        <div className="mb-3 flex items-center gap-2">
-          <PenLine className="h-4 w-4 text-primary" />
-          <h4 className="font-semibold text-ink">把你的回答改成这样</h4>
-        </div>
-        <p className="text-body-sm leading-7 text-ink-muted">
-          我会先判断这个动作是在提升线索质量还是降低试用成本，再看预约完成率、试用启动率和试用到付费转化率是否一起改善。
         </p>
       </section>
     </div>
@@ -564,30 +548,30 @@ function CompactReference({
   answer?: string;
 }) {
   return (
-    <aside className="sticky top-36 h-fit space-y-3">
-      <section className="rounded-xl border border-line bg-white p-4">
-        <div className="mb-2 flex items-center gap-2">
+    <aside className="space-y-3 lg:sticky lg:top-36 lg:h-[calc(100dvh-10rem)] lg:min-h-[520px]">
+      <section className="flex min-h-[220px] flex-col rounded-xl border border-line bg-white p-4 lg:h-[48%] lg:min-h-0">
+        <div className="mb-2 flex shrink-0 items-center gap-2">
           <span className="rounded-md bg-primary-soft px-2 py-1 text-label font-semibold text-primary">
             原题
           </span>
           <span className="text-label font-semibold text-ink-faint">
-            参考
+            完整内容
           </span>
         </div>
-        <div className="line-clamp-[8] text-body-sm leading-6 text-ink-muted">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1 text-body-sm leading-6 text-ink-muted [&_p]:my-0 [&_p+_p]:mt-2 [&_strong]:font-semibold">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {question || ""}
           </ReactMarkdown>
         </div>
       </section>
-      <section className="rounded-xl border border-line bg-white p-4">
-        <div className="mb-2 flex items-center justify-between">
+      <section className="flex min-h-[220px] flex-col rounded-xl border border-line bg-white p-4 lg:h-[48%] lg:min-h-0">
+        <div className="mb-2 flex shrink-0 items-center justify-between">
           <h3 className="font-semibold text-ink">我的回答</h3>
           <span className="text-label font-semibold text-ink-faint">
             已提交
           </span>
         </div>
-        <p className="line-clamp-[7] text-body-sm leading-6 text-ink-muted">
+        <p className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap pr-1 text-body-sm leading-6 text-ink-muted">
           {answer || ""}
         </p>
       </section>
@@ -631,7 +615,7 @@ function A1AfterSubmit({
 
   return (
     <Frame currentIndex={currentIndex} onFinish={onFinish}>
-      <main className="mx-auto grid max-w-[1440px] grid-cols-[320px_minmax(0,1fr)] gap-5 px-6 py-5">
+      <main className="mx-auto grid max-w-[1440px] gap-5 px-6 py-5 lg:grid-cols-[320px_minmax(0,1fr)]">
         <CompactReference question={question?.text} answer={answer?.text} />
 
         <section className="space-y-4">
@@ -662,7 +646,7 @@ function A1AfterSubmit({
 
             <div className="mt-5">
               {evaluation ? (
-                <TrainingEvaluationPanel evaluation={evaluation} />
+                <TrainingEvaluationPanel evaluation={evaluation} hideSummary />
               ) : (
                 <div className="space-y-4">
                   <section className="rounded-xl border border-line bg-[#F8FAFC] p-5">
