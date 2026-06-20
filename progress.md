@@ -687,3 +687,22 @@
 - `curl -I https://pm.imfly.site/icon.svg` 返回 `HTTP/2 200`，`content-type: image/svg+xml`。
 - `curl -s https://pm.imfly.site/login | rg -n 'icon\.svg|升云阶|_next/static'` 确认页面 HTML 引用 `/icon.svg`，并渲染 `升云阶阶梯标志`。
 - `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK https://pm.imfly.site`。
+
+## [2026-06-20] Docs: 已完成功能文档债回补
+
+### 背景
+- 用户指出需要回写的不止品牌图标，还包括此前做完但文档未补/未改的功能。
+- 审计对象：近期已完成并有验证/部署记录的 6 月 12 日训练入口与部署工具、6 月 19 日维度出题策略、6 月 20 日战略思维热修。
+
+### 回补内容
+- 新增 `docs/superpowers/specs/2026-06-12-training-production-routing-design.md`，记录训练入口统一、动态缓存策略、Git 拉取式部署、旧 preview/原型清理。
+- 新增 `docs/superpowers/reports/2026-06-12-training-production-routing-verify.md`，记录训练入口与生产部署稳定性验证。
+- 新增 `docs/superpowers/specs/2026-06-19-training-dimension-strategy-design.md`，记录五维训练策略收敛、战略思维业务判断化和 `/api/train` 接入方式。
+- 新增 `docs/superpowers/reports/2026-06-19-training-dimension-strategy-verify.md`，记录维度出题策略本地和生产验证。
+- 新增 `docs/superpowers/specs/2026-06-20-training-strategy-prompt-hotfix-design.md`，记录机会成本旧框架残留清理、固定推荐结构删除和回归测试。
+- 新增 `docs/superpowers/reports/2026-06-20-training-strategy-prompt-hotfix-verify.md`，记录战略思维热修验证结果。
+- 更新 `feature_list.json`，在 `training-001` 和 `ux-001` 证据中补充新增文档索引。
+
+### 验证结果
+- `feature_list.json` JSON 解析通过。
+- 新增文档均指向已有提交、命令和生产验证证据，不改变运行代码。
