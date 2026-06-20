@@ -679,3 +679,11 @@
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/brand/BrandMark.tsx src/components/TopNav.tsx 'src/app/(auth)/login/page.tsx' 'src/app/(auth)/register/page.tsx' src/components/auth/AuthShowcase.tsx src/app/layout.tsx --max-warnings 0` 通过。
 - `npm run build` 通过，构建路由包含 `/icon.svg`。
+- `./init.sh` 通过（10/10）。
+
+### 部署结果
+- 已提交并推送：`27eaba8 feat: replace brand icon with stair mark`。
+- 生产部署脚本输出：`DEPLOY_OK deploy/pm 27eaba8`。
+- `curl -I https://pm.imfly.site/icon.svg` 返回 `HTTP/2 200`，`content-type: image/svg+xml`。
+- `curl -s https://pm.imfly.site/login | rg -n 'icon\.svg|升云阶|_next/static'` 确认页面 HTML 引用 `/icon.svg`，并渲染 `升云阶阶梯标志`。
+- `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK https://pm.imfly.site`。

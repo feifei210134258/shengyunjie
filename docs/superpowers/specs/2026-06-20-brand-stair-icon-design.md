@@ -45,3 +45,22 @@
 - 浏览器标签页能加载新的 favicon。
 - TypeScript、lint、build 或项目标准启动验证通过。
 - 在桌面导航、登录/注册页、小尺寸 favicon 预览中，图标都能识别为“阶梯”。
+
+## 实现结果
+
+- 已新增 `src/components/brand/BrandMark.tsx`，统一承载深青底、白色阶梯、浅青顶部平台线的品牌图形。
+- 已新增 `src/app/icon.svg`，并通过 `src/app/layout.tsx` 的 metadata 声明为 `/icon.svg`。
+- 已替换 `src/components/TopNav.tsx`、`src/app/(auth)/login/page.tsx`、`src/app/(auth)/register/page.tsx`、`src/components/auth/AuthShowcase.tsx` 中的品牌 `GraduationCap`。
+- 已新增 `src/components/brand/brand-mark.test.mjs`，检查品牌位使用 `BrandMark`、不再使用 `GraduationCap`，并确认组件和 favicon 保留阶梯平台图形。
+- 已将 `.superpowers/` 加入 `.gitignore`，避免视觉草案工具产物进入正式提交。
+
+## 验证与部署记录
+
+- 本地验证通过：`node --test src/components/brand/brand-mark.test.mjs`。
+- 本地验证通过：`npx tsc --noEmit`。
+- 本地验证通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/brand/BrandMark.tsx src/components/TopNav.tsx 'src/app/(auth)/login/page.tsx' 'src/app/(auth)/register/page.tsx' src/components/auth/AuthShowcase.tsx src/app/layout.tsx --max-warnings 0`。
+- 本地验证通过：`npm run build`，构建路由包含 `/icon.svg`。
+- 标准启动验证通过：`./init.sh` 全部通过 `10/10`。
+- 已提交并推送：`27eaba8 feat: replace brand icon with stair mark`。
+- 已部署生产：服务器部署脚本输出 `DEPLOY_OK deploy/pm 27eaba8`。
+- 生产 smoke check 通过：`https://pm.imfly.site/icon.svg` 返回 `200 image/svg+xml`，`https://pm.imfly.site/login` HTML 包含 `<link rel="icon" href="/icon.svg">`，并渲染新的阶梯标志。

@@ -15,7 +15,7 @@
 **Files:**
 - Create: `src/components/brand/brand-mark.test.mjs`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create a Node source check that asserts the intended component and favicon exist, and that brand surfaces no longer import `GraduationCap`.
 
@@ -52,11 +52,13 @@ test("brand mark component and favicon use the stair platform motif", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test src/components/brand/brand-mark.test.mjs`
 
 Expected: FAIL because `BrandMark.tsx` and `src/app/icon.svg` do not exist yet and current brand surfaces still contain `GraduationCap`.
+
+Actual: FAIL observed before implementation. The test reported `TopNav.tsx should render BrandMark` and missing `src/components/brand/BrandMark.tsx`, confirming it caught the old icon state.
 
 ### Task 2: BrandMark Component and Favicon
 
@@ -65,15 +67,15 @@ Expected: FAIL because `BrandMark.tsx` and `src/app/icon.svg` do not exist yet a
 - Create: `src/app/icon.svg`
 - Modify: `src/app/layout.tsx`
 
-- [ ] **Step 1: Add `BrandMark`**
+- [x] **Step 1: Add `BrandMark`**
 
 Create a small reusable component with fixed internal SVG coordinates and configurable outer class names.
 
-- [ ] **Step 2: Add App Router favicon**
+- [x] **Step 2: Add App Router favicon**
 
 Create `src/app/icon.svg` with the same deep teal rounded square, white platform stair path, and cyan top platform line.
 
-- [ ] **Step 3: Add metadata icons**
+- [x] **Step 3: Add metadata icons**
 
 Update `src/app/layout.tsx` metadata with `icons: { icon: "/icon.svg" }`.
 
@@ -85,19 +87,21 @@ Update `src/app/layout.tsx` metadata with `icons: { icon: "/icon.svg" }`.
 - Modify: `src/app/(auth)/register/page.tsx`
 - Modify: `src/components/auth/AuthShowcase.tsx`
 
-- [ ] **Step 1: Replace imports**
+- [x] **Step 1: Replace imports**
 
 Remove `GraduationCap` imports from brand surfaces and import `BrandMark`.
 
-- [ ] **Step 2: Replace rendered icon wrappers**
+- [x] **Step 2: Replace rendered icon wrappers**
 
 Use `BrandMark` in TopNav, mobile login/register headers, and AuthShowcase. Preserve existing sizing and spacing by passing `className` values that match the old wrapper dimensions.
 
-- [ ] **Step 3: Run regression check**
+- [x] **Step 3: Run regression check**
 
 Run: `node --test src/components/brand/brand-mark.test.mjs`
 
 Expected: PASS.
+
+Actual: PASS, `2/2` checks passing.
 
 ### Task 4: Verify, Record, Deploy
 
@@ -105,27 +109,40 @@ Expected: PASS.
 - Modify: `progress.md`
 - Modify: `feature_list.json`
 
-- [ ] **Step 1: Run local verification**
+- [x] **Step 1: Run local verification**
 
 Run:
 
 ```bash
 node --test src/components/brand/brand-mark.test.mjs
 npx tsc --noEmit
-npx eslint src/components/brand/BrandMark.tsx src/components/TopNav.tsx 'src/app/(auth)/login/page.tsx' 'src/app/(auth)/register/page.tsx' src/components/auth/AuthShowcase.tsx src/app/layout.tsx --max-warnings 0
+ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/brand/BrandMark.tsx src/components/TopNav.tsx 'src/app/(auth)/login/page.tsx' 'src/app/(auth)/register/page.tsx' src/components/auth/AuthShowcase.tsx src/app/layout.tsx --max-warnings 0
 npm run build
 ./init.sh
 ```
 
-- [ ] **Step 2: Update project state**
+Actual:
+
+- `node --test src/components/brand/brand-mark.test.mjs` passed.
+- `npx tsc --noEmit` passed.
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint ... --max-warnings 0` passed with the existing ESLintRC deprecation warning only.
+- `npm run build` passed and listed `/icon.svg`.
+- `./init.sh` passed `10/10`.
+- `git diff --check` passed.
+
+- [x] **Step 2: Update project state**
 
 Record verification evidence in `progress.md` and append the icon replacement evidence to `feature_list.json` under `ux-001`.
 
-- [ ] **Step 3: Commit and push**
+Actual: `progress.md` and `feature_list.json` were updated with brand icon verification evidence.
+
+- [x] **Step 3: Commit and push**
 
 Commit the implementation and docs, then push `deploy/pm`.
 
-- [ ] **Step 4: Deploy production**
+Actual: committed `27eaba8 feat: replace brand icon with stair mark` and pushed to `origin/deploy/pm`.
+
+- [x] **Step 4: Deploy production**
 
 Run:
 
@@ -133,6 +150,14 @@ Run:
 ssh root@159.75.213.142 'cd /www/wwwroot/shengyunjie && bash scripts/deploy-production.sh'
 ```
 
-- [ ] **Step 5: Production smoke check**
+Actual: production deploy script completed with `DEPLOY_OK deploy/pm 27eaba8`.
+
+- [x] **Step 5: Production smoke check**
 
 Verify the deployed page references the new icon asset and that the deployment script reports success.
+
+Actual:
+
+- `curl -I https://pm.imfly.site/icon.svg` returned `HTTP/2 200` and `content-type: image/svg+xml`.
+- `curl -s https://pm.imfly.site/login | rg -n 'icon\.svg|升云阶|_next/static'` confirmed `<link rel="icon" href="/icon.svg">` and rendered `升云阶阶梯标志`.
+- `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` returned `VERIFY_OK https://pm.imfly.site`.
