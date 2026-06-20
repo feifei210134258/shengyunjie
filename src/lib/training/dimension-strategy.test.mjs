@@ -60,5 +60,8 @@ test("training answer area presents guidance as a thinking framework", () => {
   assert.match(componentSource, /思考框架/);
   assert.match(componentSource, /text-body-sm/);
   assert.match(componentSource, /hint\.length >= 30/);
+  assert.match(componentSource, /return null/);
+  assert.doesNotMatch(componentSource, /const DIM_HINTS/);
+  assert.doesNotMatch(componentSource, /业务判断问题：先识别目标与约束/);
   assert.doesNotMatch(componentSource, /先拆角色边界，再补异常护栏/);
 });

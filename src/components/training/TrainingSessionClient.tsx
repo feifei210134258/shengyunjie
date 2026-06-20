@@ -83,26 +83,10 @@ type StoredQuestion = {
   hint?: string;
 };
 
-const DIM_HINTS: Record<string, string> = {
-  "战略思维":
-    "把这题看成业务判断问题：先识别目标与约束，再说明取舍依据、代价和验证方式，形成从判断到复盘的闭环。",
-  "系统设计能力":
-    "把这题看成系统设计问题：先识别对象关系与边界，再说明规则如何生效、异常如何兜底，以及风险如何被持续治理。",
-  "数据决策能力":
-    "把这题看成假设验证问题：先说清判断假设，再定义指标口径、反向证据和决策阈值，避免只罗列数据。",
-  "用户洞察与需求管理":
-    "把这题看成任务还原问题：先回到用户真实场景，再区分表层诉求、核心问题和解决边界。",
-  "商业思维":
-    "把这题看成价值交换问题：先判断谁获得价值、谁承担成本，再看规模化收益、交付代价和风险边界。",
-};
-
-function getQuestionHint(question: QuestionState | undefined, dim: string) {
+function getQuestionHint(question: QuestionState | undefined) {
   const hint = question?.hint?.trim();
   if (hint && hint.length >= 30) return hint;
-  return (
-    DIM_HINTS[dim] ||
-    "把这题看成产品判断问题：先识别核心矛盾，再说明判断依据、方案取舍和验证闭环。"
-  );
+  return null;
 }
 
 function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState | null {
@@ -495,7 +479,7 @@ function A1BeforeSubmit({
 }: RealTrainingProps) {
   const isQuestionLoading = question?.loading || !question?.text;
   const answerText = answer?.text || "";
-  const answerHint = getQuestionHint(question, currentDim);
+  const answerHint = getQuestionHint(question);
 
   return (
     <Frame currentIndex={currentIndex} onRestart={onRestart} onFinish={onFinish}>
@@ -573,14 +557,16 @@ function A1BeforeSubmit({
                 <p className="text-label font-semibold text-primary">
                   我的回答
                 </p>
-                <div className="mt-2 rounded-lg border border-primary/10 bg-primary-soft/45 px-3 py-2.5">
-                  <p className="text-label font-semibold text-primary">
-                    思考框架
-                  </p>
-                  <p className="mt-1 text-body-sm leading-6 text-ink-muted">
-                    {answerHint}
-                  </p>
-                </div>
+                {answerHint && (
+                  <div className="mt-2 rounded-lg border border-primary/10 bg-primary-soft/45 px-3 py-2.5">
+                    <p className="text-label font-semibold text-primary">
+                      思考框架
+                    </p>
+                    <p className="mt-1 text-body-sm leading-6 text-ink-muted">
+                      {answerHint}
+                    </p>
+                  </div>
+                )}
               </div>
               <span className="ml-4 shrink-0 rounded-lg bg-[#F3F6FA] px-3 py-2 text-label font-semibold text-ink-faint">
                 {analysis?.loading ? "分析中" : "未提交"}

@@ -861,3 +861,23 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/components/training/TrainingSessionClient.tsx src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-21] Fix: 思考框架只展示 AI 当前题生成结果
+
+### 背景判断
+- 用户测试发现题目还没出来时，“思考框架”已经显示，担心它是写死或按维度默认提供。
+- 这个担心成立：上一版前端确实有 `DIM_HINTS` 维度兜底，加载中也会显示默认框架，不符合“根据题目生成框架引导”的需求。
+
+### 完成内容
+- 移除 `/training/session` 前端的维度默认框架兜底。
+- `getQuestionHint` 只接受当前题 `question.hint`，且长度达到合格阈值才返回；旧短 hint、无 hint、加载中或生成失败都不显示“思考框架”区。
+- 答题区保留“思考框架”展示样式，但改为条件渲染，确保用户看到的引导来自 AI 针对当前题生成并保存的结果。
+- 增加回归测试，禁止组件重新引入 `DIM_HINTS` 或写死维度框架。
+
+### 验证结果
+- TDD 红灯：新增测试先因组件仍包含 `const DIM_HINTS` 失败。
+- `node --test src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/lib/training/dimension-strategy.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
