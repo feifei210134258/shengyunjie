@@ -1384,10 +1384,10 @@ export default function TrainingSessionClient() {
 
     setRound((value) => value + 1);
     setCurrentIndex(0);
-    setQuestions({});
     setAnswers({});
     setAnalyses({});
     setScore(0);
+    setStreamedText("");
     setActive("before");
   };
 
@@ -1407,7 +1407,6 @@ export default function TrainingSessionClient() {
 
   const handleRestart = () => {
     setCurrentIndex(0);
-    setQuestions({});
     setAnswers({});
     setAnalyses({});
     setScore(0);

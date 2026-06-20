@@ -819,3 +819,23 @@
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/app/api/training/questions/route.ts src/components/training/TrainingSessionClient.tsx src/lib/training/personalization.ts src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs --max-warnings 0` 通过。
 - `npm run build` 通过。
+
+## [2026-06-20] Tweak: 当天训练题目缓存复用
+
+### 背景判断
+- 用户担心进入训练页自动刷新题目会浪费 token。
+- 现有 `training_sessions.questions` 已经按天保存题目，不需要新增表或字段；核心是前端不要在“重新开始/再来一轮”时清空题目状态触发自动出题。
+
+### 完成内容
+- `/training/session` 的“重新开始”现在只清空回答、分析、分数和流式文本，保留当天已生成题目缓存。
+- 完成 5 题后的下一轮同样保留已生成题目，不再清空 `questions` 触发 `/api/train`。
+- “换一题”仍是唯一显式重新生成入口，会继续调用 `generateQuestion(currentDim)` 并保存覆盖当前维度题目缓存。
+- 新增回归测试，锁定 `handleRestart` 和下一轮逻辑不得清空题目缓存，同时确认手动换题仍可重新生成。
+
+### 验证结果
+- TDD 红灯：新增测试先因 `handleRestart` 含 `setQuestions({})` 失败。
+- `node --test src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/lib/training/session-progress.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
