@@ -901,3 +901,23 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-21] Tweak: 诊断阶段三案例实战参与分数校准
+
+### 背景判断
+- 用户认为当前诊断思路不够准确，但又担心重诊断会吓跑用户。
+- 本轮采用小改：不新增动态画像表，不拉长诊断流程，只让现有阶段三案例回答真正参与诊断结论。
+
+### 完成内容
+- `/api/diagnosis/case` 在提交案例后调用 AI 诊断师评估用户案例分析，输出五维结构化证据、强弱项和改进建议。
+- 新增 `case-calibration` 诊断工具：将量表自评分与案例实战评分按 75%/25% 混合，温和校准五维分数，避免一次案例完全推翻初筛。
+- 校准后的 `dimension_scores`、`diagnosis_reports.overall_score/overall_grade/strengths/weaknesses/improvements` 和 `growth_snapshots` 会同步写入。
+- 报告页增加“实战校准”摘要，明确案例实战已按权重校准量表分数。
+
+### 验证结果
+- TDD 红灯：新增 `case-calibration.test.mjs` 先因缺少实现失败，再因权重不符合预期失败。
+- `node --test src/lib/diagnosis/case-calibration.test.mjs src/lib/diagnosis/report-summary.test.mjs src/lib/diagnosis/report-detail.test.mjs src/lib/diagnosis/interview-readiness.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- 针对性 ESLint 通过。
+- `npm run build` 通过。
+- `./init.sh` 重跑通过（前一次与并行 build 同跑时出现瞬时 TypeScript 失败，单独复跑为 10/10 通过）。

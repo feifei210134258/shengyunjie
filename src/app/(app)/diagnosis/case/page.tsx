@@ -180,7 +180,7 @@ export default function CasePage() {
             disabled={!selectedOption || !logicInput.trim() || submitting}
             loading={submitting}
           >
-            {submitting ? "提交中..." : "提交方案并生成报告"}
+            {submitting ? "AI 正在评估..." : "提交方案并生成报告"}
           </Button>
         </div>
       </div>
