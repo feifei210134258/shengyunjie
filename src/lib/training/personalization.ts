@@ -191,6 +191,14 @@ export function parseGeneratedQuestionText(text: string) {
     question = raw.slice(plainReasonMatch[0].length).trim();
   }
 
+  const leadingInlineHintMatch = question.match(
+    /^【答题提点[:：]\s*([^】]+)】\s*/i
+  );
+  if (leadingInlineHintMatch) {
+    hint = hint || leadingInlineHintMatch[1]?.trim() || "";
+    question = question.slice(leadingInlineHintMatch[0].length).trim();
+  }
+
   question = question
     .replace(/^【难度：[^】]+】\s*/i, "")
     .replace(/\*\*/g, "")

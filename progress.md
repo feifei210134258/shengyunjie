@@ -921,3 +921,20 @@
 - 针对性 ESLint 通过。
 - `npm run build` 通过。
 - `./init.sh` 重跑通过（前一次与并行 build 同跑时出现瞬时 TypeScript 失败，单独复跑为 10/10 通过）。
+
+## [2026-06-21] Fix: 连续推荐理由后的答题提点不再混入题目卡
+
+### 背景判断
+- 用户截图显示第二题的 `【答题提点：...】` 出现在题目卡红框位置，而不是下方“我的回答”的思考框架区。
+- 复现发现：当模型输出 `【为什么练这题：...】` 后紧接 `【答题提点：...】`，并省略 `题目正文` 标签时，解析器只剥离了推荐理由，答题提点会残留在题干开头。
+
+### 完成内容
+- `parseGeneratedQuestionText` 在推荐理由解析后，会再次检测并剥离题干开头残留的 inline `【答题提点：...】`。
+- 旧缓存题恢复时仍会走同一解析逻辑，因此已缓存的边缘格式也会把框架引导放回“我的回答”区域，题目卡不再显示答题提点。
+- 增加回归测试覆盖“推荐理由 + 答题提点 + 直接题干”的真实格式。
+
+### 验证结果
+- TDD 红灯：新增测试先因 `hint` 为空且题干残留 `答题提点` 失败。
+- `node --test src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- 针对性 ESLint 通过。

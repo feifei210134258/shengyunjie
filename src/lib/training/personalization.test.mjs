@@ -76,3 +76,15 @@ test("extracts inline framework guidance when the model omits the question body 
   assert.match(result.question, /在线客服 SaaS 平台/);
   assert.doesNotMatch(result.question, /答题提点/);
 });
+
+test("extracts framework guidance after recommendation reason without question body label", () => {
+  const result = parseGeneratedQuestionText(`【为什么练这题：帮你跳出只算转化率的表面思维。】
+【答题提点：优先梳理两个需求各自依赖多少现有模块、改动边界多大，再结合客户价值判断谁更影响长期架构稳定性，最后用指标反推决策是否正确。】
+你是某企业级数据分析平台的产品经理，现有2000家付费客户。请回答：
+从系统模块依赖关系和资源复用角度分析，你认为哪个需求优先级更高？`);
+
+  assert.equal(result.reason, "帮你跳出只算转化率的表面思维。");
+  assert.match(result.hint, /优先梳理两个需求/);
+  assert.match(result.question, /企业级数据分析平台/);
+  assert.doesNotMatch(result.question, /答题提点|为什么练这题/);
+});
