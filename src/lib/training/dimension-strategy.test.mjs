@@ -65,3 +65,14 @@ test("training answer area presents guidance as a thinking framework", () => {
   assert.doesNotMatch(componentSource, /业务判断问题：先识别目标与约束/);
   assert.doesNotMatch(componentSource, /先拆角色边界，再补异常护栏/);
 });
+
+test("cached generated question text is reparsed for framework guidance", () => {
+  const componentSource = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(componentSource, /const parsed = parseGeneratedQuestionText\(text\)/);
+  assert.match(componentSource, /parsed\.question/);
+  assert.match(componentSource, /parsed\.hint/);
+});

@@ -67,3 +67,12 @@ test("extracts framework guidance from generated question text", () => {
   assert.match(result.question, /外部协作者权限模块/);
   assert.doesNotMatch(result.question, /答题提点|为什么练这题|题目正文/);
 });
+
+test("extracts inline framework guidance when the model omits the question body label", () => {
+  const result = parseGeneratedQuestionText(`【答题提点：识别产品动作时，先拆解目标用户分层与付费习惯培养，再思考竞争防御、利润优化等高层意图。取舍要量化短期放弃与长期价值，并明确可接受的风险阈值。】
+你是某企业在线客服 SaaS 平台的产品经理，该平台近期将所有免费用户的坐席数量从无限制调整为最多3个，同时推出“坐席扩容包”。请回答以下两个问题：你认为这个产品动作背后最可能的业务意图是什么？如果让你验证该策略是否成功，你会选择哪三个关键指标？`);
+
+  assert.match(result.hint, /识别产品动作时/);
+  assert.match(result.question, /在线客服 SaaS 平台/);
+  assert.doesNotMatch(result.question, /答题提点/);
+});

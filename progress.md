@@ -881,3 +881,23 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/lib/training/dimension-strategy.test.mjs --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-21] Fix: 旧缓存题二次解析框架引导
+
+### 背景判断
+- 用户截图中 `【答题提点：...】` 出现在题目卡顶部，但答题区“思考框架”为空。
+- 判断原因：历史缓存的 `training_sessions.questions[dim].text` 已经把 AI 输出段落整体存成题干，恢复缓存时只读取 `hint` 字段，没有对旧题干二次解析。
+
+### 完成内容
+- `normalizeStoredQuestion` 对字符串缓存和对象缓存的 `text/question` 都会调用 `parseGeneratedQuestionText`。
+- 如果旧题干里包含 `【答题提点】`、`【为什么练这题】` 或 `题目正文`，恢复时会拆出 `hint/reason`，并清理题目正文，避免提示混进题目卡。
+- `parseGeneratedQuestionText` 增加测试覆盖模型省略 `题目正文` 标签、只用 inline `【答题提点：...】` 后直接输出题目的格式。
+- 保持上一轮原则：不会用维度写死兜底；只有解析到当前题真实 hint 时才展示“思考框架”。
+
+### 验证结果
+- TDD 红灯：新增测试先因缓存恢复路径未调用 `parseGeneratedQuestionText(text)` 失败。
+- `node --test src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。

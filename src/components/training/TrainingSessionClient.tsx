@@ -92,15 +92,23 @@ function getQuestionHint(question: QuestionState | undefined) {
 function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState | null {
   if (typeof value === "string") {
     const text = value.trim();
-    return text ? { text, loading: false } : null;
+    if (!text) return null;
+    const parsed = parseGeneratedQuestionText(text);
+    return {
+      text: parsed.question || text,
+      loading: false,
+      reason: parsed.reason || undefined,
+      hint: parsed.hint || undefined,
+    };
   }
   const text = String(value?.text || value?.question || "").trim();
   if (!text) return null;
+  const parsed = parseGeneratedQuestionText(text);
   return {
-    text,
+    text: parsed.question || text,
     loading: false,
-    reason: String(value.reason || "").trim() || undefined,
-    hint: String(value.hint || "").trim() || undefined,
+    reason: String(value.reason || parsed.reason || "").trim() || undefined,
+    hint: String(value.hint || parsed.hint || "").trim() || undefined,
   };
 }
 
