@@ -37,3 +37,13 @@ export function getNextTrainingIndexFromCompleted(
   const nextIndex = dimensions.findIndex((dimension) => !completed.has(dimension));
   return nextIndex >= 0 ? nextIndex : 0;
 }
+
+export function getRotatedTrainingDimensions(
+  date = new Date(),
+  dimensions: readonly string[] = TRAINING_DIMENSIONS
+) {
+  if (!dimensions.length) return [];
+  const daySeed = Math.floor(date.getTime() / 86_400_000);
+  const offset = daySeed % dimensions.length;
+  return [...dimensions.slice(offset), ...dimensions.slice(0, offset)];
+}

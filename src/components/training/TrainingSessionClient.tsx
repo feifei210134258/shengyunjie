@@ -11,7 +11,14 @@ import {
   parseJsonFromAiText,
   TrainingEvaluation,
 } from "@/lib/training/personalization";
-import { TRAINING_DIMENSIONS } from "@/lib/training/session-progress";
+import {
+  getNextTrainingTarget,
+  getTrainingTarget,
+} from "@/lib/training/dimension-strategy";
+import {
+  getRotatedTrainingDimensions,
+  TRAINING_DIMENSIONS,
+} from "@/lib/training/session-progress";
 import {
   ArrowRight,
   Check,
@@ -45,21 +52,30 @@ const sample = {
 
 type VariantId = "before" | "after";
 
-const ALL_DIMS = [...TRAINING_DIMENSIONS];
+const ALL_DIMS = getRotatedTrainingDimensions();
 
-const DIM_FRAMEWORKS: Record<string, string> = {
-  "战略思维": "业务判断",
-  "系统设计能力": "系统思维",
-  "数据决策能力": "假设验证",
-  "用户洞察与需求管理": "第一性原理",
-  "商业思维": "单位经济模型",
-};
+const DIM_FRAMEWORKS = Object.fromEntries(
+  TRAINING_DIMENSIONS.map((dimension) => [
+    dimension,
+    getTrainingTarget(dimension).label,
+  ])
+);
+
+function getDefaultTargetState(dimension: string) {
+  const target = getTrainingTarget(dimension);
+  return {
+    targetId: target.id,
+    targetLabel: target.label,
+  };
+}
 
 type QuestionState = {
   text: string;
   loading: boolean;
   reason?: string;
   hint?: string;
+  targetId?: string;
+  targetLabel?: string;
 };
 type AnswerState = { text: string; submitting: boolean };
 type AnalysisState = {
@@ -81,12 +97,22 @@ type StoredQuestion = {
   question?: string;
   reason?: string;
   hint?: string;
+  targetId?: string;
+  targetLabel?: string;
 };
 
 function getQuestionHint(question: QuestionState | undefined) {
   const hint = question?.hint?.trim();
   if (hint && hint.length >= 30) return hint;
   return null;
+}
+
+function withDefaultTarget(question: QuestionState, dimension: string): QuestionState {
+  if (question.targetId && question.targetLabel) return question;
+  return {
+    ...question,
+    ...getDefaultTargetState(dimension),
+  };
 }
 
 function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState | null {
@@ -109,6 +135,8 @@ function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState 
     loading: false,
     reason: String(value.reason || parsed.reason || "").trim() || undefined,
     hint: String(value.hint || parsed.hint || "").trim() || undefined,
+    targetId: String(value.targetId || "").trim() || undefined,
+    targetLabel: String(value.targetLabel || "").trim() || undefined,
   };
 }
 
@@ -513,7 +541,9 @@ function A1BeforeSubmit({
                 {currentDim}
               </span>
               <span className="rounded-md bg-primary px-3 py-1.5 text-label font-semibold text-white">
-                {DIM_FRAMEWORKS[currentDim] || "思维框架"}
+                {question?.targetLabel ||
+                  DIM_FRAMEWORKS[currentDim] ||
+                  "思维框架"}
               </span>
               <button
                 onClick={onRegenerate}
@@ -560,25 +590,25 @@ function A1BeforeSubmit({
           </section>
 
           <section className="rounded-xl border border-line bg-white p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="min-w-0 flex-1">
+            <div className="mb-3">
+              <div className="flex items-center justify-between gap-4">
                 <p className="text-label font-semibold text-primary">
                   我的回答
                 </p>
-                {answerHint && (
-                  <div className="mt-2 rounded-lg border border-primary/10 bg-primary-soft/45 px-3 py-2.5">
-                    <p className="text-label font-semibold text-primary">
-                      思考框架
-                    </p>
-                    <p className="mt-1 text-body-sm leading-6 text-ink-muted">
-                      {answerHint}
-                    </p>
-                  </div>
-                )}
+                <span className="shrink-0 rounded-lg bg-[#F3F6FA] px-3 py-2 text-label font-semibold text-ink-faint">
+                  {analysis?.loading ? "分析中" : "未提交"}
+                </span>
               </div>
-              <span className="ml-4 shrink-0 rounded-lg bg-[#F3F6FA] px-3 py-2 text-label font-semibold text-ink-faint">
-                {analysis?.loading ? "分析中" : "未提交"}
-              </span>
+              {answerHint && (
+                <div className="mt-2 rounded-lg border border-primary/10 bg-primary-soft/45 px-3 py-2.5">
+                  <p className="text-label font-semibold text-primary">
+                    思考框架
+                  </p>
+                  <p className="mt-1 text-body-sm leading-6 text-ink-muted">
+                    {answerHint}
+                  </p>
+                </div>
+              )}
             </div>
             <textarea
               value={answerText}
@@ -1131,10 +1161,14 @@ export default function TrainingSessionClient() {
   const analysis = analyses[currentDim];
   const hasAnalysis = !!analysis?.text && !analysis.loading;
 
-  const generateQuestion = useCallback(async (dim: string) => {
+  const generateQuestion = useCallback(
+    async (
+      dim: string,
+      targetState = getDefaultTargetState(dim)
+    ) => {
     setQuestions((prev) => ({
       ...prev,
-      [dim]: { text: "", loading: true },
+      [dim]: { text: "", loading: true, ...targetState },
     }));
     setStreamedText("");
 
@@ -1142,7 +1176,11 @@ export default function TrainingSessionClient() {
       const res = await fetch("/api/train", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate", dimension: dim }),
+        body: JSON.stringify({
+          action: "generate",
+          dimension: dim,
+          targetId: targetState.targetId,
+        }),
       });
       if (!res.body) throw new Error("无响应");
 
@@ -1176,6 +1214,7 @@ export default function TrainingSessionClient() {
           loading: false,
           reason: parsedQuestion.reason,
           hint: parsedQuestion.hint,
+          ...targetState,
         },
       }));
       setStreamedText("");
@@ -1190,6 +1229,8 @@ export default function TrainingSessionClient() {
               text: parsedQuestion.question,
               reason: parsedQuestion.reason,
               hint: parsedQuestion.hint,
+              targetId: targetState.targetId,
+              targetLabel: targetState.targetLabel,
             },
           }),
         }).catch((err) => console.error("保存题目失败:", err));
@@ -1197,11 +1238,17 @@ export default function TrainingSessionClient() {
     } catch {
       setQuestions((prev) => ({
         ...prev,
-        [dim]: { text: "（出题失败，请重新出题）", loading: false },
+        [dim]: {
+          text: "（出题失败，请重新出题）",
+          loading: false,
+          ...targetState,
+        },
       }));
       setStreamedText("");
     }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     const today = new Date().toLocaleDateString("en-CA", {
@@ -1216,10 +1263,10 @@ export default function TrainingSessionClient() {
         if (cancelled || !data) return;
         const cachedQuestions = data.session?.questions || {};
         const restoredEntries = Object.entries(cachedQuestions)
-          .map(([dim, value]): [string, QuestionState | null] => [
-            dim,
-            normalizeStoredQuestion(value),
-          ])
+          .map(([dim, value]): [string, QuestionState | null] => {
+            const normalized = normalizeStoredQuestion(value);
+            return [dim, normalized ? withDefaultTarget(normalized, dim) : null];
+          })
           .filter(
             (entry): entry is [string, QuestionState] =>
               dimensionSet.has(entry[0]) && Boolean(entry[1])
@@ -1401,6 +1448,15 @@ export default function TrainingSessionClient() {
   };
 
   const handleRegenerate = () => {
+    const nextTarget = getNextTrainingTarget(
+      currentDim,
+      questions[currentDim]?.targetId
+    );
+    const targetState = {
+      targetId: nextTarget.id,
+      targetLabel: nextTarget.label,
+    };
+
     setAnswers((prev) => ({
       ...prev,
       [currentDim]: { text: "", submitting: false },
@@ -1411,7 +1467,7 @@ export default function TrainingSessionClient() {
     }));
     setScore(0);
     setActive("before");
-    generateQuestion(currentDim);
+    generateQuestion(currentDim, targetState);
   };
 
   const handleRestart = () => {

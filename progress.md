@@ -938,3 +938,42 @@
 - `node --test src/lib/training/personalization.test.mjs src/lib/training/dimension-strategy.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/completion.test.mjs` 通过。
 - `npx tsc --noEmit` 通过。
 - 针对性 ESLint 通过。
+
+## [2026-06-22] Fix: 日常训练题 UI 对齐与高阶 PM 靶点出题
+
+### 背景判断
+- 用户截图显示“未提交”状态与“思考框架”视觉同行，而预期应与“我的回答”同行。
+- 进一步讨论后确认，题目高度相似不只是查重不足，而是第一题固定从“战略思维 | 业务判断”开始，且 prompt 把题目空间压得过窄。
+- 检索高阶 PM 能力框架后，采用“五维统计维度 + 高阶 PM 训练靶点”的结构，避免只围绕大维度标签出题。
+
+### 完成内容
+- 答题区布局改为标题行只放“我的回答”和“未提交/分析中”，思考框架作为独立引导块下移。
+- 新增高阶 PM 训练靶点库：问题定义、业务结果判断、复杂取舍、指标与因果、生命周期判断、系统边界、价值捕获、组织协同、质量交付、复盘迭代。
+- `/api/train` 出题改为按当前维度选择训练靶点，并把靶点能力、思考框架、变化轴和禁区写入 prompt。
+- 前端第二标签从固定大维度框架名改为当前靶点标签，例如“业务结果判断”“指标与因果”“系统边界”。
+- 每日训练维度顺序按日期轮换，避免每天第一题固定为战略思维；`/api/training/sessions` 恢复进度也使用同一轮换顺序。
+- 继续保留防假大空约束：小场景、2 个判断问题、禁止年度战略/第二增长曲线/虚构宏大经营数据。
+
+### 验证结果
+- `node --test src/lib/training/dimension-strategy.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/personalization.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/training/dimension-strategy.ts src/lib/training/session-progress.ts src/lib/training/dimension-strategy.test.mjs src/lib/training/session-progress.test.mjs src/app/api/train/route.ts src/app/api/training/sessions/route.ts src/components/training/TrainingSessionClient.tsx --max-warnings 0` 通过。
+- `npm run build` 通过。
+
+## [2026-06-22] Follow-up: 换一题同步切换训练靶点
+
+### 背景判断
+- 用户本地验证发现点击“换一题”后，题目第二标签仍停留在同一个靶点，例如“系统边界”。
+- 这说明上一轮虽然做了每日维度轮换和靶点库，但同一天同一维度手动换题仍被同一靶点约束，可能继续产生相似题。
+
+### 完成内容
+- `QuestionState` 和 `training_sessions.questions` 缓存结构增加 `targetId/targetLabel`。
+- `/api/train` 接收 `targetId`，按指定靶点生成题，而不是只按日期默认靶点。
+- “换一题”会调用 `getNextTrainingTarget`，在当前维度内切换到下一个高阶 PM 靶点，题目卡第二标签立即变化。
+- 旧缓存题如果没有靶点信息，会用当前维度默认靶点兜底。
+
+### 验证结果
+- `node --test src/lib/training/dimension-strategy.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/personalization.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/training/dimension-strategy.ts src/lib/training/session-progress.ts src/lib/training/dimension-strategy.test.mjs src/lib/training/session-progress.test.mjs src/app/api/train/route.ts src/components/training/TrainingSessionClient.tsx --max-warnings 0` 通过。
+- 本地 dev server `http://localhost:3002/training/session` 返回 200。

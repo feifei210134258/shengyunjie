@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   getCompletedTrainingDimensions,
   getNextTrainingIndexFromCompleted,
+  getRotatedTrainingDimensions,
   TRAINING_DIMENSIONS,
 } from "./session-progress.ts";
 
@@ -31,6 +32,19 @@ test("skips duplicate submitted dimensions and keeps canonical order", () => {
 
 test("starts a new round from the first dimension after all dimensions are complete", () => {
   assert.equal(getNextTrainingIndexFromCompleted(TRAINING_DIMENSIONS), 0);
+});
+
+test("daily training order rotates so the first question is not always strategic thinking", () => {
+  const firstDay = getRotatedTrainingDimensions(
+    new Date("2026-06-22T00:00:00Z")
+  );
+  const nextDay = getRotatedTrainingDimensions(
+    new Date("2026-06-23T00:00:00Z")
+  );
+
+  assert.deepEqual(new Set(firstDay), new Set(TRAINING_DIMENSIONS));
+  assert.deepEqual(new Set(nextDay), new Set(TRAINING_DIMENSIONS));
+  assert.notEqual(firstDay[0], nextDay[0]);
 });
 
 function extractFunctionBody(source, functionName) {
@@ -71,5 +85,6 @@ test("manual question replacement remains the only explicit regeneration path", 
   );
   const regenerateBody = extractFunctionBody(source, "handleRegenerate");
 
-  assert.match(regenerateBody, /generateQuestion\(currentDim\)/);
+  assert.match(regenerateBody, /generateQuestion\(currentDim,\s*targetState\)/);
+  assert.match(regenerateBody, /getNextTrainingTarget/);
 });

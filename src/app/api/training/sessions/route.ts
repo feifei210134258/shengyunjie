@@ -7,6 +7,7 @@ import {
 import {
   getCompletedTrainingDimensions,
   getNextTrainingIndexFromCompleted,
+  getRotatedTrainingDimensions,
 } from "@/lib/training/session-progress";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -46,7 +47,11 @@ export async function GET(req: NextRequest) {
       ]);
 
       const completedDimensions = getCompletedTrainingDimensions(records || []);
-      const nextIndex = getNextTrainingIndexFromCompleted(completedDimensions);
+      const trainingOrder = getRotatedTrainingDimensions(startUtc);
+      const nextIndex = getNextTrainingIndexFromCompleted(
+        completedDimensions,
+        trainingOrder
+      );
       return NextResponse.json({ session, completedDimensions, nextIndex });
     }
 

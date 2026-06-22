@@ -2,7 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  formatTrainingTarget,
   formatTrainingDimensionStrategy,
+  getTrainingTarget,
+  getNextTrainingTarget,
+  getTrainingTargetById,
+  getTrainingTargetsForDimension,
   getTrainingDimensionStrategy,
 } from "./dimension-strategy.ts";
 
@@ -75,4 +80,70 @@ test("cached generated question text is reparsed for framework guidance", () => 
   assert.match(componentSource, /const parsed = parseGeneratedQuestionText\(text\)/);
   assert.match(componentSource, /parsed\.question/);
   assert.match(componentSource, /parsed\.hint/);
+});
+
+test("high-level product manager targets expand each base dimension into trainable capabilities", () => {
+  const strategicTargets = getTrainingTargetsForDimension("战略思维");
+  const dataTargets = getTrainingTargetsForDimension("数据决策能力");
+  const systemTargets = getTrainingTargetsForDimension("系统设计能力");
+
+  assert.ok(strategicTargets.some((target) => target.label === "业务结果判断"));
+  assert.ok(strategicTargets.some((target) => target.label === "复杂取舍"));
+  assert.ok(dataTargets.some((target) => target.label === "指标与因果"));
+  assert.ok(systemTargets.some((target) => target.label === "系统边界"));
+
+  const prompt = formatTrainingTarget(
+    getTrainingTarget("战略思维", new Date("2026-06-22T00:00:00Z"))
+  );
+
+  assert.match(prompt, /高阶能力/);
+  assert.match(prompt, /思考框架/);
+  assert.match(prompt, /可用变化轴/);
+  assert.match(prompt, /靶点禁区/);
+});
+
+test("training generation prompt uses target labels instead of only broad dimension tags", () => {
+  const routeSource = readFileSync(
+    new URL("../../app/api/train/route.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(routeSource, /getTrainingTarget/);
+  assert.match(routeSource, /本题靶点/);
+  assert.match(routeSource, /训练靶点/);
+  assert.match(routeSource, /targetId/);
+  assert.match(routeSource, /getTrainingTargetById/);
+  assert.match(routeSource, /产品类型、业务动作、冲突角色、指标组合和问题结构/);
+});
+
+test("answer status stays in the title row instead of aligning with framework guidance", () => {
+  const componentSource = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(componentSource, /我的回答[\s\S]*未提交/);
+  assert.match(componentSource, /未提交[\s\S]*思考框架/);
+  assert.doesNotMatch(
+    componentSource,
+    /min-w-0 flex-1[\s\S]*思考框架[\s\S]*未提交/
+  );
+});
+
+test("manual question replacement rotates target tag within the same dimension", () => {
+  const current = getTrainingTargetById("系统设计能力", "system-boundary");
+  const next = getNextTrainingTarget("系统设计能力", current.id);
+
+  assert.equal(current.label, "系统边界");
+  assert.equal(next.label, "质量交付");
+
+  const componentSource = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(componentSource, /getNextTrainingTarget/);
+  assert.match(componentSource, /targetState/);
+  assert.match(componentSource, /targetId: targetState\.targetId/);
+  assert.match(componentSource, /question\?\.targetLabel/);
 });

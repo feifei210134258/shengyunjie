@@ -2,7 +2,10 @@ import { streamText } from "ai";
 import { getChatModel, getThinkingModel } from "@/lib/ai";
 import { createServerClient } from "@/lib/supabase-server";
 import {
+  formatTrainingTarget,
   formatTrainingDimensionStrategy,
+  getTrainingTargetById,
+  getTrainingTarget,
   getTrainingDimensionStrategy,
 } from "@/lib/training/dimension-strategy";
 import { buildTrainingPersonalization } from "@/lib/training/personalization";
@@ -52,7 +55,7 @@ async function getPersonalizationContext(dimension?: string) {
 }
 
 export async function POST(req: Request) {
-  const { action, dimension, level, userAnswer, question } = await req.json();
+  const { action, dimension, targetId, level, userAnswer, question } = await req.json();
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
@@ -63,7 +66,10 @@ export async function POST(req: Request) {
 
   if (action === "generate") {
     const dimensionStrategy = getTrainingDimensionStrategy(dimension);
-    const framework = dimensionStrategy.framework;
+    const target = targetId
+      ? getTrainingTargetById(dimension, targetId)
+      : getTrainingTarget(dimension);
+    const framework = target.framework;
     const personalization = await getPersonalizationContext(dimension);
 
     const result = streamText({
@@ -72,13 +78,17 @@ export async function POST(req: Request) {
 
 核心原则：
 1. **小而真**：场景必须具体、真实、可感知。可以是对真实知名产品/功能的分析，也可以是真实PM日常会遇到的具体困境。坚决禁止虚构公司名、营收数字、市场份额、融资额等宏大叙事数据。
-2. **思维框架导向**：每道题必须让答题者运用「${framework}」这一思维框架。难度来自"思维深度"，不是"信息阅读量"。
+2. **高阶 PM 靶点导向**：每道题必须训练「${target.label}」这一高阶 PM 能力靶点，并让答题者运用「${framework}」。难度来自"判断质量"，不是"信息阅读量"。
 3. **执行层进阶定位**：题目要让执行层PM跳出现有执行思维，但不要用"年营收5亿、CEO战略会、全公司资源重组"这种虚假宏大场景来堆难度。
 
 当前维度：${dimension}
+本题靶点：${target.label}
 对应思维框架：${framework}
 维度出题策略：
 ${formatTrainingDimensionStrategy(dimensionStrategy)}
+
+高阶 PM 训练靶点：
+${formatTrainingTarget(target)}
 
 个性化上下文：
 - 本题聚焦维度：${personalization.focusDimension || dimension}
@@ -91,10 +101,12 @@ ${formatTrainingDimensionStrategy(dimensionStrategy)}
 
 要求：
 - 必须围绕维度「${dimension}」出题
+- 必须围绕训练靶点「${target.label}」出题，页面会把它作为本题第二标签
 - **每道题不超过 300 字**
 - 避免与近期已练题目重复
+- 不要复用近期已练题目的产品类型、业务动作、冲突角色、指标组合和问题结构
 - 题目要自然嵌入用户短板，但不要暴露内部评分细节
-- 只能从上面的“允许题型”里选择一个小场景出题
+- 从维度“允许题型”和靶点“可用变化轴”中选择 2-3 个变化轴自然组合，不能写成机械填空题
 - 题目必须严格包含 2 个具体判断问题，避免开放式大作文
 - 两个问题的分工必须清晰：一个核心判断，一个落地、风险或验证追问
 - 不要生成第 3 个问题，也不要在题尾追加“注意”“补充要求”“额外思考”等隐性第三问
@@ -110,7 +122,7 @@ ${formatTrainingDimensionStrategy(dimensionStrategy)}
       messages: [
         {
           role: "user",
-          content: `请出一道关于「${dimension}」维度的训练题，要求答题者运用「${framework}」思维框架。`,
+          content: `请出一道关于「${dimension}」维度、「${target.label}」靶点的训练题，要求答题者运用「${framework}」思维框架。`,
         },
       ],
     });
