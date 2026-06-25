@@ -6,7 +6,11 @@ import InterviewQuestion from "@/components/bootcamp/InterviewQuestion";
 import AnswerEvaluation from "@/components/bootcamp/AnswerEvaluation";
 import DailySummary from "@/components/bootcamp/DailySummary";
 import { InterviewQuestion as InterviewQuestionType } from "@/types/bootcamp";
-import { calculateDayProgress } from "@/lib/bootcamp";
+import {
+  calculateDayProgress,
+  canAdvanceFromQuestion,
+  isQuestionEvaluated,
+} from "@/lib/bootcamp";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { PageSpinner } from "@/components/ui/spinner";
@@ -192,7 +196,7 @@ export default function BootcampInterviewPage() {
                     "h-2.5 rounded-full transition-colors",
                     idx === currentIndex
                       ? "bg-primary"
-                      : q.status === "evaluated"
+                      : isQuestionEvaluated(q)
                         ? "bg-success"
                         : "bg-line"
                   )}
@@ -236,7 +240,7 @@ export default function BootcampInterviewPage() {
               }}
               disabled={
                 currentIndex < questions.length - 1 &&
-                currentQuestion?.status !== "evaluated"
+                !canAdvanceFromQuestion(currentQuestion)
               }
             >
               {currentIndex < questions.length - 1

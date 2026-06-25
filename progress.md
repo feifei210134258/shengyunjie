@@ -997,3 +997,20 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/bootcamp/resume/route.ts src/app/api/bootcamp/interview/route.ts src/app/api/bootcamp/interview/answer/route.ts src/lib/bootcamp/grounding.ts src/components/bootcamp/ResumePreview.tsx --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `./init.sh` 通过，环境健康检查 10/10。
+
+## [2026-06-25] Fix: 特训有反馈时下一题按钮可点击
+
+### 背景判断
+- 用户截图显示当前题右侧已经生成完整反馈，但底部“下一题”仍是禁用态。
+- 根因是页面渲染反馈看 `currentQuestion.ai_evaluation`，但按钮禁用条件和进度统计只看 `status === "evaluated"`；当历史记录或接口返回出现“有 ai_evaluation 但 status 仍为 answered/pending”的陈旧状态时，页面会显示反馈却不允许进入下一题。
+
+### 完成内容
+- `src/lib/bootcamp.ts` 新增 `isQuestionEvaluated` / `canAdvanceFromQuestion`，统一用 `status === evaluated || ai_evaluation 存在` 判断题目是否已完成。
+- `/bootcamp/interview` 的进度条、今日进度和“下一题”按钮改用同一判断，避免显示反馈但按钮不可点。
+- 新增 `src/lib/bootcamp.test.mjs` 回归测试，覆盖“有 ai_evaluation 但 status 陈旧”仍可进入下一题。
+
+### 验证结果
+- `node --test src/lib/bootcamp.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/bootcamp/interview/page.tsx' src/lib/bootcamp.ts --max-warnings 0` 通过。
+- `npm run build` 通过。
