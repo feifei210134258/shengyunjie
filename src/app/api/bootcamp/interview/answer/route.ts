@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { getChatModel } from "@/lib/ai";
 import { AIEvaluation } from "@/types/bootcamp";
+import { sanitizeFeedbackForCurrentQuestion } from "@/lib/bootcamp/grounding";
 
 function parseJsonFromAiText<T>(text: string): T | null {
   const trimmed = text.trim();
@@ -49,7 +50,11 @@ function normalizeList(value: unknown, fallback: string[]) {
   return fallback;
 }
 
-function normalizeEvaluation(parsed: any): AIEvaluation {
+function normalizeEvaluation(
+  parsed: any,
+  questionText: string,
+  answer: string
+): AIEvaluation {
   const structure = normalizeScore(parsed?.structure, 5);
   const logic = normalizeScore(parsed?.logic, 5);
   const professionalism = normalizeScore(parsed?.professionalism, 5);
@@ -57,6 +62,16 @@ function normalizeEvaluation(parsed: any): AIEvaluation {
   const overallFallback =
     Math.round(((structure + logic + professionalism + innovation) / 4) * 10) /
     10;
+  const exampleAnswer = sanitizeFeedbackForCurrentQuestion(
+    String(parsed?.example_answer || ""),
+    questionText,
+    answer
+  );
+  const improvedAnswer = sanitizeFeedbackForCurrentQuestion(
+    String(parsed?.improved_answer || parsed?.rewrite_example || ""),
+    questionText,
+    answer
+  );
 
   return {
     overall_score: normalizeScore(
@@ -68,13 +83,17 @@ function normalizeEvaluation(parsed: any): AIEvaluation {
     professionalism,
     innovation,
     feedback:
-      String(parsed?.feedback || parsed?.overall_feedback || "").trim() ||
-      "这份回答还没有形成足够完整的面试表达，需要补充背景、判断依据、取舍过程和结果证据。",
+      sanitizeFeedbackForCurrentQuestion(
+        String(parsed?.feedback || parsed?.overall_feedback || ""),
+        questionText,
+        answer
+      ) ||
+      "这份回答还没有紧扣当前题目展开，需要围绕题目中的项目背景补充判断依据、取舍过程、结果证据和复盘结论。",
     strengths: normalizeList(parsed?.strengths, [
       "能围绕题目给出基本回答，说明你已经抓住了讨论方向。",
     ]),
     gaps: normalizeList(parsed?.gaps || parsed?.weaknesses, [
-      "缺少可验证的业务背景、关键指标、决策取舍和复盘结论，面试官难以判断你的真实产品判断力。",
+      "缺少与当前题目直接相关的业务背景、关键指标、决策取舍和复盘结论，面试官难以判断你的真实产品判断力。",
     ]),
     suggestions: normalizeList(parsed?.suggestions, [
       "按“背景目标 - 我的判断 - 关键取舍 - 数据结果 - 复盘改进”的顺序重答一遍。",
@@ -86,11 +105,11 @@ function normalizeEvaluation(parsed: any): AIEvaluation {
       "补充上线后的结果、反证和复盘",
     ]),
     example_answer:
-      String(parsed?.example_answer || "").trim() ||
-      "示例：我会先说明当时的业务目标和约束，再解释我如何用调研和数据确认优先级，接着讲两个备选方案的取舍，最后用上线后的核心指标和复盘说明这个决策是否成立。",
+      exampleAnswer ||
+      "示例：我会先复述当前题目中的项目背景和目标，再说明我当时如何判断优先级、比较备选方案、处理关键风险，最后用结果指标和复盘结论证明这个判断是否成立。",
     improved_answer:
-      String(parsed?.improved_answer || parsed?.rewrite_example || "").trim() ||
-      "改写示范：这个项目的核心问题不是“覆盖更多场景”，而是先识别哪类场景对目标用户最高频、最高价值。我当时会先用用户访谈和行为数据筛出 Top 场景，再用影响面、实现成本和验证周期做优先级排序，放弃低频但炫技的需求，把资源集中在能最快证明价值的场景上。",
+      improvedAnswer ||
+      "改写示范：针对当前题目里的项目，我会先交代业务目标和约束，再说明自己如何用用户反馈、流程数据或交付风险判断优先级。随后对比两个方案的收益与代价，解释为什么选择当前方案，并补充上线后的结果、异常情况和复盘改进。",
     next_practice:
       String(parsed?.next_practice || "").trim() ||
       "下一题前，先把自己的回答压缩成 5 句话：目标、证据、方案、取舍、结果。",
@@ -177,6 +196,10 @@ JSON 结构必须为：
   "improved_answer": "把用户原回答改写成更像面试现场的版本，120-220 字",
   "next_practice": "下一题前最该练的一件事"
 }
+硬性要求：
+1. 所有反馈、框架、示例回答和改写示范只能围绕“当前题目”和“当前回答”，不得引用其他题目、其他项目或未在当前输入中出现的业务场景。
+2. 如果用户回答偏离当前题目，要明确指出“偏离当前题目”，但仍然用当前题目的项目背景给出可改写方向。
+3. 生成前先核对题目关键词，反馈里必须出现当前题目或用户回答中的核心对象、动作或指标。
 评分标准：
 1. 结构化：是否讲清背景、目标、过程、结果、复盘。
 2. 逻辑性：是否有判断依据、取舍标准、因果链和反证意识。
@@ -196,7 +219,7 @@ JSON 结构必须为：
 
         const parsed = parseJsonFromAiText(text);
         if (!parsed) throw new Error("AI 返回不是 JSON");
-        evaluation = normalizeEvaluation(parsed);
+        evaluation = normalizeEvaluation(parsed, interview.question_text, answer);
         break;
       } catch {
         retries++;

@@ -2,6 +2,10 @@ import { createServerClient } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { getChatModel } from "@/lib/ai";
+import {
+  formatResumeGroundingContext,
+  questionUsesInvalidProjectCompanyPair,
+} from "@/lib/bootcamp/grounding";
 
 function parseJsonFromAiText<T>(text: string): T | null {
   const trimmed = text.trim();
@@ -67,6 +71,12 @@ function isGroundedInterviewQuestion(question: any) {
   ];
 
   return !fakeStrategyPatterns.some((pattern) => pattern.test(text));
+}
+
+function questionTextOf(question: any) {
+  return String(
+    question?.question_text || question?.text || question?.question || ""
+  );
 }
 
 function getFallbackQuestions(dayNumber: number, parsedProfile: any) {
@@ -171,7 +181,8 @@ export async function POST(req: NextRequest) {
 2. 重点考察：项目复盘、决策取舍、指标归因、复杂协同、系统边界、失败复盘。
 3. 问法要接地气，像面试官会追问的原话：当时怎么判断、怎么证明、怎么处理冲突、如果重来怎么改。
 4. 不要出“CEO 要你找第二增长曲线”“制定 12/18 个月战略路线图”“泛泛评估市场机会/GTM/ROI”这类假大空题，除非简历明确有对应项目且题目仍然落在具体经历上。
-5. 必须返回恰好 5 道题，难度随 day 递增。
+5. 严禁把 A 公司经历里的项目写成 B 公司做的项目；项目归属只能依据“项目归属锚点”，不允许自行推断。
+6. 必须返回恰好 5 道题，难度随 day 递增。
 JSON 结构必须为：
 {
   "questions": [
@@ -188,6 +199,8 @@ JSON 结构必须为：
           role: "user",
           content: `候选人信息：${JSON.stringify(session.parsed_profile)}
 弱点预测：${JSON.stringify(session.weakness_prediction)}
+项目归属锚点：
+${formatResumeGroundingContext(session.parsed_profile)}
 当前第 ${day_number} 天
 ${previousPerformance}`,
         },
@@ -195,9 +208,16 @@ ${previousPerformance}`,
     });
 
     const parsed = parseJsonFromAiText(text);
-    const generatedQuestions = getGeneratedQuestions(parsed).filter(
-      isGroundedInterviewQuestion
-    );
+    const generatedQuestions = getGeneratedQuestions(parsed).filter((question) => {
+      const questionText = questionTextOf(question);
+      return (
+        isGroundedInterviewQuestion(question) &&
+        !questionUsesInvalidProjectCompanyPair(
+          questionText,
+          session.parsed_profile
+        )
+      );
+    });
     const questions = [
       ...generatedQuestions,
       ...getFallbackQuestions(day_number, session.parsed_profile),

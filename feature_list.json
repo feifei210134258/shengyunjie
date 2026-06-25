@@ -1,8 +1,8 @@
 {
     "project": "产品升云阶 — Product Thinking Enhancement Tool",
-    "last_updated": "2026-06-22",
-    "current_feature": "training-001",
-    "notes": "修复训练换一题不切换靶点标签的问题：换题会在同维度内轮换高阶 PM 训练靶点，并将 targetId 传给 /api/train，避免同一天同维度仍被同一靶点框死。",
+    "last_updated": "2026-06-25",
+    "current_feature": "bootcamp-002",
+    "notes": "修复特训页题目与反馈串项目问题：简历解析增加项目所属公司字段，面试题生成使用项目归属锚点并过滤项目/公司错配，评分反馈强约束当前题目和当前回答。",
     "features": [
         {
             "id": "infra-001",
@@ -145,7 +145,7 @@
                 "bootcamp-000"
             ],
             "status": "completed",
-            "evidence": "/bootcamp/resume 页面 + /api/bootcamp/resume API + ResumeUploader/ResumePreview/WeaknessReport 组件。2026-06-03 增加 .md/.markdown 简历文件上传支持；hotfix 修复 Markdown 上传后反馈不明显/AI JSON 输出带代码块导致无法进入下一步的问题。2026-06-03 追加远端 Supabase 训练营表 migration、bootcamp_sessions.user_id 唯一约束、页面加载已解析记录；真实浏览器自测 POST /api/bootcamp/resume 200，GET 读回 parsed_profile/weakness_prediction，页面显示解析结果和“开始特训”。2026-06-04 新增 DELETE /api/bootcamp/resume 和“清空并重新上传”，真实浏览器点击清空后 GET /api/bootcamp/resume 返回 404，页面回到上传/粘贴入口，测试简历已从当前用户训练营会话清除。npx tsc、针对性 ESLint、git diff --check、./init.sh 通过"
+            "evidence": "/bootcamp/resume 页面 + /api/bootcamp/resume API + ResumeUploader/ResumePreview/WeaknessReport 组件。2026-06-03 增加 .md/.markdown 简历文件上传支持；hotfix 修复 Markdown 上传后反馈不明显/AI JSON 输出带代码块导致无法进入下一步的问题。2026-06-03 追加远端 Supabase 训练营表 migration、bootcamp_sessions.user_id 唯一约束、页面加载已解析记录；真实浏览器自测 POST /api/bootcamp/resume 200，GET 读回 parsed_profile/weakness_prediction，页面显示解析结果和“开始特训”。2026-06-04 新增 DELETE /api/bootcamp/resume 和“清空并重新上传”，真实浏览器点击清空后 GET /api/bootcamp/resume 返回 404，页面回到上传/粘贴入口，测试简历已从当前用户训练营会话清除。npx tsc、针对性 ESLint、git diff --check、./init.sh 通过。2026-06-25 修复 MD 简历项目归属解析：parsed_profile.projects 增加可选 company，prompt 要求只在同一经历/小节明确归属时填写，ResumePreview 展示项目公司；回归测试覆盖项目 company 优先于附近工作经历。验证：node --test src/lib/bootcamp/grounding.test.mjs、npx tsc --noEmit、针对性 ESLint、npm run build、./init.sh 通过"
         },
         {
             "id": "bootcamp-002",
@@ -155,7 +155,7 @@
                 "bootcamp-001"
             ],
             "status": "completed",
-            "evidence": "/bootcamp/interview 页面 + /api/bootcamp/interview API + InterviewQuestion/AnswerEvaluation/DailySummary 组件。2026-06-03 修复面试题生成 JSON 解析脆弱、重复生成冲突和题目数量不稳定问题；真实浏览器自测 POST /api/bootcamp/interview 200 返回 5 道题，GET /api/bootcamp/interview?day=1 从数据库读回 5 道题，题号 1-5，current_day=1。2026-06-04 出题 prompt 改为基于简历项目/公司/指标的高阶 PM 面试追问，并过滤 CEO/第二增长曲线/18 个月战略路线图等假大空题；真实浏览器生成 Day 1 题目返回 5 题，围绕客户健康度评分系统、权限与审批流重构、指标归因和系统边界追问。2026-06-04 修复评分反馈空壳问题：/api/bootcamp/interview/answer 增加严格 JSON schema、容错解析、字段归一化、思路框架/示例回答/改写示范/下一题练习；旧空评价可点击“重新生成反馈”基于原回答重评。真实浏览器验证教师智能助理第一题重评后显示完整教练反馈。2026-06-04 宽屏重排：/bootcamp/interview 改为 1480px 双栏，左侧固定题目/原回答/进度/导航，右侧反馈铺开；1920px 浏览器实测主容器 1480px，左右栏约 571px / 821px"
+            "evidence": "/bootcamp/interview 页面 + /api/bootcamp/interview API + InterviewQuestion/AnswerEvaluation/DailySummary 组件。2026-06-03 修复面试题生成 JSON 解析脆弱、重复生成冲突和题目数量不稳定问题；真实浏览器自测 POST /api/bootcamp/interview 200 返回 5 道题，GET /api/bootcamp/interview?day=1 从数据库读回 5 道题，题号 1-5，current_day=1。2026-06-04 出题 prompt 改为基于简历项目/公司/指标的高阶 PM 面试追问，并过滤 CEO/第二增长曲线/18 个月战略路线图等假大空题；真实浏览器生成 Day 1 题目返回 5 题，围绕客户健康度评分系统、权限与审批流重构、指标归因和系统边界追问。2026-06-04 修复评分反馈空壳问题：/api/bootcamp/interview/answer 增加严格 JSON schema、容错解析、字段归一化、思路框架/示例回答/改写示范/下一题练习；旧空评价可点击“重新生成反馈”基于原回答重评。真实浏览器验证教师智能助理第一题重评后显示完整教练反馈。2026-06-04 宽屏重排：/bootcamp/interview 改为 1480px 双栏，左侧固定题目/原回答/进度/导航，右侧反馈铺开；1920px 浏览器实测主容器 1480px，左右栏约 571px / 821px。2026-06-25 修复特训题目和教练反馈串项目：新增 bootcamp grounding 工具生成项目归属锚点，/api/bootcamp/interview 过滤“项目 + 错误公司”组合，/api/bootcamp/interview/answer 要求反馈/示例/改写只围绕当前题目和当前回答；回归测试覆盖“万商云集 + BPM 流程引擎重构”错配和泛泛“这个项目”反馈串题。验证：node --test src/lib/bootcamp/grounding.test.mjs、npx tsc --noEmit、针对性 ESLint、npm run build、./init.sh 通过"
         },
         {
             "id": "bootcamp-003",

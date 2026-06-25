@@ -7,6 +7,7 @@ export interface ParsedProfile {
   }>;
   projects: Array<{
     name: string;
+    company?: string;
     description: string;
     role: string;
     outcomes: string[];

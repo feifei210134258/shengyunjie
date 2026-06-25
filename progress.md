@@ -977,3 +977,23 @@
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/training/dimension-strategy.ts src/lib/training/session-progress.ts src/lib/training/dimension-strategy.test.mjs src/lib/training/session-progress.test.mjs src/app/api/train/route.ts src/components/training/TrainingSessionClient.tsx --max-warnings 0` 通过。
 - 本地 dev server `http://localhost:3002/training/session` 返回 200。
+
+## [2026-06-25] Fix: 特训题目与教练反馈不再串项目
+
+### 背景判断
+- 用户截图显示特训题把「BPM 流程引擎重构」错误写成在「万商云集」做，疑似 MD 简历解析后项目和公司归属串联。
+- 同一页右侧 AI 教练反馈围绕另一个「教师智能助理低使用率场景」题目，而不是当前 BPM 流程引擎题，说明评分反馈上下文约束过松。
+
+### 完成内容
+- `/api/bootcamp/resume` 的简历解析 JSON 增加 `projects.company`，并要求只有同一经历/同一小节/项目描述明确归属时才填写，无法判断就留空。
+- 新增 `src/lib/bootcamp/grounding.ts`：从简历结构化信息生成项目归属锚点，并检测“项目名 + 其他公司名”的错配题目。
+- `/api/bootcamp/interview` 在出题 prompt 中加入项目归属锚点，并过滤模型返回的项目/公司错配题，防止「万商云集做 BPM」这类组合进入题库。
+- `/api/bootcamp/interview/answer` 强约束评分只能围绕当前题目和当前回答；总评、示例回答、改写示范若无法和当前上下文重叠，会回落到当前题目导向的安全文案。
+- `ResumePreview` 展示项目所属公司，便于用户在解析结果页发现归属异常。
+
+### 验证结果
+- `node --test src/lib/bootcamp/grounding.test.mjs` 通过，覆盖「万商云集 + BPM 流程引擎重构」错配、项目 company 优先和泛泛“这个项目”反馈串题。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/bootcamp/resume/route.ts src/app/api/bootcamp/interview/route.ts src/app/api/bootcamp/interview/answer/route.ts src/lib/bootcamp/grounding.ts src/components/bootcamp/ResumePreview.tsx --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。

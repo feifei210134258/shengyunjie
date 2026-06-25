@@ -61,7 +61,10 @@ export default function ResumePreview({ profile, rawMarkdown }: Props) {
               <p className="text-body-sm text-ink-muted mt-1">
                 {project.description}
               </p>
-              <p className="text-label text-primary mt-2">角色：{project.role}</p>
+              <p className="text-label text-primary mt-2">
+                {project.company ? `公司：${project.company} · ` : ""}
+                角色：{project.role}
+              </p>
             </div>
           ))}
         </div>
