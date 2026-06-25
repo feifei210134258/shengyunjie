@@ -702,6 +702,7 @@
 - 新增 `docs/superpowers/specs/2026-06-20-training-strategy-prompt-hotfix-design.md`，记录机会成本旧框架残留清理、固定推荐结构删除和回归测试。
 - 新增 `docs/superpowers/reports/2026-06-20-training-strategy-prompt-hotfix-verify.md`，记录战略思维热修验证结果。
 - 更新 `feature_list.json`，在 `training-001` 和 `ux-001` 证据中补充新增文档索引。
+- 2026-06-25：训练题质量升级，新增 `src/lib/training/question-bank.ts` 作为高阶产品题种子池（30+ 条，带 source/sourceUrl/usageRights/variationAxes/forbiddenPatterns），`/api/train` 生成前先选种子并注入种子材料，同时把今日会话题目与历史记录一起参与重复惩罚；`question-bank.test.mjs` 与 `route.test.mjs` 覆盖了种子密度、家族避让、当天题规避和 prompt 注入。验证：`node --test src/lib/training/question-bank.test.mjs src/app/api/train/route.test.mjs`、`npx tsc --noEmit`、`./init.sh` 通过。
 
 ### 验证结果
 - `feature_list.json` JSON 解析通过。

@@ -21,6 +21,7 @@ export interface TrainingPersonalization {
   recentLowDimensions: string[];
   recentGaps: string[];
   recentQuestions: string[];
+  todayQuestions: string[];
   averageScore: number | null;
   recommendationReason: string;
 }
@@ -217,6 +218,7 @@ export function buildTrainingPersonalization(input: {
   requestedDimension?: string;
   latestReport?: any;
   recentRecords?: any[];
+  todayQuestions?: string[];
   latestBootcampSession?: any;
 }): TrainingPersonalization {
   const weakFromReport =
@@ -244,6 +246,9 @@ export function buildTrainingPersonalization(input: {
     .map((record) => String(record.question_scenario || "").trim())
     .filter(Boolean)
     .slice(0, 5);
+  const todayQuestions = Array.from(
+    new Set((input.todayQuestions || []).map((item) => String(item || "").trim()).filter(Boolean))
+  ).slice(0, 5);
   const scored = recentRecords
     .map((record) => Number(record.score))
     .filter((score) => Number.isFinite(score) && score > 0);
@@ -276,6 +281,7 @@ export function buildTrainingPersonalization(input: {
     recentLowDimensions: Array.from(new Set(recentLowDimensions)).slice(0, 3),
     recentGaps,
     recentQuestions,
+    todayQuestions,
     averageScore,
     recommendationReason:
       reasonParts.join("；") || "先完成一题高阶 PM 场景题，用答案质量校准当前能力。",

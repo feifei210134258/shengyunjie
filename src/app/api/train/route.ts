@@ -1,6 +1,7 @@
 import { streamText } from "ai";
 import { getChatModel, getThinkingModel } from "@/lib/ai";
 import { createServerClient } from "@/lib/supabase-server";
+import { getBeijingDate } from "@/lib/date";
 import {
   formatTrainingTarget,
   formatTrainingDimensionStrategy,
@@ -8,6 +9,13 @@ import {
   getTrainingTarget,
   getTrainingDimensionStrategy,
 } from "@/lib/training/dimension-strategy";
+import {
+  describeSeedForPrompt,
+  formatTrainingQuestionSeed,
+  getRecentQuestionFamiliesFromSeeds,
+  getTrainingQuestionSeedById,
+  pickTrainingQuestionSeed,
+} from "@/lib/training/question-bank";
 import { buildTrainingPersonalization } from "@/lib/training/personalization";
 
 async function getPersonalizationContext(dimension?: string) {
@@ -43,10 +51,26 @@ async function getPersonalizationContext(dimension?: string) {
           .maybeSingle(),
       ]);
 
+    const today = getBeijingDate();
+    const { data: todaySession } = await supabase
+      .from("training_sessions")
+      .select("questions")
+      .eq("user_id", user.id)
+      .eq("session_date", today)
+      .maybeSingle();
+
+    const todayQuestions = Object.values(todaySession?.questions || {})
+      .map((item: any) => {
+        if (typeof item === "string") return item;
+        return String(item?.text || item?.question || "").trim();
+      })
+      .filter(Boolean);
+
     return buildTrainingPersonalization({
       requestedDimension: dimension,
       latestReport,
       recentRecords: recentRecords || [],
+      todayQuestions,
       latestBootcampSession: session,
     });
   } catch {
@@ -71,6 +95,18 @@ export async function POST(req: Request) {
       : getTrainingTarget(dimension);
     const framework = target.framework;
     const personalization = await getPersonalizationContext(dimension);
+    const recentFamilies = getRecentQuestionFamiliesFromSeeds(
+      personalization.recentQuestions
+    );
+    const seed = getTrainingQuestionSeedById(targetId)
+      ? getTrainingQuestionSeedById(targetId)
+      : pickTrainingQuestionSeed({
+          dimension,
+          targetId,
+          recentFamilies,
+          recentQuestionTexts: personalization.recentQuestions,
+        });
+    const seedContext = seed ? describeSeedForPrompt(seed) : null;
 
     const result = streamText({
       model: chatModel,
@@ -84,6 +120,9 @@ export async function POST(req: Request) {
 当前维度：${dimension}
 本题靶点：${target.label}
 对应思维框架：${framework}
+${seedContext ? `种子题库材料：
+${formatTrainingQuestionSeed(seedContext)}
+` : ""}
 维度出题策略：
 ${formatTrainingDimensionStrategy(dimensionStrategy)}
 
@@ -102,9 +141,12 @@ ${formatTrainingTarget(target)}
 要求：
 - 必须围绕维度「${dimension}」出题
 - 必须围绕训练靶点「${target.label}」出题，页面会把它作为本题第二标签
+- 优先以“种子题库材料”中的场景壳子为基础改写，不要凭空重新发明一个完全不同的主题
+- 如果种子题库材料给出了来源、场景、动作、冲突和证据，就把它们作为题目的骨架，只保留必要改写
 - **每道题不超过 300 字**
 - 避免与近期已练题目重复
 - 不要复用近期已练题目的产品类型、业务动作、冲突角色、指标组合和问题结构
+- 如果当前种子与近期题目过于接近，就切换到同维度、同靶点的其他种子家族再出题
 - 题目要自然嵌入用户短板，但不要暴露内部评分细节
 - 从维度“允许题型”和靶点“可用变化轴”中选择 2-3 个变化轴自然组合，不能写成机械填空题
 - 题目必须严格包含 2 个具体判断问题，避免开放式大作文
