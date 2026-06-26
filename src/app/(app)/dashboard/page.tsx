@@ -316,6 +316,11 @@ function SignalItem({ label, value }: { label: string; value: string }) {
 
 function MissionMap({ items }: { items: MissionMapItem[] }) {
   if (!items.length) return null;
+  const priorityItems = items.filter((item) => item.status === "priority");
+  const restItems = items.filter((item) => item.status !== "priority");
+  const visibleItems = [...priorityItems, ...restItems].slice(0, 8);
+  const remainingCount = Math.max(items.length - visibleItems.length, 0);
+
   return (
     <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -336,17 +341,17 @@ function MissionMap({ items }: { items: MissionMapItem[] }) {
           <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
         </Link>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {items.map((item) => (
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {visibleItems.map((item) => (
           <div
             key={item.missionId}
             className={
               item.status === "priority"
-                ? "rounded-lg border border-primary/25 bg-primary-soft p-4"
-                : "rounded-lg border border-line bg-surface p-4"
+                ? "rounded-lg border border-primary/25 bg-primary-soft px-4 py-3"
+                : "rounded-lg border border-line bg-surface px-4 py-3"
             }
           >
-            <div className="mb-2 flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate text-body-sm font-bold text-ink">
                   {item.missionLabel}
@@ -363,7 +368,7 @@ function MissionMap({ items }: { items: MissionMapItem[] }) {
                 <Gauge className="h-4 w-4 shrink-0 text-ink-faint" strokeWidth={1.5} />
               )}
             </div>
-            <div className="flex items-center justify-between gap-2 text-label font-semibold text-ink-muted">
+            <div className="mt-2 flex items-center justify-between gap-2 text-label font-semibold text-ink-muted">
               <span className="truncate">{item.dimension}</span>
               <span className="font-mono">
                 {item.score != null ? item.score.toFixed(1) : "-"}
@@ -371,6 +376,12 @@ function MissionMap({ items }: { items: MissionMapItem[] }) {
             </div>
           </div>
         ))}
+        {remainingCount > 0 && (
+          <div className="flex items-center justify-between rounded-lg border border-dashed border-line-strong bg-surface px-4 py-3 text-body-sm font-semibold text-ink-muted">
+            <span>更多任务</span>
+            <span className="font-mono">+{remainingCount}</span>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -430,6 +441,96 @@ function BlindSpotPanel({
           </p>
         </div>
       )}
+    </section>
+  );
+}
+
+function ReviewWorkspace({
+  blindSpots,
+  nextPractice,
+  trendData,
+  stats,
+  profile,
+  latestReport,
+}: {
+  blindSpots: BlindSpotItem[];
+  nextPractice: NextPractice | undefined;
+  trendData: TrendPoint[];
+  stats: DashboardData["trainingStats"] | null;
+  profile: DashboardData["profile"];
+  latestReport: DashboardData["latestReport"];
+}) {
+  return (
+    <section className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="space-y-5">
+        <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
+              <h2 className="text-heading-sm font-semibold text-ink">
+                训练复盘
+              </h2>
+            </div>
+            {nextPractice && (
+              <span className="rounded-lg bg-primary-soft px-3 py-2 text-label font-bold text-primary">
+                {nextPractice.missionLabel} / {nextPractice.actionLabel}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)]">
+            <BlindSpotPanel
+              className="border-0 bg-transparent p-0 shadow-none sm:p-0"
+              items={blindSpots}
+              nextPractice={nextPractice}
+            />
+            <div className="space-y-5">
+              <GrowthChart trendData={trendData} />
+              <TrainingStats stats={stats} />
+            </div>
+          </div>
+        </section>
+
+        <TrainingMethodPanel />
+      </div>
+
+      <aside className="space-y-5">
+        <ProfileCard profile={profile} />
+        <LatestReport
+          focusAreas={profile?.weaknesses ?? []}
+          report={latestReport}
+        />
+      </aside>
+    </section>
+  );
+}
+
+function TrainingMethodPanel() {
+  return (
+    <section className="rounded-xl border border-line bg-surface-raised p-6 shadow-xs">
+      <div className="mb-5 flex items-center gap-2">
+        <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
+        <h2 className="text-heading-sm font-semibold text-ink">
+          训练方法
+        </h2>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <OperatingPrinciple
+          icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
+          title="先定任务"
+          body="从增长、商业化、交付、平台化等真实任务进入训练。"
+        />
+        <OperatingPrinciple
+          icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
+          title="再练动作"
+          body="每题聚焦一个微动作，例如归因、取舍、边界或验证。"
+        />
+        <OperatingPrinciple
+          icon={<Brain className="h-4 w-4" strokeWidth={1.5} />}
+          title="最后归因"
+          body="系统把作答表现沉淀成能力信号，用来推荐下一轮训练。"
+        />
+      </div>
     </section>
   );
 }
@@ -508,51 +609,14 @@ export default function DashboardPage() {
 
           <MissionMap items={data?.commandCenter?.missionMap ?? []} />
 
-          <section className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(280px,3fr)]">
-            <div className="space-y-5">
-              <BlindSpotPanel
-                items={data?.commandCenter?.blindSpots ?? []}
-                nextPractice={data?.commandCenter?.nextPractice}
-              />
-              <ProfileCard profile={profile} />
-            </div>
-
-            <div className="space-y-5">
-              <GrowthChart trendData={trendData} />
-              <TrainingStats stats={stats} />
-            </div>
-
-            <LatestReport
-              focusAreas={profile?.weaknesses ?? []}
-              report={latestReport}
-            />
-          </section>
-
-          <section className="rounded-xl border border-line bg-surface-raised p-6 shadow-xs">
-            <div className="mb-5 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
-                <h2 className="text-heading-sm font-semibold text-ink">
-                训练方法
-              </h2>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <OperatingPrinciple
-                icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
-                title="先定任务"
-                body="从增长、商业化、交付、平台化等真实任务进入训练。"
-              />
-              <OperatingPrinciple
-                icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
-                title="再练动作"
-                body="每题聚焦一个微动作，例如归因、取舍、边界或验证。"
-              />
-              <OperatingPrinciple
-                icon={<Brain className="h-4 w-4" strokeWidth={1.5} />}
-                title="最后归因"
-                body="系统把作答表现沉淀成能力信号，用来推荐下一轮训练。"
-              />
-            </div>
-          </section>
+          <ReviewWorkspace
+            blindSpots={data?.commandCenter?.blindSpots ?? []}
+            latestReport={latestReport}
+            nextPractice={data?.commandCenter?.nextPractice}
+            profile={profile}
+            stats={stats}
+            trendData={trendData}
+          />
         </div>
       )}
     </main>

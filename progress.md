@@ -1121,3 +1121,20 @@
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
 - `npm run build` 通过。
+
+## [2026-06-27] Redesign: 首页下半区重排为复盘工作区
+
+### 背景判断
+- 用户认可空白已消失，但认为“按列堆叠”的解决方式不够好，允许重新设计或排版。
+- 这次不继续局部补洞，而是把首页中后段重新组织成更自然的训练路径：任务调度 → 任务地图 → 复盘工作区 → 画像侧栏。
+
+### 完成内容
+- 新增 `ReviewWorkspace` 局部组件：左侧主区域合并“最近暴露的问题、成长趋势、维度训练表现”，形成连续复盘工作区。
+- 右侧侧栏承载“能力画像”和“最近诊断”，让画像承担解释和归因，不再和复盘卡片抢主路径。
+- 训练方法抽成独立 `TrainingMethodPanel`，放在复盘工作区下方，避免卡片墙式堆叠。
+- 任务地图从 12 个完整大卡片网格收敛为优先展示 8 个任务 + 更多任务提示，降低页面高度和信息噪声。
+
+### 验证结果
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
+- `npm run build` 通过。
