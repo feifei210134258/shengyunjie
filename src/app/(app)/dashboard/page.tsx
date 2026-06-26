@@ -508,52 +508,49 @@ export default function DashboardPage() {
 
           <MissionMap items={data?.commandCenter?.missionMap ?? []} />
 
-          <section className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
-            <BlindSpotPanel
-              className="lg:col-span-5"
-              items={data?.commandCenter?.blindSpots ?? []}
-              nextPractice={data?.commandCenter?.nextPractice}
-            />
-            <div className="space-y-5 lg:col-span-4">
+          <section className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(280px,3fr)]">
+            <div className="space-y-5">
+              <BlindSpotPanel
+                items={data?.commandCenter?.blindSpots ?? []}
+                nextPractice={data?.commandCenter?.nextPractice}
+              />
+              <ProfileCard profile={profile} />
+            </div>
+
+            <div className="space-y-5">
               <GrowthChart trendData={trendData} />
               <TrainingStats stats={stats} />
             </div>
+
             <LatestReport
-              className="lg:col-span-3"
               focusAreas={profile?.weaknesses ?? []}
               report={latestReport}
             />
           </section>
 
-          <section className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
-            <ProfileCard className="lg:col-span-5" profile={profile} />
-
-            <div className="lg:col-span-7">
-              <section className="rounded-xl border border-line bg-surface-raised p-6 shadow-xs">
-                <div className="mb-5 flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
+          <section className="rounded-xl border border-line bg-surface-raised p-6 shadow-xs">
+            <div className="mb-5 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
                 <h2 className="text-heading-sm font-semibold text-ink">
-                    训练方法
-                  </h2>
-                </div>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <OperatingPrinciple
-                    icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
-                    title="先定任务"
-                    body="从增长、商业化、交付、平台化等真实任务进入训练。"
-                  />
-                  <OperatingPrinciple
-                    icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
-                    title="再练动作"
-                    body="每题聚焦一个微动作，例如归因、取舍、边界或验证。"
-                  />
-                  <OperatingPrinciple
-                    icon={<Brain className="h-4 w-4" strokeWidth={1.5} />}
-                    title="最后归因"
-                    body="系统把作答表现沉淀成能力信号，用来推荐下一轮训练。"
-                  />
-                </div>
-              </section>
+                训练方法
+              </h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <OperatingPrinciple
+                icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
+                title="先定任务"
+                body="从增长、商业化、交付、平台化等真实任务进入训练。"
+              />
+              <OperatingPrinciple
+                icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
+                title="再练动作"
+                body="每题聚焦一个微动作，例如归因、取舍、边界或验证。"
+              />
+              <OperatingPrinciple
+                icon={<Brain className="h-4 w-4" strokeWidth={1.5} />}
+                title="最后归因"
+                body="系统把作答表现沉淀成能力信号，用来推荐下一轮训练。"
+              />
             </div>
           </section>
         </div>
