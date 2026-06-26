@@ -318,7 +318,7 @@ function MissionMap({ items }: { items: MissionMapItem[] }) {
   if (!items.length) return null;
   const priorityItems = items.filter((item) => item.status === "priority");
   const restItems = items.filter((item) => item.status !== "priority");
-  const visibleItems = [...priorityItems, ...restItems].slice(0, 8);
+  const visibleItems = [...priorityItems, ...restItems].slice(0, 7);
   const remainingCount = Math.max(items.length - visibleItems.length, 0);
 
   return (
