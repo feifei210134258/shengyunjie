@@ -1,8 +1,8 @@
 {
     "project": "产品升云阶 — Product Thinking Enhancement Tool",
-    "last_updated": "2026-06-26",
-    "current_feature": "training-001",
-    "notes": "日常训练题目质量继续微调：保留任务驱动架构，前台第一标签改为任务标签而非旧五维度；出题 prompt 禁止题干显式“请运用/请结合XX框架”，并要求冲突对话、数据异动、老板指令、客户投诉等题面外形轮换，降低考试腔和新模板化风险。",
+    "last_updated": "2026-06-27",
+    "current_feature": "ux-001",
+    "notes": "首页从五维能力画像驾驶舱重构为任务驱动训练调度台：首屏突出今日高阶产品任务、训练微动作、推荐依据和训练闭环；任务地图展示增长诊断、商业化、资源排期、平台抽象等真实 PM 工作任务；五维画像降级为能力归因与评分解释。",
     "features": [
         {
             "id": "infra-001",
@@ -176,7 +176,7 @@
                 "infra-002"
             ],
             "status": "completed",
-            "evidence": "所有页面路由可访问，侧边栏导航工作正常。2026-06-03 视觉优化：统一 token/字体/主导航/认证页/工作台/训练页/诊断与特训关键组件，npx tsc --noEmit、ESLint、npx next build、./init.sh 通过，/login Chrome 1440x900 截图检查通过。2026-06-04 首页工作台高密度 cockpit 改版：紧凑顶部栏 + KPI strip + 12 栅格能力画像/成长趋势/维度训练表现/最近诊断，去掉大 CTA 卡和大雷达图；npx tsc --noEmit、ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' src/components/dashboard/*.tsx --max-warnings 0、git diff --check、./init.sh 通过；系统 Chrome 打开 http://localhost:3002/dashboard 截图验证首屏布局正常。2026-06-05 删除未使用旧 Sidebar，避免 Material Symbols 与旧 surface token 残留；诊断量表五维度改为 lucide 专业图标。2026-06-06 /api/dashboard 增加 nextActions，基于诊断、今日训练、近次均分、案例推演记录生成主行动和次行动；/dashboard 顶部升级为全局行动中心，展示系统推荐、行动入口和能力信号。2026-06-12 修复登录按钮：登录成功后先确认 Supabase session，再使用 window.location.replace('/dashboard') 硬跳转，避免客户端 chunk transition 报错；Computer Use 真实鼠标点击登录按钮后进入 localhost:3000/dashboard，工作台完整渲染且无 Next 错误遮罩。npx tsc、针对性 ESLint、npm run build、./init.sh 通过。2026-06-20 品牌图标替换为‘阶梯 + 平台’标志，TopNav、登录、注册、AuthShowcase 统一使用 BrandMark，新增 /icon.svg favicon；验证：node --test src/components/brand/brand-mark.test.mjs、npx tsc --noEmit、针对性 ESLint、npm run build 通过。已部署到生产：服务器脚本输出 DEPLOY_OK deploy/pm 27eaba8；公网 /icon.svg 返回 200 image/svg+xml，/login HTML 引用 /icon.svg 并渲染升云阶阶梯标志。2026-06-20 文档债回补：新增 docs/superpowers/specs/2026-06-12-training-production-routing-design.md 和 docs/superpowers/reports/2026-06-12-training-production-routing-verify.md，补齐训练入口、缓存策略、Git 拉取式部署和旧预览清理的设计/验证记录。"
+            "evidence": "所有页面路由可访问，侧边栏导航工作正常。2026-06-03 视觉优化：统一 token/字体/主导航/认证页/工作台/训练页/诊断与特训关键组件，npx tsc --noEmit、ESLint、npx next build、./init.sh 通过，/login Chrome 1440x900 截图检查通过。2026-06-04 首页工作台高密度 cockpit 改版：紧凑顶部栏 + KPI strip + 12 栅格能力画像/成长趋势/维度训练表现/最近诊断，去掉大 CTA 卡和大雷达图；npx tsc --noEmit、ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' src/components/dashboard/*.tsx --max-warnings 0、git diff --check、./init.sh 通过；系统 Chrome 打开 http://localhost:3002/dashboard 截图验证首屏布局正常。2026-06-05 删除未使用旧 Sidebar，避免 Material Symbols 与旧 surface token 残留；诊断量表五维度改为 lucide 专业图标。2026-06-06 /api/dashboard 增加 nextActions，基于诊断、今日训练、近次均分、案例推演记录生成主行动和次行动；/dashboard 顶部升级为全局行动中心，展示系统推荐、行动入口和能力信号。2026-06-12 修复登录按钮：登录成功后先确认 Supabase session，再使用 window.location.replace('/dashboard') 硬跳转，避免客户端 chunk transition 报错；Computer Use 真实鼠标点击登录按钮后进入 localhost:3000/dashboard，工作台完整渲染且无 Next 错误遮罩。npx tsc、针对性 ESLint、npm run build、./init.sh 通过。2026-06-20 品牌图标替换为‘阶梯 + 平台’标志，TopNav、登录、注册、AuthShowcase 统一使用 BrandMark，新增 /icon.svg favicon；验证：node --test src/components/brand/brand-mark.test.mjs、npx tsc --noEmit、针对性 ESLint、npm run build 通过。已部署到生产：服务器脚本输出 DEPLOY_OK deploy/pm 27eaba8；公网 /icon.svg 返回 200 image/svg+xml，/login HTML 引用 /icon.svg 并渲染升云阶阶梯标志。2026-06-20 文档债回补：新增 docs/superpowers/specs/2026-06-12-training-production-routing-design.md 和 docs/superpowers/reports/2026-06-12-training-production-routing-verify.md，补齐训练入口、缓存策略、Git 拉取式部署和旧预览清理的设计/验证记录。2026-06-27 首页重构为任务驱动训练调度台：/api/dashboard 新增 commandCenter，基于训练 mission 池、近期记录和反馈盲区生成今日任务、任务地图、训练闭环和刻意练习建议；/dashboard 首屏展示任务/微动作而非旧五维，五维画像移到能力归因区；mission action 标签修正为分层归因、边界治理、口径治理等微动作，避免“增长诊断 / 增长诊断”重复。验证：新增 dashboard command-center TDD 测试与 mission 标签测试，node --test、npx tsc、针对性 ESLint 通过。"
         },
         {
             "id": "ux-002",

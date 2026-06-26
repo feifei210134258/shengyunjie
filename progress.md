@@ -1080,3 +1080,24 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/training/training-missions.ts src/lib/training/training-missions.test.mjs src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs src/app/api/train/route.ts src/app/api/train/route.test.mjs --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-27] Redesign: 首页改为任务驱动训练调度台
+
+### 背景判断
+- 训练出题已经从旧五维度直出重构为高阶产品任务驱动，但首页仍以“能力画像 / 维度训练表现”为中心。
+- 这会让用户继续认为训练由“战略思维、数据决策、商业思维”等抽象维度主导，和当前任务驱动出题内核不一致。
+- 用户明确允许较大幅重构首页，并要求别把当前训练质量改烂。
+
+### 完成内容
+- 新增 `src/lib/dashboard/training-command-center.ts`，从现有 `training_records`、诊断短板和 mission 池推导首页 command center，不改 DB schema。
+- `/api/dashboard` 返回 `commandCenter`：今日主任务、训练闭环入口、任务地图、最近盲区、下一轮刻意练习建议；保留 `nextActions` 兼容旧调用。
+- `/dashboard` 首屏改为“今日训练调度”，展示任务标签和微动作标签，例如“增长诊断 / 分层归因”，并保留推荐依据。
+- 新增“训练任务地图”，展示增长诊断、商业化、资源排期、平台抽象、经营分析、行业约束、协同推进、需求重构、质量发布、流程自动化、生态规则、AI落地等任务簇。
+- 新增“最近暴露的问题”和“训练方法”模块，把首页叙事从五维画像切换到任务、动作、反馈、归因闭环。
+- 修正 mission 微动作标签，避免“增长诊断 / 增长诊断”“平台抽象 / 平台抽象”等重复标签。
+
+### 验证结果
+- TDD 红灯：新增 `training-command-center.test.mjs` 先捕获 command center 缺失；新增 mission 测试先捕获 displayLabel/label 重复。
+- `node --test src/lib/dashboard/training-command-center.test.mjs src/lib/dashboard/trend.test.mjs src/lib/training/training-missions.test.mjs src/components/training/TrainingSessionClient.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' src/app/api/dashboard/route.ts src/lib/dashboard/training-command-center.ts src/lib/dashboard/training-command-center.test.mjs src/lib/training/training-missions.ts src/lib/training/training-missions.test.mjs --max-warnings 0` 通过。

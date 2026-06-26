@@ -43,6 +43,13 @@ test("mission display labels do not expose the old five-dimension framework", ()
   }
 });
 
+test("mission action labels are more specific than task display labels", () => {
+  for (const mission of getTrainingMissions()) {
+    assert.ok(mission.label);
+    assert.notEqual(mission.displayLabel, mission.label);
+  }
+});
+
 test("daily mission plan starts from work missions and is not the old five-dimension order", () => {
   const plan = getDailyTrainingMissionPlan(new Date("2026-06-26T00:00:00Z"));
 

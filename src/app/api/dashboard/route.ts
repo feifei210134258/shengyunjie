@@ -1,6 +1,5 @@
 import { createServerClient } from "@/lib/supabase-server";
-import { getDimensionLabel } from "@/lib/constants";
-import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
+import { buildCommandCenter } from "@/lib/dashboard/training-command-center";
 import {
   getDiagnosisGrade,
   getDiagnosisReportSummary,
@@ -46,14 +45,6 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
   }
 
   return streak;
-}
-
-function getAverageScore(records: any[]) {
-  const scores = records
-    .map((record) => Number(record.score))
-    .filter((score) => Number.isFinite(score) && score > 0);
-  if (!scores.length) return null;
-  return Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length / 10) * 10) / 10;
 }
 
 /* ------------------------------------------------------------------ */
@@ -232,101 +223,29 @@ export async function GET() {
       : null;
 
     const recentRecords = recentActionRecords || [];
-    const recentAverage = getAverageScore(recentRecords);
-    const latestRecord = recentRecords[0] || null;
     const hasCaseSimulation = recentRecords.some(
       (record: any) => record.ai_feedback?.source === "case_simulation"
     );
-    const weakestDimension =
-      profile?.weaknesses?.[0] ||
-      Object.entries(dimAverages)
-        .sort((a, b) => Number(a[1]) - Number(b[1]))[0]?.[0] ||
-      "战略思维";
-    const weakestDimensionLabel = getDimensionLabel(weakestDimension);
-    const primaryAction = !latestReport
-      ? {
-          title: "先完成一次能力诊断",
-          description: "系统需要一份完整画像，才能把训练题、案例和特训建议聚焦到真实短板。",
-          href: "/diagnosis/scale",
-          cta: "开始诊断",
-          kind: "diagnosis",
-        }
-      : (todayCount || 0) === 0
-        ? {
-            title: `今日先练 ${weakestDimensionLabel}`,
-            description: "完成一题高质量作答，再用 AI 反馈校准今天的判断链路。",
-            href: TRAINING_SESSION_ROUTE,
-            cta: "开始训练",
-            kind: "training",
-          }
-        : recentAverage != null && recentAverage < 7
-          ? {
-              title: "复盘最近一次低分回答",
-              description: "先把盲区、改写示范和下一题建议吃透，再继续刷题。",
-              href: latestRecord ? `/training/history/${latestRecord.id}` : "/training",
-              cta: "查看复盘",
-              kind: "review",
-            }
-          : !hasCaseSimulation
-            ? {
-                title: "做一次案例决策推演",
-                description: "从读案例进入取舍训练，把战略判断写入训练档案。",
-                href: "/training/cases",
-                cta: "去案例库",
-                kind: "case",
-              }
-            : {
-                title: "继续推进下一题训练",
-                description: "当前节奏不错，保持每日一次高质量训练即可。",
-                href: TRAINING_SESSION_ROUTE,
-                cta: "继续训练",
-                kind: "training",
-              };
-
-    const latestReportHref = latestReport
-      ? `/diagnosis/report?reportId=${encodeURIComponent(latestReport.id)}`
-      : "/diagnosis/scale";
-
-    const secondaryActions = [
-        {
-          title: "案例库推演",
-          description: hasCaseSimulation ? "已有推演记录，可继续换产品做取舍。" : "补一次真实产品决策题。",
-          href: "/training/cases",
-          cta: "打开",
-          kind: "case",
-        },
-        {
-          title: "复盘归档",
-          description: latestRecord ? `最近记录：${getDimensionLabel(latestRecord.dimension)}` : "训练后会自动沉淀复盘记录。",
-          href: latestRecord ? `/training/history/${latestRecord.id}` : "/training",
-          cta: "查看",
-          kind: "review",
-        },
-        {
-          title: "能力报告",
-          description: latestReportSummary.overall_score != null ? `最近诊断 ${latestReportSummary.overall_score} 分` : "暂无完整诊断报告。",
-          href: latestReportHref,
-          cta: latestReport ? "查看" : "诊断",
-          kind: "diagnosis",
-        },
-      ].filter((action) => action.kind !== primaryAction.kind);
-
-    const nextActions = {
-      primary: primaryAction,
-      secondary: secondaryActions,
-      signals: {
-        weakestDimension: weakestDimensionLabel,
-        recentAverage,
-        hasCaseSimulation,
-      },
-    };
+    const commandCenter = buildCommandCenter({
+      todayCount: todayCount || 0,
+      recentRecords,
+      dimAverages,
+      profileWeaknesses: profile?.weaknesses || [],
+      latestReport: latestReport ? { id: latestReport.id } : null,
+      hasCaseSimulation,
+    });
 
     return NextResponse.json({
       profile,
       trainingStats,
       growthTrend,
       latestReport: reportResponse,
-      nextActions,
+      commandCenter,
+      nextActions: {
+        primary: commandCenter.primary,
+        secondary: commandCenter.secondary,
+        signals: commandCenter.signals,
+      },
     });
   } catch (error: any) {
     return NextResponse.json(
