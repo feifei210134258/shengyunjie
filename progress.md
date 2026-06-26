@@ -1101,3 +1101,20 @@
 - `node --test src/lib/dashboard/training-command-center.test.mjs src/lib/dashboard/trend.test.mjs src/lib/training/training-missions.test.mjs src/components/training/TrainingSessionClient.test.mjs` 通过。
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' src/app/api/dashboard/route.ts src/lib/dashboard/training-command-center.ts src/lib/dashboard/training-command-center.test.mjs src/lib/training/training-missions.ts src/lib/training/training-missions.test.mjs --max-warnings 0` 通过。
+
+## [2026-06-27] Fix: 首页卡片间距微调
+
+### 背景判断
+- 用户反馈新版首页登录态下卡片之间的间隔有样式问题。
+- 浏览器控制技能打开线上 `/dashboard` 时当前会话未登录，被重定向到 `/login`，无法直接看到登录态数据态；但静态代码审查发现新版 dashboard 大量使用 `space-y-4`、`gap-2`、`gap-4`，任务地图 12 个卡片在宽屏下使用 6 列，整体节奏偏挤。
+
+### 完成内容
+- `/dashboard` 主页面模块间距从 16px 提升到 20px，关键 12 栅格 gap 从 16px 提升到 20px。
+- 顶部行动卡、训练闭环、任务地图、最近盲区和训练方法模块内距统一放大。
+- 任务地图从宽屏 6 列改为 4 列，卡片间距和卡片内距同步增加，避免任务标签挤成密集表格。
+- KPI 卡片增加竖向内距，让顶部四个指标不再贴边。
+
+### 验证结果
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
+- `npm run build` 通过。

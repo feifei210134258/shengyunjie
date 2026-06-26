@@ -164,14 +164,14 @@ function KpiCard({
   icon: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-line bg-surface-raised px-4 py-3 shadow-xs">
+    <div className="rounded-xl border border-line bg-surface-raised px-4 py-4 shadow-xs">
       <div className="flex items-center justify-between gap-3">
         <p className="text-label font-semibold text-ink-muted">{label}</p>
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-primary">
           {icon}
         </div>
       </div>
-      <div className="mt-2 flex items-baseline gap-2">
+      <div className="mt-3 flex items-baseline gap-2">
         <p className="font-mono text-data-md font-bold text-ink">{value}</p>
         <p className="truncate text-body-sm text-ink-faint">{meta}</p>
       </div>
@@ -206,9 +206,9 @@ function ActionCenter({
   const nextPractice = commandCenter?.nextPractice;
 
   return (
-    <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-5">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="rounded-lg bg-primary-soft p-4 sm:p-5">
+    <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-6">
+        <div className="rounded-lg bg-primary-soft p-4 sm:p-6">
           <div className="flex flex-wrap items-center gap-2 text-label font-semibold text-primary">
             <Compass className="h-4 w-4" strokeWidth={1.5} />
             <span>今日训练调度</span>
@@ -246,7 +246,7 @@ function ActionCenter({
           </div>
 
           {signals && (
-            <div className="mt-4 grid gap-2 border-t border-primary/10 pt-4 sm:grid-cols-3">
+            <div className="mt-5 grid gap-3 border-t border-primary/10 pt-4 sm:grid-cols-3">
               <SignalItem label="后台归因" value={signals.weakestDimension} />
               <SignalItem
                 label="近次均分"
@@ -260,12 +260,12 @@ function ActionCenter({
           )}
         </div>
 
-        <div className="flex flex-col rounded-lg border border-line bg-surface p-3">
-          <div className="mb-2 flex items-center gap-2 text-body-sm font-bold text-ink">
+        <div className="flex flex-col rounded-lg border border-line bg-surface p-4">
+          <div className="mb-3 flex items-center gap-2 text-body-sm font-bold text-ink">
             <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
             训练闭环
           </div>
-          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             {secondary.map((action) => (
               <Link
                 key={action.title}
@@ -287,7 +287,7 @@ function ActionCenter({
           </div>
 
           {nextPractice && (
-            <div className="mt-auto border-t border-line pt-3">
+            <div className="mt-4 border-t border-line pt-3 lg:mt-auto">
               <p className="text-label font-semibold text-ink-muted">
                 下一轮建议
               </p>
@@ -317,8 +317,8 @@ function SignalItem({ label, value }: { label: string; value: string }) {
 function MissionMap({ items }: { items: MissionMapItem[] }) {
   if (!items.length) return null;
   return (
-    <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-5">
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-body-sm font-bold text-ink">
             <Layers3 className="h-4 w-4 text-primary" strokeWidth={1.5} />
@@ -336,14 +336,14 @@ function MissionMap({ items }: { items: MissionMapItem[] }) {
           <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
         </Link>
       </div>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => (
           <div
             key={item.missionId}
             className={
               item.status === "priority"
-                ? "rounded-lg border border-primary/25 bg-primary-soft p-3"
-                : "rounded-lg border border-line bg-surface p-3"
+                ? "rounded-lg border border-primary/25 bg-primary-soft p-4"
+                : "rounded-lg border border-line bg-surface p-4"
             }
           >
             <div className="mb-2 flex items-start justify-between gap-2">
@@ -398,15 +398,15 @@ function BlindSpotPanel({
   return (
     <section
       className={cn(
-        "rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-5",
+        "rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6",
         className
       )}
     >
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-5 flex items-center gap-2">
         <ClipboardCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
         <h2 className="text-heading-sm font-semibold text-ink">最近暴露的问题</h2>
       </div>
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         {fallbackItems.map((item) => (
           <div key={item.label} className="rounded-lg bg-surface px-3 py-2.5">
             <p className="text-body-sm font-bold text-ink">{item.label}</p>
@@ -417,7 +417,7 @@ function BlindSpotPanel({
         ))}
       </div>
       {nextPractice && (
-        <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3">
+        <div className="mt-5 rounded-lg border border-primary/15 bg-primary-soft px-4 py-4">
           <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
             <Workflow className="h-4 w-4" strokeWidth={1.5} />
             刻意练习
@@ -457,29 +457,29 @@ export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <SkeletonCard className="h-56" />
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <SkeletonCard className="h-24 p-4" />
             <SkeletonCard className="h-24 p-4" />
             <SkeletonCard className="h-24 p-4" />
             <SkeletonCard className="h-24 p-4" />
           </div>
           <SkeletonCard className="h-48" />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
             <SkeletonCard className="h-80 lg:col-span-5" />
             <SkeletonCard className="h-80 lg:col-span-4" />
             <SkeletonCard className="h-80 lg:col-span-3" />
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <ActionCenter
             commandCenter={data?.commandCenter}
             fallbackFocus={focusLabel}
           />
 
-          <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <KpiCard
               label="今日训练"
               value={stats?.todayCount ?? 0}
@@ -508,13 +508,13 @@ export default function DashboardPage() {
 
           <MissionMap items={data?.commandCenter?.missionMap ?? []} />
 
-          <section className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
+          <section className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
             <BlindSpotPanel
               className="lg:col-span-5"
               items={data?.commandCenter?.blindSpots ?? []}
               nextPractice={data?.commandCenter?.nextPractice}
             />
-            <div className="space-y-4 lg:col-span-4">
+            <div className="space-y-5 lg:col-span-4">
               <GrowthChart trendData={trendData} />
               <TrainingStats stats={stats} />
             </div>
@@ -525,18 +525,18 @@ export default function DashboardPage() {
             />
           </section>
 
-          <section className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
+          <section className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
             <ProfileCard className="lg:col-span-5" profile={profile} />
 
             <div className="lg:col-span-7">
-              <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs">
-                <div className="mb-4 flex items-center gap-2">
+              <section className="rounded-xl border border-line bg-surface-raised p-6 shadow-xs">
+                <div className="mb-5 flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
                 <h2 className="text-heading-sm font-semibold text-ink">
                     训练方法
                   </h2>
                 </div>
-                <div className="grid gap-3 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-3">
                   <OperatingPrinciple
                     icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
                     title="先定任务"
