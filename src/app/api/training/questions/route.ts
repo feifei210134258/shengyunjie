@@ -37,6 +37,10 @@ export async function POST(req: NextRequest) {
               text: questionText,
               reason: String(question?.reason || "").trim(),
               hint: String(question?.hint || "").trim(),
+              missionId: String(question?.missionId || "").trim(),
+              dimension: String(question?.dimension || "").trim(),
+              targetId: String(question?.targetId || "").trim(),
+              targetLabel: String(question?.targetLabel || "").trim(),
             },
     };
 

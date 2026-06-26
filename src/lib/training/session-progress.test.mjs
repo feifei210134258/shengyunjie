@@ -85,6 +85,8 @@ test("manual question replacement remains the only explicit regeneration path", 
   );
   const regenerateBody = extractFunctionBody(source, "handleRegenerate");
 
-  assert.match(regenerateBody, /generateQuestion\(currentDim,\s*targetState\)/);
-  assert.match(regenerateBody, /getNextTrainingTarget/);
+  assert.match(regenerateBody, /getNextTrainingMission/);
+  assert.match(regenerateBody, /setActiveMissions/);
+  assert.match(regenerateBody, /generateQuestion\(nextMission,\s*targetState\)/);
+  assert.doesNotMatch(regenerateBody, /getNextTrainingTarget/);
 });

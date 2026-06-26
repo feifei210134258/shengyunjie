@@ -12,13 +12,12 @@ import {
   TrainingEvaluation,
 } from "@/lib/training/personalization";
 import {
-  getNextTrainingTarget,
-  getTrainingTarget,
-} from "@/lib/training/dimension-strategy";
-import {
-  getRotatedTrainingDimensions,
-  TRAINING_DIMENSIONS,
-} from "@/lib/training/session-progress";
+  getDailyTrainingMissionPlan,
+  getMissionPlanWithCachedQuestions,
+  getNextTrainingMission,
+  getTrainingMissions,
+  type TrainingMission,
+} from "@/lib/training/training-missions";
 import {
   ArrowRight,
   Check,
@@ -52,20 +51,14 @@ const sample = {
 
 type VariantId = "before" | "after";
 
-const ALL_DIMS = getRotatedTrainingDimensions();
+const MISSION_PLAN = getDailyTrainingMissionPlan();
 
-const DIM_FRAMEWORKS = Object.fromEntries(
-  TRAINING_DIMENSIONS.map((dimension) => [
-    dimension,
-    getTrainingTarget(dimension).label,
-  ])
-);
-
-function getDefaultTargetState(dimension: string) {
-  const target = getTrainingTarget(dimension);
+function getDefaultTargetState(mission: TrainingMission) {
   return {
-    targetId: target.id,
-    targetLabel: target.label,
+    missionId: mission.id,
+    dimension: mission.primaryDimension,
+    targetId: mission.targetId,
+    targetLabel: mission.label,
   };
 }
 
@@ -74,6 +67,8 @@ type QuestionState = {
   loading: boolean;
   reason?: string;
   hint?: string;
+  missionId?: string;
+  dimension?: string;
   targetId?: string;
   targetLabel?: string;
 };
@@ -97,6 +92,8 @@ type StoredQuestion = {
   question?: string;
   reason?: string;
   hint?: string;
+  missionId?: string;
+  dimension?: string;
   targetId?: string;
   targetLabel?: string;
 };
@@ -107,11 +104,18 @@ function getQuestionHint(question: QuestionState | undefined) {
   return null;
 }
 
-function withDefaultTarget(question: QuestionState, dimension: string): QuestionState {
-  if (question.targetId && question.targetLabel) return question;
+function withDefaultTarget(question: QuestionState, mission: TrainingMission): QuestionState {
+  if (
+    question.missionId &&
+    question.dimension &&
+    question.targetId &&
+    question.targetLabel
+  ) {
+    return question;
+  }
   return {
     ...question,
-    ...getDefaultTargetState(dimension),
+    ...getDefaultTargetState(mission),
   };
 }
 
@@ -143,6 +147,8 @@ function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState 
     loading: false,
     reason: String(value.reason || parsed.reason || "").trim() || undefined,
     hint: String(value.hint || parsed.hint || "").trim() || undefined,
+    missionId: String(value.missionId || "").trim() || undefined,
+    dimension: String(value.dimension || "").trim() || undefined,
     targetId: String(value.targetId || "").trim() || undefined,
     targetLabel: String(value.targetLabel || "").trim() || undefined,
   };
@@ -150,6 +156,7 @@ function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState 
 
 interface RealTrainingProps {
   currentIndex: number;
+  totalCount: number;
   currentDim: string;
   question: QuestionState | undefined;
   answer: AnswerState | undefined;
@@ -164,10 +171,16 @@ interface RealTrainingProps {
   onFinish: () => void;
 }
 
-function MiniProgress({ current = 0 }: { current?: number }) {
+function MiniProgress({
+  current = 0,
+  total = MISSION_PLAN.length,
+}: {
+  current?: number;
+  total?: number;
+}) {
   return (
     <div className="flex w-36 items-center gap-1.5">
-      {[0, 1, 2, 3, 4].map((item) => (
+      {Array.from({ length: total }, (_, item) => (
         <div
           key={item}
           className={cn(
@@ -183,11 +196,13 @@ function MiniProgress({ current = 0 }: { current?: number }) {
 function Frame({
   children,
   currentIndex = 0,
+  totalCount = MISSION_PLAN.length,
   onRestart,
   onFinish,
 }: {
   children: React.ReactNode;
   currentIndex?: number;
+  totalCount?: number;
   onRestart?: () => void;
   onFinish?: () => void;
 }) {
@@ -198,7 +213,7 @@ function Frame({
           <span className="text-body-md font-semibold text-primary">
             日常训练
           </span>
-          <MiniProgress current={currentIndex} />
+          <MiniProgress current={currentIndex} total={totalCount} />
         </div>
         <div className="flex items-center gap-2">
           {onRestart && (
@@ -510,6 +525,7 @@ function FocusedWorkspace() {
 
 function A1BeforeSubmit({
   currentIndex,
+  totalCount,
   currentDim,
   question,
   answer,
@@ -526,7 +542,12 @@ function A1BeforeSubmit({
   const answerHint = getQuestionHint(question);
 
   return (
-    <Frame currentIndex={currentIndex} onRestart={onRestart} onFinish={onFinish}>
+    <Frame
+      currentIndex={currentIndex}
+      totalCount={totalCount}
+      onRestart={onRestart}
+      onFinish={onFinish}
+    >
       <main className="mx-auto max-w-[1080px] px-6 py-3">
         <div className="mb-2 flex items-end justify-between">
           <div>
@@ -538,7 +559,7 @@ function A1BeforeSubmit({
             </h2>
           </div>
           <span className="rounded-lg border border-line bg-white px-3 py-2 text-label font-semibold text-ink-muted">
-            第 {currentIndex + 1} / {ALL_DIMS.length} 题
+            第 {currentIndex + 1} / {totalCount} 题
           </span>
         </div>
 
@@ -549,9 +570,7 @@ function A1BeforeSubmit({
                 {currentDim}
               </span>
               <span className="rounded-md bg-primary px-3 py-1.5 text-label font-semibold text-white">
-                {question?.targetLabel ||
-                  DIM_FRAMEWORKS[currentDim] ||
-                  "思维框架"}
+                {question?.targetLabel || "训练任务"}
               </span>
               <button
                 onClick={onRegenerate}
@@ -703,6 +722,7 @@ function extractSections(text: string) {
 
 function A1AfterSubmit({
   currentIndex,
+  totalCount,
   currentDim,
   question,
   answer,
@@ -717,7 +737,12 @@ function A1AfterSubmit({
   const sections = extractSections(analysis?.text || "");
 
   return (
-    <Frame currentIndex={currentIndex} onRestart={onRestart} onFinish={onFinish}>
+    <Frame
+      currentIndex={currentIndex}
+      totalCount={totalCount}
+      onRestart={onRestart}
+      onFinish={onFinish}
+    >
       <main className="mx-auto grid max-w-[1440px] gap-5 px-6 py-5 lg:grid-cols-[320px_minmax(0,1fr)]">
         <CompactReference question={question?.text} answer={answer?.text} />
 
@@ -801,7 +826,7 @@ function A1AfterSubmit({
                   onClick={onNext}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-semibold text-white"
                 >
-                  {currentIndex === ALL_DIMS.length - 1 ? "再来一轮" : "下一题"}
+                  {currentIndex === totalCount - 1 ? "再来一轮" : "下一题"}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
@@ -1154,8 +1179,13 @@ function ReviewBoard() {
 export default function TrainingSessionClient() {
   const router = useRouter();
   const [active, setActive] = useState<VariantId>("before");
+  const [activeMissions, setActiveMissions] =
+    useState<TrainingMission[]>(MISSION_PLAN);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentDim = ALL_DIMS[currentIndex];
+  const currentMission = activeMissions[currentIndex] || activeMissions[0];
+  const currentKey = currentMission?.id || "mission";
+  const currentDim = currentMission?.primaryDimension || "通用产品能力";
+  const totalCount = activeMissions.length || MISSION_PLAN.length;
   const [questions, setQuestions] = useState<Record<string, QuestionState>>({});
   const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
   const [analyses, setAnalyses] = useState<Record<string, AnalysisState>>({});
@@ -1164,19 +1194,20 @@ export default function TrainingSessionClient() {
   const [streamedText, setStreamedText] = useState("");
   const [initializing, setInitializing] = useState(true);
 
-  const question = questions[currentDim];
-  const answer = answers[currentDim];
-  const analysis = analyses[currentDim];
+  const question = questions[currentKey];
+  const answer = answers[currentKey];
+  const analysis = analyses[currentKey];
   const hasAnalysis = !!analysis?.text && !analysis.loading;
 
   const generateQuestion = useCallback(
     async (
-      dim: string,
-      targetState = getDefaultTargetState(dim)
+      mission: TrainingMission,
+      targetState = getDefaultTargetState(mission)
     ) => {
+    const key = mission.id;
     setQuestions((prev) => ({
       ...prev,
-      [dim]: { text: "", loading: true, ...targetState },
+      [key]: { text: "", loading: true, ...targetState },
     }));
     setStreamedText("");
 
@@ -1186,8 +1217,9 @@ export default function TrainingSessionClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "generate",
-          dimension: dim,
+          dimension: targetState.dimension,
           targetId: targetState.targetId,
+          missionId: targetState.missionId,
           currentQuestions: getGeneratedQuestionTexts(questions),
         }),
       });
@@ -1218,7 +1250,7 @@ export default function TrainingSessionClient() {
       const parsedQuestion = parseGeneratedQuestionText(text);
       setQuestions((prev) => ({
         ...prev,
-        [dim]: {
+        [key]: {
           text: parsedQuestion.question,
           loading: false,
           reason: parsedQuestion.reason,
@@ -1233,11 +1265,13 @@ export default function TrainingSessionClient() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            dimension: dim,
+            dimension: key,
             question: {
               text: parsedQuestion.question,
               reason: parsedQuestion.reason,
               hint: parsedQuestion.hint,
+              missionId: targetState.missionId,
+              dimension: targetState.dimension,
               targetId: targetState.targetId,
               targetLabel: targetState.targetLabel,
             },
@@ -1247,7 +1281,7 @@ export default function TrainingSessionClient() {
     } catch {
       setQuestions((prev) => ({
         ...prev,
-        [dim]: {
+        [key]: {
           text: "（出题失败，请重新出题）",
           loading: false,
           ...targetState,
@@ -1263,7 +1297,12 @@ export default function TrainingSessionClient() {
     const today = new Date().toLocaleDateString("en-CA", {
       timeZone: "Asia/Shanghai",
     });
-    const dimensionSet = new Set<string>(ALL_DIMS);
+    const missionMap = new Map(
+      getTrainingMissions().map((mission) => [mission.id, mission])
+    );
+    const missionSet = new Set<string>(
+      getTrainingMissions().map((mission) => mission.id)
+    );
     let cancelled = false;
 
     fetch(`/api/training/sessions?date=${today}`)
@@ -1274,11 +1313,15 @@ export default function TrainingSessionClient() {
         const restoredEntries = Object.entries(cachedQuestions)
           .map(([dim, value]): [string, QuestionState | null] => {
             const normalized = normalizeStoredQuestion(value);
-            return [dim, normalized ? withDefaultTarget(normalized, dim) : null];
+            const mission = missionMap.get(dim);
+            return [
+              dim,
+              normalized && mission ? withDefaultTarget(normalized, mission) : null,
+            ];
           })
           .filter(
             (entry): entry is [string, QuestionState] =>
-              dimensionSet.has(entry[0]) && Boolean(entry[1])
+              missionSet.has(entry[0]) && Boolean(entry[1])
           );
         const restoredQuestions = Object.fromEntries(restoredEntries) as Record<
           string,
@@ -1287,12 +1330,18 @@ export default function TrainingSessionClient() {
 
         if (Object.keys(restoredQuestions).length) {
           setQuestions((prev) => ({ ...restoredQuestions, ...prev }));
+          setActiveMissions(
+            getMissionPlanWithCachedQuestions(
+              Object.keys(restoredQuestions),
+              MISSION_PLAN
+            )
+          );
         }
 
         const nextIndex =
           typeof data.nextIndex === "number" &&
           data.nextIndex >= 0 &&
-          data.nextIndex < ALL_DIMS.length
+          data.nextIndex < activeMissions.length
             ? data.nextIndex
             : 0;
         setCurrentIndex(nextIndex);
@@ -1305,17 +1354,18 @@ export default function TrainingSessionClient() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeMissions.length]);
 
   useEffect(() => {
     if (
       !initializing &&
-      !questions[currentDim]?.text &&
-      !questions[currentDim]?.loading
+      currentMission &&
+      !questions[currentKey]?.text &&
+      !questions[currentKey]?.loading
     ) {
-      generateQuestion(currentDim);
+      generateQuestion(currentMission);
     }
-  }, [currentDim, generateQuestion, initializing, questions]);
+  }, [currentKey, currentMission, generateQuestion, initializing, questions]);
 
   useEffect(() => {
     if (hasAnalysis) {
@@ -1326,22 +1376,22 @@ export default function TrainingSessionClient() {
   const handleAnswerChange = (value: string) => {
     setAnswers((prev) => ({
       ...prev,
-      [currentDim]: { text: value, submitting: false },
+      [currentKey]: { text: value, submitting: false },
     }));
   };
 
   const handleSubmit = async () => {
-    const answerText = answers[currentDim]?.text?.trim();
-    const q = questions[currentDim]?.text;
+    const answerText = answers[currentKey]?.text?.trim();
+    const q = questions[currentKey]?.text;
     if (!answerText || !q || q.startsWith("（出题失败")) return;
 
     setAnswers((prev) => ({
       ...prev,
-      [currentDim]: { text: answerText, submitting: true },
+      [currentKey]: { text: answerText, submitting: true },
     }));
     setAnalyses((prev) => ({
       ...prev,
-      [currentDim]: { text: "", loading: true },
+      [currentKey]: { text: "", loading: true },
     }));
 
     try {
@@ -1351,6 +1401,7 @@ export default function TrainingSessionClient() {
         body: JSON.stringify({
           action: "analyze",
           dimension: currentDim,
+          missionId: currentMission?.id,
           question: q,
           userAnswer: answerText,
         }),
@@ -1374,7 +1425,7 @@ export default function TrainingSessionClient() {
                 fullText += token;
                 setAnalyses((prev) => ({
                   ...prev,
-                  [currentDim]: { text: fullText, loading: true },
+                  [currentKey]: { text: fullText, loading: true },
                 }));
               }
             } catch {}
@@ -1394,7 +1445,7 @@ export default function TrainingSessionClient() {
       setScore(extractedScore);
       setAnalyses((prev) => ({
         ...prev,
-        [currentDim]: {
+        [currentKey]: {
           text: fullText,
           loading: false,
           evaluation: evaluation || undefined,
@@ -1415,7 +1466,7 @@ export default function TrainingSessionClient() {
     } catch {
       setAnalyses((prev) => ({
         ...prev,
-        [currentDim]: {
+        [currentKey]: {
           text: "AI 分析暂时不可用，请稍后再试。",
           loading: false,
         },
@@ -1423,22 +1474,21 @@ export default function TrainingSessionClient() {
     } finally {
       setAnswers((prev) => ({
         ...prev,
-        [currentDim]: { text: answerText, submitting: false },
+        [currentKey]: { text: answerText, submitting: false },
       }));
     }
   };
 
   const handleNext = () => {
-    if (currentIndex < ALL_DIMS.length - 1) {
+    if (currentIndex < activeMissions.length - 1) {
       setCurrentIndex((value) => value + 1);
       setScore(0);
       setActive("before");
       return;
     }
 
-    const roundQuestions = ALL_DIMS.map((dim) => questions[dim]?.text).filter(
-      Boolean
-    );
+    const roundQuestions = activeMissions.map((mission) => questions[mission.id]?.text)
+      .filter(Boolean);
     if (roundQuestions.length > 0) {
       fetch("/api/training/sessions", {
         method: "POST",
@@ -1449,6 +1499,7 @@ export default function TrainingSessionClient() {
 
     setRound((value) => value + 1);
     setCurrentIndex(0);
+    setActiveMissions(MISSION_PLAN);
     setAnswers({});
     setAnalyses({});
     setScore(0);
@@ -1457,30 +1508,34 @@ export default function TrainingSessionClient() {
   };
 
   const handleRegenerate = () => {
-    const nextTarget = getNextTrainingTarget(
-      currentDim,
-      questions[currentDim]?.targetId
-    );
-    const targetState = {
-      targetId: nextTarget.id,
-      targetLabel: nextTarget.label,
-    };
+    const nextMission = getNextTrainingMission(questions[currentKey]?.missionId || currentMission?.id);
+    if (!nextMission) return;
+    const targetState = getDefaultTargetState(nextMission);
+    const nextKey = nextMission.id;
 
+    setActiveMissions((prev) => {
+      const next = [...prev];
+      next[currentIndex] = nextMission;
+      return next;
+    });
     setAnswers((prev) => ({
       ...prev,
-      [currentDim]: { text: "", submitting: false },
+      [currentKey]: { text: "", submitting: false },
+      [nextKey]: { text: "", submitting: false },
     }));
     setAnalyses((prev) => ({
       ...prev,
-      [currentDim]: { text: "", loading: false },
+      [currentKey]: { text: "", loading: false },
+      [nextKey]: { text: "", loading: false },
     }));
     setScore(0);
     setActive("before");
-    generateQuestion(currentDim, targetState);
+    generateQuestion(nextMission, targetState);
   };
 
   const handleRestart = () => {
     setCurrentIndex(0);
+    setActiveMissions(MISSION_PLAN);
     setAnswers({});
     setAnalyses({});
     setScore(0);
@@ -1491,6 +1546,7 @@ export default function TrainingSessionClient() {
 
   const realProps: RealTrainingProps = {
     currentIndex,
+    totalCount,
     currentDim,
     question,
     answer,

@@ -5,11 +5,10 @@ import {
   formatTrainingTarget,
   formatTrainingDimensionStrategy,
   getTrainingTarget,
-  getNextTrainingTarget,
-  getTrainingTargetById,
   getTrainingTargetsForDimension,
   getTrainingDimensionStrategy,
 } from "./dimension-strategy.ts";
+import { getNextTrainingMission } from "./training-missions.ts";
 
 test("strategic thinking is scoped to business judgment instead of broad strategy essays", () => {
   const strategy = getTrainingDimensionStrategy("战略思维");
@@ -130,20 +129,22 @@ test("answer status stays in the title row instead of aligning with framework gu
   );
 });
 
-test("manual question replacement rotates target tag within the same dimension", () => {
-  const current = getTrainingTargetById("系统设计能力", "system-boundary");
-  const next = getNextTrainingTarget("系统设计能力", current.id);
+test("manual question replacement rotates mission instead of target inside one dimension", () => {
+  const next = getNextTrainingMission("platform-abstraction");
 
-  assert.equal(current.label, "系统边界");
-  assert.equal(next.label, "质量交付");
+  assert.ok(next);
+  assert.equal(next.id, "data-product-governance");
+  assert.notEqual(next.taskType, "平台/中台/系统抽象");
 
   const componentSource = readFileSync(
     new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
     "utf8"
   );
 
-  assert.match(componentSource, /getNextTrainingTarget/);
+  assert.match(componentSource, /getNextTrainingMission/);
+  assert.match(componentSource, /setActiveMissions/);
   assert.match(componentSource, /targetState/);
   assert.match(componentSource, /targetId: targetState\.targetId/);
   assert.match(componentSource, /question\?\.targetLabel/);
+  assert.doesNotMatch(componentSource, /getNextTrainingTarget/);
 });

@@ -25,3 +25,11 @@ test("training generation prompt avoids turning every question into the same val
   assert.match(source, /不要把每道题都收束成/);
   assert.match(source, /企业服务交付、线下履约、供应链协同/);
 });
+
+test("training generation route treats mission as primary and dimensions as attribution labels", () => {
+  assert.match(source, /formatTrainingMission/);
+  assert.match(source, /维度和靶点只是评估归因标签/);
+  assert.match(source, /真实国内产品工作任务/);
+  assert.match(source, /当前维度：\$\{effectiveDimension\}/);
+  assert.match(source, /本题聚焦维度：\$\{personalization\.focusDimension \|\| effectiveDimension\}/);
+});

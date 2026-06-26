@@ -16,6 +16,11 @@ import {
   pickTrainingQuestionSeed,
 } from "@/lib/training/question-bank";
 import { buildTrainingPersonalization } from "@/lib/training/personalization";
+import {
+  formatTrainingMission,
+  getMissionTarget,
+  getTrainingMissionById,
+} from "@/lib/training/training-missions";
 
 function normalizeQuestionText(value: unknown) {
   if (typeof value === "string") return value.trim();
@@ -113,6 +118,7 @@ export async function POST(req: Request) {
     action,
     dimension,
     targetId,
+    missionId,
     level,
     userAnswer,
     question,
@@ -127,13 +133,18 @@ export async function POST(req: Request) {
   const chatModel = getChatModel(apiKey, "deepseek-v4-flash");
 
   if (action === "generate") {
-    const dimensionStrategy = getTrainingDimensionStrategy(dimension);
-    const target = targetId
-      ? getTrainingTargetById(dimension, targetId)
-      : getTrainingTarget(dimension);
+    const mission = getTrainingMissionById(missionId);
+    const effectiveDimension = mission?.primaryDimension || dimension;
+    const effectiveTargetId = mission?.targetId || targetId;
+    const dimensionStrategy = getTrainingDimensionStrategy(effectiveDimension);
+    const target = mission
+      ? getMissionTarget(mission)
+      : effectiveTargetId
+        ? getTrainingTargetById(effectiveDimension, effectiveTargetId)
+        : getTrainingTarget(effectiveDimension);
     const framework = target.framework;
     const personalization = await getPersonalizationContext(
-      dimension,
+      effectiveDimension,
       currentQuestions
     );
     const mergedTodayQuestions = personalization.todayQuestions;
@@ -141,8 +152,11 @@ export async function POST(req: Request) {
       [...personalization.recentQuestions, ...mergedTodayQuestions]
     );
     const seed = pickTrainingQuestionSeed({
-      dimension,
-      targetId,
+      dimension: effectiveDimension,
+      targetId: effectiveTargetId,
+      missionId,
+      missionTaskType: mission?.taskType,
+      productDomains: mission?.productDomains,
       recentFamilies,
       recentQuestionTexts: personalization.recentQuestions,
       todayQuestionTexts: mergedTodayQuestions,
@@ -158,7 +172,10 @@ export async function POST(req: Request) {
 2. **高阶 PM 靶点导向**：每道题必须训练「${target.label}」这一高阶 PM 能力靶点，并让答题者运用「${framework}」。难度来自"判断质量"，不是"信息阅读量"。
 3. **执行层进阶定位**：题目要让执行层PM跳出现有执行思维，但不要用"年营收5亿、CEO战略会、全公司资源重组"这种虚假宏大场景来堆难度。
 
-当前维度：${dimension}
+当前维度：${effectiveDimension}
+${mission ? `当前训练任务：
+${formatTrainingMission(mission)}
+` : ""}
 本题靶点：${target.label}
 对应思维框架：${framework}
 ${seedContext ? `种子题库材料：
@@ -171,7 +188,7 @@ ${formatTrainingDimensionStrategy(dimensionStrategy)}
 ${formatTrainingTarget(target)}
 
 个性化上下文：
-- 本题聚焦维度：${personalization.focusDimension || dimension}
+- 本题聚焦维度：${personalization.focusDimension || effectiveDimension}
 - 用户当前短板：${personalization.weakDimensions.join("、") || "暂无明确画像"}
 - 最近低分维度：${personalization.recentLowDimensions.join("、") || "暂无"}
 - 最近训练盲区：${personalization.recentGaps.join("；") || "暂无"}
@@ -181,8 +198,9 @@ ${formatTrainingTarget(target)}
 - 推荐理由：${personalization.recommendationReason}
 
 要求：
-- 必须围绕维度「${dimension}」出题
-- 必须围绕训练靶点「${target.label}」出题，页面会把它作为本题第二标签
+- 必须优先围绕“当前训练任务”出题；维度和靶点只是评估归因标签，不要让题面被抽象维度锁死
+- 页面第一标签会显示「${effectiveDimension}」，第二标签会显示「${mission?.label || target.label}」，但题目本身必须像真实国内产品工作任务，而不是像能力维度说明
+- 必须围绕训练靶点「${mission?.label || target.label}」出题，页面会把它作为本题第二标签
 - 优先以“种子题库材料”中的场景壳子为基础改写，不要凭空重新发明一个完全不同的主题
 - 如果种子题库材料给出了来源、场景、动作、冲突和证据，就把它们作为题目的骨架，只保留必要改写
 - **每道题不超过 300 字**
@@ -209,7 +227,9 @@ ${formatTrainingTarget(target)}
       messages: [
         {
           role: "user",
-          content: `请出一道关于「${dimension}」维度、「${target.label}」靶点的训练题，要求答题者运用「${framework}」思维框架。`,
+          content: mission
+            ? `请围绕「${mission.title}」这类国内高阶产品真实任务出题，页面标签是「${effectiveDimension} / ${mission.label}」，要求答题者运用「${mission.framework}」。`
+            : `请出一道关于「${effectiveDimension}」维度、「${target.label}」靶点的训练题，要求答题者运用「${framework}」思维框架。`,
         },
       ],
     });

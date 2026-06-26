@@ -30,6 +30,9 @@ export type TrainingQuestionSeed = {
 type SeedContext = {
   dimension?: string;
   targetId?: string | null;
+  missionId?: string | null;
+  missionTaskType?: string | null;
+  productDomains?: string[];
   recentFamilies?: string[];
   recentQuestionTexts?: string[];
   todayQuestionTexts?: string[];
@@ -743,8 +746,14 @@ function hasCrowdedSkeleton(seed: TrainingQuestionSeed, crowdedSignals: Set<stri
 function scoreSeedMatch(seed: TrainingQuestionSeed, context: SeedContext) {
   let score = 0;
 
-  if (context.dimension && seed.dimension === context.dimension) score += 4;
+  if (context.dimension && seed.dimension === context.dimension) score += 2;
   if (context.targetId && seed.targetId === context.targetId) score += 3;
+  if (context.missionTaskType && skeletonText(seed).includes(context.missionTaskType)) {
+    score += 1;
+  }
+  for (const domain of context.productDomains || []) {
+    if (skeletonText(seed).includes(domain)) score += 1.5;
+  }
   if (context.recentFamilies?.includes(seed.family)) score -= 8;
 
   const recentTexts = context.recentQuestionTexts || [];
@@ -789,9 +798,12 @@ export function pickTrainingQuestionSeed(context: SeedContext = {}) {
     ? getTrainingTargetById(context.dimension, context.targetId)
     : getTrainingTarget(context.dimension);
   const crowdedSignals = getCrowdedTodaySignals(context.todayQuestionTexts || []);
-  const dimensionPool = pool.filter(
-    (seed) => !context.dimension || seed.dimension === context.dimension
-  );
+  const targetPool = context.targetId
+    ? pool.filter((seed) => seed.targetId === context.targetId)
+    : [];
+  const dimensionPool = targetPool.length
+    ? targetPool
+    : pool.filter((seed) => !context.dimension || seed.dimension === context.dimension);
   const lessCrowdedPool = dimensionPool.filter(
     (seed) => !hasCrowdedSkeleton(seed, crowdedSignals)
   );

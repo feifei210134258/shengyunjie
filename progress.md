@@ -1037,3 +1037,26 @@
 - `npm run build` 通过。
 - `git diff --check` 通过。
 - 模拟用户截图中的同质题簇后，下一颗战略思维种子切换为 `seed-tradeoff-03 / architecture-payoff / 架构投入 / 长期投入`，不再继续 SaaS 免费付费或上线回滚骨架。
+
+## [2026-06-26] Refactor: 日常训练从维度直出改为高阶产品任务驱动
+
+### 背景判断
+- 用户连续截图验证后，确认“同维度换靶点”和题库 seed 仍不能根治换皮感。
+- 根因上移到架构层：五维画像标签过早参与题面生成，尤其战略/商业/数据三类能力在真实工作中高度耦合，强行拆维度会把题目压回相似骨架。
+- 本轮保留训练页视觉、为什么练这题、思考框架和提交后反馈，但把出题入口从“维度优先”改为“国内高阶产品真实任务优先”。
+
+### 完成内容
+- 新增 `src/lib/training/training-missions.ts`：国内高阶产品任务池，覆盖增长诊断、商业化取舍、项目推进与资源冲突、平台/中台抽象、数据经营分析、行业与供给侧约束、组织影响与协同推进等任务类型。
+- `TrainingSessionClient` 改用 `getDailyTrainingMissionPlan` 和 `getNextTrainingMission`；“换一题”会替换当前题槽的 mission，跨任务类型切换，而不是只在同一维度里换靶点。
+- `/api/train` 接收 `missionId`，以 mission 为主组织 prompt；维度和靶点只作为页面标签与评估归因，不再直接决定题面。
+- `question-bank.ts` 支持 missionTaskType/productDomains 参与 seed 评分，降低单一维度池对题目的锁定。
+- `/api/training/questions` 保存 `missionId/dimension/targetId/targetLabel`，刷新或恢复当天训练时不丢任务语义。
+- `getMissionPlanWithCachedQuestions` 会把当天缓存里的替换 mission 恢复进当前训练计划，避免用户换题后刷新又退回默认任务序列。
+
+### 验证结果
+- TDD 红灯：新增 mission plan、训练页 mission 使用、route prompt mission 主导、题目缓存 mission 元数据测试，均先捕获旧实现问题。
+- `node --test src/lib/training/session-progress.test.mjs src/lib/training/training-missions.test.mjs src/components/training/TrainingSessionClient.test.mjs src/app/api/train/route.test.mjs src/app/api/training/questions/route.test.mjs src/lib/training/question-bank.test.mjs src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs src/lib/training/completion.test.mjs` 通过，41 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint ... --max-warnings 0` 针对性通过（仅 ESLint 9 eslintrc 迁移提示）。
+- `npm run build` 通过。
+- `git diff --check` 通过。
