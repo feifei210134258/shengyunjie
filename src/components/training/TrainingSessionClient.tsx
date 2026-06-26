@@ -157,7 +157,7 @@ function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState 
 interface RealTrainingProps {
   currentIndex: number;
   totalCount: number;
-  currentDim: string;
+  currentDisplayLabel: string;
   question: QuestionState | undefined;
   answer: AnswerState | undefined;
   analysis: AnalysisState | undefined;
@@ -526,7 +526,7 @@ function FocusedWorkspace() {
 function A1BeforeSubmit({
   currentIndex,
   totalCount,
-  currentDim,
+  currentDisplayLabel,
   question,
   answer,
   analysis,
@@ -567,7 +567,7 @@ function A1BeforeSubmit({
           <section className="rounded-xl border border-primary/20 bg-[#EEF2FF] p-4 shadow-[0_10px_28px_rgba(67,56,202,0.06)]">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-md bg-white px-3 py-1.5 text-label font-semibold text-primary">
-                {currentDim}
+                {currentDisplayLabel}
               </span>
               <span className="rounded-md bg-primary px-3 py-1.5 text-label font-semibold text-white">
                 {question?.targetLabel || "训练任务"}
@@ -723,7 +723,6 @@ function extractSections(text: string) {
 function A1AfterSubmit({
   currentIndex,
   totalCount,
-  currentDim,
   question,
   answer,
   analysis,
@@ -1185,6 +1184,7 @@ export default function TrainingSessionClient() {
   const currentMission = activeMissions[currentIndex] || activeMissions[0];
   const currentKey = currentMission?.id || "mission";
   const currentDim = currentMission?.primaryDimension || "通用产品能力";
+  const currentDisplayLabel = currentMission?.displayLabel || currentDim;
   const totalCount = activeMissions.length || MISSION_PLAN.length;
   const [questions, setQuestions] = useState<Record<string, QuestionState>>({});
   const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
@@ -1547,7 +1547,7 @@ export default function TrainingSessionClient() {
   const realProps: RealTrainingProps = {
     currentIndex,
     totalCount,
-    currentDim,
+    currentDisplayLabel,
     question,
     answer,
     analysis,

@@ -18,3 +18,14 @@ test("manual regeneration switches mission rather than only target inside the sa
   assert.match(source, /getNextTrainingMission/);
   assert.doesNotMatch(source, /getNextTrainingTarget/);
 });
+
+test("question card primary label uses mission display label rather than old dimension", () => {
+  assert.match(source, /displayLabel/);
+  assert.match(source, /currentDisplayLabel/);
+  assert.match(source, /function A1BeforeSubmit\(\{[\s\S]*currentDisplayLabel/);
+  assert.match(source, /\{currentDisplayLabel\}/);
+  assert.doesNotMatch(
+    source,
+    /function A1BeforeSubmit\(\{[\s\S]{0,400}currentDim/
+  );
+});

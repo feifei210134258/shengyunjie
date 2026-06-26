@@ -16,6 +16,7 @@ export type TrainingMission = {
     | "组织影响与协同推进";
   primaryDimension: string;
   targetId: string;
+  displayLabel: string;
   label: string;
   capability: string;
   framework: string;
@@ -35,6 +36,7 @@ const missions: TrainingMission[] = [
     taskType: "业务增长判断",
     primaryDimension: "数据决策能力",
     targetId: "metrics-causality",
+    displayLabel: "增长诊断",
     label: "增长诊断",
     capability: "从拉新、转化、留存、复购或续费漏斗中识别真实瓶颈，并判断产品动作是否服务业务目标。",
     framework: "增长诊断框架：先确认业务目标和漏斗环节，再拆用户分层、渠道来源和关键转化行为，最后定义结果指标与反证信号。",
@@ -52,6 +54,7 @@ const missions: TrainingMission[] = [
     taskType: "商业化取舍",
     primaryDimension: "商业思维",
     targetId: "value-capture",
+    displayLabel: "商业化",
     label: "商业化取舍",
     capability: "判断能力如何转化为套餐、增购包、定价、续费扩容或交付成本控制。",
     framework: "商业化框架：先识别客户分层和价值强度，再判断付费边界、包装方式、迁移节奏、成本和续费风险。",
@@ -69,6 +72,7 @@ const missions: TrainingMission[] = [
     taskType: "项目推进与资源冲突",
     primaryDimension: "战略思维",
     targetId: "tradeoff",
+    displayLabel: "资源排期",
     label: "资源取舍",
     capability: "在老板目标、销售承诺、研发容量和上线窗口冲突时，给出可解释的排期和取舍。",
     framework: "推进取舍框架：先拆目标和不可退让边界，再比较影响面、紧急度、资源消耗和风险，最后确定阶段路径与同步机制。",
@@ -86,6 +90,7 @@ const missions: TrainingMission[] = [
     taskType: "平台/中台/系统抽象",
     primaryDimension: "系统设计能力",
     targetId: "system-boundary",
+    displayLabel: "平台抽象",
     label: "平台抽象",
     capability: "从多个业务线或客户定制中抽象通用能力，并划清配置、权限、流程、数据和异常边界。",
     framework: "平台抽象框架：先找共性对象和差异点，再定义配置边界、模块职责、依赖关系和异常治理。",
@@ -103,6 +108,7 @@ const missions: TrainingMission[] = [
     taskType: "数据经营分析",
     primaryDimension: "数据决策能力",
     targetId: "metrics-causality",
+    displayLabel: "经营分析",
     label: "经营分析",
     capability: "围绕指标、标签、看板、埋点和数据质量，判断数据是否能支持经营决策。",
     framework: "经营分析框架：先定义决策问题，再拆指标口径、数据来源、标签质量和使用场景，最后设计校验和应用闭环。",
@@ -120,6 +126,7 @@ const missions: TrainingMission[] = [
     taskType: "行业与供给侧约束",
     primaryDimension: "商业思维",
     targetId: "lifecycle-judgment",
+    displayLabel: "行业约束",
     label: "行业约束判断",
     capability: "在政策、履约、供给、线下服务或行业链条限制下判断产品方案是否成立。",
     framework: "行业约束框架：先识别供给侧瓶颈和外部规则，再判断产品动作能改变什么、不能改变什么，最后确定最小验证场景。",
@@ -137,6 +144,7 @@ const missions: TrainingMission[] = [
     taskType: "组织影响与协同推进",
     primaryDimension: "用户洞察与需求管理",
     targetId: "stakeholder-influence",
+    displayLabel: "协同推进",
     label: "协同推进",
     capability: "在销售、运营、研发、客成、法务和管理层目标不一致时，把争论转成可决策的问题。",
     framework: "协同推进框架：先澄清各方目标和底线，再把分歧转成可验证假设，最后明确决策人、节奏和复盘口径。",
@@ -154,6 +162,7 @@ const missions: TrainingMission[] = [
     taskType: "业务增长判断",
     primaryDimension: "用户洞察与需求管理",
     targetId: "problem-framing",
+    displayLabel: "需求重构",
     label: "需求重构",
     capability: "从老板、客户或一线团队的功能诉求里识别真实任务、边界和第一版验证范围。",
     framework: "问题重构框架：先还原触发场景和角色目标，再区分症状、根因和约束，最后定义第一版做与不做。",
@@ -171,6 +180,7 @@ const missions: TrainingMission[] = [
     taskType: "项目推进与资源冲突",
     primaryDimension: "系统设计能力",
     targetId: "quality-delivery",
+    displayLabel: "质量发布",
     label: "发布风险",
     capability: "在速度、质量、合规、安全和客户承诺之间判断是否发布、灰度或延期。",
     framework: "质量交付框架：先识别不可逆风险和受影响用户，再定义灰度范围、监控、回滚条件和验收标准。",
@@ -188,6 +198,7 @@ const missions: TrainingMission[] = [
     taskType: "平台/中台/系统抽象",
     primaryDimension: "系统设计能力",
     targetId: "system-boundary",
+    displayLabel: "流程自动化",
     label: "流程效率",
     capability: "围绕运营后台、审批、质检和异常处理，判断流程改造如何提升效率且不放大风险。",
     framework: "流程效率框架：先拆角色、任务和状态，再识别自动化边界、人工兜底、异常回收和审计记录。",
@@ -205,6 +216,7 @@ const missions: TrainingMission[] = [
     taskType: "行业与供给侧约束",
     primaryDimension: "商业思维",
     targetId: "tradeoff",
+    displayLabel: "生态规则",
     label: "生态取舍",
     capability: "在平台、商家、达人、服务商、用户等多边角色间判断规则调整影响和长期生态健康。",
     framework: "生态取舍框架：先拆各角色利益和行为变化，再判断短期指标、长期供给质量和规则公平性。",
@@ -222,6 +234,7 @@ const missions: TrainingMission[] = [
     taskType: "数据经营分析",
     primaryDimension: "数据决策能力",
     targetId: "iteration-review",
+    displayLabel: "AI落地",
     label: "AI落地复盘",
     capability: "判断 AI/自动化能力是否真正提升业务效率，并识别误判、信任、成本和人工兜底问题。",
     framework: "AI落地框架：先定义要替代或增强的任务，再看准确率、采纳率、人工兜底、成本和风险反馈。",
@@ -307,7 +320,7 @@ export function formatTrainingMission(mission: TrainingMission) {
   return [
     `训练任务：${mission.title}`,
     `任务类型：${mission.taskType}`,
-    `页面标签：${mission.primaryDimension} / ${mission.label}`,
+    `页面标签：${mission.displayLabel} / ${mission.label}`,
     `高阶能力：${mission.capability}`,
     `思考框架：${mission.framework}`,
     `可选产品域：${mission.productDomains.map((item) => `- ${item}`).join("\n")}`,

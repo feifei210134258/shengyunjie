@@ -1060,3 +1060,23 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint ... --max-warnings 0` 针对性通过（仅 ESLint 9 eslintrc 迁移提示）。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-26] Tweak: 训练题去考试腔与前台任务标签
+
+### 背景判断
+- 用户更新后截图显示题目质量已明显提升，但前两题第一标签仍是“系统设计能力”，前台感知上像旧五维度还在主导。
+- 题干里出现“请运用质量交付框架 / 流程效率框架”等表达，容易从真实工作题退回考试题。
+- 当前题目已经有较好的业务真实感，因此本轮只做窄幅微调，不重写架构、不改变训练页布局。
+
+### 完成内容
+- `TrainingMission` 增加 `displayLabel`，题卡第一标签改为任务标签，例如“质量发布”“流程自动化”“生态规则”“AI落地”；旧五维度仍保留用于后台记录、评分和画像归因。
+- `/api/train` prompt 明确要求框架只用于内部构思，不要在题干中写“请运用XX框架”或“请结合XX框架”。
+- 出题 prompt 增加题面外形轮换要求：冲突对话、数据异动、老板指令、客户投诉、评审会争议、上线事故、运营反馈、销售承诺、一线工单等，避免形成新的固定模板。
+
+### 验证结果
+- TDD 红灯：新增测试先捕获缺少 `displayLabel`、题卡仍可能显示旧维度、prompt 未禁止考试腔和未要求题面外形轮换。
+- `node --test src/lib/training/session-progress.test.mjs src/lib/training/training-missions.test.mjs src/components/training/TrainingSessionClient.test.mjs src/app/api/train/route.test.mjs src/app/api/training/questions/route.test.mjs src/lib/training/question-bank.test.mjs src/lib/training/dimension-strategy.test.mjs src/lib/training/personalization.test.mjs src/lib/training/completion.test.mjs` 通过，45 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/training/training-missions.ts src/lib/training/training-missions.test.mjs src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs src/app/api/train/route.ts src/app/api/train/route.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。

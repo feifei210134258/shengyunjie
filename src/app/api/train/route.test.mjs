@@ -33,3 +33,18 @@ test("training generation route treats mission as primary and dimensions as attr
   assert.match(source, /当前维度：\$\{effectiveDimension\}/);
   assert.match(source, /本题聚焦维度：\$\{personalization\.focusDimension \|\| effectiveDimension\}/);
 });
+
+test("training generation prompt keeps frameworks behind the scenes instead of sounding like an exam", () => {
+  assert.match(source, /不要在题干中写“请运用.*框架”/);
+  assert.match(source, /不要在题干中写“请结合.*框架”/);
+  assert.match(source, /框架只用于你内部组织题目/);
+  assert.doesNotMatch(source, /要求答题者运用「\$\{mission\.framework\}」/);
+});
+
+test("training generation prompt varies the surface form of questions", () => {
+  assert.match(source, /题面外形必须轮换/);
+  assert.match(source, /冲突对话/);
+  assert.match(source, /数据异动/);
+  assert.match(source, /老板指令/);
+  assert.match(source, /客户投诉/);
+});

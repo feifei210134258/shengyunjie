@@ -11,6 +11,7 @@ test("domestic senior product missions cover real work tasks instead of abstract
   const missions = getTrainingMissions();
   const taskTypes = new Set(missions.map((mission) => mission.taskType));
   const domains = new Set(missions.flatMap((mission) => mission.productDomains));
+  const displayLabels = new Set(missions.map((mission) => mission.displayLabel));
 
   assert.ok(missions.length >= 12);
   assert.ok(taskTypes.has("业务增长判断"));
@@ -22,6 +23,24 @@ test("domestic senior product missions cover real work tasks instead of abstract
   assert.ok(domains.has("供应链协同"));
   assert.ok(domains.has("本地生活"));
   assert.ok(domains.has("数据产品"));
+  assert.ok(displayLabels.has("质量发布"));
+  assert.ok(displayLabels.has("流程自动化"));
+  assert.ok(displayLabels.has("生态规则"));
+});
+
+test("mission display labels do not expose the old five-dimension framework", () => {
+  const oldDimensions = new Set([
+    "战略思维",
+    "系统设计能力",
+    "数据决策能力",
+    "用户洞察与需求管理",
+    "商业思维",
+  ]);
+
+  for (const mission of getTrainingMissions()) {
+    assert.ok(mission.displayLabel);
+    assert.ok(!oldDimensions.has(mission.displayLabel));
+  }
 });
 
 test("daily mission plan starts from work missions and is not the old five-dimension order", () => {
