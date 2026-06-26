@@ -115,6 +115,14 @@ function withDefaultTarget(question: QuestionState, dimension: string): Question
   };
 }
 
+function getGeneratedQuestionTexts(
+  questions: Record<string, QuestionState>
+) {
+  return Object.entries(questions)
+    .map(([, question]) => question.text?.trim())
+    .filter((text): text is string => Boolean(text));
+}
+
 function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState | null {
   if (typeof value === "string") {
     const text = value.trim();
@@ -1180,6 +1188,7 @@ export default function TrainingSessionClient() {
           action: "generate",
           dimension: dim,
           targetId: targetState.targetId,
+          currentQuestions: getGeneratedQuestionTexts(questions),
         }),
       });
       if (!res.body) throw new Error("无响应");
@@ -1247,7 +1256,7 @@ export default function TrainingSessionClient() {
       setStreamedText("");
     }
     },
-    []
+    [questions]
   );
 
   useEffect(() => {

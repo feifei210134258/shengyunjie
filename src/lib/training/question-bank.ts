@@ -35,6 +35,30 @@ type SeedContext = {
   todayQuestionTexts?: string[];
 };
 
+type SkeletonSignal = {
+  id: string;
+  patterns: RegExp[];
+};
+
+const skeletonSignals: SkeletonSignal[] = [
+  {
+    id: "saas-pricing-access",
+    patterns: [/SaaS/i, /免费/, /付费/, /试用/, /套餐/, /权限/, /高级版/],
+  },
+  {
+    id: "release-rollback-validation",
+    patterns: [/上线/, /灰度/, /回滚/, /验证方案/, /观察周期/, /成功标准/],
+  },
+  {
+    id: "default-permission-change",
+    patterns: [/默认/, /开启/, /只读/, /可编辑/, /权限/, /自动生成/],
+  },
+  {
+    id: "metric-guardrail-loop",
+    patterns: [/转化率/, /投诉率/, /留存/, /护栏/, /指标/, /数据/],
+  },
+];
+
 const seedPool: TrainingQuestionSeed[] = [
   {
     id: "seed-business-outcome-01",
@@ -659,6 +683,63 @@ function normalizeText(value: string | undefined) {
   return String(value || "").trim();
 }
 
+function skeletonText(seed: TrainingQuestionSeed) {
+  return [
+    seed.title,
+    seed.family,
+    seed.scenarioType,
+    seed.actionType,
+    seed.conflictType,
+    seed.evidenceType,
+    seed.shell,
+    seed.promptAngle,
+    ...seed.variationAxes,
+  ].join(" ");
+}
+
+function detectSkeletonSignals(text: string) {
+  const normalized = normalizeText(text);
+  if (!normalized) return new Set<string>();
+
+  return new Set(
+    skeletonSignals
+      .filter((signal) =>
+        signal.patterns.some((pattern) => pattern.test(normalized))
+      )
+      .map((signal) => signal.id)
+  );
+}
+
+function getCrowdedTodaySignals(todayTexts: string[]) {
+  const counts = new Map<string, number>();
+  for (const text of todayTexts) {
+    for (const signal of detectSkeletonSignals(text)) {
+      counts.set(signal, (counts.get(signal) || 0) + 1);
+    }
+  }
+
+  return new Set(
+    Array.from(counts.entries())
+      .filter(
+        ([signal, count]) =>
+          count >= 2 ||
+          (todayTexts.length >= 3 &&
+            signal === "release-rollback-validation" &&
+            count >= 1)
+      )
+      .map(([signal]) => signal)
+  );
+}
+
+function hasCrowdedSkeleton(seed: TrainingQuestionSeed, crowdedSignals: Set<string>) {
+  if (!crowdedSignals.size) return false;
+  const seedSignals = detectSkeletonSignals(skeletonText(seed));
+  for (const signal of seedSignals) {
+    if (crowdedSignals.has(signal)) return true;
+  }
+  return false;
+}
+
 function scoreSeedMatch(seed: TrainingQuestionSeed, context: SeedContext) {
   let score = 0;
 
@@ -682,6 +763,12 @@ function scoreSeedMatch(seed: TrainingQuestionSeed, context: SeedContext) {
       0
     );
     score -= overlap * 8;
+
+    const crowdedSignals = getCrowdedTodaySignals(todayTexts);
+    const seedSignals = detectSkeletonSignals(skeletonText(seed));
+    for (const signal of seedSignals) {
+      if (crowdedSignals.has(signal)) score -= 7;
+    }
   }
 
   return score;
@@ -701,9 +788,16 @@ export function pickTrainingQuestionSeed(context: SeedContext = {}) {
   const target = context.targetId
     ? getTrainingTargetById(context.dimension, context.targetId)
     : getTrainingTarget(context.dimension);
+  const crowdedSignals = getCrowdedTodaySignals(context.todayQuestionTexts || []);
+  const dimensionPool = pool.filter(
+    (seed) => !context.dimension || seed.dimension === context.dimension
+  );
+  const lessCrowdedPool = dimensionPool.filter(
+    (seed) => !hasCrowdedSkeleton(seed, crowdedSignals)
+  );
+  const candidatePool = lessCrowdedPool.length ? lessCrowdedPool : dimensionPool;
 
-  const scored = pool
-    .filter((seed) => !context.dimension || seed.dimension === context.dimension)
+  const scored = candidatePool
     .map((seed) => ({
       seed,
       score: scoreSeedMatch(seed, context),

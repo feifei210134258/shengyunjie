@@ -1015,3 +1015,25 @@
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/bootcamp/interview/page.tsx' src/lib/bootcamp.ts --max-warnings 0` 通过。
 - `npm run build` 通过。
+
+## [2026-06-26] Fix: 日常训练换题仍高度同质
+
+### 背景判断
+- 用户截图显示连续刷新/换题后，题面仍集中在 B2B SaaS、免费/付费、权限、试用、默认策略、上线回滚和验证方案。
+- 根因不是单纯“随机性不够”：前端换题时没有把当前页面已生成题传给 `/api/train`，后端只依赖已异步保存到 `training_sessions.questions` 的题；连续点击或保存未完成时，重复控制看不到刚出现的题。
+- 第二个根因是种子库和 prompt 都会把战略思维题收束到同一种骨架：产品域多为 SaaS，追问多为“关键指标/观察周期/决策标准/回滚”。
+
+### 完成内容
+- `TrainingSessionClient` 生成题时传入当前页面已知题目 `currentQuestions`。
+- `/api/train` 合并前端即时题和当天缓存题，统一进入 `buildTrainingPersonalization`、recent family 提取和 `pickTrainingQuestionSeed`。
+- `question-bank.ts` 增加题面骨架信号检测，识别 SaaS 定价权限、默认权限变更、上线回滚验证、指标护栏闭环等拥挤模板；当今日题目已集中在某类骨架时，优先从候选种子中剔除同类骨架。
+- 出题 prompt 明确禁止把每题都写成“设计验证方案，包含关键指标、观察周期、决策标准、是否回滚”，并要求拥挤时切换到不同产品域和决策动作。
+
+### 验证结果
+- TDD 红灯：新增测试先复现截图同质题簇下仍会选到 `risk-release/上线判断`，以及 `/api/train` 未合并前端当前题。
+- `node --test src/lib/training/question-bank.test.mjs src/app/api/train/route.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/app/api/train/route.test.mjs src/components/training/TrainingSessionClient.tsx src/lib/training/question-bank.ts src/lib/training/question-bank.test.mjs --max-warnings 0` 通过（仅 ESLint 9 eslintrc 迁移提示）。
+- `npm run build` 通过。
+- `git diff --check` 通过。
+- 模拟用户截图中的同质题簇后，下一颗战略思维种子切换为 `seed-tradeoff-03 / architecture-payoff / 架构投入 / 长期投入`，不再继续 SaaS 免费付费或上线回滚骨架。

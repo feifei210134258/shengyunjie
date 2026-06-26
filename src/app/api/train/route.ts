@@ -13,19 +13,43 @@ import {
   describeSeedForPrompt,
   formatTrainingQuestionSeed,
   getRecentQuestionFamiliesFromSeeds,
-  getTrainingQuestionSeedById,
   pickTrainingQuestionSeed,
 } from "@/lib/training/question-bank";
 import { buildTrainingPersonalization } from "@/lib/training/personalization";
 
-async function getPersonalizationContext(dimension?: string) {
+function normalizeQuestionText(value: unknown) {
+  if (typeof value === "string") return value.trim();
+  if (value && typeof value === "object") {
+    const item = value as Record<string, unknown>;
+    return String(item.text || item.question || "").trim();
+  }
+  return "";
+}
+
+function normalizeCurrentQuestions(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map(normalizeQuestionText).filter(Boolean);
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value).map(normalizeQuestionText).filter(Boolean);
+  }
+  return [];
+}
+
+async function getPersonalizationContext(
+  dimension?: string,
+  currentQuestions?: unknown
+) {
   try {
     const supabase = await createServerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return buildTrainingPersonalization({ requestedDimension: dimension });
+      return buildTrainingPersonalization({
+        requestedDimension: dimension,
+        todayQuestions: normalizeCurrentQuestions(currentQuestions),
+      });
     }
 
     const [{ data: latestReport }, { data: recentRecords }, { data: session }] =
@@ -59,27 +83,41 @@ async function getPersonalizationContext(dimension?: string) {
       .eq("session_date", today)
       .maybeSingle();
 
-    const todayQuestions = Object.values(todaySession?.questions || {})
-      .map((item: any) => {
-        if (typeof item === "string") return item;
-        return String(item?.text || item?.question || "").trim();
-      })
+    const persistedTodayQuestions = Object.values(todaySession?.questions || {})
+      .map(normalizeQuestionText)
       .filter(Boolean);
+    const mergedTodayQuestions = Array.from(
+      new Set([
+        ...persistedTodayQuestions,
+        ...normalizeCurrentQuestions(currentQuestions),
+      ])
+    );
 
     return buildTrainingPersonalization({
       requestedDimension: dimension,
       latestReport,
       recentRecords: recentRecords || [],
-      todayQuestions,
+      todayQuestions: mergedTodayQuestions,
       latestBootcampSession: session,
     });
   } catch {
-    return buildTrainingPersonalization({ requestedDimension: dimension });
+    return buildTrainingPersonalization({
+      requestedDimension: dimension,
+      todayQuestions: normalizeCurrentQuestions(currentQuestions),
+    });
   }
 }
 
 export async function POST(req: Request) {
-  const { action, dimension, targetId, level, userAnswer, question } = await req.json();
+  const {
+    action,
+    dimension,
+    targetId,
+    level,
+    userAnswer,
+    question,
+    currentQuestions,
+  } = await req.json();
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
@@ -94,18 +132,21 @@ export async function POST(req: Request) {
       ? getTrainingTargetById(dimension, targetId)
       : getTrainingTarget(dimension);
     const framework = target.framework;
-    const personalization = await getPersonalizationContext(dimension);
-    const recentFamilies = getRecentQuestionFamiliesFromSeeds(
-      personalization.recentQuestions
+    const personalization = await getPersonalizationContext(
+      dimension,
+      currentQuestions
     );
-    const seed = getTrainingQuestionSeedById(targetId)
-      ? getTrainingQuestionSeedById(targetId)
-      : pickTrainingQuestionSeed({
-          dimension,
-          targetId,
-          recentFamilies,
-          recentQuestionTexts: personalization.recentQuestions,
-        });
+    const mergedTodayQuestions = personalization.todayQuestions;
+    const recentFamilies = getRecentQuestionFamiliesFromSeeds(
+      [...personalization.recentQuestions, ...mergedTodayQuestions]
+    );
+    const seed = pickTrainingQuestionSeed({
+      dimension,
+      targetId,
+      recentFamilies,
+      recentQuestionTexts: personalization.recentQuestions,
+      todayQuestionTexts: mergedTodayQuestions,
+    });
     const seedContext = seed ? describeSeedForPrompt(seed) : null;
 
     const result = streamText({
@@ -136,6 +177,7 @@ ${formatTrainingTarget(target)}
 - 最近训练盲区：${personalization.recentGaps.join("；") || "暂无"}
 - 近期训练均分：${personalization.averageScore ? `${personalization.averageScore}/10` : "暂无"}
 - 近期已练题目：${personalization.recentQuestions.join(" | ") || "暂无"}
+- 今日已出题目：${mergedTodayQuestions.join(" | ") || "暂无"}
 - 推荐理由：${personalization.recommendationReason}
 
 要求：
@@ -149,6 +191,9 @@ ${formatTrainingTarget(target)}
 - 如果当前种子与近期题目过于接近，就切换到同维度、同靶点的其他种子家族再出题
 - 题目要自然嵌入用户短板，但不要暴露内部评分细节
 - 从维度“允许题型”和靶点“可用变化轴”中选择 2-3 个变化轴自然组合，不能写成机械填空题
+- 今日已出题目如果已经集中在 B2B SaaS、免费/付费、权限、试用、上线、灰度、回滚、指标验证这类题面骨架，下一题必须换到不同产品域和不同决策动作
+- 不要把每道题都收束成“请设计验证方案，包含关键指标、观察周期、决策标准、是否回滚”；只有种子或靶点明确要求时才使用验证/回滚追问
+- 可以使用的非 SaaS 产品域包括：企业服务交付、线下履约、供应链协同、内部运营平台、内容治理、客服质检、数据治理、渠道协同、硬件/软件结合场景
 - 题目必须严格包含 2 个具体判断问题，避免开放式大作文
 - 两个问题的分工必须清晰：一个核心判断，一个落地、风险或验证追问
 - 不要生成第 3 个问题，也不要在题尾追加“注意”“补充要求”“额外思考”等隐性第三问
