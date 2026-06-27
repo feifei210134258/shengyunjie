@@ -210,9 +210,9 @@ function ActionCenter({
   const secondaryActions = secondary.slice(0, 3);
 
   return (
-    <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
-        <div className="rounded-lg bg-primary-soft p-4 sm:p-5">
+    <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex h-full flex-col rounded-lg bg-primary-soft p-4 sm:p-5">
           <div className="flex flex-wrap items-center gap-2 text-label font-semibold text-primary">
             <Compass className="h-4 w-4" strokeWidth={1.5} />
             <span>今日训练调度</span>
@@ -276,64 +276,64 @@ function ActionCenter({
             />
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-col rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-5">
-        <div className="mb-4 flex items-center gap-2 text-body-sm font-bold text-ink">
-          <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
-          训练闭环
-        </div>
-        <div className="space-y-2">
-          {secondaryActions.map((action) => (
-            <Link
-              key={action.title}
-              href={action.href}
-              className="group block rounded-lg border border-transparent bg-surface px-3 py-3 transition-all hover:border-primary/20 hover:bg-white"
-            >
-              <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-surface-raised text-primary">
-                  {getActionIcon(action.kind)}
-                </span>
-                <span className="min-w-0 flex-1 truncate">{action.title}</span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" />
+        <div className="flex h-full flex-col rounded-lg border border-line bg-surface p-4">
+          <div className="mb-4 flex items-center gap-2 text-body-sm font-bold text-ink">
+            <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
+            训练闭环
+          </div>
+          <div className="space-y-2">
+            {secondaryActions.map((action) => (
+              <Link
+                key={action.title}
+                href={action.href}
+                className="group block rounded-lg border border-transparent bg-surface-raised px-3 py-2.5 transition-all hover:border-primary/20 hover:bg-white"
+              >
+                <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-surface text-primary">
+                    {getActionIcon(action.kind)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">{action.title}</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" />
+                </div>
+                <p className="mt-1 line-clamp-1 pl-9 text-body-sm text-ink-muted">
+                  {action.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4">
+            {signals && (
+              <>
+                <SignalItem label="后台归因" value={signals.weakestDimension} />
+                <SignalItem
+                  label="近次均分"
+                  value={signals.recentAverage != null ? `${signals.recentAverage}/10` : "暂无"}
+                />
+                <SignalItem
+                  label="案例推演"
+                  value={signals.hasCaseSimulation ? "已归档" : "待补齐"}
+                />
+              </>
+            )}
+          </div>
+
+          {nextPractice && (
+            <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3 lg:mt-auto">
+              <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
+                <Workflow className="h-4 w-4" strokeWidth={1.5} />
+                下一轮建议
               </div>
-              <p className="mt-1 line-clamp-1 pl-9 text-body-sm text-ink-muted">
-                {action.description}
+              <p className="text-body-sm font-bold text-ink">
+                {nextPractice.missionLabel} / {nextPractice.actionLabel}
               </p>
-            </Link>
-          ))}
-        </div>
-
-        <div className="mt-4 grid gap-2 border-t border-line pt-4 sm:grid-cols-3 xl:grid-cols-1">
-          {signals && (
-            <>
-              <SignalItem label="后台归因" value={signals.weakestDimension} />
-              <SignalItem
-                label="近次均分"
-                value={signals.recentAverage != null ? `${signals.recentAverage}/10` : "暂无"}
-              />
-              <SignalItem
-                label="案例推演"
-                value={signals.hasCaseSimulation ? "已归档" : "待补齐"}
-              />
-            </>
+              <p className="mt-1 line-clamp-2 text-body-sm text-ink-muted">
+                {nextPractice.reason}
+              </p>
+            </div>
           )}
         </div>
-
-        {nextPractice && (
-          <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3 xl:mt-auto">
-            <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
-              <Workflow className="h-4 w-4" strokeWidth={1.5} />
-              下一轮建议
-            </div>
-            <p className="text-body-sm font-bold text-ink">
-              {nextPractice.missionLabel} / {nextPractice.actionLabel}
-            </p>
-            <p className="mt-1 line-clamp-2 text-body-sm text-ink-muted">
-              {nextPractice.reason}
-            </p>
-          </div>
-        )}
       </div>
     </section>
   );
