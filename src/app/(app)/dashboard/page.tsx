@@ -211,8 +211,8 @@ function ActionCenter({
 
   return (
     <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="flex h-full flex-col rounded-lg bg-primary-soft p-4 sm:p-5">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="rounded-lg bg-primary-soft p-4 sm:p-5">
           <div className="flex flex-wrap items-center gap-2 text-label font-semibold text-primary">
             <Compass className="h-4 w-4" strokeWidth={1.5} />
             <span>今日训练调度</span>
@@ -277,7 +277,7 @@ function ActionCenter({
           </div>
         </div>
 
-        <div className="flex h-full flex-col rounded-lg border border-line bg-surface p-4">
+        <div className="flex flex-col rounded-lg border border-line bg-surface p-4">
           <div className="mb-4 flex items-center gap-2 text-body-sm font-bold text-ink">
             <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
             训练闭环
@@ -320,7 +320,7 @@ function ActionCenter({
           </div>
 
           {nextPractice && (
-            <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3 lg:mt-auto">
+            <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3">
               <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
                 <Workflow className="h-4 w-4" strokeWidth={1.5} />
                 下一轮建议
