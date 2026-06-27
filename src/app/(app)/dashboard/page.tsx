@@ -21,7 +21,6 @@ import {
   Dumbbell,
   FileCheck2,
   Flame,
-  Gauge,
   Layers3,
   ListChecks,
   Route,
@@ -152,7 +151,7 @@ function getWeaknessLabel(profile: DashboardData["profile"]) {
   return getDimensionLabel(dimension) || "待诊断";
 }
 
-function KpiCard({
+function CommandMetric({
   label,
   value,
   meta,
@@ -164,16 +163,16 @@ function KpiCard({
   icon: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-line bg-surface-raised px-4 py-4 shadow-xs">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-label font-semibold text-ink-muted">{label}</p>
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-primary">
+    <div className="min-w-0 rounded-lg bg-white/80 px-3 py-3">
+      <div className="flex items-center gap-2">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface text-primary">
           {icon}
         </div>
+        <p className="truncate text-label font-semibold text-ink-muted">{label}</p>
       </div>
-      <div className="mt-3 flex items-baseline gap-2">
-        <p className="font-mono text-data-md font-bold text-ink">{value}</p>
-        <p className="truncate text-body-sm text-ink-faint">{meta}</p>
+      <div className="mt-2 flex items-baseline gap-2">
+        <p className="font-mono text-data-sm font-bold text-ink">{value}</p>
+        <p className="truncate text-label font-semibold text-ink-faint">{meta}</p>
       </div>
     </div>
   );
@@ -189,9 +188,13 @@ function getActionIcon(kind: ActionItem["kind"]) {
 function ActionCenter({
   commandCenter,
   fallbackFocus,
+  stats,
+  latestReport,
 }: {
   commandCenter: DashboardData["commandCenter"] | undefined;
   fallbackFocus: string;
+  stats: DashboardData["trainingStats"] | null;
+  latestReport: DashboardData["latestReport"];
 }) {
   const primary =
     commandCenter?.primary || {
@@ -204,11 +207,12 @@ function ActionCenter({
   const secondary = commandCenter?.secondary || [];
   const signals = commandCenter?.signals;
   const nextPractice = commandCenter?.nextPractice;
+  const secondaryActions = secondary.slice(0, 3);
 
   return (
-    <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-6">
-        <div className="rounded-lg bg-primary-soft p-4 sm:p-6">
+    <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
+        <div className="rounded-lg bg-primary-soft p-4 sm:p-5">
           <div className="flex flex-wrap items-center gap-2 text-label font-semibold text-primary">
             <Compass className="h-4 w-4" strokeWidth={1.5} />
             <span>今日训练调度</span>
@@ -245,8 +249,64 @@ function ActionCenter({
             </Link>
           </div>
 
+          <div className="mt-5 grid gap-3 border-t border-primary/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
+            <CommandMetric
+              label="今日训练"
+              value={stats?.todayCount ?? 0}
+              meta="题已完成"
+              icon={<CalendarCheck className="h-4 w-4" strokeWidth={1.5} />}
+            />
+            <CommandMetric
+              label="连续天数"
+              value={stats?.streak ?? 0}
+              meta="天"
+              icon={<Flame className="h-4 w-4" strokeWidth={1.5} />}
+            />
+            <CommandMetric
+              label="累计完成"
+              value={stats?.totalCount ?? 0}
+              meta="次训练"
+              icon={<Trophy className="h-4 w-4" strokeWidth={1.5} />}
+            />
+            <CommandMetric
+              label="最近诊断"
+              value={latestReport?.overall_score ?? "-"}
+              meta={latestReport?.overall_grade ? `${latestReport.overall_grade} 级` : "待完成"}
+              icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-5">
+        <div className="mb-4 flex items-center gap-2 text-body-sm font-bold text-ink">
+          <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
+          训练闭环
+        </div>
+        <div className="space-y-2">
+          {secondaryActions.map((action) => (
+            <Link
+              key={action.title}
+              href={action.href}
+              className="group block rounded-lg border border-transparent bg-surface px-3 py-3 transition-all hover:border-primary/20 hover:bg-white"
+            >
+              <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-surface-raised text-primary">
+                  {getActionIcon(action.kind)}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{action.title}</span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" />
+              </div>
+              <p className="mt-1 line-clamp-1 pl-9 text-body-sm text-ink-muted">
+                {action.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-2 border-t border-line pt-4 sm:grid-cols-3 xl:grid-cols-1">
           {signals && (
-            <div className="mt-5 grid gap-3 border-t border-primary/10 pt-4 sm:grid-cols-3">
+            <>
               <SignalItem label="后台归因" value={signals.weakestDimension} />
               <SignalItem
                 label="近次均分"
@@ -256,50 +316,24 @@ function ActionCenter({
                 label="案例推演"
                 value={signals.hasCaseSimulation ? "已归档" : "待补齐"}
               />
-            </div>
+            </>
           )}
         </div>
 
-        <div className="flex flex-col rounded-lg border border-line bg-surface p-4">
-          <div className="mb-3 flex items-center gap-2 text-body-sm font-bold text-ink">
-            <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
-            训练闭环
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            {secondary.map((action) => (
-              <Link
-                key={action.title}
-                href={action.href}
-                className="rounded-md bg-surface-raised px-3 py-2.5 transition-all hover:border-primary/20 hover:bg-white"
-              >
-                <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-surface text-primary">
-                    {getActionIcon(action.kind)}
-                  </span>
-                  {action.title}
-                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-ink-faint" />
-                </div>
-                <p className="mt-1 line-clamp-1 text-body-sm text-ink-muted">
-                  {action.description}
-                </p>
-              </Link>
-            ))}
-          </div>
-
-          {nextPractice && (
-            <div className="mt-4 border-t border-line pt-3 lg:mt-auto">
-              <p className="text-label font-semibold text-ink-muted">
-                下一轮建议
-              </p>
-              <p className="mt-1 text-body-sm font-bold text-ink">
-                {nextPractice.missionLabel} / {nextPractice.actionLabel}
-              </p>
-              <p className="mt-1 line-clamp-2 text-body-sm text-ink-muted">
-                {nextPractice.reason}
-              </p>
+        {nextPractice && (
+          <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3 xl:mt-auto">
+            <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
+              <Workflow className="h-4 w-4" strokeWidth={1.5} />
+              下一轮建议
             </div>
-          )}
-        </div>
+            <p className="text-body-sm font-bold text-ink">
+              {nextPractice.missionLabel} / {nextPractice.actionLabel}
+            </p>
+            <p className="mt-1 line-clamp-2 text-body-sm text-ink-muted">
+              {nextPractice.reason}
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -307,7 +341,7 @@ function ActionCenter({
 
 function SignalItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-white/75 px-3 py-2">
+    <div className="rounded-md bg-surface px-3 py-2">
       <p className="text-label font-semibold text-ink-faint">{label}</p>
       <p className="mt-0.5 truncate text-body-sm font-bold text-ink">{value}</p>
     </div>
@@ -316,74 +350,106 @@ function SignalItem({ label, value }: { label: string; value: string }) {
 
 function MissionMap({ items }: { items: MissionMapItem[] }) {
   if (!items.length) return null;
-  const priorityItems = items.filter((item) => item.status === "priority");
-  const restItems = items.filter((item) => item.status !== "priority");
-  const visibleItems = [...priorityItems, ...restItems].slice(0, 7);
-  const remainingCount = Math.max(items.length - visibleItems.length, 0);
+  const priority = items.find((item) => item.status === "priority") || items[0];
+  const trackItems = items
+    .filter((item) => item.missionId !== priority.missionId)
+    .slice(0, 6);
+  const remainingCount = Math.max(items.length - trackItems.length - 1, 0);
 
   return (
     <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-body-sm font-bold text-ink">
-            <Layers3 className="h-4 w-4 text-primary" strokeWidth={1.5} />
-            训练任务地图
+      <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="flex min-h-[220px] flex-col justify-between rounded-lg border border-primary/20 bg-primary-soft p-4">
+          <div>
+            <div className="flex items-center gap-2 text-body-sm font-bold text-primary">
+              <Layers3 className="h-4 w-4" strokeWidth={1.5} />
+              任务地图
+            </div>
+            <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+              首页只展示今天最值得练的任务和相邻训练轨道，五维画像退到后台做归因。
+            </p>
           </div>
-          <p className="mt-1 max-w-3xl text-body-sm text-ink-muted">
-            每个任务都对应一种高级产品经理常见判断动作，完成训练后会沉淀到能力归因。
-          </p>
-        </div>
-        <Link
-          href={TRAINING_SESSION_ROUTE}
-          className="inline-flex items-center gap-1.5 text-body-sm font-semibold text-primary hover:text-primary-hover"
-        >
-          进入今日题组
-          <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-        </Link>
-      </div>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {visibleItems.map((item) => (
-          <div
-            key={item.missionId}
-            className={
-              item.status === "priority"
-                ? "rounded-lg border border-primary/25 bg-primary-soft px-4 py-3"
-                : "rounded-lg border border-line bg-surface px-4 py-3"
-            }
-          >
-            <div className="flex items-start justify-between gap-2">
+          <div className="mt-5 rounded-lg bg-white/80 px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-body-sm font-bold text-ink">
-                  {item.missionLabel}
+                <p className="truncate text-heading-sm font-semibold text-ink">
+                  {priority.missionLabel}
                 </p>
-                <p className="mt-0.5 truncate text-label font-semibold text-primary">
-                  {item.actionLabel}
+                <p className="mt-1 text-body-sm font-bold text-primary">
+                  {priority.actionLabel}
                 </p>
               </div>
-              {item.status === "priority" ? (
-                <Target className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.5} />
-              ) : item.status === "active" ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" strokeWidth={1.5} />
-              ) : (
-                <Gauge className="h-4 w-4 shrink-0 text-ink-faint" strokeWidth={1.5} />
-              )}
+              <Target className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.5} />
             </div>
             <div className="mt-2 flex items-center justify-between gap-2 text-label font-semibold text-ink-muted">
-              <span className="truncate">{item.dimension}</span>
+              <span className="truncate">{priority.dimension}</span>
               <span className="font-mono">
-                {item.score != null ? item.score.toFixed(1) : "-"}
+                {priority.score != null ? priority.score.toFixed(1) : "-"}
               </span>
             </div>
           </div>
-        ))}
-        {remainingCount > 0 && (
-          <div className="flex items-center justify-between rounded-lg border border-dashed border-line-strong bg-surface px-4 py-3 text-body-sm font-semibold text-ink-muted">
-            <span>更多任务</span>
-            <span className="font-mono">+{remainingCount}</span>
+        </div>
+
+        <div className="min-w-0">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-heading-sm font-semibold text-ink">
+                今日任务轨道
+              </h2>
+              <p className="mt-1 text-body-sm text-ink-muted">
+                从真实 PM 任务进入训练，再沉淀到能力归因。
+              </p>
+            </div>
+            <Link
+              href={TRAINING_SESSION_ROUTE}
+              className="inline-flex items-center gap-1.5 text-body-sm font-semibold text-primary hover:text-primary-hover"
+            >
+              进入今日题组
+              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+            </Link>
           </div>
-        )}
+
+          <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-3">
+            {trackItems.map((item) => (
+              <MissionTrackItem key={item.missionId} item={item} />
+            ))}
+            {remainingCount > 0 && (
+              <div className="flex min-h-[76px] items-center justify-between rounded-lg border border-dashed border-line-strong bg-surface px-4 py-3 text-body-sm font-semibold text-ink-muted">
+                <span>更多任务</span>
+                <span className="font-mono">+{remainingCount}</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </section>
+  );
+}
+
+function MissionTrackItem({ item }: { item: MissionMapItem }) {
+  return (
+    <div className="min-h-[76px] rounded-lg border border-line bg-surface px-4 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-body-sm font-bold text-ink">
+            {item.missionLabel}
+          </p>
+          <p className="mt-0.5 truncate text-label font-semibold text-primary">
+            {item.actionLabel}
+          </p>
+        </div>
+        {item.status === "active" ? (
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-success" strokeWidth={1.5} />
+        ) : (
+          <span className="rounded-md bg-surface-raised px-2 py-1 font-mono text-label font-semibold text-ink-muted">
+            {item.score != null ? item.score.toFixed(1) : "-"}
+          </span>
+        )}
+      </div>
+      <p className="mt-2 truncate text-label font-semibold text-ink-muted">
+        {item.dimension}
+      </p>
+    </div>
   );
 }
 
@@ -578,34 +644,9 @@ export default function DashboardPage() {
           <ActionCenter
             commandCenter={data?.commandCenter}
             fallbackFocus={focusLabel}
+            latestReport={latestReport}
+            stats={stats}
           />
-
-          <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <KpiCard
-              label="今日训练"
-              value={stats?.todayCount ?? 0}
-              meta="题已完成"
-              icon={<CalendarCheck className="h-4 w-4" strokeWidth={1.5} />}
-            />
-            <KpiCard
-              label="连续天数"
-              value={stats?.streak ?? 0}
-              meta="天"
-              icon={<Flame className="h-4 w-4" strokeWidth={1.5} />}
-            />
-            <KpiCard
-              label="累计完成"
-              value={stats?.totalCount ?? 0}
-              meta="次训练"
-              icon={<Trophy className="h-4 w-4" strokeWidth={1.5} />}
-            />
-            <KpiCard
-              label="最近诊断"
-              value={latestReport?.overall_score ?? "-"}
-              meta={latestReport?.overall_grade ? `${latestReport.overall_grade} 级` : "待完成"}
-              icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
-            />
-          </section>
 
           <MissionMap items={data?.commandCenter?.missionMap ?? []} />
 

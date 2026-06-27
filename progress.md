@@ -1138,3 +1138,23 @@
 - `npx tsc --noEmit` 通过。
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
 - `npm run build` 通过。
+
+## [2026-06-27] Redesign: 首页首屏与任务地图重新排版
+
+### 背景判断
+- 用户反馈“解决了但方案不太好”，允许重新设计或排版，并要求部署上线后检查样式。
+- Kimi WebBridge 真实浏览器截图确认线上页面仍像一组横向铺满的大卡片：KPI 独立成排、任务地图是卡片墙，信息层级不够像“今天要练什么”。
+- 本轮继续保留任务驱动训练方向，不改后端、不改训练出题质量链路，只重排 dashboard 信息架构。
+
+### 完成内容
+- 首屏取消独立 KPI 大卡段，将“今日训练、连续天数、累计完成、最近诊断”合入今日训练调度面板。
+- 训练闭环改为右侧紧凑行动区，并保留后台归因、近次均分、案例推演和下一轮建议。
+- 任务地图从 8 格卡片墙改为“左侧优先任务 + 右侧今日任务轨道”，更接近训练调度台，而不是后台配置列表。
+- 复盘工作区、能力画像和最近诊断沿用上一版结构，保持设计和下方引导不被打散。
+
+### 验证结果
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
+- `./init.sh` 通过。
