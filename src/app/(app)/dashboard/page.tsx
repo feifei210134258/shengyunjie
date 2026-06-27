@@ -210,7 +210,7 @@ function ActionCenter({
   const secondaryActions = secondary.slice(0, 3);
 
   return (
-    <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
         <div className="rounded-lg bg-primary-soft p-4 sm:p-5">
           <div className="flex flex-wrap items-center gap-2 text-label font-semibold text-primary">
