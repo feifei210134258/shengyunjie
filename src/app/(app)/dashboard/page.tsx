@@ -301,34 +301,36 @@ function ActionCenter({
           </div>
         </div>
 
-        <aside className="border-t border-line bg-surface p-4 sm:p-6 lg:border-l lg:border-t-0">
-          <div className="mb-4 flex items-center gap-2 text-body-sm font-bold text-ink">
+        <aside className="border-t border-line bg-surface p-4 lg:border-l lg:border-t-0">
+          <div className="mb-3 flex items-center gap-2 text-body-sm font-bold text-ink">
             <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
             训练闭环
           </div>
-          <div className="space-y-2">
+          <div className="rounded-lg border border-line bg-surface-raised">
             {secondaryActions.map((action) => (
               <Link
                 key={action.title}
                 href={action.href}
-                className="group block rounded-lg border border-line bg-surface-raised px-3 py-3 transition-all hover:border-primary/20 hover:bg-white"
+                className="group flex items-center gap-3 border-b border-line px-3 py-3 transition-colors last:border-b-0 hover:bg-white"
               >
-                <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-surface text-primary">
-                    {getActionIcon(action.kind)}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{action.title}</span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface text-primary">
+                  {getActionIcon(action.kind)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-body-sm font-semibold text-ink">
+                    {action.title}
+                  </p>
+                  <p className="line-clamp-1 text-body-sm text-ink-muted">
+                    {action.description}
+                  </p>
                 </div>
-                <p className="mt-1 line-clamp-1 pl-9 text-body-sm text-ink-muted">
-                  {action.description}
-                </p>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" />
               </Link>
             ))}
           </div>
 
           {nextPractice && (
-            <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3">
+            <div className="mt-3 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3">
               <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
                 <Workflow className="h-4 w-4" strokeWidth={1.5} />
                 下一轮建议
