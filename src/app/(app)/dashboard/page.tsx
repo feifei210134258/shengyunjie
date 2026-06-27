@@ -183,7 +183,7 @@ function ActionCenter({
   return (
     <section className="relative overflow-hidden rounded-xl border border-line bg-surface-raised shadow-xs">
       <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
-      <div className="min-h-[480px] p-5 sm:p-8 xl:p-10">
+      <div className="min-h-[380px] p-5 sm:p-7 xl:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-label font-bold text-primary">
             <Compass className="h-4 w-4" strokeWidth={1.5} />
@@ -194,24 +194,24 @@ function ActionCenter({
           </span>
         </div>
 
-        <div className="mt-12 max-w-5xl">
+        <div className="mt-8 max-w-5xl">
           <p className="text-body-sm font-bold text-ink-muted">重点动作</p>
-          <h1 className="mt-3 max-w-4xl text-[36px] font-bold leading-[1.12] text-ink sm:text-[50px] xl:text-[60px]">
+          <h1 className="mt-3 max-w-4xl text-[34px] font-bold leading-[1.12] text-ink sm:text-[46px] xl:text-[54px]">
             {focusTitle}
           </h1>
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {primary.missionLabel && (
               <span className="rounded-md bg-primary-soft px-3 py-1.5 text-label font-bold text-primary">
                 场景：{primary.missionLabel}
               </span>
             )}
           </div>
-          <p className="mt-6 max-w-3xl text-body-lg leading-relaxed text-ink-muted">
+          <p className="mt-5 max-w-3xl text-body-lg leading-relaxed text-ink-muted">
             {primary.description}
           </p>
         </div>
 
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center">
           <Link
             href={primary.href}
             className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary px-8 py-4 text-body-lg font-semibold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-[0.98] sm:w-[220px]"
@@ -225,7 +225,7 @@ function ActionCenter({
           </p>
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-x-4 gap-y-1 text-label font-semibold text-ink-faint">
+        <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-label font-semibold text-ink-faint">
           <span>今日 {stats?.todayCount ?? 0} 题</span>
           <span>连击 {stats?.streak ?? 0} 天</span>
           <span>累计 {stats?.totalCount ?? 0} 次</span>

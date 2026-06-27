@@ -1198,3 +1198,21 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-27] Tweak: 首页 hero 卡片高度收敛
+
+### 背景判断
+- 用户反馈首页首屏 hero 卡片太大，希望收一点高度。
+- 本轮只调整 dashboard hero 的视觉尺寸，不改变信息结构、训练入口、训练题生成或后端逻辑。
+
+### 完成内容
+- hero 最小高度从 480px 收敛到 380px。
+- 首屏内距从 `sm:p-8 xl:p-10` 收到 `sm:p-7 xl:p-8`。
+- 标题字号从桌面 60px 收到 54px，移动/中屏同步略收。
+- 标题区、场景标签、说明、CTA 和状态行之间的垂直间距整体压紧。
+
+### 验证结果
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
