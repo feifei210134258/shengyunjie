@@ -1177,3 +1177,24 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-06-27] Redesign: 首页首屏降噪为单一训练入口
+
+### 背景判断
+- 用户继续反馈首页“没有重点”“信息密度有点高，信息权重不清晰”，并明确指出“后续任务的意义不大”。
+- Product Design 路由审查后确认：首屏同时展示任务、依据、训练闭环、统计、后续任务轨道，会让用户把首页理解成控制台，而不是今天的训练入口。
+- 本轮不改后端、不改训练题生成、不改 DB schema，只把 dashboard 首屏的信息权重重新压到一个动作。
+
+### 完成内容
+- 首屏改为单一任务入口：最大标题从任务分类转为“先练：具体微动作”，例如“先练：分层归因”。
+- 删除右侧“为什么先练这个 / 练完看这里 / 下一轮建议”复合侧栏，推荐依据收敛为 CTA 旁一句轻量文字。
+- 删除“后续任务 / 今日任务轨道”整块，避免在用户开练前制造待办压力。
+- KPI 从四个小卡片降级为一行极弱状态文字，仅保留今日题数、连击、累计、诊断。
+- 保留下方训练复盘、能力画像、最近诊断和训练方法，作为练完后再看的解释层。
+
+### 验证结果
+- Kimi WebBridge 本地生产构建截图确认首屏只显示重点动作、场景标签、说明、主 CTA 和轻量状态；后续任务不再出现。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
