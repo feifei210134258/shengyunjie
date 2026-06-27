@@ -210,130 +210,128 @@ function ActionCenter({
   const secondaryActions = secondary.slice(0, 3);
 
   return (
-    <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="rounded-lg bg-primary-soft p-4 sm:p-5">
-          <div className="flex flex-wrap items-center gap-2 text-label font-semibold text-primary">
-            <Compass className="h-4 w-4" strokeWidth={1.5} />
-            <span>今日训练调度</span>
-            <span className="rounded-md bg-white/80 px-2 py-1 text-ink-muted">
-              {getTodayLabel()}
-            </span>
+    <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="rounded-xl border border-primary/15 bg-primary-soft p-4 shadow-xs sm:p-6">
+        <div className="flex flex-wrap items-center gap-2 text-label font-semibold text-primary">
+          <Compass className="h-4 w-4" strokeWidth={1.5} />
+          <span>今日训练调度</span>
+          <span className="rounded-md bg-white/80 px-2 py-1 text-ink-muted">
+            {getTodayLabel()}
+          </span>
+        </div>
+        <div className="mt-4 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0">
+            <h1 className="max-w-4xl text-heading-xl font-bold leading-tight text-ink">
+              {primary.title}
+            </h1>
+            {primary.missionLabel && primary.actionLabel && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-md bg-white px-3 py-1.5 text-label font-bold text-primary">
+                  {primary.missionLabel}
+                </span>
+                <span className="rounded-md bg-primary px-3 py-1.5 text-label font-bold text-white">
+                  {primary.actionLabel}
+                </span>
+              </div>
+            )}
+            <p className="mt-3 max-w-2xl text-body-md leading-relaxed text-ink-muted">
+              {primary.description}
+            </p>
           </div>
-          <div className="mt-4 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-            <div className="min-w-0">
-              <h1 className="max-w-4xl text-heading-xl font-bold leading-tight text-ink">
-                {primary.title}
-              </h1>
-              {primary.missionLabel && primary.actionLabel && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-md bg-white px-3 py-1.5 text-label font-bold text-primary">
-                    {primary.missionLabel}
-                  </span>
-                  <span className="rounded-md bg-primary px-3 py-1.5 text-label font-bold text-white">
-                    {primary.actionLabel}
-                  </span>
-                </div>
-              )}
-              <p className="mt-3 max-w-2xl text-body-md leading-relaxed text-ink-muted">
-                {primary.description}
-              </p>
-            </div>
-            <Link
-              href={primary.href}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-body-md font-semibold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-[0.98]"
-            >
-              {getActionIcon(primary.kind)}
-              {primary.cta}
-              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-            </Link>
-          </div>
-
-          <div className="mt-5 grid gap-3 border-t border-primary/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
-            <CommandMetric
-              label="今日训练"
-              value={stats?.todayCount ?? 0}
-              meta="题已完成"
-              icon={<CalendarCheck className="h-4 w-4" strokeWidth={1.5} />}
-            />
-            <CommandMetric
-              label="连续天数"
-              value={stats?.streak ?? 0}
-              meta="天"
-              icon={<Flame className="h-4 w-4" strokeWidth={1.5} />}
-            />
-            <CommandMetric
-              label="累计完成"
-              value={stats?.totalCount ?? 0}
-              meta="次训练"
-              icon={<Trophy className="h-4 w-4" strokeWidth={1.5} />}
-            />
-            <CommandMetric
-              label="最近诊断"
-              value={latestReport?.overall_score ?? "-"}
-              meta={latestReport?.overall_grade ? `${latestReport.overall_grade} 级` : "待完成"}
-              icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
-            />
-          </div>
+          <Link
+            href={primary.href}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-body-md font-semibold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-[0.98]"
+          >
+            {getActionIcon(primary.kind)}
+            {primary.cta}
+            <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+          </Link>
         </div>
 
-        <div className="flex flex-col rounded-lg border border-line bg-surface p-4">
-          <div className="mb-4 flex items-center gap-2 text-body-sm font-bold text-ink">
-            <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
-            训练闭环
-          </div>
-          <div className="space-y-2">
-            {secondaryActions.map((action) => (
-              <Link
-                key={action.title}
-                href={action.href}
-                className="group block rounded-lg border border-transparent bg-surface-raised px-3 py-2.5 transition-all hover:border-primary/20 hover:bg-white"
-              >
-                <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-surface text-primary">
-                    {getActionIcon(action.kind)}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{action.title}</span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" />
-                </div>
-                <p className="mt-1 line-clamp-1 pl-9 text-body-sm text-ink-muted">
-                  {action.description}
-                </p>
-              </Link>
-            ))}
-          </div>
+        <div className="mt-5 grid gap-3 border-t border-primary/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
+          <CommandMetric
+            label="今日训练"
+            value={stats?.todayCount ?? 0}
+            meta="题已完成"
+            icon={<CalendarCheck className="h-4 w-4" strokeWidth={1.5} />}
+          />
+          <CommandMetric
+            label="连续天数"
+            value={stats?.streak ?? 0}
+            meta="天"
+            icon={<Flame className="h-4 w-4" strokeWidth={1.5} />}
+          />
+          <CommandMetric
+            label="累计完成"
+            value={stats?.totalCount ?? 0}
+            meta="次训练"
+            icon={<Trophy className="h-4 w-4" strokeWidth={1.5} />}
+          />
+          <CommandMetric
+            label="最近诊断"
+            value={latestReport?.overall_score ?? "-"}
+            meta={latestReport?.overall_grade ? `${latestReport.overall_grade} 级` : "待完成"}
+            icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
+          />
+        </div>
+      </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4">
-            {signals && (
-              <>
-                <SignalItem label="后台归因" value={signals.weakestDimension} />
-                <SignalItem
-                  label="近次均分"
-                  value={signals.recentAverage != null ? `${signals.recentAverage}/10` : "暂无"}
-                />
-                <SignalItem
-                  label="案例推演"
-                  value={signals.hasCaseSimulation ? "已归档" : "待补齐"}
-                />
-              </>
-            )}
-          </div>
-
-          {nextPractice && (
-            <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3">
-              <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
-                <Workflow className="h-4 w-4" strokeWidth={1.5} />
-                下一轮建议
+      <div className="flex flex-col rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-5">
+        <div className="mb-4 flex items-center gap-2 text-body-sm font-bold text-ink">
+          <Route className="h-4 w-4 text-primary" strokeWidth={1.5} />
+          训练闭环
+        </div>
+        <div className="space-y-2">
+          {secondaryActions.map((action) => (
+            <Link
+              key={action.title}
+              href={action.href}
+              className="group block rounded-lg border border-transparent bg-surface px-3 py-2.5 transition-all hover:border-primary/20 hover:bg-white"
+            >
+              <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-surface-raised text-primary">
+                  {getActionIcon(action.kind)}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{action.title}</span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" />
               </div>
-              <p className="text-body-sm font-bold text-ink">
-                {nextPractice.missionLabel} / {nextPractice.actionLabel}
+              <p className="mt-1 line-clamp-1 pl-9 text-body-sm text-ink-muted">
+                {action.description}
               </p>
-              <p className="mt-1 line-clamp-2 text-body-sm text-ink-muted">
-                {nextPractice.reason}
-              </p>
-            </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4">
+          {signals && (
+            <>
+              <SignalItem label="后台归因" value={signals.weakestDimension} />
+              <SignalItem
+                label="近次均分"
+                value={signals.recentAverage != null ? `${signals.recentAverage}/10` : "暂无"}
+              />
+              <SignalItem
+                label="案例推演"
+                value={signals.hasCaseSimulation ? "已归档" : "待补齐"}
+              />
+            </>
           )}
         </div>
+
+        {nextPractice && (
+          <div className="mt-4 rounded-lg border border-primary/15 bg-primary-soft px-3 py-3">
+            <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
+              <Workflow className="h-4 w-4" strokeWidth={1.5} />
+              下一轮建议
+            </div>
+            <p className="text-body-sm font-bold text-ink">
+              {nextPractice.missionLabel} / {nextPractice.actionLabel}
+            </p>
+            <p className="mt-1 line-clamp-2 text-body-sm text-ink-muted">
+              {nextPractice.reason}
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );
