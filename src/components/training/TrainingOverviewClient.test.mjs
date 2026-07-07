@@ -11,3 +11,11 @@ test("training overview turns recent records into a second-pass review queue", (
   assert.match(source, /继续修正/);
   assert.match(source, /revise=1/);
 });
+
+test("training overview uses the profile recommendation as the primary start action", () => {
+  assert.match(source, /\/api\/profile\/recommendation/);
+  assert.match(source, /recommendationPlan/);
+  assert.match(source, /primaryRecommendation/);
+  assert.match(source, /画像处方/);
+  assert.match(source, /primaryRecommendation\.href/);
+});

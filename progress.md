@@ -1,5 +1,20 @@
 # 会话进度日志
 
+## [2026-07-07] 训练首页：画像处方驱动主入口
+
+### 完成内容
+- 训练首页加载 `/api/profile/recommendation`，读取 `recommendationPlan` 中的训练处方作为首屏主行动。
+- 首屏文案从本地统计弱项升级为“画像处方”，展示处方标题、推荐理由和证据来源。
+- “开始训练”按钮优先跳转画像处方的 `href`，例如 `/training/session?focus=...`，让二次修正入账后的推荐能直接影响下一题。
+- 保留原本基于训练统计的推荐作为兜底，推荐接口失败时仍可开始今日训练。
+
+### 验证记录
+- TDD 红灯：`node --test src/components/training/TrainingOverviewClient.test.mjs` 先失败于缺少 `/api/profile/recommendation`、`recommendationPlan`、`primaryRecommendation`、`画像处方` 和处方 href。
+- 已通过：`node --test src/components/training/TrainingOverviewClient.test.mjs`（2 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingOverviewClient.tsx src/components/training/TrainingOverviewClient.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析。
+
 ## [2026-07-07] 二次修正：同步进入画像证据账本
 
 ### 完成内容

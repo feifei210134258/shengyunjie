@@ -5,7 +5,11 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DIMENSION_COLORS, DIM_LABELS } from "@/lib/constants";
+import {
+  DIMENSION_COLORS,
+  DIM_LABELS,
+  getDimensionShortLabel,
+} from "@/lib/constants";
 import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
 import {
   ArrowRight,
@@ -53,6 +57,21 @@ type TrainingStats = {
     revisionSavedAt: string | null;
     created_at: string;
   }[];
+};
+
+type ProfileRecommendation = {
+  id: string;
+  type: "training" | "interview" | "review";
+  title: string;
+  reason: string;
+  href: string;
+  cta: string;
+  targetDimension: string;
+  evidence: string;
+};
+
+type RecommendationPlan = {
+  recommendations?: ProfileRecommendation[];
 };
 
 function getRecommendedDimension(stats: TrainingStats | null) {
@@ -111,6 +130,8 @@ export default function TrainingPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
 
   const [stats, setStats] = useState<TrainingStats | null>(null);
+  const [recommendationPlan, setRecommendationPlan] =
+    useState<RecommendationPlan | null>(null);
 
   const [trainedDays, setTrainedDays] = useState<number[]>([]);
   const [monthCount, setMonthCount] = useState(0);
@@ -121,6 +142,12 @@ export default function TrainingPage() {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const recommendedDimension = getRecommendedDimension(stats);
+  const primaryRecommendation =
+    recommendationPlan?.recommendations?.find((item) => item.type === "training") ||
+    null;
+  const primaryTrainingLabel =
+    getDimensionShortLabel(primaryRecommendation?.targetDimension) ||
+    recommendedDimension.label;
   const practicedDimensionCount = Object.values(stats?.dimStats ?? {}).filter(
     (count) => count > 0
   ).length;
@@ -131,6 +158,11 @@ export default function TrainingPage() {
       .then((r) => r.json())
       .then((data) => setStats(data))
       .catch((err) => console.error("获取训练统计失败:", err));
+
+    fetch("/api/profile/recommendation")
+      .then((r) => r.json())
+      .then((data) => setRecommendationPlan(data.recommendationPlan || null))
+      .catch((err) => console.error("获取画像处方失败:", err));
 
     fetch(`/api/training/sessions?month=${monthStr}`)
       .then((r) => r.json())
@@ -170,15 +202,22 @@ export default function TrainingPage() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
                 <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <Badge>今日推荐训练</Badge>
-                  <Badge variant="neutral">{recommendedDimension.label}</Badge>
+                  <Badge>画像处方</Badge>
+                  <Badge variant="neutral">{primaryTrainingLabel}</Badge>
                 </div>
                 <h3 className="text-heading-lg font-bold text-ink">
-                  用一题校准 {recommendedDimension.label} 的判断链路
+                  {primaryRecommendation?.title ||
+                    `用一题校准 ${recommendedDimension.label} 的判断链路`}
                 </h3>
                 <p className="mt-2 text-body-md text-ink-muted">
-                  先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。
+                  {primaryRecommendation?.reason ||
+                    "先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。"}
                 </p>
+                {primaryRecommendation?.evidence && (
+                  <p className="mt-3 text-label font-semibold text-primary">
+                    推荐依据：{primaryRecommendation.evidence}
+                  </p>
+                )}
               </div>
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
                 <Target className="h-6 w-6" strokeWidth={1.5} />
@@ -187,10 +226,14 @@ export default function TrainingPage() {
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
-                href={TRAINING_SESSION_ROUTE}
+                href={
+                  primaryRecommendation
+                    ? primaryRecommendation.href
+                    : TRAINING_SESSION_ROUTE
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
               >
-                开始今日训练
+                {primaryRecommendation?.cta || "开始今日训练"}
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link

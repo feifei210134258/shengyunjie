@@ -133,6 +133,7 @@
 - 用户保存二次修正后，前端会再次调用 `POST /api/profile/summary` 创建画像快照，`dimension_scores.__trigger` 标记为 `revision_saved`，把复盘行为纳入能力证据账本。
 - 训练页完成 AI 反馈并写入 `training_records` 后，会自动调用 `POST /api/profile/summary` 创建 `growth_snapshots` 快照；快照的 `dimension_scores.__trigger` 标记来源为 `training_feedback`，让下一轮 Dashboard 推荐能读取最新训练证据。
 - 画像快照保存成功后，训练反馈页会立即读取 `GET /api/profile/recommendation`，展示基于新证据生成的“下一轮处方”；用户可直接在反馈页调用 `POST /api/profile/recommendation` 把该处方设为本周处方，形成“反馈 → 画像 → 推荐 → 下一题”的闭环。
+- 训练首页的主行动也读取 `GET /api/profile/recommendation`，优先使用画像处方中的训练建议作为开始训练入口，确保二次修正和画像快照能影响下一次打开训练页时练什么。
 
 ---
 
