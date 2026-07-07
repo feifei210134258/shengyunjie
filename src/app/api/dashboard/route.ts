@@ -5,6 +5,7 @@ import {
   getDiagnosisReportSummary,
   normalizeDiagnosisScore,
 } from "@/lib/diagnosis/report-summary";
+import { buildGrowthProfile } from "@/lib/profile/growth-profile";
 import { NextResponse } from "next/server";
 
 /* ------------------------------------------------------------------ */
@@ -132,9 +133,16 @@ export async function GET() {
       .order("created_at", { ascending: false })
       .limit(8);
 
+    const { data: profileTrainingRecords } = await supabase
+      .from("training_records")
+      .select("id, dimension, score, ai_feedback, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(80);
+
     const { data: bootcampSession } = await supabase
       .from("bootcamp_sessions")
-      .select("status, current_day, parsed_profile, weakness_prediction")
+      .select("id, status, current_day, parsed_profile, weakness_prediction")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -150,6 +158,30 @@ export async function GET() {
       .maybeSingle();
 
     const latestReportSummary = getDiagnosisReportSummary(latestReport);
+
+    let bootcampInterviews: any[] = [];
+    if (bootcampSession?.id) {
+      const { data: interviews } = await supabase
+        .from("bootcamp_interviews")
+        .select("id, question_type, status, user_answer, ai_evaluation, created_at")
+        .eq("session_id", bootcampSession.id)
+        .order("created_at", { ascending: false });
+      bootcampInterviews = interviews || [];
+    }
+
+    const { data: growthSnapshots } = await supabase
+      .from("growth_snapshots")
+      .select("id, snapshot_date, overall_score")
+      .eq("user_id", userId)
+      .order("snapshot_date", { ascending: false })
+      .limit(12);
+
+    const growthProfile = buildGrowthProfile({
+      latestReport,
+      trainingRecords: profileTrainingRecords || [],
+      bootcampInterviews,
+      growthSnapshots: growthSnapshots || [],
+    });
 
     /* ------- Profile Calculation ------- */
 
@@ -256,6 +288,7 @@ export async function GET() {
 
     return NextResponse.json({
       profile,
+      growthProfile,
       trainingStats,
       growthTrend,
       latestReport: reportResponse,

@@ -20,6 +20,7 @@ import {
   ListChecks,
   ShieldCheck,
   Target,
+  TrendingUp,
   Workflow,
 } from "lucide-react";
 
@@ -49,6 +50,7 @@ export interface DashboardData {
     strengths: string[];
     weaknesses: string[];
   } | null;
+  growthProfile?: GrowthProfile;
   commandCenter?: {
     primary: CommandAction;
     secondary: CommandAction[];
@@ -117,6 +119,45 @@ interface ProductPath {
 }
 
 type NextPractice = NonNullable<DashboardData["commandCenter"]>["nextPractice"];
+
+interface GrowthProfileDimension {
+  id: string;
+  label: string;
+  shortLabel: string;
+  score: number;
+  grade: string;
+  diagnosisScore: number | null;
+  trainingAverage: number | null;
+  evidenceCount: number;
+  lastEvidenceAt: string | null;
+  insight: string;
+}
+
+interface GrowthProfile {
+  summary: {
+    overallScore: number | null;
+    overallGrade: string | null;
+    evidenceCount: number;
+    snapshotCount: number;
+    lastEvidenceAt: string | null;
+  };
+  dimensions: GrowthProfileDimension[];
+  weakestDimensions: GrowthProfileDimension[];
+  strongestDimensions: GrowthProfileDimension[];
+  careerReadiness: {
+    label: string;
+    score: number;
+    evaluatedInterviewCount: number;
+    answeredInterviewCount: number;
+    nextAction: string;
+  };
+  focusPlan: {
+    title: string;
+    reason: string;
+    href: string;
+    targetDimension: string;
+  };
+}
 
 function aggregateTrend(
   growthTrend: DashboardData["growthTrend"]
@@ -451,6 +492,143 @@ function ReviewWorkspace({
   );
 }
 
+function GrowthProfileLedger({
+  growthProfile,
+}: {
+  growthProfile: GrowthProfile | undefined;
+}) {
+  const dimensions = growthProfile?.dimensions ?? [];
+  const weakest = growthProfile?.weakestDimensions?.[0];
+  const readiness = growthProfile?.careerReadiness;
+
+  return (
+    <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
+      <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)_300px]">
+        <div>
+          <div className="mb-4 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" strokeWidth={1.5} />
+            <h2 className="text-heading-sm font-semibold text-ink">
+              能力证据账本
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <MetricTile
+              label="综合画像"
+              value={growthProfile?.summary.overallScore ?? "-"}
+              suffix={growthProfile?.summary.overallScore != null ? "分" : ""}
+            />
+            <MetricTile
+              label="证据数"
+              value={growthProfile?.summary.evidenceCount ?? 0}
+              suffix="条"
+            />
+            <MetricTile
+              label="快照"
+              value={growthProfile?.summary.snapshotCount ?? 0}
+              suffix="次"
+            />
+            <MetricTile
+              label="面试就绪"
+              value={readiness?.score ?? 0}
+              suffix="/10"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-label font-bold text-ink-muted">当前焦点</p>
+              <p className="mt-1 text-heading-sm font-bold text-ink">
+                {growthProfile?.focusPlan.title || "先建立能力画像"}
+              </p>
+            </div>
+            <Link
+              href={growthProfile?.focusPlan.href || "/diagnosis/scale"}
+              className="inline-flex items-center gap-2 rounded-lg border border-line-strong bg-transparent px-3 py-2 text-body-sm font-bold text-ink transition-all hover:bg-surface active:scale-[0.98]"
+            >
+              去补强
+              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+            </Link>
+          </div>
+          <p className="mb-4 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
+            {growthProfile?.focusPlan.reason ||
+              "完成诊断、训练和模拟面试后，这里会把分数、证据和下一步训练合成一份可追踪的成长画像。"}
+          </p>
+          <div className="grid gap-2 md:grid-cols-5">
+            {dimensions.length ? (
+              dimensions.map((dimension) => (
+                <div key={dimension.id} className="rounded-lg bg-surface px-3 py-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="truncate text-label font-bold text-ink">
+                      {dimension.shortLabel}
+                    </p>
+                    <span className="font-mono text-label font-bold text-ink-muted">
+                      {dimension.score}
+                    </span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-line">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.min(dimension.score, 100)}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-label text-ink-faint">
+                    证据 {dimension.evidenceCount}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5 text-body-sm text-ink-muted md:col-span-5">
+                暂无画像维度。先完成一次诊断或训练，系统会自动补齐。
+              </div>
+            )}
+          </div>
+        </div>
+
+        <aside className="rounded-lg bg-surface px-4 py-4">
+          <p className="text-label font-bold text-ink-muted">面试就绪</p>
+          <p className="mt-2 text-heading-sm font-bold text-ink">
+            {readiness?.label || "等待追问信号"}
+          </p>
+          <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+            {readiness?.nextAction ||
+              "完成模拟面试后，系统会把项目追问表现也合入画像。"}
+          </p>
+          {weakest && (
+            <div className="mt-4 rounded-md bg-warning-soft px-3 py-2">
+              <p className="text-label font-bold text-warning">最弱维度</p>
+              <p className="mt-1 text-body-sm font-bold text-ink">
+                {weakest.label} · {weakest.score} 分
+              </p>
+            </div>
+          )}
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function MetricTile({
+  label,
+  value,
+  suffix,
+}: {
+  label: string;
+  value: string | number;
+  suffix?: string;
+}) {
+  return (
+    <div className="rounded-lg bg-surface px-3 py-3">
+      <p className="text-label font-bold text-ink-muted">{label}</p>
+      <p className="mt-1 font-mono text-data-md font-bold text-ink">
+        {value}
+        {suffix && <span className="ml-1 text-label text-ink-muted">{suffix}</span>}
+      </p>
+    </div>
+  );
+}
+
 function TrainingMethodPanel() {
   return (
     <section className="rounded-xl border border-line bg-surface-raised p-6 shadow-xs">
@@ -521,6 +699,8 @@ export default function DashboardPage() {
             latestReport={latestReport}
             stats={stats}
           />
+
+          <GrowthProfileLedger growthProfile={data?.growthProfile} />
 
           <ReviewWorkspace
             blindSpots={data?.commandCenter?.blindSpots ?? []}

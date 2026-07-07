@@ -1302,3 +1302,26 @@
 - `npm run build` 通过，新增讲述稿 UI 与故事库 API 构建成功。
 - `git diff --check` 通过。
 - `./init.sh` 通过，环境健康检查 10/10。
+
+## [2026-07-07] Feature: 用户画像引擎 — 能力证据账本
+
+### 背景判断
+- 当前工作台已经按“面试跳槽冲刺 / 高级产品思维训练”组织路径，但画像仍主要是侧栏里的维度分展示，用户很难看出诊断、训练和面试追问如何共同更新自己的能力状态。
+- 从第一性原理看，升阶训练的核心资产不是一次分数，而是可追踪的证据账本：我在哪些维度有证据、哪些维度暴露弱点、下一步该补什么。
+
+### 完成内容
+- 新增 `src/lib/profile/growth-profile.ts`，把诊断维度分、训练记录、特训面试回答/评价和成长快照聚合为 `growthProfile`。
+- 新增 `GET /api/profile/summary`，从 `diagnosis_reports.dimension_scores`、`training_records`、`bootcamp_interviews` 和 `growth_snapshots` 读取画像证据。
+- 新增 `POST /api/profile/summary`，把当前画像维度分、综合分和证据数写入既有 `growth_snapshots`，形成可读回的画像快照；不新增 schema。
+- `/api/dashboard` 同步返回 `growthProfile`，Dashboard 新增“能力证据账本”，展示综合画像、证据数、快照数、面试就绪、当前焦点、最弱维度和五维证据。
+- 产品设计文档和 feature_list 同步标记 `profile-001` 完成。
+
+### 验证结果
+- TDD 红灯：新增画像聚合测试、画像 API 源测试、Dashboard 源测试和 feature_list 状态测试，先捕获缺少画像引擎、缺少 API、Dashboard 无证据账本、profile-001 未完成。
+- `node --test src/lib/profile/growth-profile.test.mjs src/app/api/profile/summary/route.test.mjs feature_list.test.mjs src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' 'src/app/(app)/bootcamp/page.test.mjs' src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/components/TopNav.test.mjs` 通过，20 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/profile/growth-profile.ts src/lib/profile/growth-profile.test.mjs src/app/api/profile/summary/route.ts src/app/api/profile/summary/route.test.mjs 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，新增 `/api/profile/summary` 路由出现在构建结果中。
+- `git diff --check` 通过。
+- `feature_list.json` JSON 解析通过。
+- `./init.sh` 通过，环境健康检查 10/10。
