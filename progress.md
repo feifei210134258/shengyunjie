@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-07] 复盘归档：队列直达二次修正
+
+### 完成内容
+- 训练首页复盘队列对“待二次修正”记录追加 `?revise=1`，点击后直接进入复盘页的修正工作区，而不是只停留在只读归档。
+- 历史复盘页新增可编辑的“二次修正”工作区：从已保存修正版预填，支持聚焦、保存中、已保存、保存失败状态。
+- 保存继续复用 `PATCH /api/training/record`，写入并读回 `training_records.ai_feedback.__revision`，不新增 schema。
+
+### 验证记录
+- TDD 红灯：`node --test src/components/training/TrainingOverviewClient.test.mjs 'src/app/(app)/training/history/[id]/page.test.mjs'` 先失败于缺少 `revise=1` 直达入口；`node 'src/app/(app)/training/history/[id]/page.test.mjs'` 先失败于缺少 `useSearchParams`、`revisionText`、`handleSaveRevision` 和 `PATCH` 保存入口。
+- 已通过：`node 'src/app/(app)/training/history/[id]/page.test.mjs' && node --test src/components/training/TrainingOverviewClient.test.mjs src/app/api/training/record/route.test.mjs src/app/api/training/stats/route.test.mjs src/lib/training/session-progress.test.mjs feature_list.test.mjs`（18 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingOverviewClient.tsx 'src/app/(app)/training/history/[id]/page.tsx' --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析。
+
 ## [2026-07-07] 训练首页：复盘队列
 
 ### 完成内容

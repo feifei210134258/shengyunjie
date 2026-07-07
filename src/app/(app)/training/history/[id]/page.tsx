@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PageHeader } from "@/components/ui/page-header";
@@ -14,10 +14,17 @@ import { Sparkles, Activity, Lightbulb, BookOpen, FileCheck2, Target, PenLine } 
 
 export default function HistoryDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+  const shouldOpenRevision = searchParams.get("revise") === "1";
 
   const [record, setRecord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [revisionText, setRevisionText] = useState("");
+  const [revisionStatus, setRevisionStatus] = useState<
+    "idle" | "saving" | "saved" | "failed"
+  >("idle");
+  const revisionEditorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -25,10 +32,25 @@ export default function HistoryDetailPage() {
       .then((r) => r.json())
       .then((data) => {
         setRecord(data.record);
+        const savedRevision = data.record?.ai_feedback?.__revision;
+        setRevisionText(
+          savedRevision && typeof savedRevision.revisedAnswer === "string"
+            ? savedRevision.revisedAnswer
+            : ""
+        );
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!shouldOpenRevision || loading) return;
+    revisionEditorRef.current?.focus();
+    revisionEditorRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [loading, shouldOpenRevision]);
 
   if (loading) {
     return <PageSpinner />;
@@ -62,6 +84,41 @@ export default function HistoryDetailPage() {
       : "";
   const revisionSavedAt =
     revision && typeof revision.savedAt === "string" ? revision.savedAt : "";
+  const showRevisionWorkbench = shouldOpenRevision || Boolean(revisedAnswer);
+
+  const handleSaveRevision = async () => {
+    const nextRevision = revisionText.trim();
+    if (!id || !nextRevision) return;
+
+    setRevisionStatus("saving");
+    try {
+      const response = await fetch("/api/training/record", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recordId: id, revisedAnswer: nextRevision }),
+      });
+      if (!response.ok) throw new Error("二次修正保存失败");
+
+      const result = await response.json();
+      const currentRevision = result.revision || {
+        revisedAnswer: nextRevision,
+        savedAt: new Date().toISOString(),
+      };
+      setRecord((current: any) => ({
+        ...current,
+        ai_feedback: {
+          ...(current?.ai_feedback && typeof current.ai_feedback === "object"
+            ? current.ai_feedback
+            : {}),
+          __revision: currentRevision,
+        },
+      }));
+      setRevisionText(currentRevision.revisedAnswer || nextRevision);
+      setRevisionStatus("saved");
+    } catch {
+      setRevisionStatus("failed");
+    }
+  };
 
   const extractSections = (text: string) => {
     const diagnosisMatch = text.match(
@@ -157,26 +214,52 @@ export default function HistoryDetailPage() {
             </div>
           </Card>
 
-          {revisedAnswer && (
+          {showRevisionWorkbench && (
             <Card size="md" className="border-primary-muted bg-primary-soft/50">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-label font-bold text-primary">
                   <PenLine className="h-4 w-4" />
                   二次修正
                 </div>
-                {revisionSavedAt && (
-                  <span className="text-label font-semibold text-ink-muted">
-                    {new Date(revisionSavedAt).toLocaleString("zh-CN", {
-                      hour12: false,
-                    })}
-                  </span>
-                )}
+                <span className="rounded-md bg-white px-3 py-1.5 text-label font-semibold text-ink-muted">
+                  {revisionStatus === "saving"
+                    ? "保存中"
+                    : revisionStatus === "saved"
+                      ? "已保存"
+                      : revisionStatus === "failed"
+                        ? "保存失败"
+                        : revisionSavedAt
+                          ? `最近保存：${new Date(revisionSavedAt).toLocaleString("zh-CN", {
+                              hour12: false,
+                            })}`
+                          : "待修正"}
+                </span>
               </div>
               <p className="mb-3 text-body-sm font-semibold text-ink-muted">
                 修正版
               </p>
-              <div className="whitespace-pre-wrap rounded-lg border border-primary-muted bg-white/80 p-4 text-body-md leading-relaxed text-ink">
-                {revisedAnswer}
+              <textarea
+                ref={revisionEditorRef}
+                value={revisionText}
+                onChange={(event) => {
+                  setRevisionText(event.target.value);
+                  setRevisionStatus("idle");
+                }}
+                className="min-h-[180px] w-full resize-none rounded-lg border border-primary-muted bg-white/80 p-4 text-body-md leading-7 text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                placeholder="基于 AI 反馈重写：关键判断、依据、取舍、验证指标..."
+              />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-label font-semibold text-ink-muted">
+                  从复盘队列进入时，先补这一版，再继续开新题。
+                </p>
+                <button
+                  onClick={handleSaveRevision}
+                  disabled={!revisionText.trim() || revisionStatus === "saving"}
+                  className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <PenLine className="h-4 w-4" />
+                  保存二次修正
+                </button>
               </div>
             </Card>
           )}

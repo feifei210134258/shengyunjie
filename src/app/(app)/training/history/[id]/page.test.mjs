@@ -11,3 +11,13 @@ test("training history reads back the saved second-pass revision", () => {
   assert.match(source, /revisedAnswer/);
   assert.match(source, /record\.ai_feedback\?\.__revision/);
 });
+
+test("training history can save a second-pass revision from the review queue", () => {
+  assert.match(source, /useSearchParams/);
+  assert.match(source, /searchParams\.get\("revise"\) === "1"/);
+  assert.match(source, /revisionText/);
+  assert.match(source, /handleSaveRevision/);
+  assert.match(source, /method: "PATCH"/);
+  assert.match(source, /\/api\/training\/record/);
+  assert.match(source, /保存二次修正/);
+});

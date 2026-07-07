@@ -278,7 +278,11 @@ export default function TrainingPage() {
                 return (
                   <Link
                     key={item.id}
-                    href={`/training/history/${item.id}`}
+                    href={
+                      item.needsRevision
+                        ? `/training/history/${item.id}?revise=1`
+                        : `/training/history/${item.id}`
+                    }
                     className="group flex min-h-[156px] flex-col justify-between rounded-lg border border-line bg-white p-4 transition hover:border-line-strong hover:bg-surface"
                   >
                     <div>
