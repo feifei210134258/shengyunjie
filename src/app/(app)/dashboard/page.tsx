@@ -15,7 +15,6 @@ import {
   BookOpen,
   Brain,
   ClipboardCheck,
-  Compass,
   Dumbbell,
   FileCheck2,
   ListChecks,
@@ -55,6 +54,7 @@ export interface DashboardData {
     secondary: CommandAction[];
     missionMap: MissionMapItem[];
     blindSpots: BlindSpotItem[];
+    productPaths: ProductPath[];
     nextPractice: {
       missionId: string;
       missionLabel: string;
@@ -102,6 +102,18 @@ interface BlindSpotItem {
   label: string;
   description: string;
   weight: number;
+}
+
+interface ProductPath {
+  id: "interview_sprint" | "thinking_training";
+  label: string;
+  promise: string;
+  href: string;
+  primaryAction: string;
+  statusLabel: string;
+  evidenceLabel: string;
+  nextStep: string;
+  emphasis: "career" | "growth";
 }
 
 type NextPractice = NonNullable<DashboardData["commandCenter"]>["nextPractice"];
@@ -152,7 +164,37 @@ function getActionIcon(kind: ActionItem["kind"]) {
   return <Dumbbell className="h-4 w-4" strokeWidth={1.5} />;
 }
 
-function ActionCenter({
+function getFallbackProductPaths(
+  fallbackFocus: string,
+  stats: DashboardData["trainingStats"] | null
+): ProductPath[] {
+  return [
+    {
+      id: "interview_sprint",
+      label: "面试跳槽冲刺",
+      promise: "把项目经历、追问风险和回答证据整理成高级 PM 面试材料。",
+      href: "/bootcamp/resume",
+      primaryAction: "上传简历",
+      statusLabel: "先建立简历基线",
+      evidenceLabel: "等待项目材料",
+      nextStep: "从简历进入项目追问，把经历打磨成可讲的能力证据。",
+      emphasis: "career",
+    },
+    {
+      id: "thinking_training",
+      label: "高级产品思维训练",
+      promise: "每天用一个真实任务练判断、取舍、归因和落地闭环。",
+      href: TRAINING_SESSION_ROUTE,
+      primaryAction: "开始今日训练",
+      statusLabel: `优先补 ${fallbackFocus}`,
+      evidenceLabel: `今日 ${stats?.todayCount ?? 0} 题 / 累计 ${stats?.totalCount ?? 0} 条证据`,
+      nextStep: "先做一题真实场景判断，再用反馈更新下一轮训练方向。",
+      emphasis: "growth",
+    },
+  ];
+}
+
+function PathFirstHero({
   commandCenter,
   fallbackFocus,
   stats,
@@ -172,9 +214,10 @@ function ActionCenter({
       kind: "training" as const,
     };
   const signals = commandCenter?.signals;
-  const focusTitle = primary.actionLabel
-    ? `先练：${primary.actionLabel}`
-    : primary.title;
+  const paths =
+    commandCenter?.productPaths?.length === 2
+      ? commandCenter.productPaths
+      : getFallbackProductPaths(fallbackFocus, stats);
   const reasonText =
     signals?.recentAverage != null
       ? `推荐依据：${signals.weakestDimension ?? fallbackFocus}偏弱，近次均分 ${signals.recentAverage}/10`
@@ -182,57 +225,108 @@ function ActionCenter({
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-line bg-surface-raised shadow-xs">
-      <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
-      <div className="min-h-[380px] p-5 sm:p-7 xl:p-8">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
+      <div className="p-5 sm:p-7 xl:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-label font-bold text-primary">
-            <Compass className="h-4 w-4" strokeWidth={1.5} />
-            <span>今日只做一件事</span>
+          <div>
+            <p className="text-label font-bold text-primary">结果路径</p>
+            <h1 className="mt-2 max-w-4xl text-[32px] font-bold leading-[1.1] text-ink sm:text-[44px] xl:text-[52px]">
+              今天先选路径：冲面试，还是练判断
+            </h1>
           </div>
           <span className="rounded-md bg-surface px-2.5 py-1.5 text-label font-semibold text-ink-muted">
             {getTodayLabel()}
           </span>
         </div>
 
-        <div className="mt-8 max-w-5xl">
-          <p className="text-body-sm font-bold text-ink-muted">重点动作</p>
-          <h1 className="mt-3 max-w-4xl text-[34px] font-bold leading-[1.12] text-ink sm:text-[46px] xl:text-[54px]">
-            {focusTitle}
-          </h1>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {primary.missionLabel && (
-              <span className="rounded-md bg-primary-soft px-3 py-1.5 text-label font-bold text-primary">
-                场景：{primary.missionLabel}
-              </span>
-            )}
-          </div>
-          <p className="mt-5 max-w-3xl text-body-lg leading-relaxed text-ink-muted">
-            {primary.description}
-          </p>
+        <p className="mt-5 max-w-3xl text-body-lg leading-relaxed text-ink-muted">
+          面试跳槽需要把项目讲成证据，长期升阶需要把判断练成肌肉。升云阶现在先帮你选结果路径，再把诊断、训练、复盘收进同一条链路。
+        </p>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          {paths.map((path) => (
+            <Link
+              key={path.id}
+              href={path.href}
+              className={cn(
+                "group flex min-h-[270px] flex-col rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99]",
+                path.emphasis === "career"
+                  ? "border-primary/20 bg-primary-soft/70 hover:border-primary/35"
+                  : "border-secondary/25 bg-secondary-soft/45 hover:border-secondary/45"
+              )}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-label font-bold text-ink-muted">
+                    {path.statusLabel}
+                  </p>
+                  <h2 className="mt-2 text-heading-lg font-bold text-ink">
+                    {path.label}
+                  </h2>
+                </div>
+                <div
+                  className={cn(
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
+                    path.emphasis === "career"
+                      ? "bg-primary text-white"
+                      : "bg-secondary text-white"
+                  )}
+                >
+                  {path.emphasis === "career" ? (
+                    <FileCheck2 className="h-5 w-5" strokeWidth={1.5} />
+                  ) : (
+                    <Target className="h-5 w-5" strokeWidth={1.5} />
+                  )}
+                </div>
+              </div>
+
+              <p className="mt-5 max-w-xl text-body-md leading-relaxed text-ink-muted">
+                {path.promise}
+              </p>
+              <p className="mt-4 text-body-sm leading-relaxed text-ink">
+                {path.nextStep}
+              </p>
+
+              <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-6">
+                <span className="rounded-md bg-white/70 px-3 py-1.5 text-label font-bold text-ink-muted">
+                  {path.evidenceLabel}
+                </span>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-body-sm font-bold text-white transition-all group-hover:translate-x-0.5",
+                    path.emphasis === "career" ? "bg-primary" : "bg-secondary"
+                  )}
+                >
+                  {path.primaryAction}
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+                </span>
+              </div>
+            </Link>
+          ))}
         </div>
 
-        <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="mt-5 flex flex-col gap-4 rounded-lg bg-surface px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-label font-bold text-ink-muted">今日系统建议</p>
+            <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+              {primary.description} {reasonText}
+            </p>
+          </div>
           <Link
             href={primary.href}
-            className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary px-8 py-4 text-body-lg font-semibold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-[0.98] sm:w-[220px]"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface-raised px-4 py-2.5 text-body-sm font-bold text-ink transition-all hover:bg-surface-hover active:scale-[0.98]"
           >
             {getActionIcon(primary.kind)}
-            开始这一题
+            {primary.cta}
             <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
           </Link>
-          <p className="max-w-xl text-body-sm leading-relaxed text-ink-muted">
-            {reasonText}
-          </p>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-label font-semibold text-ink-faint">
-          <span>今日 {stats?.todayCount ?? 0} 题</span>
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-label font-semibold text-ink-faint">
+          <span>训练 {stats?.totalCount ?? 0} 次</span>
           <span>连击 {stats?.streak ?? 0} 天</span>
-          <span>累计 {stats?.totalCount ?? 0} 次</span>
-          <span>
-            诊断 {latestReport?.overall_score ?? "-"}
-            {latestReport?.overall_grade ? ` ${latestReport.overall_grade}` : ""}
-          </span>
+          <span>今日 {stats?.todayCount ?? 0} 题</span>
+          <span>诊断 {latestReport?.overall_score ?? "-"}{latestReport?.overall_grade ? ` ${latestReport.overall_grade}` : ""}</span>
         </div>
       </div>
     </section>
@@ -421,7 +515,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="space-y-5">
-          <ActionCenter
+          <PathFirstHero
             commandCenter={data?.commandCenter}
             fallbackFocus={focusLabel}
             latestReport={latestReport}

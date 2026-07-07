@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageSpinner } from "@/components/ui/spinner";
-import { Rocket, FileUp, Brain, BarChart3, ArrowRight } from "lucide-react";
+import { Rocket, FileUp, Brain, BarChart3, ArrowRight, FileText } from "lucide-react";
 
 export default function BootcampPage() {
   const [session, setSession] = useState<any>(null);
@@ -101,14 +101,21 @@ export default function BootcampPage() {
               特训已准备好
             </h1>
             <p className="mt-2 text-body-md text-ink-muted">
-              你可以先查看简历解析与弱点预测，再进入模拟面试。
+              你可以先整理项目故事库，再进入模拟面试继续补证据。
             </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <Link
                 href="/bootcamp/resume"
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-transparent px-5 py-2.5 text-body-md font-semibold text-ink transition-all hover:bg-bg active:scale-[0.97]"
               >
                 查看简历解析
+              </Link>
+              <Link
+                href="/bootcamp/story-bank"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-transparent px-5 py-2.5 text-body-md font-semibold text-ink transition-all hover:bg-bg active:scale-[0.97]"
+              >
+                <FileText className="h-4 w-4" strokeWidth={1.5} />
+                项目故事库
               </Link>
               {session.current_day > 0 ? (
                 <Link

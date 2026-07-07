@@ -15,11 +15,18 @@ type DashboardRecord = {
 
 type CommandCenterInput = {
   todayCount: number;
+  totalCount?: number;
   recentRecords: DashboardRecord[];
   dimAverages: Record<string, number>;
   profileWeaknesses: string[];
   latestReport: { id: string } | null;
   hasCaseSimulation?: boolean;
+  bootcampSession?: {
+    status?: string | null;
+    currentDay?: number | null;
+    hasResume?: boolean;
+    weaknessCount?: number;
+  } | null;
   date?: Date;
 };
 
@@ -53,6 +60,7 @@ export type BlindSpotItem = {
 export type TrainingCommandCenter = {
   primary: CommandAction;
   secondary: CommandAction[];
+  productPaths: ProductPath[];
   missionMap: MissionMapItem[];
   blindSpots: BlindSpotItem[];
   nextPractice: {
@@ -66,6 +74,18 @@ export type TrainingCommandCenter = {
     recentAverage: number | null;
     hasCaseSimulation: boolean;
   };
+};
+
+export type ProductPath = {
+  id: "interview_sprint" | "thinking_training";
+  label: string;
+  promise: string;
+  href: string;
+  primaryAction: string;
+  statusLabel: string;
+  evidenceLabel: string;
+  nextStep: string;
+  emphasis: "career" | "growth";
 };
 
 const missionActionLabels: Record<string, string> = {
@@ -228,6 +248,79 @@ function getNextPracticeMission(
   return getTrainingMissions().find((mission) => mission.id === missionId) || fallback;
 }
 
+function buildInterviewPath(input: CommandCenterInput): ProductPath {
+  const bootcamp = input.bootcampSession;
+  const hasResume = Boolean(bootcamp?.hasResume);
+  const weaknessCount = bootcamp?.weaknessCount || 0;
+  const currentDay = Number(bootcamp?.currentDay || 0);
+
+  if (bootcamp?.status === "completed") {
+    return {
+      id: "interview_sprint",
+      label: "面试跳槽冲刺",
+      promise: "把项目经历、追问风险和回答证据整理成高级 PM 面试材料。",
+      href: "/bootcamp/report",
+      primaryAction: "查看面试报告",
+      statusLabel: "冲刺已完成",
+      evidenceLabel: "已有综合报告",
+      nextStep: "复盘最容易被追问的项目证据，再回到模拟面试补强。",
+      emphasis: "career",
+    };
+  }
+
+  if (bootcamp?.status === "in_progress" && currentDay > 0) {
+    return {
+      id: "interview_sprint",
+      label: "面试跳槽冲刺",
+      promise: "把项目经历、追问风险和回答证据整理成高级 PM 面试材料。",
+      href: "/bootcamp/story-bank",
+      primaryAction: "整理项目证据",
+      statusLabel: `Day ${currentDay} 特训中`,
+      evidenceLabel: weaknessCount ? `${weaknessCount} 个简历风险点` : "简历已解析",
+      nextStep: "继续围绕真实项目追问，把回答改成可讲、可验证的证据。",
+      emphasis: "career",
+    };
+  }
+
+  return {
+    id: "interview_sprint",
+    label: "面试跳槽冲刺",
+    promise: "把项目经历、追问风险和回答证据整理成高级 PM 面试材料。",
+    href: hasResume ? "/bootcamp/story-bank" : "/bootcamp/resume",
+    primaryAction: hasResume ? "继续生成题" : "上传简历",
+    statusLabel: hasResume ? "简历已解析" : "先建立简历基线",
+    evidenceLabel: weaknessCount ? `${weaknessCount} 个潜在追问点` : "等待项目材料",
+    nextStep: hasResume
+      ? "从简历项目进入模拟追问，沉淀你的项目故事库。"
+      : "先上传或粘贴简历，让系统抽取项目、影响和追问风险。",
+    emphasis: "career",
+  };
+}
+
+function buildTrainingPath(
+  input: CommandCenterInput,
+  priorityMission: TrainingMission,
+  actionLabel: string,
+  recentAverage: number | null
+): ProductPath {
+  const totalEvidence = input.totalCount ?? input.recentRecords.length;
+  const statusLabel = recentAverage != null
+    ? `近次均分 ${recentAverage}/10`
+    : `${priorityMission.displayLabel} 待开练`;
+
+  return {
+    id: "thinking_training",
+    label: "高级产品思维训练",
+    promise: "每天用一个真实任务练判断、取舍、归因和落地闭环。",
+    href: "/training/session",
+    primaryAction: input.todayCount > 0 ? "继续今日训练" : "开始今日训练",
+    statusLabel,
+    evidenceLabel: `今日 ${input.todayCount} 题 / 累计 ${totalEvidence} 条证据`,
+    nextStep: `今日优先练 ${priorityMission.displayLabel} / ${actionLabel}，练完后沉淀为能力画像信号。`,
+    emphasis: "growth",
+  };
+}
+
 export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCenter {
   const date = input.date || new Date();
   const weakestDimension = getWeakestDimension(input);
@@ -322,10 +415,15 @@ export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCe
   const visibleSecondary = secondary.filter((action) => action.kind !== primary.kind);
 
   const blindSpots = blindSpotsWithMission.map(({ missionId: _missionId, ...item }) => item);
+  const productPaths = [
+    buildInterviewPath(input),
+    buildTrainingPath(input, priorityMission, actionLabel, recentAverage),
+  ];
 
   return {
     primary,
     secondary: visibleSecondary,
+    productPaths,
     missionMap: buildMissionMap(priorityMission, input.dimAverages),
     blindSpots,
     nextPractice: {

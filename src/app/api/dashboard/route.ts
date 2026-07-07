@@ -132,6 +132,12 @@ export async function GET() {
       .order("created_at", { ascending: false })
       .limit(8);
 
+    const { data: bootcampSession } = await supabase
+      .from("bootcamp_sessions")
+      .select("status, current_day, parsed_profile, weakness_prediction")
+      .eq("user_id", userId)
+      .maybeSingle();
+
     /* ------- Latest Diagnosis Report ------- */
 
     const { data: latestReport } = await supabase
@@ -228,11 +234,24 @@ export async function GET() {
     );
     const commandCenter = buildCommandCenter({
       todayCount: todayCount || 0,
+      totalCount: totalCount || 0,
       recentRecords,
       dimAverages,
       profileWeaknesses: profile?.weaknesses || [],
       latestReport: latestReport ? { id: latestReport.id } : null,
       hasCaseSimulation,
+      bootcampSession: bootcampSession
+        ? {
+            status: bootcampSession.status,
+            currentDay: bootcampSession.current_day,
+            hasResume: Boolean(bootcampSession.parsed_profile),
+            weaknessCount: Array.isArray(
+              bootcampSession.weakness_prediction?.likely_gaps
+            )
+              ? bootcampSession.weakness_prediction.likely_gaps.length
+              : 0,
+          }
+        : null,
     });
 
     return NextResponse.json({

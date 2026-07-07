@@ -1,0 +1,142 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { buildStoryBank, updateParsedProfileProject } from "./story-bank.ts";
+
+const parsedProfile = {
+  work_experience: [
+    {
+      company: "云杉科技",
+      title: "高级产品经理",
+      duration: "2021-2025",
+      highlights: ["负责客户健康度和续费增长相关产品"],
+    },
+  ],
+  projects: [
+    {
+      name: "客户健康度评分系统",
+      company: "云杉科技",
+      description: "面向客户成功团队识别续费风险和扩容机会。",
+      role: "产品负责人",
+      outcomes: ["续费风险识别提前 14 天", "CS 跟进效率提升 23%"],
+    },
+    {
+      name: "权限审批流重构",
+      company: "云杉科技",
+      description: "重构企业客户复杂权限与审批配置。",
+      role: "产品负责人",
+      outcomes: [],
+    },
+  ],
+  skills: ["B 端 SaaS", "数据产品"],
+  education: [],
+};
+
+test("builds project stories from resume projects and evaluated interviews", () => {
+  const result = buildStoryBank({
+    session: {
+      id: "session-1",
+      current_day: 2,
+      status: "in_progress",
+      parsed_profile: parsedProfile,
+      weakness_prediction: {
+        weak_dimensions: [
+          {
+            dimension: "指标归因",
+            severity: "high",
+            gap_description: "容易只说结果，缺少归因证据。",
+          },
+        ],
+        recommended_focus: ["项目复盘", "指标归因"],
+      },
+    },
+    interviews: [
+      {
+        id: "q1",
+        day_number: 1,
+        question_index: 1,
+        question_text:
+          "请复盘客户健康度评分系统：业务问题是什么，如何证明续费结果来自产品动作？",
+        question_type: "data_driven",
+        difficulty: 3,
+        user_answer: "我先拆客户分层，再看续费风险命中率和 CS 跟进动作。",
+        ai_evaluation: {
+          overall_score: 7.4,
+          strengths: ["能提到客户分层和风险命中率"],
+          gaps: ["还缺少反证和归因排除"],
+          improved_answer:
+            "这个项目我会先讲清续费风险识别滞后的问题，再说明评分模型如何拆分客户行为、工单和使用深度，最后用命中率、提前量和 CS 转化动作证明效果。",
+        },
+        status: "evaluated",
+      },
+    ],
+  });
+
+  assert.equal(result.summary.totalProjects, 2);
+  assert.equal(result.summary.answeredQuestions, 1);
+  assert.equal(result.projectStories[0].projectName, "客户健康度评分系统");
+  assert.equal(result.projectStories[0].evidenceItems.length, 1);
+  assert.match(result.projectStories[0].interviewReadyAnswer, /续费风险识别/);
+  assert.match(result.projectStories[0].interviewScript.fullScript, /客户健康度评分系统/);
+  assert.match(result.projectStories[0].interviewScript.sections[0].label, /开场/);
+  assert.ok(result.projectStories[0].interviewScript.sections.length >= 4);
+  assert.ok(result.projectStories[0].readinessScore > result.projectStories[1].readinessScore);
+  assert.ok(result.projectStories[1].proofGaps.some((gap) => gap.includes("结果指标")));
+});
+
+test("keeps unmatched interview answers as general story assets", () => {
+  const result = buildStoryBank({
+    session: {
+      id: "session-1",
+      current_day: 1,
+      status: "in_progress",
+      parsed_profile: parsedProfile,
+      weakness_prediction: null,
+    },
+    interviews: [
+      {
+        id: "q2",
+        day_number: 1,
+        question_index: 2,
+        question_text: "请讲一次你推翻原方案的经历。",
+        question_type: "strategy",
+        difficulty: 2,
+        user_answer: "我在一次项目评审里用客户反馈推翻了原方案。",
+        ai_evaluation: {
+          overall_score: 6.1,
+          strengths: ["有推翻方案的动作"],
+          gaps: ["缺少项目对象和结果"],
+          improved_answer: "我会用一次具体评审说明自己如何识别风险、调整方案并复盘结果。",
+        },
+        status: "evaluated",
+      },
+    ],
+  });
+
+  assert.equal(result.generalAssets.length, 1);
+  assert.equal(result.generalAssets[0].questionId, "q2");
+  assert.match(result.recommendedNextAction.href, /interview|resume/);
+});
+
+test("updates one resume project evidence without changing other projects", () => {
+  const updated = updateParsedProfileProject(parsedProfile, {
+    projectName: "权限审批流重构",
+    role: "从 0 到 1 负责权限模型、审批链路和灰度上线",
+    description: "解决大客户多角色权限配置混乱、审批链路不可追踪的问题。",
+    outcomesText: "审批配置时长下降 31%\n权限相关工单下降 18%",
+  });
+
+  assert.equal(updated.projects[0].role, "产品负责人");
+  assert.equal(
+    updated.projects[1].role,
+    "从 0 到 1 负责权限模型、审批链路和灰度上线"
+  );
+  assert.equal(
+    updated.projects[1].description,
+    "解决大客户多角色权限配置混乱、审批链路不可追踪的问题。"
+  );
+  assert.deepEqual(updated.projects[1].outcomes, [
+    "审批配置时长下降 31%",
+    "权限相关工单下降 18%",
+  ]);
+});

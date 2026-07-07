@@ -20,9 +20,9 @@ import { useState, useRef, useEffect } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "工作台", icon: LayoutDashboard },
-  { href: "/diagnosis/scale?entry=nav", label: "诊断", icon: Brain },
-  { href: "/training", label: "训练", icon: Dumbbell },
-  { href: "/bootcamp", label: "特训", icon: Rocket },
+  { href: "/training", label: "今日训练", icon: Dumbbell },
+  { href: "/bootcamp", label: "面试冲刺", icon: Rocket },
+  { href: "/diagnosis/scale?entry=nav", label: "能力诊断", icon: Brain },
 ];
 
 export default function TopNav() {

@@ -1216,3 +1216,89 @@
 - `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' --max-warnings 0` 通过。
 - `npm run build` 通过。
 - `git diff --check` 通过。
+
+## [2026-07-07] Redesign: 产品入口改为双结果路径
+
+### 背景判断
+- 当前产品目标同时包含“高级产品思维训练”和“面试跳槽快速强化”，但旧首页仍偏单一今日训练入口，导航也仍像诊断、训练、特训的模块列表。
+- 从第一性原理看，用户先关心结果路径：我要冲面试，还是长期练判断。诊断、训练、案例和特训应该服务路径，而不是让用户自己理解模块关系。
+
+### 完成内容
+- `/api/dashboard` 增加读取 `bootcamp_sessions`，把简历解析、特训 Day、弱点数量与训练记录、诊断报告一起汇总进 `commandCenter.productPaths`。
+- `buildCommandCenter` 新增两条产品路径：`面试跳槽冲刺` 和 `高级产品思维训练`，分别给出状态、证据沉淀和下一步动作。
+- `/dashboard` 首屏从“今日只做一件事”改为双路径选择，用户可以直接进入简历/模拟面试路径或今日真实任务训练路径。
+- `TopNav` 从模块名改成结果导向：工作台、今日训练、面试冲刺、能力诊断。
+- 设计文档补充 2026-07 产品路径调整，明确底层模块继续存在，前台改按结果路径组织。
+
+### 验证结果
+- TDD 红灯：新增测试先捕获 `productPaths` 缺失、首页仍是单一模块入口、导航仍使用“训练 / 特训 / 诊断”旧模块名。
+- `node --test src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/components/TopNav.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' src/app/api/dashboard/route.ts src/lib/dashboard/training-command-center.ts src/lib/dashboard/training-command-center.test.mjs src/components/TopNav.tsx src/components/TopNav.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
+## [2026-07-07] Feature: 面试项目故事库
+
+### 背景判断
+- 双路径首页已经把用户导向“面试跳槽冲刺”，但冲刺路径还缺一个真正可沉淀的资产层。
+- 高级 PM 面试的核心不是刷题数量，而是把真实项目讲成“背景、判断、取舍、结果、复盘”的证据链。
+
+### 完成内容
+- 新增 `src/lib/bootcamp/story-bank.ts`，从已落库的简历项目和模拟面试记录聚合项目故事。
+- 新增 `GET /api/bootcamp/story-bank`，读取 `bootcamp_sessions.parsed_profile`、`weakness_prediction` 和 `bootcamp_interviews.user_answer/ai_evaluation`，返回故事库数据；不新增 schema。
+- 新增 `/bootcamp/story-bank` 页面：左侧项目资产列表，右侧展示项目描述、结果证据、证据缺口、可讲版本、面试证据和可能追问。
+- Dashboard 面试路径在已有简历/特训进度时改指向故事库；`/bootcamp` 特训首页新增项目故事库入口。
+- 产品设计文档补充“项目故事库”作为面试冲刺路径的资产层。
+
+### 验证结果
+- TDD 红灯：新增 story-bank 领域测试、API 源测试、页面源测试、特训首页入口测试，均先捕获缺失实现。
+- `node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' 'src/app/(app)/bootcamp/page.test.mjs' src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/components/TopNav.test.mjs` 通过。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/bootcamp/story-bank.ts src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.ts src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.tsx' 'src/app/(app)/bootcamp/story-bank/page.test.mjs' 'src/app/(app)/bootcamp/page.tsx' 'src/app/(app)/bootcamp/page.test.mjs' src/lib/dashboard/training-command-center.ts src/lib/dashboard/training-command-center.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，新增 `/bootcamp/story-bank` 和 `/api/bootcamp/story-bank` 路由出现在构建结果中。
+- `git diff --check` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
+## [2026-07-07] Feature: 项目故事库可编辑证据
+
+### 背景判断
+- 故事库第一版已经能从简历和模拟面试记录聚合证据，但用户还不能直接补齐“角色、项目描述、结果指标”这些面试最关键材料。
+- 按当前项目规则，避免新增 schema；本轮把补充内容写回现有 `bootcamp_sessions.parsed_profile`，保证前后端与持久化闭环成立。
+
+### 完成内容
+- `src/lib/bootcamp/story-bank.ts` 新增 `updateParsedProfileProject`，按项目名更新 `role/description/outcomes`，不影响其他项目。
+- `PATCH /api/bootcamp/story-bank` 接收项目证据补充，更新 `bootcamp_sessions.parsed_profile` 后重新聚合并返回故事库。
+- `/bootcamp/story-bank` 项目详情右侧新增“补项目证据”表单，可编辑我的角色、项目描述、结果指标并保存。
+- 设计文档和 feature_list 同步标记故事库支持可编辑、可持久化。
+
+### 验证结果
+- TDD 红灯：新增领域测试先捕获缺少更新函数；API 测试先捕获缺少 PATCH；页面测试先捕获缺少保存交互。
+- `node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' 'src/app/(app)/bootcamp/page.test.mjs' src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/components/TopNav.test.mjs` 通过，14 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/bootcamp/story-bank.ts src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.ts src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.tsx' 'src/app/(app)/bootcamp/story-bank/page.test.mjs' 'src/app/(app)/bootcamp/page.tsx' 'src/app/(app)/bootcamp/page.test.mjs' src/lib/dashboard/training-command-center.ts src/lib/dashboard/training-command-center.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `git diff --check` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
+## [2026-07-07] Feature: 项目故事库 2 分钟讲述稿
+
+### 背景判断
+- 故事库已经能补充项目证据，但用户真正上面试时还需要一段可复述的结构化讲述稿。
+- 本轮继续不新增 schema，直接从项目描述、个人角色、结果指标和高质量 AI 改写派生讲述稿。
+
+### 完成内容
+- `ProjectStory` 增加 `interviewScript`，包含开场定位、我的角色、关键判断、结果证据、复盘升级和 `fullScript`。
+- `buildStoryBank` 为每个项目自动生成 2 分钟讲述稿；优先使用该项目的高分 AI 改写作为关键判断部分。
+- `/bootcamp/story-bank` 在“可讲版本”下方新增“2 分钟讲述稿”模块，按段落展示并提供“复制讲述稿”按钮。
+- 产品设计文档和 feature_list 同步记录讲述稿能力。
+
+### 验证结果
+- TDD 红灯：领域测试先捕获 `interviewScript` 缺失；页面测试先捕获“2 分钟讲述稿 / 复制讲述稿 / clipboard”缺失。
+- `node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' 'src/app/(app)/bootcamp/page.test.mjs' src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/components/TopNav.test.mjs` 通过，15 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/bootcamp/story-bank.ts src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.ts src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.tsx' 'src/app/(app)/bootcamp/story-bank/page.test.mjs' 'src/app/(app)/bootcamp/page.tsx' 'src/app/(app)/bootcamp/page.test.mjs' src/lib/dashboard/training-command-center.ts src/lib/dashboard/training-command-center.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，新增讲述稿 UI 与故事库 API 构建成功。
+- `git diff --check` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
