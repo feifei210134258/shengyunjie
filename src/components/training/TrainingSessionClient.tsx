@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -83,8 +83,13 @@ type QuestionState = {
   targetLabel?: string;
   profileFocus?: string;
   prescriptionId?: string;
+  draftAnswer?: string;
 };
-type AnswerState = { text: string; submitting: boolean };
+type AnswerState = {
+  text: string;
+  submitting: boolean;
+  draftStatus?: "idle" | "saving" | "saved" | "failed";
+};
 type NextPrescriptionState = {
   status: "loading" | "ready" | "saving" | "saved" | "failed";
   recommendation?: {
@@ -127,6 +132,13 @@ type StoredQuestion = {
   targetLabel?: string;
   profileFocus?: string;
   prescriptionId?: string;
+  draftAnswer?: string;
+};
+
+type ReadinessItem = {
+  id: string;
+  label: string;
+  matched: boolean;
 };
 
 function getPrescriptionAwareMissionPlan(
@@ -146,6 +158,32 @@ function getQuestionHint(question: QuestionState | undefined) {
   const hint = question?.hint?.trim();
   if (hint && hint.length >= 30) return hint;
   return null;
+}
+
+function getAnswerReadiness(answerText: string): ReadinessItem[] {
+  const text = answerText.trim();
+  return [
+    {
+      id: "judgment",
+      label: "先给判断",
+      matched: /(我会|我认为|结论|建议|不建议|优先|先|判断)/.test(text),
+    },
+    {
+      id: "evidence",
+      label: "补充依据",
+      matched: /(因为|依据|数据|用户|客户|现象|原因|信号|反馈)/.test(text),
+    },
+    {
+      id: "tradeoff",
+      label: "写出取舍",
+      matched: /(取舍|牺牲|风险|代价|暂不|不做|优先级|影响)/.test(text),
+    },
+    {
+      id: "validation",
+      label: "说明验证",
+      matched: /(指标|验证|观察|监控|复盘|回滚|护栏|转化|留存|A\/B)/i.test(text),
+    },
+  ];
 }
 
 function withDefaultTarget(question: QuestionState, mission: TrainingMission): QuestionState {
@@ -197,6 +235,8 @@ function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState 
     targetLabel: String(value.targetLabel || "").trim() || undefined,
     profileFocus: String(value.profileFocus || "").trim() || undefined,
     prescriptionId: String(value.prescriptionId || "").trim() || undefined,
+    draftAnswer:
+      typeof value.draftAnswer === "string" ? value.draftAnswer : undefined,
   };
 }
 
@@ -589,6 +629,9 @@ function A1BeforeSubmit({
   const isQuestionLoading = question?.loading || !question?.text;
   const answerText = answer?.text || "";
   const answerHint = getQuestionHint(question);
+  const readiness = getAnswerReadiness(answerText);
+  const readinessCount = readiness.filter((item) => item.matched).length;
+  const draftStatus = answer?.draftStatus || "idle";
 
   return (
     <Frame
@@ -710,6 +753,45 @@ function A1BeforeSubmit({
               className="min-h-[170px] w-full resize-none rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-sm leading-7 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               placeholder="写下你的思考..."
             />
+            <div className="mt-3 border-t border-line pt-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-label font-bold text-ink">
+                    作答质检 · {readinessCount}/4
+                  </p>
+                  <p className="mt-1 text-label font-semibold text-ink-muted">
+                    自动保存：
+                    {draftStatus === "saving"
+                      ? "保存中"
+                      : draftStatus === "saved"
+                        ? "已保存"
+                        : draftStatus === "failed"
+                          ? "保存失败"
+                          : "等待输入"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {readiness.map((item) => (
+                    <span
+                      key={item.id}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-label font-semibold",
+                        item.matched
+                          ? "bg-primary-soft text-primary"
+                          : "bg-[#F3F6FA] text-ink-muted"
+                      )}
+                    >
+                      {item.matched ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <X className="h-3.5 w-3.5" />
+                      )}
+                      {item.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
             <div className="mt-3 flex justify-end">
               <button
                 onClick={onSubmit}
@@ -1363,6 +1445,7 @@ export default function TrainingSessionClient() {
   const [, setRound] = useState(1);
   const [streamedText, setStreamedText] = useState("");
   const [initializing, setInitializing] = useState(true);
+  const lastSavedDraftRef = useRef<Record<string, string>>({});
 
   const question = questions[currentKey];
   const answer = answers[currentKey];
@@ -1508,7 +1591,27 @@ export default function TrainingSessionClient() {
         let nextPlan = prescriptionMissionPlan;
 
         if (Object.keys(restoredQuestions).length) {
+          const restoredAnswers = Object.fromEntries(
+            Object.entries(restoredQuestions)
+              .filter(([, restoredQuestion]) => restoredQuestion.draftAnswer)
+              .map(([key, restoredQuestion]) => {
+                const draftAnswer = restoredQuestion.draftAnswer || "";
+                lastSavedDraftRef.current[key] = draftAnswer;
+                return [
+                  key,
+                  {
+                    text: draftAnswer,
+                    submitting: false,
+                    draftStatus: "saved" as const,
+                  },
+                ];
+              })
+          ) as Record<string, AnswerState>;
+
           setQuestions((prev) => ({ ...restoredQuestions, ...prev }));
+          if (Object.keys(restoredAnswers).length) {
+            setAnswers((prev) => ({ ...restoredAnswers, ...prev }));
+          }
           nextPlan = getMissionPlanWithCachedQuestions(
             Object.keys(restoredQuestions),
             prescriptionMissionPlan
@@ -1553,10 +1656,81 @@ export default function TrainingSessionClient() {
     }
   }, [hasAnalysis]);
 
+  useEffect(() => {
+    const draftAnswer = answer?.text;
+    const q = question;
+
+    if (draftAnswer === undefined || !q?.text || q.loading) return;
+    if (draftAnswer === lastSavedDraftRef.current[currentKey]) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      fetch("/api/training/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dimension: currentKey,
+          question: {
+            text: q.text,
+            reason: q.reason,
+            hint: q.hint,
+            missionId: q.missionId,
+            dimension: q.dimension,
+            targetId: q.targetId,
+            targetLabel: q.targetLabel,
+            profileFocus: q.profileFocus,
+            prescriptionId: q.prescriptionId,
+            draftAnswer,
+          },
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error("答案草稿保存失败");
+          lastSavedDraftRef.current[currentKey] = draftAnswer;
+          setQuestions((prev) => ({
+            ...prev,
+            [currentKey]: {
+              ...(prev[currentKey] || q),
+              draftAnswer,
+            },
+          }));
+          setAnswers((prev) => {
+            if (prev[currentKey]?.text !== draftAnswer) return prev;
+            return {
+              ...prev,
+              [currentKey]: {
+                ...prev[currentKey],
+                text: prev[currentKey]?.text ?? draftAnswer,
+                submitting: prev[currentKey]?.submitting || false,
+                draftStatus: "saved",
+              },
+            };
+          });
+        })
+        .catch(() => {
+          setAnswers((prev) => {
+            if (prev[currentKey]?.text !== draftAnswer) return prev;
+            return {
+              ...prev,
+              [currentKey]: {
+                ...prev[currentKey],
+                text: prev[currentKey]?.text ?? draftAnswer,
+                submitting: prev[currentKey]?.submitting || false,
+                draftStatus: "failed",
+              },
+            };
+          });
+        });
+    }, 650);
+
+    return () => window.clearTimeout(timeout);
+  }, [answer?.text, currentKey, question]);
+
   const handleAnswerChange = (value: string) => {
     setAnswers((prev) => ({
       ...prev,
-      [currentKey]: { text: value, submitting: false },
+      [currentKey]: { text: value, submitting: false, draftStatus: "saving" },
     }));
   };
 
@@ -1567,7 +1741,11 @@ export default function TrainingSessionClient() {
 
     setAnswers((prev) => ({
       ...prev,
-      [currentKey]: { text: answerText, submitting: true },
+      [currentKey]: {
+        text: answerText,
+        submitting: true,
+        draftStatus: prev[currentKey]?.draftStatus,
+      },
     }));
     setAnalyses((prev) => ({
       ...prev,
@@ -1748,7 +1926,11 @@ export default function TrainingSessionClient() {
     } finally {
       setAnswers((prev) => ({
         ...prev,
-        [currentKey]: { text: answerText, submitting: false },
+        [currentKey]: {
+          text: answerText,
+          submitting: false,
+          draftStatus: prev[currentKey]?.draftStatus,
+        },
       }));
     }
   };
@@ -1854,8 +2036,8 @@ export default function TrainingSessionClient() {
     });
     setAnswers((prev) => ({
       ...prev,
-      [currentKey]: { text: "", submitting: false },
-      [nextKey]: { text: "", submitting: false },
+      [currentKey]: { text: "", submitting: false, draftStatus: "idle" },
+      [nextKey]: { text: "", submitting: false, draftStatus: "idle" },
     }));
     setAnalyses((prev) => ({
       ...prev,

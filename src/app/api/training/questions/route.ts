@@ -28,6 +28,12 @@ export async function POST(req: NextRequest) {
       .eq("session_date", today)
       .maybeSingle();
 
+    const existingQuestion = existing?.questions?.[dimension];
+    const previousQuestion =
+      existingQuestion && typeof existingQuestion === "object"
+        ? existingQuestion
+        : {};
+
     const mergedQuestions = {
       ...(existing?.questions || {}),
       [dimension]:
@@ -35,14 +41,30 @@ export async function POST(req: NextRequest) {
           ? questionText
           : {
               text: questionText,
-              reason: String(question?.reason || "").trim(),
-              hint: String(question?.hint || "").trim(),
-              missionId: String(question?.missionId || "").trim(),
-              dimension: String(question?.dimension || "").trim(),
-              targetId: String(question?.targetId || "").trim(),
-              targetLabel: String(question?.targetLabel || "").trim(),
-              profileFocus: String(question?.profileFocus || "").trim(),
-              prescriptionId: String(question?.prescriptionId || "").trim(),
+              reason: String(question?.reason ?? previousQuestion?.reason ?? "").trim(),
+              hint: String(question?.hint ?? previousQuestion?.hint ?? "").trim(),
+              missionId: String(
+                question?.missionId ?? previousQuestion?.missionId ?? ""
+              ).trim(),
+              dimension: String(
+                question?.dimension ?? previousQuestion?.dimension ?? ""
+              ).trim(),
+              targetId: String(
+                question?.targetId ?? previousQuestion?.targetId ?? ""
+              ).trim(),
+              targetLabel: String(
+                question?.targetLabel ?? previousQuestion?.targetLabel ?? ""
+              ).trim(),
+              profileFocus: String(
+                question?.profileFocus ?? previousQuestion?.profileFocus ?? ""
+              ).trim(),
+              prescriptionId: String(
+                question?.prescriptionId ?? previousQuestion?.prescriptionId ?? ""
+              ).trim(),
+              draftAnswer:
+                typeof question?.draftAnswer === "string"
+                  ? question.draftAnswer
+                  : String(previousQuestion?.draftAnswer || ""),
             },
     };
 

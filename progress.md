@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-07] 训练作答工作台：草稿恢复 + 作答质检
+
+### 完成内容
+- 训练作答输入会自动保存到当天 `training_sessions.questions[missionId].draftAnswer`，复用既有训练会话 JSON，不新增 schema。
+- 重新进入当天训练时，从 `/api/training/sessions` 读回题目缓存并恢复草稿答案，减少刷新或误退出导致的训练中断。
+- 提交前新增“作答质检”，实时检查回答是否覆盖判断、依据、取舍、验证四个高级 PM 表达要素；该检查只提示不拦截，保留低门槛训练体验。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/training/questions/route.test.mjs src/lib/training/session-progress.test.mjs` 先失败于缺少 `draftAnswer`、`作答质检`、`自动保存`。
+- 已通过：`node --test src/app/api/training/questions/route.test.mjs src/lib/training/session-progress.test.mjs feature_list.test.mjs`（15 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/app/api/training/questions/route.ts src/app/api/training/questions/route.test.mjs src/lib/training/session-progress.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析、`./init.sh`（10/10）。
+
 ## [2026-07-07] 训练反馈页闭环：下一轮处方
 
 ### 完成内容

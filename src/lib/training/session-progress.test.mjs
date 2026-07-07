@@ -136,3 +136,17 @@ test("training feedback fetches and can persist the next recommendation prescrip
   assert.match(source, /下一轮处方/);
   assert.match(source, /设为本周处方/);
 });
+
+test("training answer drafts are restored and saved to the daily question cache", () => {
+  const source = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /draftAnswer/);
+  assert.match(source, /setAnswers/);
+  assert.match(source, /作答质检/);
+  assert.match(source, /自动保存/);
+  assert.match(source, /draftStatus:\s*"saving"/);
+  assert.match(source, /\/api\/training\/questions/);
+});
