@@ -21,6 +21,28 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
   return calcStreakFromBeijingDates(dates, getBeijingDate());
 }
 
+function buildReviewQueue(records: any[] = []) {
+  return records
+    .map((record) => {
+      const revision = record.ai_feedback?.__revision;
+      const hasRevision =
+        revision && typeof revision.revisedAnswer === "string" && revision.revisedAnswer.trim();
+
+      return {
+        id: record.id,
+        dimension: record.dimension,
+        question_scenario: record.question_scenario,
+        score: record.score,
+        created_at: record.created_at,
+        needsRevision: !hasRevision,
+        revisionSavedAt:
+          revision && typeof revision.savedAt === "string" ? revision.savedAt : null,
+      };
+    })
+    .sort((a, b) => Number(b.needsRevision) - Number(a.needsRevision))
+    .slice(0, 4);
+}
+
 export async function GET() {
   try {
     const supabase = await createServerClient();
@@ -84,6 +106,7 @@ export async function GET() {
     });
 
     const streak = await calcStreak(supabase, user.id);
+    const reviewQueue = buildReviewQueue(recent || []);
 
     return NextResponse.json({
       totalCount: totalCount || 0,
@@ -92,6 +115,7 @@ export async function GET() {
       dimAverages,
       streak,
       recent,
+      reviewQueue,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "服务器错误" }, { status: 500 });

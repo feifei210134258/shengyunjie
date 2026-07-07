@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-07] 训练首页：复盘队列
+
+### 完成内容
+- `/api/training/stats` 从最近训练记录生成 `reviewQueue`，按是否缺少 `ai_feedback.__revision` 排序，优先暴露待二次修正的记录。
+- 训练首页新增“复盘队列”区块，把最近回答分成“待二次修正 / 修正版已沉淀”，直接跳转到对应复盘页继续修正。
+- 首页文案从“多刷题”改为“把反馈转成下一版表达”，让训练入口更贴近高级 PM 思维训练闭环。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/training/stats/route.test.mjs src/components/training/TrainingOverviewClient.test.mjs` 先失败于缺少 `reviewQueue`、`needsRevision`、`待二次修正` 和 `继续修正`。
+- 已通过：`node --test src/app/api/training/stats/route.test.mjs src/components/training/TrainingOverviewClient.test.mjs src/app/api/training/record/route.test.mjs src/lib/training/session-progress.test.mjs feature_list.test.mjs`（16 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/training/stats/route.ts src/app/api/training/stats/route.test.mjs src/components/training/TrainingOverviewClient.tsx src/components/training/TrainingOverviewClient.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析、`./init.sh`（10/10）。
+
 ## [2026-07-07] 复盘归档：读回二次修正版
 
 ### 完成内容

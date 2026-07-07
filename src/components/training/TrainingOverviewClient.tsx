@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Flame,
   ListChecks,
+  PenLine,
   Target,
 } from "lucide-react";
 
@@ -36,7 +37,20 @@ type TrainingStats = {
       source?: string;
       product?: string;
       next_practice?: string;
+      __revision?: {
+        revisedAnswer?: string;
+        savedAt?: string;
+      };
     } | null;
+    created_at: string;
+  }[];
+  reviewQueue?: {
+    id: string;
+    dimension: string;
+    question_scenario: string;
+    score: number | null;
+    needsRevision: boolean;
+    revisionSavedAt: string | null;
     created_at: string;
   }[];
 };
@@ -110,6 +124,7 @@ export default function TrainingPage() {
   const practicedDimensionCount = Object.values(stats?.dimStats ?? {}).filter(
     (count) => count > 0
   ).length;
+  const reviewQueue = stats?.reviewQueue ?? [];
 
   useEffect(() => {
     fetch("/api/training/stats")
@@ -231,6 +246,79 @@ export default function TrainingPage() {
             meta="已训练维度"
             icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
           />
+        </section>
+
+        <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+          <div className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-label font-bold text-primary">复盘队列</p>
+              <h3 className="mt-1 text-heading-md font-bold text-ink">
+                先把最近回答改成能复述的版本
+              </h3>
+              <p className="mt-1 max-w-2xl text-body-sm text-ink-muted">
+                训练不是多刷题，而是把反馈转成下一版表达。优先处理待二次修正的记录，再继续开新题。
+              </p>
+            </div>
+            <Link
+              href={TRAINING_SESSION_ROUTE}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98]"
+            >
+              开新题
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-4">
+            {reviewQueue.length > 0 ? (
+              reviewQueue.map((item) => {
+                const score10 =
+                  typeof item.score === "number"
+                    ? Math.round((item.score / 10) * 10) / 10
+                    : null;
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/training/history/${item.id}`}
+                    className="group flex min-h-[156px] flex-col justify-between rounded-lg border border-line bg-white p-4 transition hover:border-line-strong hover:bg-surface"
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-label font-bold ${
+                            item.needsRevision
+                              ? "bg-warning-soft text-warning"
+                              : "bg-primary-soft text-primary"
+                          }`}
+                        >
+                          {item.needsRevision ? "待二次修正" : "修正版已沉淀"}
+                        </span>
+                        {score10 != null && (
+                          <span className="rounded-md bg-surface px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
+                            {score10}/10
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-3 line-clamp-3 text-body-sm font-semibold leading-relaxed text-ink">
+                        {item.question_scenario.replace(/\n/g, " ").slice(0, 96)}
+                        {item.question_scenario.length > 96 ? "..." : ""}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-3 text-label font-bold">
+                      <span className="text-ink-muted">{item.dimension}</span>
+                      <span className="inline-flex items-center gap-1 text-primary group-hover:text-primary-hover">
+                        <PenLine className="h-3.5 w-3.5" />
+                        {item.needsRevision ? "继续修正" : "查看修正版"}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="col-span-full rounded-lg border border-dashed border-line bg-white px-4 py-6 text-center text-body-sm text-ink-muted">
+                完成一次训练后，这里会出现需要修正的复盘队列。
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Dimension coverage + Calendar + History */}
