@@ -89,6 +89,10 @@ type AnalysisState = {
   text: string;
   loading: boolean;
   evaluation?: TrainingEvaluation;
+  profileSync?: {
+    status: "syncing" | "saved" | "failed";
+    snapshotId?: string;
+  };
 };
 
 type DailySessionResponse = {
@@ -782,6 +786,7 @@ function A1AfterSubmit({
 }: RealTrainingProps) {
   const evaluation = analysis?.evaluation;
   const sections = extractSections(analysis?.text || "");
+  const profileSync = analysis?.profileSync;
 
   return (
     <Frame
@@ -852,6 +857,34 @@ function A1AfterSubmit({
                 </div>
               )}
             </div>
+
+            {profileSync && (
+              <section className="mt-5 rounded-xl border border-primary/10 bg-primary-soft/45 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-label font-bold text-primary">
+                      {profileSync.status === "saved"
+                        ? "画像已更新"
+                        : profileSync.status === "syncing"
+                          ? "画像更新中"
+                          : "画像更新失败"}
+                    </p>
+                    <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                      {profileSync.status === "saved"
+                        ? "本次训练反馈已沉淀为能力快照，下一次训练处方会读取这条新证据。"
+                        : profileSync.status === "syncing"
+                          ? "正在把本次训练记录写入能力证据账本。"
+                          : "AI 反馈已生成，但画像快照暂未写入；稍后可在工作台重新生成画像。"}
+                    </p>
+                  </div>
+                  {profileSync.status === "saved" && (
+                    <span className="rounded-md bg-white px-3 py-1.5 text-label font-semibold text-primary">
+                      证据账本 +1
+                    </span>
+                  )}
+                </div>
+              </section>
+            )}
 
             <div className="mt-5 flex items-center justify-between gap-3">
               <button
@@ -1525,10 +1558,11 @@ export default function TrainingSessionClient() {
           text: fullText,
           loading: false,
           evaluation: evaluation || undefined,
+          profileSync: { status: "syncing" },
         },
       }));
 
-      await fetch("/api/training/record", {
+      const recordResponse = await fetch("/api/training/record", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1539,12 +1573,46 @@ export default function TrainingSessionClient() {
           score: extractedScore,
         }),
       });
+      if (!recordResponse.ok) throw new Error("训练记录保存失败");
+      const recordResult = await recordResponse.json();
+
+      const profileResponse = await fetch("/api/profile/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trigger: "training_feedback",
+          trainingRecordId: recordResult?.id,
+          dimension: currentDim,
+          missionId: currentMission?.id,
+          score: extractedScore,
+        }),
+      });
+      if (!profileResponse.ok) throw new Error("画像快照保存失败");
+      const profileResult = await profileResponse.json();
+
+      setAnalyses((prev) => ({
+        ...prev,
+        [currentKey]: {
+          ...(prev[currentKey] || { text: fullText, loading: false }),
+          text: fullText,
+          loading: false,
+          evaluation: evaluation || undefined,
+          profileSync: {
+            status: "saved",
+            snapshotId: profileResult?.snapshot?.id,
+          },
+        },
+      }));
     } catch {
       setAnalyses((prev) => ({
         ...prev,
         [currentKey]: {
-          text: "AI 分析暂时不可用，请稍后再试。",
+          text: prev[currentKey]?.text || "AI 分析暂时不可用，请稍后再试。",
           loading: false,
+          evaluation: prev[currentKey]?.evaluation,
+          profileSync: prev[currentKey]?.text
+            ? { status: "failed" }
+            : prev[currentKey]?.profileSync,
         },
       }));
     } finally {

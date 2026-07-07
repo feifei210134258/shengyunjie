@@ -48,7 +48,10 @@ test("daily training order rotates so the first question is not always strategic
 });
 
 function extractFunctionBody(source, functionName) {
-  const marker = `const ${functionName} = () => {`;
+  const marker =
+    source.includes(`const ${functionName} = async () => {`)
+      ? `const ${functionName} = async () => {`
+      : `const ${functionName} = () => {`;
   const start = source.indexOf(marker);
   assert.notEqual(start, -1, `${functionName} should exist`);
 
@@ -102,4 +105,18 @@ test("training session can start from dashboard prescription focus", () => {
   assert.match(source, /getTrainingMissionForProfileFocus/);
   assert.match(source, /处方训练/);
   assert.match(source, /profileFocus/);
+});
+
+test("training feedback persists a growth snapshot for the profile loop", () => {
+  const source = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+  const submitBody = extractFunctionBody(source, "handleSubmit");
+
+  assert.match(submitBody, /\/api\/training\/record/);
+  assert.match(submitBody, /\/api\/profile\/summary/);
+  assert.match(submitBody, /training_feedback/);
+  assert.match(submitBody, /trainingRecordId/);
+  assert.match(source, /画像已更新/);
 });

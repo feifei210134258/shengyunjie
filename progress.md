@@ -1371,3 +1371,26 @@
 - `git diff --check` 通过。
 - `feature_list.json` JSON 解析通过。
 - `./init.sh` 通过，环境健康检查 10/10。
+
+## [2026-07-07] Feature: 训练反馈自动更新画像
+
+### 背景判断
+- 上一轮已经把 Dashboard 处方带进训练页，但用户提交答案后，AI 反馈仍然主要停留在训练记录里。
+- 从第一性原理看，产品思维提升的关键闭环是：一次回答产生证据，证据更新画像，画像再驱动下一次处方。
+
+### 完成内容
+- `/api/profile/summary` 的 `POST` 支持接收 `trigger=training_feedback`、`trainingRecordId`、`dimension`、`missionId` 和 `score`。
+- 画像快照继续写入既有 `growth_snapshots`，并把触发元数据保存到 `dimension_scores.__trigger`，不新增 schema。
+- `/training/session` 在 AI 分析完成并写入 `training_records` 后，自动调用 `POST /api/profile/summary` 创建画像快照。
+- 反馈页新增画像同步状态：画像更新中、画像已更新、画像更新失败。
+
+### 验证结果
+- TDD 红灯：新增 profile summary API 源测试和训练页源测试，先捕获缺少 `training_feedback/__trigger`、缺少 `/api/profile/summary` 调用和缺少“画像已更新”状态。
+- `node --test src/app/api/profile/summary/route.test.mjs src/lib/training/session-progress.test.mjs` 通过，11 项。
+- `node --test src/app/api/profile/summary/route.test.mjs src/lib/training/session-progress.test.mjs src/lib/training/training-missions.test.mjs src/app/api/train/route.test.mjs src/app/api/training/questions/route.test.mjs feature_list.test.mjs` 通过，29 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/profile/summary/route.ts src/app/api/profile/summary/route.test.mjs src/components/training/TrainingSessionClient.tsx src/lib/training/session-progress.test.mjs feature_list.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，`/training/session` 保持动态路由。
+- `git diff --check` 通过。
+- `feature_list.json` JSON 解析通过。
+- `./init.sh` 通过，环境健康检查 10/10。

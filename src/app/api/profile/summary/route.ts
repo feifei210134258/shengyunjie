@@ -2,6 +2,23 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 import { buildGrowthProfile } from "@/lib/profile/growth-profile";
 
+async function readSnapshotTrigger(req?: Request) {
+  if (!req) return null;
+  try {
+    const body = await req.json();
+    if (body?.trigger !== "training_feedback") return null;
+    return {
+      trigger: "training_feedback",
+      trainingRecordId: String(body.trainingRecordId || "").trim(),
+      dimension: String(body.dimension || "").trim(),
+      missionId: String(body.missionId || "").trim(),
+      score: Number.isFinite(Number(body.score)) ? Number(body.score) : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function loadGrowthProfile(supabase: any, userId: string) {
   const { data: latestReport, error: reportError } = await supabase
     .from("diagnosis_reports")
@@ -81,7 +98,7 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
     const supabase = await createServerClient();
     const {
@@ -99,12 +116,19 @@ export async function POST() {
         dimension.score,
       ])
     );
+    const trigger = await readSnapshotTrigger(req);
+    const snapshotDimensionScores = trigger
+      ? {
+          ...dimensionScores,
+          __trigger: trigger,
+        }
+      : dimensionScores;
 
     const { data: snapshot, error: insertError } = await supabase
       .from("growth_snapshots")
       .insert({
         user_id: user.id,
-        dimension_scores: dimensionScores,
+        dimension_scores: snapshotDimensionScores,
         overall_score: growthProfile.summary.overallScore,
         training_count: growthProfile.summary.evidenceCount,
       })

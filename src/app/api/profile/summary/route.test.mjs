@@ -19,3 +19,9 @@ test("profile summary API can persist a current growth snapshot", () => {
   assert.match(source, /dimension_scores/);
   assert.match(source, /training_count/);
 });
+
+test("profile summary API can tag snapshots created from training feedback", () => {
+  assert.match(source, /training_feedback/);
+  assert.match(source, /__trigger/);
+  assert.match(source, /trainingRecordId/);
+});
