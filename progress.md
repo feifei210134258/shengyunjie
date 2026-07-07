@@ -1,5 +1,20 @@
 # 会话进度日志
 
+## [2026-07-07] 训练反馈页闭环：下一轮处方
+
+### 完成内容
+- 在训练反馈页补上“下一轮处方”：训练记录保存并写入画像快照后，前端立即读取 `/api/profile/recommendation`，展示基于最新证据生成的下一步训练建议。
+- 在反馈页新增“设为本周处方”动作，复用既有 `POST /api/profile/recommendation` 写入 `growth_snapshots.dimension_scores.__recommendation`，不新增 schema。
+- 保留画像同步状态：画像保存成功与下一轮处方生成失败互不覆盖，避免因为推荐接口失败误判训练记录或画像快照失败。
+
+### 验证记录
+- TDD 红灯：`node --test src/lib/training/session-progress.test.mjs` 先失败于 `handleSelectNextPrescription should exist`。
+- 已通过：`node --test src/lib/training/session-progress.test.mjs src/app/api/profile/recommendation/route.test.mjs src/app/api/profile/summary/route.test.mjs feature_list.test.mjs`（16 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/lib/training/session-progress.test.mjs src/app/api/profile/recommendation/route.ts src/app/api/profile/summary/route.ts --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析。
+- 已通过：`./init.sh`（10/10）。
+
 ## 当前状态 / Current State
 
 **Last Updated:** 2026-05-28

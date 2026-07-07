@@ -120,3 +120,19 @@ test("training feedback persists a growth snapshot for the profile loop", () => 
   assert.match(submitBody, /trainingRecordId/);
   assert.match(source, /画像已更新/);
 });
+
+test("training feedback fetches and can persist the next recommendation prescription", () => {
+  const source = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+  const submitBody = extractFunctionBody(source, "handleSubmit");
+  const selectBody = extractFunctionBody(source, "handleSelectNextPrescription");
+
+  assert.match(submitBody, /\/api\/profile\/recommendation/);
+  assert.match(submitBody, /nextPrescription/);
+  assert.match(selectBody, /\/api\/profile\/recommendation/);
+  assert.match(selectBody, /recommendationId/);
+  assert.match(source, /下一轮处方/);
+  assert.match(source, /设为本周处方/);
+});

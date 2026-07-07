@@ -128,6 +128,7 @@
 - Dashboard 在能力证据账本下方展示“训练处方”，用户可以直接开始训练、进入模拟面试或把某条建议设为本周处方。
 - 今日训练处方链接会携带 `focus` 进入 `/training/session`，训练页把画像维度映射为具体高阶 PM 任务（如资源排期、平台抽象、增长诊断），并把 `profileFocus/prescriptionId` 与题目一起写入 `training_sessions.questions`，刷新后可读回。
 - 训练页完成 AI 反馈并写入 `training_records` 后，会自动调用 `POST /api/profile/summary` 创建 `growth_snapshots` 快照；快照的 `dimension_scores.__trigger` 标记来源为 `training_feedback`，让下一轮 Dashboard 推荐能读取最新训练证据。
+- 画像快照保存成功后，训练反馈页会立即读取 `GET /api/profile/recommendation`，展示基于新证据生成的“下一轮处方”；用户可直接在反馈页调用 `POST /api/profile/recommendation` 把该处方设为本周处方，形成“反馈 → 画像 → 推荐 → 下一题”的闭环。
 
 ---
 

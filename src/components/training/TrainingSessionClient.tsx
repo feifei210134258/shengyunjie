@@ -85,6 +85,18 @@ type QuestionState = {
   prescriptionId?: string;
 };
 type AnswerState = { text: string; submitting: boolean };
+type NextPrescriptionState = {
+  status: "loading" | "ready" | "saving" | "saved" | "failed";
+  recommendation?: {
+    id: string;
+    title: string;
+    reason: string;
+    href: string;
+    cta: string;
+    targetDimension: string;
+    evidence: string;
+  };
+};
 type AnalysisState = {
   text: string;
   loading: boolean;
@@ -93,6 +105,7 @@ type AnalysisState = {
     status: "syncing" | "saved" | "failed";
     snapshotId?: string;
   };
+  nextPrescription?: NextPrescriptionState;
 };
 
 type DailySessionResponse = {
@@ -203,6 +216,7 @@ interface RealTrainingProps {
   onRegenerate: () => void;
   onRestart: () => void;
   onFinish: () => void;
+  onSelectNextPrescription: () => Promise<void>;
 }
 
 function MiniProgress({
@@ -783,10 +797,13 @@ function A1AfterSubmit({
   onNext,
   onRestart,
   onFinish,
+  onSelectNextPrescription,
 }: RealTrainingProps) {
   const evaluation = analysis?.evaluation;
   const sections = extractSections(analysis?.text || "");
   const profileSync = analysis?.profileSync;
+  const nextPrescription = analysis?.nextPrescription;
+  const recommendation = nextPrescription?.recommendation;
 
   return (
     <Frame
@@ -881,6 +898,60 @@ function A1AfterSubmit({
                     <span className="rounded-md bg-white px-3 py-1.5 text-label font-semibold text-primary">
                       证据账本 +1
                     </span>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {nextPrescription && (
+              <section className="mt-4 rounded-xl border border-line bg-[#F8FAFC] px-4 py-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-label font-bold text-primary">
+                      下一轮处方
+                    </p>
+                    {nextPrescription.status === "loading" ? (
+                      <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                        正在读取最新画像，生成下一道最值得练的任务。
+                      </p>
+                    ) : nextPrescription.status === "failed" ? (
+                      <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                        本次反馈已保存，但下一轮处方暂时生成失败；稍后可回到工作台查看。
+                      </p>
+                    ) : recommendation ? (
+                      <>
+                        <h3 className="mt-2 text-heading-sm font-bold text-ink">
+                          {recommendation.title}
+                        </h3>
+                        <p className="mt-2 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
+                          {recommendation.reason}
+                        </p>
+                        <p className="mt-2 text-label font-semibold text-ink-muted">
+                          {recommendation.evidence}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                        暂无可用处方。完成更多诊断或训练后，系统会给出下一步。
+                      </p>
+                    )}
+                  </div>
+                  {recommendation && (
+                    <button
+                      onClick={onSelectNextPrescription}
+                      disabled={
+                        nextPrescription.status === "saving" ||
+                        nextPrescription.status === "saved"
+                      }
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-ink px-4 text-label font-bold text-white transition-all hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
+                    >
+                      <Check className="h-4 w-4" />
+                      {nextPrescription.status === "saving"
+                        ? "保存中"
+                        : nextPrescription.status === "saved"
+                          ? "已设为本周处方"
+                          : "设为本周处方"}
+                    </button>
                   )}
                 </div>
               </section>
@@ -1601,8 +1672,67 @@ export default function TrainingSessionClient() {
             status: "saved",
             snapshotId: profileResult?.snapshot?.id,
           },
+          nextPrescription: { status: "loading" },
         },
       }));
+
+      try {
+        const recommendationResponse = await fetch("/api/profile/recommendation");
+        if (!recommendationResponse.ok) {
+          throw new Error("下一轮处方生成失败");
+        }
+        const recommendationResult = await recommendationResponse.json();
+        const nextRecommendation =
+          recommendationResult?.recommendationPlan?.recommendations?.[0];
+
+        setAnalyses((prev) => ({
+          ...prev,
+          [currentKey]: {
+            ...(prev[currentKey] || { text: fullText, loading: false }),
+            text: fullText,
+            loading: false,
+            evaluation: evaluation || undefined,
+            profileSync: {
+              status: "saved",
+              snapshotId: profileResult?.snapshot?.id,
+            },
+            nextPrescription: nextRecommendation
+              ? {
+                  status: "ready",
+                  recommendation: {
+                    id: String(nextRecommendation.id || ""),
+                    title: String(nextRecommendation.title || "继续训练"),
+                    reason: String(
+                      nextRecommendation.reason ||
+                        "基于最新画像继续补强薄弱能力。"
+                    ),
+                    href: String(nextRecommendation.href || "/training/session"),
+                    cta: String(nextRecommendation.cta || "开始训练"),
+                    targetDimension: String(
+                      nextRecommendation.targetDimension || currentDim
+                    ),
+                    evidence: String(nextRecommendation.evidence || "最新画像证据"),
+                  },
+                }
+              : { status: "failed" },
+          },
+        }));
+      } catch {
+        setAnalyses((prev) => ({
+          ...prev,
+          [currentKey]: {
+            ...(prev[currentKey] || { text: fullText, loading: false }),
+            text: fullText,
+            loading: false,
+            evaluation: evaluation || undefined,
+            profileSync: {
+              status: "saved",
+              snapshotId: profileResult?.snapshot?.id,
+            },
+            nextPrescription: { status: "failed" },
+          },
+        }));
+      }
     } catch {
       setAnalyses((prev) => ({
         ...prev,
@@ -1620,6 +1750,66 @@ export default function TrainingSessionClient() {
         ...prev,
         [currentKey]: { text: answerText, submitting: false },
       }));
+    }
+  };
+
+  const handleSelectNextPrescription = async () => {
+    const recommendationId =
+      analyses[currentKey]?.nextPrescription?.recommendation?.id || "";
+    if (!recommendationId) return;
+
+    setAnalyses((prev) => {
+      const current = prev[currentKey];
+      if (!current?.nextPrescription?.recommendation) return prev;
+      return {
+        ...prev,
+        [currentKey]: {
+          ...current,
+          nextPrescription: {
+            ...current.nextPrescription,
+            status: "saving",
+          },
+        },
+      };
+    });
+
+    try {
+      const response = await fetch("/api/profile/recommendation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recommendationId }),
+      });
+      if (!response.ok) throw new Error("训练处方保存失败");
+
+      setAnalyses((prev) => {
+        const current = prev[currentKey];
+        if (!current?.nextPrescription?.recommendation) return prev;
+        return {
+          ...prev,
+          [currentKey]: {
+            ...current,
+            nextPrescription: {
+              ...current.nextPrescription,
+              status: "saved",
+            },
+          },
+        };
+      });
+    } catch {
+      setAnalyses((prev) => {
+        const current = prev[currentKey];
+        if (!current?.nextPrescription?.recommendation) return prev;
+        return {
+          ...prev,
+          [currentKey]: {
+            ...current,
+            nextPrescription: {
+              ...current.nextPrescription,
+              status: "ready",
+            },
+          },
+        };
+      });
     }
   };
 
@@ -1704,6 +1894,7 @@ export default function TrainingSessionClient() {
     onRegenerate: handleRegenerate,
     onRestart: handleRestart,
     onFinish: () => router.push("/training"),
+    onSelectNextPrescription: handleSelectNextPrescription,
   };
 
   return (
