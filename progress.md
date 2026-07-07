@@ -1,5 +1,21 @@
 # 会话进度日志
 
+## [2026-07-07] 复盘归档：读回二次修正版
+
+### 完成内容
+- 历史复盘页读取 `training_records.ai_feedback.__revision`，在原回答下方展示“二次修正 / 修正版”。
+- 修正版展示保存时间，帮助用户区分首次作答、AI 反馈和反馈后的二次表达。
+- 复用既有 `/api/training/history/[id]` 读记录接口，不新增 schema 或 API。
+
+### 验证记录
+- TDD 红灯：`node 'src/app/(app)/training/history/[id]/page.test.mjs'` 先失败于缺少 `__revision`、`二次修正`、`修正版` 和 `revisedAnswer`。
+- 已通过：`node 'src/app/(app)/training/history/[id]/page.test.mjs'`。
+- 已通过：`node --test src/app/api/training/record/route.test.mjs src/lib/training/session-progress.test.mjs feature_list.test.mjs`（14 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/training/history/[id]/page.tsx' 'src/app/(app)/training/history/[id]/page.test.mjs' --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`。
+- 已通过：`git diff --check`、`feature_list.json` JSON 解析、`./init.sh`（10/10）。
+
 ## [2026-07-07] 训练反馈页：二次修正落库
 
 ### 完成内容

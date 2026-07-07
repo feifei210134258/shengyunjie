@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageSpinner } from "@/components/ui/spinner";
 import TrainingEvaluationPanel from "@/components/training/TrainingEvaluationPanel";
 import { normalizeTrainingEvaluation } from "@/lib/training/personalization";
-import { Sparkles, Activity, Lightbulb, BookOpen, FileCheck2, Target } from "lucide-react";
+import { Sparkles, Activity, Lightbulb, BookOpen, FileCheck2, Target, PenLine } from "lucide-react";
 
 export default function HistoryDetailPage() {
   const params = useParams();
@@ -55,6 +55,13 @@ export default function HistoryDetailPage() {
   const isCaseSimulation = record.ai_feedback?.source === "case_simulation";
   const sourceLabel = isCaseSimulation ? "案例推演" : "日常训练";
   const productName = record.ai_feedback?.product;
+  const revision = record.ai_feedback?.__revision;
+  const revisedAnswer =
+    revision && typeof revision.revisedAnswer === "string"
+      ? revision.revisedAnswer
+      : "";
+  const revisionSavedAt =
+    revision && typeof revision.savedAt === "string" ? revision.savedAt : "";
 
   const extractSections = (text: string) => {
     const diagnosisMatch = text.match(
@@ -149,6 +156,30 @@ export default function HistoryDetailPage() {
               {record.user_answer}
             </div>
           </Card>
+
+          {revisedAnswer && (
+            <Card size="md" className="border-primary-muted bg-primary-soft/50">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-label font-bold text-primary">
+                  <PenLine className="h-4 w-4" />
+                  二次修正
+                </div>
+                {revisionSavedAt && (
+                  <span className="text-label font-semibold text-ink-muted">
+                    {new Date(revisionSavedAt).toLocaleString("zh-CN", {
+                      hour12: false,
+                    })}
+                  </span>
+                )}
+              </div>
+              <p className="mb-3 text-body-sm font-semibold text-ink-muted">
+                修正版
+              </p>
+              <div className="whitespace-pre-wrap rounded-lg border border-primary-muted bg-white/80 p-4 text-body-md leading-relaxed text-ink">
+                {revisedAnswer}
+              </div>
+            </Card>
+          )}
           </div>
 
           {/* AI analysis */}
