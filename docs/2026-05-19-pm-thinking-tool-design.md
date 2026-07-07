@@ -130,6 +130,7 @@
 - 训练页作答区会把用户草稿保存到当天 `training_sessions.questions[missionId].draftAnswer`，刷新或重新进入当天训练时恢复答案；提交前展示“判断、依据、取舍、验证”四项作答质检，帮助用户把回答从直觉表达拉回高级 PM 的结构化表达。
 - AI 反馈页提供“二次修正”输入，用户可基于反馈当场重写关键答案；`PATCH /api/training/record` 会把修正内容写入 `training_records.ai_feedback.__revision`，历史复盘页会读回原回答、AI 反馈和用户修正版。
 - 训练首页通过 `/api/training/stats` 读取最近训练记录，生成“复盘队列”：优先展示还没有二次修正的记录，引导用户先把反馈改成能复述的版本，再继续开新题。
+- 用户保存二次修正后，前端会再次调用 `POST /api/profile/summary` 创建画像快照，`dimension_scores.__trigger` 标记为 `revision_saved`，把复盘行为纳入能力证据账本。
 - 训练页完成 AI 反馈并写入 `training_records` 后，会自动调用 `POST /api/profile/summary` 创建 `growth_snapshots` 快照；快照的 `dimension_scores.__trigger` 标记来源为 `training_feedback`，让下一轮 Dashboard 推荐能读取最新训练证据。
 - 画像快照保存成功后，训练反馈页会立即读取 `GET /api/profile/recommendation`，展示基于新证据生成的“下一轮处方”；用户可直接在反馈页调用 `POST /api/profile/recommendation` 把该处方设为本周处方，形成“反馈 → 画像 → 推荐 → 下一题”的闭环。
 

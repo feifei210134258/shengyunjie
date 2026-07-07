@@ -25,3 +25,8 @@ test("profile summary API can tag snapshots created from training feedback", () 
   assert.match(source, /__trigger/);
   assert.match(source, /trainingRecordId/);
 });
+
+test("profile summary API can tag snapshots created from saved revisions", () => {
+  assert.match(source, /revision_saved/);
+  assert.match(source, /revisedAnswer/);
+});

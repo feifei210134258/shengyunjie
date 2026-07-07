@@ -6,13 +6,19 @@ async function readSnapshotTrigger(req?: Request) {
   if (!req) return null;
   try {
     const body = await req.json();
-    if (body?.trigger !== "training_feedback") return null;
+    const triggerType = String(body?.trigger || "");
+    if (!["training_feedback", "revision_saved"].includes(triggerType)) {
+      return null;
+    }
+    const revisedAnswer = String(body.revisedAnswer || "").trim();
     return {
-      trigger: "training_feedback",
+      trigger: triggerType,
       trainingRecordId: String(body.trainingRecordId || "").trim(),
       dimension: String(body.dimension || "").trim(),
       missionId: String(body.missionId || "").trim(),
       score: Number.isFinite(Number(body.score)) ? Number(body.score) : null,
+      revisedAnswer:
+        triggerType === "revision_saved" ? revisedAnswer.slice(0, 600) : "",
     };
   } catch {
     return null;

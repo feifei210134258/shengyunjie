@@ -1,5 +1,20 @@
 # 会话进度日志
 
+## [2026-07-07] 二次修正：同步进入画像证据账本
+
+### 完成内容
+- `POST /api/profile/summary` 支持 `revision_saved` 触发来源，会把训练记录 ID、维度和修正答案摘要写入 `growth_snapshots.dimension_scores.__trigger`。
+- 训练反馈页保存二次修正后，会继续调用画像快照接口；保存成功时提示“二次修正已进入能力证据账本”。
+- 历史复盘页从复盘队列保存二次修正后，也会创建画像快照，保证“反馈 → 修正 → 画像 → 推荐”闭环不只发生在首次提交时。
+- 产品设计文档补充二次修正进入画像账本的数据流。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/profile/summary/route.test.mjs src/lib/training/session-progress.test.mjs && node 'src/app/(app)/training/history/[id]/page.test.mjs'` 先失败于缺少 `revision_saved`、`/api/profile/summary` 和“二次修正已进入能力证据账本”。
+- 已通过：`node --test src/app/api/profile/summary/route.test.mjs src/lib/training/session-progress.test.mjs && node 'src/app/(app)/training/history/[id]/page.test.mjs'`（19 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/profile/summary/route.ts src/app/api/profile/summary/route.test.mjs src/components/training/TrainingSessionClient.tsx src/lib/training/session-progress.test.mjs 'src/app/(app)/training/history/[id]/page.tsx' 'src/app/(app)/training/history/[id]/page.test.mjs' --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析。
+
 ## [2026-07-07] 复盘归档：队列直达二次修正
 
 ### 完成内容

@@ -106,6 +106,7 @@ type RevisionState = {
   text: string;
   status: "idle" | "saving" | "saved" | "failed";
   savedAt?: string;
+  profileStatus?: "idle" | "syncing" | "saved" | "failed";
 };
 type AnalysisState = {
   text: string;
@@ -1035,11 +1036,15 @@ function A1AfterSubmit({
               />
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-label font-semibold text-ink-muted">
-                  {revision.savedAt
-                    ? `最近保存：${new Date(revision.savedAt).toLocaleString("zh-CN", {
-                        hour12: false,
-                      })}`
-                    : "修正会写入本题训练记录"}
+                  {revision.profileStatus === "saved"
+                    ? "二次修正已进入能力证据账本"
+                    : revision.profileStatus === "failed"
+                      ? "修正已保存，画像证据稍后可刷新"
+                      : revision.savedAt
+                        ? `最近保存：${new Date(revision.savedAt).toLocaleString("zh-CN", {
+                            hour12: false,
+                          })}`
+                        : "修正会写入本题训练记录"}
                 </p>
                 <button
                   onClick={onSaveRevision}
@@ -2128,6 +2133,24 @@ export default function TrainingSessionClient() {
       if (!response.ok) throw new Error("二次修正保存失败");
       const result = await response.json();
 
+      let revisionProfileStatus: RevisionState["profileStatus"] = "syncing";
+      try {
+        const profileResponse = await fetch("/api/profile/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            trigger: "revision_saved",
+            trainingRecordId: recordId,
+            dimension: question?.dimension || currentDim,
+            missionId: currentMission?.id,
+            revisedAnswer,
+          }),
+        });
+        revisionProfileStatus = profileResponse.ok ? "saved" : "failed";
+      } catch {
+        revisionProfileStatus = "failed";
+      }
+
       setAnalyses((prev) => {
         const currentAnalysis = prev[currentKey];
         if (!currentAnalysis) return prev;
@@ -2139,6 +2162,7 @@ export default function TrainingSessionClient() {
               text: revisedAnswer,
               status: "saved",
               savedAt: result?.revision?.savedAt,
+              profileStatus: revisionProfileStatus,
             },
           },
         };

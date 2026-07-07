@@ -24,6 +24,9 @@ export default function HistoryDetailPage() {
   const [revisionStatus, setRevisionStatus] = useState<
     "idle" | "saving" | "saved" | "failed"
   >("idle");
+  const [revisionProfileStatus, setRevisionProfileStatus] = useState<
+    "idle" | "syncing" | "saved" | "failed"
+  >("idle");
   const revisionEditorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -104,6 +107,22 @@ export default function HistoryDetailPage() {
         revisedAnswer: nextRevision,
         savedAt: new Date().toISOString(),
       };
+      setRevisionProfileStatus("syncing");
+      try {
+        const profileResponse = await fetch("/api/profile/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            trigger: "revision_saved",
+            trainingRecordId: id,
+            dimension: record.dimension,
+            revisedAnswer: nextRevision,
+          }),
+        });
+        setRevisionProfileStatus(profileResponse.ok ? "saved" : "failed");
+      } catch {
+        setRevisionProfileStatus("failed");
+      }
       setRecord((current: any) => ({
         ...current,
         ai_feedback: {
@@ -225,7 +244,9 @@ export default function HistoryDetailPage() {
                   {revisionStatus === "saving"
                     ? "保存中"
                     : revisionStatus === "saved"
-                      ? "已保存"
+                      ? revisionProfileStatus === "saved"
+                        ? "已进证据账本"
+                        : "已保存"
                       : revisionStatus === "failed"
                         ? "保存失败"
                         : revisionSavedAt
@@ -250,7 +271,11 @@ export default function HistoryDetailPage() {
               />
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-label font-semibold text-ink-muted">
-                  从复盘队列进入时，先补这一版，再继续开新题。
+                  {revisionProfileStatus === "saved"
+                    ? "二次修正已进入能力证据账本"
+                    : revisionProfileStatus === "failed"
+                      ? "修正已保存，画像证据稍后可刷新"
+                      : "从复盘队列进入时，先补这一版，再继续开新题。"}
                 </p>
                 <button
                   onClick={handleSaveRevision}

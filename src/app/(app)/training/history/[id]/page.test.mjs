@@ -21,3 +21,9 @@ test("training history can save a second-pass revision from the review queue", (
   assert.match(source, /\/api\/training\/record/);
   assert.match(source, /保存二次修正/);
 });
+
+test("training history saves a profile snapshot after revision", () => {
+  assert.match(source, /\/api\/profile\/summary/);
+  assert.match(source, /revision_saved/);
+  assert.match(source, /二次修正已进入能力证据账本/);
+});

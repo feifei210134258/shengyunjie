@@ -163,3 +163,16 @@ test("training feedback supports saving a second-pass revised answer", () => {
   assert.match(source, /method:\s*"PATCH"/);
   assert.match(source, /\/api\/training\/record/);
 });
+
+test("saving a second-pass revision updates the growth profile evidence ledger", () => {
+  const source = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+  const revisionBody = extractFunctionBody(source, "handleSaveRevision");
+
+  assert.match(revisionBody, /\/api\/profile\/summary/);
+  assert.match(revisionBody, /revision_saved/);
+  assert.match(revisionBody, /revisedAnswer/);
+  assert.match(source, /二次修正已进入能力证据账本/);
+});
