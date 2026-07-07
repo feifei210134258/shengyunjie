@@ -1325,3 +1325,26 @@
 - `git diff --check` 通过。
 - `feature_list.json` JSON 解析通过。
 - `./init.sh` 通过，环境健康检查 10/10。
+
+## [2026-07-07] Feature: 用户画像引擎 — 个性化训练处方
+
+### 背景判断
+- 画像证据账本已经能说明“我现在是什么状态”，但用户还需要系统把状态翻译成下一步行动。
+- 从第一性原理看，推荐不是一个泛泛 CTA，而是基于证据的处方：今天练什么、面试补哪类证据、最近反馈如何复盘。
+
+### 完成内容
+- 新增 `src/lib/profile/recommendation.ts`，基于 `growthProfile` 的最弱维度、面试就绪度、证据数和当前焦点生成三条处方：训练、面试、复盘。
+- 新增 `GET /api/profile/recommendation`，从 `diagnosis_reports`、`training_records`、`bootcamp_interviews`、`growth_snapshots` 构建推荐计划。
+- 新增 `POST /api/profile/recommendation`，用户选择推荐后写入 `growth_snapshots.dimension_scores.__recommendation`，形成可读回的处方快照；不新增 schema。
+- `/api/dashboard` 返回 `recommendationPlan`，Dashboard 新增“训练处方”模块，支持“设为本周处方”并调用推荐 API 持久化。
+- 产品设计文档和 feature_list 同步标记 `profile-002` 完成。
+
+### 验证结果
+- TDD 红灯：新增推荐引擎测试、推荐 API 源测试、Dashboard 源测试和 feature_list 状态测试，先捕获缺少推荐引擎、缺少 API、Dashboard 无训练处方、profile-002 未完成。
+- `node --test src/lib/profile/growth-profile.test.mjs src/lib/profile/recommendation.test.mjs src/app/api/profile/summary/route.test.mjs src/app/api/profile/recommendation/route.test.mjs feature_list.test.mjs src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' 'src/app/(app)/bootcamp/page.test.mjs' src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/components/TopNav.test.mjs` 通过，25 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/profile/recommendation.ts src/lib/profile/recommendation.test.mjs src/app/api/profile/recommendation/route.ts src/app/api/profile/recommendation/route.test.mjs 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，新增 `/api/profile/recommendation` 路由出现在构建结果中。
+- `git diff --check` 通过。
+- `feature_list.json` JSON 解析通过。
+- `./init.sh` 通过，环境健康检查 10/10。

@@ -14,6 +14,7 @@ import {
   ArrowRight,
   BookOpen,
   Brain,
+  CheckCircle2,
   ClipboardCheck,
   Dumbbell,
   FileCheck2,
@@ -51,6 +52,7 @@ export interface DashboardData {
     weaknesses: string[];
   } | null;
   growthProfile?: GrowthProfile;
+  recommendationPlan?: RecommendationPlan;
   commandCenter?: {
     primary: CommandAction;
     secondary: CommandAction[];
@@ -157,6 +159,28 @@ interface GrowthProfile {
     href: string;
     targetDimension: string;
   };
+}
+
+interface RecommendationItem {
+  id: string;
+  type: "training" | "interview" | "review";
+  title: string;
+  reason: string;
+  href: string;
+  cta: string;
+  priority: number;
+  targetDimension: string;
+  evidence: string;
+}
+
+interface RecommendationPlan {
+  primaryFocus: {
+    dimensionId: string;
+    label: string;
+    score: number;
+    reason: string;
+  };
+  recommendations: RecommendationItem[];
 }
 
 function aggregateTrend(
@@ -609,6 +633,100 @@ function GrowthProfileLedger({
   );
 }
 
+function RecommendationPrescription({
+  plan,
+  onSelect,
+  savingId,
+  selectedId,
+}: {
+  plan: RecommendationPlan | undefined;
+  onSelect: (recommendationId: string) => Promise<void>;
+  savingId: string;
+  selectedId: string;
+}) {
+  const recommendations = plan?.recommendations ?? [];
+
+  return (
+    <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
+      <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-start">
+        <div>
+          <p className="text-label font-bold text-primary">画像推荐</p>
+          <h2 className="mt-1 text-heading-md font-bold text-ink">训练处方</h2>
+          <p className="mt-2 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
+            系统把诊断、训练、面试追问和画像快照合成下一步动作。你可以把其中一条设为本周处方，系统会写入成长快照，后续继续读回。
+          </p>
+        </div>
+        <div className="rounded-lg bg-primary-soft px-4 py-3">
+          <p className="text-label font-bold text-primary">主焦点</p>
+          <p className="mt-1 text-body-sm font-bold text-ink">
+            {plan?.primaryFocus.label || "等待画像"} · {plan?.primaryFocus.score ?? "-"} 分
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        {recommendations.length ? (
+          recommendations.map((item) => {
+            const selected = selectedId === item.id;
+            return (
+              <article
+                key={item.id}
+                className={cn(
+                  "flex min-h-[230px] flex-col rounded-lg border px-4 py-4",
+                  selected
+                    ? "border-primary bg-primary-soft"
+                    : "border-line bg-surface"
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-label font-bold text-ink-muted">
+                      P{item.priority} · {item.evidence}
+                    </p>
+                    <h3 className="mt-2 text-heading-sm font-bold text-ink">
+                      {item.title}
+                    </h3>
+                  </div>
+                  {selected && (
+                    <CheckCircle2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                  )}
+                </div>
+                <p className="mt-3 flex-1 text-body-sm leading-relaxed text-ink-muted">
+                  {item.reason}
+                </p>
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                  <Link
+                    href={item.href}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3 py-2 text-label font-bold text-white transition-all hover:bg-ink/90 active:scale-[0.98]"
+                  >
+                    {item.cta}
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Link>
+                  <button
+                    onClick={() => onSelect(item.id)}
+                    disabled={Boolean(savingId)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-transparent px-3 py-2 text-label font-bold text-ink transition-all hover:bg-surface-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    {savingId === item.id
+                      ? "保存中"
+                      : selected
+                        ? "已设为处方"
+                        : "设为本周处方"}
+                  </button>
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <div className="rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5 text-body-sm text-ink-muted lg:col-span-3">
+            暂无训练处方。先完成诊断或训练，系统会生成下一步推荐。
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function MetricTile({
   label,
   value,
@@ -662,6 +780,8 @@ function TrainingMethodPanel() {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [savingRecommendationId, setSavingRecommendationId] = useState("");
+  const [selectedRecommendationId, setSelectedRecommendationId] = useState("");
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -678,6 +798,21 @@ export default function DashboardPage() {
   const latestReport = data?.latestReport ?? null;
   const profile = data?.profile ?? null;
   const focusLabel = getWeaknessLabel(profile);
+
+  async function selectRecommendation(recommendationId: string) {
+    setSavingRecommendationId(recommendationId);
+    try {
+      const response = await fetch("/api/profile/recommendation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recommendationId }),
+      });
+      if (!response.ok) throw new Error("保存训练处方失败");
+      setSelectedRecommendationId(recommendationId);
+    } finally {
+      setSavingRecommendationId("");
+    }
+  }
 
   return (
     <main className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
@@ -701,6 +836,13 @@ export default function DashboardPage() {
           />
 
           <GrowthProfileLedger growthProfile={data?.growthProfile} />
+
+          <RecommendationPrescription
+            onSelect={selectRecommendation}
+            plan={data?.recommendationPlan}
+            savingId={savingRecommendationId}
+            selectedId={selectedRecommendationId}
+          />
 
           <ReviewWorkspace
             blindSpots={data?.commandCenter?.blindSpots ?? []}

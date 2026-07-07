@@ -6,6 +6,7 @@ import {
   normalizeDiagnosisScore,
 } from "@/lib/diagnosis/report-summary";
 import { buildGrowthProfile } from "@/lib/profile/growth-profile";
+import { buildRecommendationPlan } from "@/lib/profile/recommendation";
 import { NextResponse } from "next/server";
 
 /* ------------------------------------------------------------------ */
@@ -182,6 +183,7 @@ export async function GET() {
       bootcampInterviews,
       growthSnapshots: growthSnapshots || [],
     });
+    const recommendationPlan = buildRecommendationPlan(growthProfile);
 
     /* ------- Profile Calculation ------- */
 
@@ -289,6 +291,7 @@ export async function GET() {
     return NextResponse.json({
       profile,
       growthProfile,
+      recommendationPlan,
       trainingStats,
       growthTrend,
       latestReport: reportResponse,

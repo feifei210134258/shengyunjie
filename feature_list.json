@@ -1,8 +1,8 @@
 {
     "project": "产品升云阶 — Product Thinking Enhancement Tool",
     "last_updated": "2026-07-07",
-    "current_feature": "profile-001",
-    "notes": "首页从五维能力画像驾驶舱重构为任务驱动训练调度台：首屏突出今日高阶产品任务、训练微动作、推荐依据和训练闭环；任务地图展示增长诊断、商业化、资源排期、平台抽象等真实 PM 工作任务；五维画像降级为能力归因与评分解释。2026-06-27 跟进重新排版 dashboard：任务地图收敛为优先任务轨道，下半区重排为复盘工作区 + 画像诊断侧栏，避免卡片墙和分行空白。 2026-06-27 再次重排首页：首屏取消独立 KPI 大卡段，将今日训练、连续天数、累计完成和最近诊断合入今日训练调度；训练任务地图改为左侧优先任务 + 右侧任务轨道，减少 8 格卡片墙感；保留训练闭环、复盘工作区和画像归因。验证：npx tsc --noEmit、针对性 ESLint、npm run build、git diff --check、./init.sh 通过，并将部署后用 Kimi WebBridge 检查线上样式。 2026-06-27 Product Design 重想首页：dashboard 首屏改为统一“今日训练台”，把本轮任务、选择依据、训练闭环和辅助指标放进同一训练桌面；任务地图降级为紧凑今日任务轨道，避免继续像信息卡片集合。验证：npx tsc --noEmit、针对性 ESLint、npm run build、git diff --check 通过。2026-06-27 首页首屏降噪：删除后续任务轨道和复合侧栏，最大标题改为“先练：具体微动作”，推荐依据/KPI 降级为轻量文字，首页第一屏只服务开始今日这一题。验证：Kimi WebBridge 本地生产构建截图、npx tsc --noEmit、针对性 ESLint、npm run build、git diff --check 通过。2026-06-27 hero 高度收敛：首屏 hero 最小高度 480px→380px，内距/标题字号/垂直间距同步收紧，保持单一训练入口结构不变。验证：npx tsc、针对性 ESLint、npm run build、git diff --check 通过。2026-07-07 产品路径化改造：dashboard 首屏从单一训练入口改为“面试跳槽冲刺 / 高级产品思维训练”双路径选择，/api/dashboard 读取 bootcamp_sessions、训练记录和诊断状态生成 productPaths；TopNav 改为今日训练、面试冲刺、能力诊断，弱化模块列表感。验证：新增路径化 TDD 测试、npx tsc、针对性 ESLint、npm run build、git diff --check、./init.sh 通过。2026-07-07 用户画像引擎落地：新增 /api/profile/summary 和 buildGrowthProfile，从诊断维度分、训练记录、特训面试评价、growth_snapshots 聚合能力画像；POST 可写入 growth_snapshots；Dashboard 新增能力证据账本，展示综合画像、证据数、快照、面试就绪和五维证据。",
+    "current_feature": "profile-002",
+    "notes": "首页从五维能力画像驾驶舱重构为任务驱动训练调度台：首屏突出今日高阶产品任务、训练微动作、推荐依据和训练闭环；任务地图展示增长诊断、商业化、资源排期、平台抽象等真实 PM 工作任务；五维画像降级为能力归因与评分解释。2026-06-27 跟进重新排版 dashboard：任务地图收敛为优先任务轨道，下半区重排为复盘工作区 + 画像诊断侧栏，避免卡片墙和分行空白。 2026-06-27 再次重排首页：首屏取消独立 KPI 大卡段，将今日训练、连续天数、累计完成和最近诊断合入今日训练调度；训练任务地图改为左侧优先任务 + 右侧任务轨道，减少 8 格卡片墙感；保留训练闭环、复盘工作区和画像归因。验证：npx tsc --noEmit、针对性 ESLint、npm run build、git diff --check、./init.sh 通过，并将部署后用 Kimi WebBridge 检查线上样式。 2026-06-27 Product Design 重想首页：dashboard 首屏改为统一“今日训练台”，把本轮任务、选择依据、训练闭环和辅助指标放进同一训练桌面；任务地图降级为紧凑今日任务轨道，避免继续像信息卡片集合。验证：npx tsc --noEmit、针对性 ESLint、npm run build、git diff --check 通过。2026-06-27 首页首屏降噪：删除后续任务轨道和复合侧栏，最大标题改为“先练：具体微动作”，推荐依据/KPI 降级为轻量文字，首页第一屏只服务开始今日这一题。验证：Kimi WebBridge 本地生产构建截图、npx tsc --noEmit、针对性 ESLint、npm run build、git diff --check 通过。2026-06-27 hero 高度收敛：首屏 hero 最小高度 480px→380px，内距/标题字号/垂直间距同步收紧，保持单一训练入口结构不变。验证：npx tsc、针对性 ESLint、npm run build、git diff --check 通过。2026-07-07 产品路径化改造：dashboard 首屏从单一训练入口改为“面试跳槽冲刺 / 高级产品思维训练”双路径选择，/api/dashboard 读取 bootcamp_sessions、训练记录和诊断状态生成 productPaths；TopNav 改为今日训练、面试冲刺、能力诊断，弱化模块列表感。验证：新增路径化 TDD 测试、npx tsc、针对性 ESLint、npm run build、git diff --check、./init.sh 通过。2026-07-07 用户画像引擎落地：新增 /api/profile/summary 和 buildGrowthProfile，从诊断维度分、训练记录、特训面试评价、growth_snapshots 聚合能力画像；POST 可写入 growth_snapshots；Dashboard 新增能力证据账本，展示综合画像、证据数、快照、面试就绪和五维证据。2026-07-07 推荐逻辑落地：新增 buildRecommendationPlan 和 /api/profile/recommendation，从画像生成训练/面试/复盘三条训练处方，用户可在 Dashboard 设为本周处方，并写入 growth_snapshots.dimension_scores.__recommendation。",
     "features": [
         {
             "id": "infra-001",
@@ -70,8 +70,8 @@
             "dependencies": [
                 "profile-001"
             ],
-            "status": "not-started",
-            "evidence": ""
+            "status": "completed",
+            "evidence": "新增 src/lib/profile/recommendation.ts 画像推荐引擎；GET /api/profile/recommendation 从诊断、训练、特训面试和 growth_snapshots 构建训练/面试/复盘三条训练处方；POST /api/profile/recommendation 将用户选择的处方写入 growth_snapshots.dimension_scores.__recommendation；Dashboard 展示“训练处方”并支持“设为本周处方”。验证：node --test recommendation/dashboard/feature_list 相关测试、npx tsc、针对性 ESLint、npm run build、git diff --check、./init.sh 通过。"
         },
         {
             "id": "diag-001",
