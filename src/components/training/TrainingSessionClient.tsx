@@ -102,15 +102,22 @@ type NextPrescriptionState = {
     evidence: string;
   };
 };
+type RevisionState = {
+  text: string;
+  status: "idle" | "saving" | "saved" | "failed";
+  savedAt?: string;
+};
 type AnalysisState = {
   text: string;
   loading: boolean;
   evaluation?: TrainingEvaluation;
+  recordId?: string;
   profileSync?: {
     status: "syncing" | "saved" | "failed";
     snapshotId?: string;
   };
   nextPrescription?: NextPrescriptionState;
+  revision?: RevisionState;
 };
 
 type DailySessionResponse = {
@@ -257,6 +264,8 @@ interface RealTrainingProps {
   onRestart: () => void;
   onFinish: () => void;
   onSelectNextPrescription: () => Promise<void>;
+  onRevisionChange: (value: string) => void;
+  onSaveRevision: () => Promise<void>;
 }
 
 function MiniProgress({
@@ -880,12 +889,15 @@ function A1AfterSubmit({
   onRestart,
   onFinish,
   onSelectNextPrescription,
+  onRevisionChange,
+  onSaveRevision,
 }: RealTrainingProps) {
   const evaluation = analysis?.evaluation;
   const sections = extractSections(analysis?.text || "");
   const profileSync = analysis?.profileSync;
   const nextPrescription = analysis?.nextPrescription;
   const recommendation = nextPrescription?.recommendation;
+  const revision = analysis?.revision || { text: "", status: "idle" as const };
 
   return (
     <Frame
@@ -984,6 +996,61 @@ function A1AfterSubmit({
                 </div>
               </section>
             )}
+
+            <section className="mt-4 rounded-xl border border-line bg-white px-4 py-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-label font-bold text-primary">二次修正</p>
+                  <h3 className="mt-2 text-heading-sm font-bold text-ink">
+                    把反馈立刻改成一版能复述的答案
+                  </h3>
+                  <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                    不需要重做整题。先把本次反馈里最关键的缺口补进去，系统会把这版修正写回训练记录，之后复盘能读到。
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-md px-3 py-1.5 text-label font-semibold",
+                    revision.status === "saved"
+                      ? "bg-primary-soft text-primary"
+                      : revision.status === "failed"
+                        ? "bg-danger-soft text-danger"
+                        : "bg-[#F3F6FA] text-ink-muted"
+                  )}
+                >
+                  {revision.status === "saving"
+                    ? "保存中"
+                    : revision.status === "saved"
+                      ? "已保存"
+                      : revision.status === "failed"
+                        ? "保存失败"
+                        : "待修正"}
+                </span>
+              </div>
+              <textarea
+                value={revision.text}
+                onChange={(event) => onRevisionChange(event.target.value)}
+                className="mt-4 min-h-[130px] w-full resize-none rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-sm leading-7 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+                placeholder="基于反馈重写你的关键判断、依据、取舍和验证指标..."
+              />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-label font-semibold text-ink-muted">
+                  {revision.savedAt
+                    ? `最近保存：${new Date(revision.savedAt).toLocaleString("zh-CN", {
+                        hour12: false,
+                      })}`
+                    : "修正会写入本题训练记录"}
+                </p>
+                <button
+                  onClick={onSaveRevision}
+                  disabled={!analysis?.recordId || !revision.text.trim() || revision.status === "saving"}
+                  className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <PenLine className="h-4 w-4" />
+                  保存二次修正
+                </button>
+              </div>
+            </section>
 
             {nextPrescription && (
               <section className="mt-4 rounded-xl border border-line bg-[#F8FAFC] px-4 py-4">
@@ -1824,6 +1891,7 @@ export default function TrainingSessionClient() {
       });
       if (!recordResponse.ok) throw new Error("训练记录保存失败");
       const recordResult = await recordResponse.json();
+      const recordId = recordResult?.id ? String(recordResult.id) : undefined;
 
       const profileResponse = await fetch("/api/profile/summary", {
         method: "POST",
@@ -1846,6 +1914,11 @@ export default function TrainingSessionClient() {
           text: fullText,
           loading: false,
           evaluation: evaluation || undefined,
+          recordId,
+          revision: {
+            text: answerText,
+            status: "idle",
+          },
           profileSync: {
             status: "saved",
             snapshotId: profileResult?.snapshot?.id,
@@ -1870,6 +1943,11 @@ export default function TrainingSessionClient() {
             text: fullText,
             loading: false,
             evaluation: evaluation || undefined,
+            recordId,
+            revision: prev[currentKey]?.revision || {
+              text: answerText,
+              status: "idle",
+            },
             profileSync: {
               status: "saved",
               snapshotId: profileResult?.snapshot?.id,
@@ -1903,6 +1981,11 @@ export default function TrainingSessionClient() {
             text: fullText,
             loading: false,
             evaluation: evaluation || undefined,
+            recordId,
+            revision: prev[currentKey]?.revision || {
+              text: answerText,
+              status: "idle",
+            },
             profileSync: {
               status: "saved",
               snapshotId: profileResult?.snapshot?.id,
@@ -1995,6 +2078,90 @@ export default function TrainingSessionClient() {
     }
   };
 
+  const handleRevisionChange = (value: string) => {
+    setAnalyses((prev) => {
+      const current = prev[currentKey];
+      if (!current) return prev;
+      return {
+        ...prev,
+        [currentKey]: {
+          ...current,
+          revision: {
+            ...(current.revision || { status: "idle" }),
+            text: value,
+            status: "idle",
+          },
+        },
+      };
+    });
+  };
+
+  const handleSaveRevision = async () => {
+    const current = analyses[currentKey];
+    const revisedAnswer = current?.revision?.text?.trim() || "";
+    const recordId = current?.recordId;
+
+    if (!recordId || !revisedAnswer) return;
+
+    setAnalyses((prev) => {
+      const currentAnalysis = prev[currentKey];
+      if (!currentAnalysis) return prev;
+      return {
+        ...prev,
+        [currentKey]: {
+          ...currentAnalysis,
+          revision: {
+            ...(currentAnalysis.revision || { text: revisedAnswer }),
+            text: revisedAnswer,
+            status: "saving",
+          },
+        },
+      };
+    });
+
+    try {
+      const response = await fetch("/api/training/record", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recordId, revisedAnswer }),
+      });
+      if (!response.ok) throw new Error("二次修正保存失败");
+      const result = await response.json();
+
+      setAnalyses((prev) => {
+        const currentAnalysis = prev[currentKey];
+        if (!currentAnalysis) return prev;
+        return {
+          ...prev,
+          [currentKey]: {
+            ...currentAnalysis,
+            revision: {
+              text: revisedAnswer,
+              status: "saved",
+              savedAt: result?.revision?.savedAt,
+            },
+          },
+        };
+      });
+    } catch {
+      setAnalyses((prev) => {
+        const currentAnalysis = prev[currentKey];
+        if (!currentAnalysis) return prev;
+        return {
+          ...prev,
+          [currentKey]: {
+            ...currentAnalysis,
+            revision: {
+              ...(currentAnalysis.revision || { text: revisedAnswer }),
+              text: revisedAnswer,
+              status: "failed",
+            },
+          },
+        };
+      });
+    }
+  };
+
   const handleNext = () => {
     if (currentIndex < activeMissions.length - 1) {
       setCurrentIndex((value) => value + 1);
@@ -2077,6 +2244,8 @@ export default function TrainingSessionClient() {
     onRestart: handleRestart,
     onFinish: () => router.push("/training"),
     onSelectNextPrescription: handleSelectNextPrescription,
+    onRevisionChange: handleRevisionChange,
+    onSaveRevision: handleSaveRevision,
   };
 
   return (

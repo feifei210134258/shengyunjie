@@ -150,3 +150,16 @@ test("training answer drafts are restored and saved to the daily question cache"
   assert.match(source, /draftStatus:\s*"saving"/);
   assert.match(source, /\/api\/training\/questions/);
 });
+
+test("training feedback supports saving a second-pass revised answer", () => {
+  const source = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /二次修正/);
+  assert.match(source, /revision/);
+  assert.match(source, /handleSaveRevision/);
+  assert.match(source, /method:\s*"PATCH"/);
+  assert.match(source, /\/api\/training\/record/);
+});

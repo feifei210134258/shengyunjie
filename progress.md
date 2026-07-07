@@ -1,5 +1,18 @@
 # 会话进度日志
 
+## [2026-07-07] 训练反馈页：二次修正落库
+
+### 完成内容
+- 反馈页新增“二次修正”输入区，用户可在看完 AI 反馈后当场重写关键答案。
+- 新增 `PATCH /api/training/record`，按当前用户校验记录归属后，把修正内容写入 `training_records.ai_feedback.__revision`，不新增 schema。
+- 前端保存状态覆盖待修正、保存中、已保存、保存失败；保存成功后显示最近保存时间。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/training/record/route.test.mjs src/lib/training/session-progress.test.mjs` 先失败于缺少 `PATCH`、`二次修正` 和 `handleSaveRevision`。
+- 已通过：`node --test src/app/api/training/record/route.test.mjs src/lib/training/session-progress.test.mjs feature_list.test.mjs`（14 项）。
+- 已通过：`git diff --check`。
+- 已通过：`./init.sh`（Node/npm/依赖/TypeScript/ESLint/环境变量/Next.js 构建，10/10）。
+
 ## [2026-07-07] 训练作答工作台：草稿恢复 + 作答质检
 
 ### 完成内容
