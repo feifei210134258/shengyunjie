@@ -48,3 +48,9 @@ test("training generation prompt varies the surface form of questions", () => {
   assert.match(source, /老板指令/);
   assert.match(source, /客户投诉/);
 });
+
+test("training generation route accepts profile prescription focus as mission input", () => {
+  assert.match(source, /profileFocus/);
+  assert.match(source, /getTrainingMissionForProfileFocus/);
+  assert.match(source, /训练处方聚焦/);
+});

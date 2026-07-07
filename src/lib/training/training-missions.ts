@@ -252,6 +252,56 @@ export function getTrainingMissions() {
   return missions;
 }
 
+const profileFocusDimensions: Record<string, string> = {
+  strategic_thinking: "战略思维",
+  strategy: "战略思维",
+  "战略思维": "战略思维",
+  system_design: "系统设计能力",
+  "系统设计能力": "系统设计能力",
+  data_decision: "数据决策能力",
+  data_driven: "数据决策能力",
+  "数据决策能力": "数据决策能力",
+  user_insight: "用户洞察与需求管理",
+  "用户洞察与需求管理": "用户洞察与需求管理",
+  commercial_thinking: "商业思维",
+  business_thinking: "商业思维",
+  "商业思维": "商业思维",
+};
+
+const preferredMissionByProfileFocus: Record<string, string> = {
+  strategic_thinking: "delivery-resource-conflict",
+  strategy: "delivery-resource-conflict",
+  "战略思维": "delivery-resource-conflict",
+  system_design: "platform-abstraction",
+  "系统设计能力": "platform-abstraction",
+  data_decision: "growth-funnel-diagnosis",
+  data_driven: "growth-funnel-diagnosis",
+  "数据决策能力": "growth-funnel-diagnosis",
+  user_insight: "demand-problem-framing",
+  "用户洞察与需求管理": "demand-problem-framing",
+  commercial_thinking: "commercial-packaging",
+  business_thinking: "commercial-packaging",
+  "商业思维": "commercial-packaging",
+};
+
+function normalizeProfileFocus(value?: string | null) {
+  return String(value || "").trim();
+}
+
+export function getTrainingMissionForProfileFocus(profileFocus?: string | null) {
+  const focus = normalizeProfileFocus(profileFocus);
+  if (!focus) return undefined;
+
+  const preferredMissionId = preferredMissionByProfileFocus[focus];
+  const preferredMission = getTrainingMissionById(preferredMissionId);
+  if (preferredMission) return preferredMission;
+
+  const dimension = profileFocusDimensions[focus] || focus;
+  return getTrainingMissions().find(
+    (mission) => mission.primaryDimension === dimension
+  );
+}
+
 function getDaySeed(date: Date) {
   return Math.floor(date.getTime() / 86_400_000);
 }

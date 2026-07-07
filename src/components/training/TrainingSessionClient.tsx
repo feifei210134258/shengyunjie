@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import TrainingEvaluationPanel from "@/components/training/TrainingEvaluationPanel";
@@ -15,6 +15,7 @@ import {
   getDailyTrainingMissionPlan,
   getMissionPlanWithCachedQuestions,
   getNextTrainingMission,
+  getTrainingMissionForProfileFocus,
   getTrainingMissions,
   type TrainingMission,
 } from "@/lib/training/training-missions";
@@ -53,12 +54,21 @@ type VariantId = "before" | "after";
 
 const MISSION_PLAN = getDailyTrainingMissionPlan();
 
-function getDefaultTargetState(mission: TrainingMission) {
+type PrescriptionMeta = {
+  profileFocus?: string;
+  prescriptionId?: string;
+};
+
+function getDefaultTargetState(
+  mission: TrainingMission,
+  prescriptionMeta: PrescriptionMeta = {}
+) {
   return {
     missionId: mission.id,
     dimension: mission.primaryDimension,
     targetId: mission.targetId,
     targetLabel: mission.label,
+    ...prescriptionMeta,
   };
 }
 
@@ -71,6 +81,8 @@ type QuestionState = {
   dimension?: string;
   targetId?: string;
   targetLabel?: string;
+  profileFocus?: string;
+  prescriptionId?: string;
 };
 type AnswerState = { text: string; submitting: boolean };
 type AnalysisState = {
@@ -96,7 +108,22 @@ type StoredQuestion = {
   dimension?: string;
   targetId?: string;
   targetLabel?: string;
+  profileFocus?: string;
+  prescriptionId?: string;
 };
+
+function getPrescriptionAwareMissionPlan(
+  profileFocus?: string | null,
+  fallbackPlan = MISSION_PLAN
+) {
+  const focusMission = getTrainingMissionForProfileFocus(profileFocus);
+  if (!focusMission) return fallbackPlan;
+
+  return [
+    focusMission,
+    ...fallbackPlan.filter((mission) => mission.id !== focusMission.id),
+  ].slice(0, fallbackPlan.length);
+}
 
 function getQuestionHint(question: QuestionState | undefined) {
   const hint = question?.hint?.trim();
@@ -151,6 +178,8 @@ function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState 
     dimension: String(value.dimension || "").trim() || undefined,
     targetId: String(value.targetId || "").trim() || undefined,
     targetLabel: String(value.targetLabel || "").trim() || undefined,
+    profileFocus: String(value.profileFocus || "").trim() || undefined,
+    prescriptionId: String(value.prescriptionId || "").trim() || undefined,
   };
 }
 
@@ -163,6 +192,7 @@ interface RealTrainingProps {
   analysis: AnalysisState | undefined;
   score: number;
   streamedText: string;
+  prescriptionLabel?: string;
   onAnswerChange: (value: string) => void;
   onSubmit: () => void;
   onNext: () => void;
@@ -531,6 +561,7 @@ function A1BeforeSubmit({
   answer,
   analysis,
   streamedText,
+  prescriptionLabel,
   onAnswerChange,
   onSubmit,
   onRegenerate,
@@ -564,6 +595,23 @@ function A1BeforeSubmit({
         </div>
 
         <div className="space-y-4">
+          {question?.profileFocus && (
+            <section className="rounded-xl border border-primary/15 bg-white px-4 py-3 shadow-[0_10px_28px_rgba(67,56,202,0.05)]">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-label font-bold text-primary">处方训练</p>
+                  <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                    来自训练处方：优先补{" "}
+                    {prescriptionLabel || currentDisplayLabel}，本题会写入今日训练缓存。
+                  </p>
+                </div>
+                <span className="rounded-md bg-primary-soft px-3 py-1.5 text-label font-semibold text-primary">
+                  {question.targetLabel || "定向练习"}
+                </span>
+              </div>
+            </section>
+          )}
+
           <section className="rounded-xl border border-primary/20 bg-[#EEF2FF] p-4 shadow-[0_10px_28px_rgba(67,56,202,0.06)]">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-md bg-white px-3 py-1.5 text-label font-semibold text-primary">
@@ -1177,14 +1225,32 @@ function ReviewBoard() {
 
 export default function TrainingSessionClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const profileFocus = searchParams.get("focus") || "";
+  const prescriptionId =
+    searchParams.get("prescription") || searchParams.get("recommendationId") || "";
+  const prescriptionMeta = useMemo(
+    () => ({
+      profileFocus: profileFocus || undefined,
+      prescriptionId: prescriptionId || undefined,
+    }),
+    [prescriptionId, profileFocus]
+  );
+  const prescriptionMissionPlan = useMemo(
+    () => getPrescriptionAwareMissionPlan(profileFocus, MISSION_PLAN),
+    [profileFocus]
+  );
   const [active, setActive] = useState<VariantId>("before");
   const [activeMissions, setActiveMissions] =
-    useState<TrainingMission[]>(MISSION_PLAN);
+    useState<TrainingMission[]>(prescriptionMissionPlan);
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentMission = activeMissions[currentIndex] || activeMissions[0];
   const currentKey = currentMission?.id || "mission";
   const currentDim = currentMission?.primaryDimension || "通用产品能力";
   const currentDisplayLabel = currentMission?.displayLabel || currentDim;
+  const prescriptionLabel = profileFocus
+    ? getTrainingMissionForProfileFocus(profileFocus)?.displayLabel || currentDisplayLabel
+    : "";
   const totalCount = activeMissions.length || MISSION_PLAN.length;
   const [questions, setQuestions] = useState<Record<string, QuestionState>>({});
   const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
@@ -1202,8 +1268,12 @@ export default function TrainingSessionClient() {
   const generateQuestion = useCallback(
     async (
       mission: TrainingMission,
-      targetState = getDefaultTargetState(mission)
+      targetStateInput?: ReturnType<typeof getDefaultTargetState>
     ) => {
+    const targetState = {
+      ...getDefaultTargetState(mission, prescriptionMeta),
+      ...targetStateInput,
+    };
     const key = mission.id;
     setQuestions((prev) => ({
       ...prev,
@@ -1220,6 +1290,8 @@ export default function TrainingSessionClient() {
           dimension: targetState.dimension,
           targetId: targetState.targetId,
           missionId: targetState.missionId,
+          profileFocus: targetState.profileFocus,
+          prescriptionId: targetState.prescriptionId,
           currentQuestions: getGeneratedQuestionTexts(questions),
         }),
       });
@@ -1274,6 +1346,8 @@ export default function TrainingSessionClient() {
               dimension: targetState.dimension,
               targetId: targetState.targetId,
               targetLabel: targetState.targetLabel,
+              profileFocus: targetState.profileFocus,
+              prescriptionId: targetState.prescriptionId,
             },
           }),
         }).catch((err) => console.error("保存题目失败:", err));
@@ -1290,7 +1364,7 @@ export default function TrainingSessionClient() {
       setStreamedText("");
     }
     },
-    [questions]
+    [prescriptionMeta, questions]
   );
 
   useEffect(() => {
@@ -1327,21 +1401,23 @@ export default function TrainingSessionClient() {
           string,
           QuestionState
         >;
+        let nextPlan = prescriptionMissionPlan;
 
         if (Object.keys(restoredQuestions).length) {
           setQuestions((prev) => ({ ...restoredQuestions, ...prev }));
-          setActiveMissions(
-            getMissionPlanWithCachedQuestions(
-              Object.keys(restoredQuestions),
-              MISSION_PLAN
-            )
+          nextPlan = getMissionPlanWithCachedQuestions(
+            Object.keys(restoredQuestions),
+            prescriptionMissionPlan
           );
+          setActiveMissions(nextPlan);
+        } else {
+          setActiveMissions(prescriptionMissionPlan);
         }
 
         const nextIndex =
           typeof data.nextIndex === "number" &&
           data.nextIndex >= 0 &&
-          data.nextIndex < activeMissions.length
+          data.nextIndex < nextPlan.length
             ? data.nextIndex
             : 0;
         setCurrentIndex(nextIndex);
@@ -1354,7 +1430,7 @@ export default function TrainingSessionClient() {
     return () => {
       cancelled = true;
     };
-  }, [activeMissions.length]);
+  }, [prescriptionMissionPlan]);
 
   useEffect(() => {
     if (
@@ -1499,7 +1575,7 @@ export default function TrainingSessionClient() {
 
     setRound((value) => value + 1);
     setCurrentIndex(0);
-    setActiveMissions(MISSION_PLAN);
+    setActiveMissions(prescriptionMissionPlan);
     setAnswers({});
     setAnalyses({});
     setScore(0);
@@ -1510,7 +1586,7 @@ export default function TrainingSessionClient() {
   const handleRegenerate = () => {
     const nextMission = getNextTrainingMission(questions[currentKey]?.missionId || currentMission?.id);
     if (!nextMission) return;
-    const targetState = getDefaultTargetState(nextMission);
+    const targetState = getDefaultTargetState(nextMission, prescriptionMeta);
     const nextKey = nextMission.id;
 
     setActiveMissions((prev) => {
@@ -1535,7 +1611,7 @@ export default function TrainingSessionClient() {
 
   const handleRestart = () => {
     setCurrentIndex(0);
-    setActiveMissions(MISSION_PLAN);
+    setActiveMissions(prescriptionMissionPlan);
     setAnswers({});
     setAnalyses({});
     setScore(0);
@@ -1553,6 +1629,7 @@ export default function TrainingSessionClient() {
     analysis,
     score,
     streamedText,
+    prescriptionLabel,
     onAnswerChange: handleAnswerChange,
     onSubmit: handleSubmit,
     onNext: handleNext,

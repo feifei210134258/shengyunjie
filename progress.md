@@ -1348,3 +1348,26 @@
 - `git diff --check` 通过。
 - `feature_list.json` JSON 解析通过。
 - `./init.sh` 通过，环境健康检查 10/10。
+
+## [2026-07-07] Feature: 处方驱动训练闭环
+
+### 背景判断
+- 推荐处方如果只是一个跳转按钮，用户仍然要在训练页重新解释自己该练什么，画像闭环会断掉。
+- 本轮把 Dashboard 的 `focus` 直接接入训练页、出题 API 和当天题目缓存，让“画像推荐 → 今日训练 → 题目落库”形成同一条链路。
+
+### 完成内容
+- 新增 `getTrainingMissionForProfileFocus`，把 `strategic_thinking/system_design/data_decision/user_insight/commercial_thinking` 映射到具体高阶 PM mission。
+- `/training/session?focus=...` 会优先使用处方 mission 出题，并显示“处方训练”提示。
+- `/api/train` 支持 `profileFocus` 兜底选 mission，prompt 明示训练处方聚焦。
+- `/api/training/questions` 将 `profileFocus/prescriptionId` 与题目缓存一起保存，刷新后可读回。
+- 设计文档和 `feature_list.json` 同步记录训练处方闭环。
+
+### 验证结果
+- TDD 红灯：新增 mission focus 映射、训练页处方 focus、出题 API profileFocus、题目缓存元数据测试，先确认缺失实现会失败。
+- `node --test src/lib/training/training-missions.test.mjs src/lib/training/session-progress.test.mjs src/app/api/train/route.test.mjs src/app/api/training/questions/route.test.mjs` 通过，23 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/training/training-missions.ts src/lib/training/training-missions.test.mjs src/lib/training/session-progress.test.mjs src/app/api/train/route.ts src/app/api/train/route.test.mjs src/app/api/training/questions/route.ts src/app/api/training/questions/route.test.mjs src/components/training/TrainingSessionClient.tsx --max-warnings 0` 通过。
+- `npm run build` 通过，`/training/session` 保持动态路由。
+- `git diff --check` 通过。
+- `feature_list.json` JSON 解析通过。
+- `./init.sh` 通过，环境健康检查 10/10。

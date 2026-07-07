@@ -19,6 +19,7 @@ import { buildTrainingPersonalization } from "@/lib/training/personalization";
 import {
   formatTrainingMission,
   getMissionTarget,
+  getTrainingMissionForProfileFocus,
   getTrainingMissionById,
 } from "@/lib/training/training-missions";
 
@@ -119,6 +120,7 @@ export async function POST(req: Request) {
     dimension,
     targetId,
     missionId,
+    profileFocus,
     level,
     userAnswer,
     question,
@@ -133,7 +135,9 @@ export async function POST(req: Request) {
   const chatModel = getChatModel(apiKey, "deepseek-v4-flash");
 
   if (action === "generate") {
-    const mission = getTrainingMissionById(missionId);
+    const mission =
+      getTrainingMissionById(missionId) ||
+      getTrainingMissionForProfileFocus(profileFocus);
     const effectiveDimension = mission?.primaryDimension || dimension;
     const effectiveTargetId = mission?.targetId || targetId;
     const dimensionStrategy = getTrainingDimensionStrategy(effectiveDimension);
@@ -154,7 +158,7 @@ export async function POST(req: Request) {
     const seed = pickTrainingQuestionSeed({
       dimension: effectiveDimension,
       targetId: effectiveTargetId,
-      missionId,
+      missionId: mission?.id || missionId,
       missionTaskType: mission?.taskType,
       productDomains: mission?.productDomains,
       recentFamilies,
@@ -189,6 +193,7 @@ ${formatTrainingTarget(target)}
 
 个性化上下文：
 - 本题聚焦维度：${personalization.focusDimension || effectiveDimension}
+- 训练处方聚焦：${profileFocus || "未指定"}
 - 用户当前短板：${personalization.weakDimensions.join("、") || "暂无明确画像"}
 - 最近低分维度：${personalization.recentLowDimensions.join("、") || "暂无"}
 - 最近训练盲区：${personalization.recentGaps.join("；") || "暂无"}

@@ -41,6 +41,8 @@ export async function POST(req: NextRequest) {
               dimension: String(question?.dimension || "").trim(),
               targetId: String(question?.targetId || "").trim(),
               targetLabel: String(question?.targetLabel || "").trim(),
+              profileFocus: String(question?.profileFocus || "").trim(),
+              prescriptionId: String(question?.prescriptionId || "").trim(),
             },
     };
 

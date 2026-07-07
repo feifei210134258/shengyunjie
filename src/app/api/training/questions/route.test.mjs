@@ -10,3 +10,8 @@ test("training question cache preserves mission metadata for refresh recovery", 
   assert.match(source, /targetLabel/);
   assert.match(source, /dimension:\s*String\(question\?\.dimension/);
 });
+
+test("training question cache preserves prescription metadata for focused sessions", () => {
+  assert.match(source, /profileFocus/);
+  assert.match(source, /prescriptionId/);
+});

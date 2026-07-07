@@ -126,6 +126,7 @@
 - `buildRecommendationPlan` 基于画像最弱维度、证据数量、面试就绪度和当前焦点生成三条处方：今日训练、项目面试证据、复盘动作。
 - `GET /api/profile/recommendation` 从 Supabase 画像证据实时生成处方；`POST /api/profile/recommendation` 把用户选择的处方写入 `growth_snapshots.dimension_scores.__recommendation`，不新增 schema。
 - Dashboard 在能力证据账本下方展示“训练处方”，用户可以直接开始训练、进入模拟面试或把某条建议设为本周处方。
+- 今日训练处方链接会携带 `focus` 进入 `/training/session`，训练页把画像维度映射为具体高阶 PM 任务（如资源排期、平台抽象、增长诊断），并把 `profileFocus/prescriptionId` 与题目一起写入 `training_sessions.questions`，刷新后可读回。
 
 ---
 

@@ -4,6 +4,7 @@ import {
   getMissionPlanWithCachedQuestions,
   getDailyTrainingMissionPlan,
   getNextTrainingMission,
+  getTrainingMissionForProfileFocus,
   getTrainingMissions,
 } from "./training-missions.ts";
 
@@ -84,5 +85,28 @@ test("cached replacement missions are restored into the active daily plan", () =
   assert.equal(
     restoredPlan.filter((mission) => mission.id === "platform-abstraction").length,
     1
+  );
+});
+
+test("profile focus ids resolve to concrete senior PM missions", () => {
+  assert.equal(
+    getTrainingMissionForProfileFocus("strategic_thinking")?.id,
+    "delivery-resource-conflict"
+  );
+  assert.equal(
+    getTrainingMissionForProfileFocus("system_design")?.primaryDimension,
+    "系统设计能力"
+  );
+  assert.equal(
+    getTrainingMissionForProfileFocus("data_decision")?.id,
+    "growth-funnel-diagnosis"
+  );
+  assert.equal(
+    getTrainingMissionForProfileFocus("user_insight")?.id,
+    "demand-problem-framing"
+  );
+  assert.equal(
+    getTrainingMissionForProfileFocus("commercial_thinking")?.id,
+    "commercial-packaging"
   );
 });

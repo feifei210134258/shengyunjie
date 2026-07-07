@@ -90,3 +90,16 @@ test("manual question replacement remains the only explicit regeneration path", 
   assert.match(regenerateBody, /generateQuestion\(nextMission,\s*targetState\)/);
   assert.doesNotMatch(regenerateBody, /getNextTrainingTarget/);
 });
+
+test("training session can start from dashboard prescription focus", () => {
+  const source = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /useSearchParams/);
+  assert.match(source, /searchParams\.get\("focus"\)/);
+  assert.match(source, /getTrainingMissionForProfileFocus/);
+  assert.match(source, /处方训练/);
+  assert.match(source, /profileFocus/);
+});
