@@ -1,5 +1,20 @@
 # 会话进度日志
 
+## [2026-07-08] Dashboard：本周处方读回
+
+### 完成内容
+- `/api/dashboard` 从最近 `growth_snapshots.dimension_scores.__recommendation` 读回 `latestRecommendation`，与 `recommendationPlan` 一起返回。
+- Dashboard 首次加载后用 `latestRecommendation.id` 恢复已选推荐高亮，刷新后不再丢失“已设为处方”状态。
+- “训练处方”区新增“本周处方”读回提示和继续执行入口；用户重新选择处方后，会用 POST 返回的 `selectedRecommendation` 立即更新页面状态。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 先失败于缺少 `latestRecommendation` 和“本周处方”读回。
+- 已通过：`node --test src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/app/api/profile/recommendation/route.test.mjs src/lib/profile/recommendation.test.mjs feature_list.test.mjs`（13 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/dashboard/route.ts src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' src/app/api/profile/recommendation/route.test.mjs src/lib/profile/recommendation.ts src/lib/profile/recommendation.test.mjs feature_list.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`。
+- 已通过：`git diff --check`、`feature_list.json` JSON 解析、`./init.sh`（10/10）。
+
 ## [2026-07-08] 项目故事库：接入日常训练表达资产
 
 ### 完成内容

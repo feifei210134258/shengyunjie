@@ -20,8 +20,10 @@ test("dashboard renders the growth profile as an evidence ledger", () => {
 
 test("dashboard renders and persists a personalized training prescription", () => {
   assert.match(source, /recommendationPlan/);
+  assert.match(source, /latestRecommendation/);
   assert.match(source, /训练处方/);
   assert.match(source, /设为本周处方/);
+  assert.match(source, /本周处方/);
   assert.match(source, /\/api\/profile\/recommendation/);
   assert.match(source, /项目证据处方/);
 });

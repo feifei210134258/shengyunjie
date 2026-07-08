@@ -53,6 +53,7 @@ export interface DashboardData {
   } | null;
   growthProfile?: GrowthProfile;
   recommendationPlan?: RecommendationPlan;
+  latestRecommendation?: SelectedRecommendation | null;
   commandCenter?: {
     primary: CommandAction;
     secondary: CommandAction[];
@@ -217,6 +218,15 @@ interface RecommendationPlan {
     reason: string;
   };
   recommendations: RecommendationItem[];
+}
+
+interface SelectedRecommendation {
+  id: string;
+  title: string;
+  type: "training" | "interview" | "review";
+  href: string;
+  targetDimension: string;
+  selectedAt?: string;
 }
 
 function aggregateTrend(
@@ -813,11 +823,13 @@ function GrowthProfileLedger({
 
 function RecommendationPrescription({
   plan,
+  latestRecommendation,
   onSelect,
   savingId,
   selectedId,
 }: {
   plan: RecommendationPlan | undefined;
+  latestRecommendation: SelectedRecommendation | null | undefined;
   onSelect: (recommendationId: string) => Promise<void>;
   savingId: string;
   selectedId: string;
@@ -841,6 +853,24 @@ function RecommendationPrescription({
           </p>
         </div>
       </div>
+
+      {latestRecommendation && (
+        <div className="mb-4 rounded-lg border border-primary/15 bg-primary-soft px-4 py-3">
+          <p className="text-label font-bold text-primary">本周处方</p>
+          <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-body-sm font-bold text-ink">
+              {latestRecommendation.title}
+            </p>
+            <Link
+              href={latestRecommendation.href}
+              className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
+            >
+              继续执行
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-3 lg:grid-cols-3">
         {recommendations.length ? (
@@ -966,6 +996,7 @@ export default function DashboardPage() {
       .then((r) => r.json())
       .then((data) => {
         setData(data);
+        setSelectedRecommendationId(data.latestRecommendation?.id || "");
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -986,7 +1017,17 @@ export default function DashboardPage() {
         body: JSON.stringify({ recommendationId }),
       });
       if (!response.ok) throw new Error("保存训练处方失败");
+      const result = await response.json();
       setSelectedRecommendationId(recommendationId);
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              latestRecommendation:
+                result.selectedRecommendation || current.latestRecommendation,
+            }
+          : current
+      );
     } finally {
       setSavingRecommendationId("");
     }
@@ -1020,6 +1061,7 @@ export default function DashboardPage() {
           <GrowthProfileLedger growthProfile={data?.growthProfile} />
 
           <RecommendationPrescription
+            latestRecommendation={data?.latestRecommendation}
             onSelect={selectRecommendation}
             plan={data?.recommendationPlan}
             savingId={savingRecommendationId}

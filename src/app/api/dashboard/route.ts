@@ -184,6 +184,10 @@ export async function GET() {
       growthSnapshots: growthSnapshots || [],
     });
     const recommendationPlan = buildRecommendationPlan(growthProfile);
+    const latestRecommendation =
+      (growthSnapshots || []).find(
+        (snapshot: any) => snapshot.dimension_scores?.__recommendation
+      )?.dimension_scores?.__recommendation || null;
 
     /* ------- Profile Calculation ------- */
 
@@ -292,6 +296,7 @@ export async function GET() {
       profile,
       growthProfile,
       recommendationPlan,
+      latestRecommendation,
       trainingStats,
       growthTrend,
       latestReport: reportResponse,

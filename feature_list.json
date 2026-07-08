@@ -71,7 +71,7 @@
                 "profile-001"
             ],
             "status": "completed",
-            "evidence": "新增 src/lib/profile/recommendation.ts 画像推荐引擎；GET /api/profile/recommendation 从诊断、训练、特训面试和 growth_snapshots 构建训练/面试/复盘三条训练处方；POST /api/profile/recommendation 将用户选择的处方写入 growth_snapshots.dimension_scores.__recommendation；Dashboard 展示“训练处方”并支持“设为本周处方”。2026-07-08 项目故事包入账后，推荐引擎用 growthProfile.storyAssets 的 proofGaps 生成项目证据处方，指向 /bootcamp/story-bank，避免继续给泛泛整理项目建议。验证：node --test recommendation/dashboard/feature_list 相关测试、npx tsc、针对性 ESLint、npm run build、git diff --check、./init.sh 通过。"
+            "evidence": "新增 src/lib/profile/recommendation.ts 画像推荐引擎；GET /api/profile/recommendation 从诊断、训练、特训面试和 growth_snapshots 构建训练/面试/复盘三条训练处方；POST /api/profile/recommendation 将用户选择的处方写入 growth_snapshots.dimension_scores.__recommendation；Dashboard 展示“训练处方”并支持“设为本周处方”。2026-07-08 项目故事包入账后，推荐引擎用 growthProfile.storyAssets 的 proofGaps 生成项目证据处方，指向 /bootcamp/story-bank，避免继续给泛泛整理项目建议。2026-07-08 Dashboard 从最近 growth_snapshots.dimension_scores.__recommendation 读回已选处方，刷新后恢复“本周处方”提示与对应推荐高亮。验证：TDD 红灯覆盖 dashboard API latestRecommendation 与页面读回文案；node --test recommendation/dashboard/feature_list 相关测试、npx tsc、针对性 ESLint、npm run build、git diff --check、./init.sh 通过。"
         },
         {
             "id": "diag-001",
