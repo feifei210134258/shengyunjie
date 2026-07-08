@@ -195,6 +195,7 @@ test("turns saved thinking upgrade cards into the next training prescription", (
         tradeoffQuality: "说明为什么先放弃低频客户的定制需求。",
         attributionDepth: "把增长变化拆成渠道、人群和激活动作。",
         landingRigor: "用一周灰度和续费风险指标验证。",
+        migrationCheck: "上一题没有把取舍标准迁移到新场景，仍然停留在功能清单。",
         href: "/training/history/record-1",
       },
     ],
@@ -208,11 +209,11 @@ test("turns saved thinking upgrade cards into the next training prescription", (
   );
 
   assert.equal(trainingPrescription.id, "thinking-upgrade-snap-thinking-1");
-  assert.match(trainingPrescription.title, /延续 战略思维 的思维升级/);
-  assert.match(trainingPrescription.reason, /先判断是否值得做/);
-  assert.match(trainingPrescription.reason, /放弃低频客户/);
+  assert.match(trainingPrescription.title, /补上 战略思维 的迁移缺口/);
+  assert.match(trainingPrescription.reason, /上一题没有把取舍标准迁移到新场景/);
+  assert.match(trainingPrescription.reason, /下一题先补迁移/);
   assert.match(trainingPrescription.href, /thinking_training/);
   assert.equal(trainingPrescription.evidence, "思维升级卡 2026-07-08");
   assert.equal(reviewPrescription.href, "/training/history/record-1");
-  assert.match(reviewPrescription.reason, /灰度/);
+  assert.match(reviewPrescription.reason, /取舍标准迁移到新场景/);
 });

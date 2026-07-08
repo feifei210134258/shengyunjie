@@ -38,6 +38,10 @@ function getEvidenceLabel(profile: GrowthProfile) {
   return `${evidenceCount} 条训练/面试证据`;
 }
 
+function hasMigrationGap(migrationCheck: string) {
+  return /未|没有|缺|不足|偏弱|仍然|还需|未能|失败/.test(migrationCheck);
+}
+
 function buildInterviewRecommendation(
   profile: GrowthProfile,
   targetDimension: string
@@ -95,6 +99,23 @@ function buildTrainingRecommendation({
 }): ProfileRecommendation {
   const latestThinkingAsset = profile.thinkingAssets[0];
   if (latestThinkingAsset) {
+    const migrationCheck = latestThinkingAsset.migrationCheck;
+    if (migrationCheck && hasMigrationGap(migrationCheck)) {
+      return {
+        id: `thinking-upgrade-${latestThinkingAsset.snapshotId}`,
+        type: "training",
+        title: `补上 ${latestThinkingAsset.dimensionLabel} 的迁移缺口`,
+        reason: `迁移验证指出：${migrationCheck}。下一题先补迁移，再把判断、取舍、归因和落地要求用到新场景。`,
+        href: `/training/session?focus=thinking_training&from=${encodeURIComponent(
+          latestThinkingAsset.trainingRecordId
+        )}`,
+        cta: "补一次迁移",
+        priority: 1,
+        targetDimension: latestThinkingAsset.dimension || dimensionId,
+        evidence: `思维升级卡 ${latestThinkingAsset.savedAt || "已入账"}`,
+      };
+    }
+
     const nextFocus =
       latestThinkingAsset.judgmentQuality ||
       latestThinkingAsset.tradeoffQuality ||
@@ -152,6 +173,7 @@ function buildReviewRecommendation({
   const latestThinkingAsset = profile.thinkingAssets[0];
   if (latestThinkingAsset) {
     const reviewCue =
+      latestThinkingAsset.migrationCheck ||
       latestThinkingAsset.landingRigor ||
       latestThinkingAsset.attributionDepth ||
       latestThinkingAsset.tradeoffQuality ||

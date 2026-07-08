@@ -21,3 +21,8 @@ test("training question cache can persist answer drafts inside the daily session
   assert.match(source, /question\?\.draftAnswer/);
   assert.match(source, /questions:\s*mergedQuestions/);
 });
+
+test("training question cache preserves thinking migration check context", () => {
+  assert.match(source, /sanitizeMigrationTarget/);
+  assert.match(source, /migrationCheck/);
+});

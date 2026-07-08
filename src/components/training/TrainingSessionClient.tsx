@@ -158,6 +158,7 @@ type ThinkingUpgradeMigrationTarget = {
   tradeoffQuality: string;
   attributionDepth: string;
   landingRigor: string;
+  migrationCheck: string;
   href: string;
 };
 
@@ -228,6 +229,7 @@ function normalizeMigrationTarget(
     tradeoffQuality: String(value.tradeoffQuality || "").trim(),
     attributionDepth: String(value.attributionDepth || "").trim(),
     landingRigor: String(value.landingRigor || "").trim(),
+    migrationCheck: String(value.migrationCheck || "").trim(),
     href: String(value.href || "").trim(),
   };
 }
@@ -789,6 +791,12 @@ function A1BeforeSubmit({
                       <p className="text-body-sm leading-relaxed text-ink">
                         <span className="font-semibold">落地：</span>
                         {migrationTarget.landingRigor}
+                      </p>
+                    )}
+                    {migrationTarget.migrationCheck && (
+                      <p className="text-body-sm leading-relaxed text-ink md:col-span-2">
+                        <span className="font-semibold">上次迁移验证：</span>
+                        {migrationTarget.migrationCheck}
                       </p>
                     )}
                   </div>

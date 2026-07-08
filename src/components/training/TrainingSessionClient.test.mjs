@@ -45,6 +45,8 @@ test("thinking training session shows the previous thinking upgrade as a migrati
   assert.match(source, /上一张思维升级卡/);
   assert.match(source, /judgmentQuality/);
   assert.match(source, /landingRigor/);
+  assert.match(source, /migrationCheck/);
+  assert.match(source, /上次迁移验证/);
 });
 
 test("training analysis sends the effective goal focus into feedback generation", () => {

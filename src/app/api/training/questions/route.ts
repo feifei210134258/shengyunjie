@@ -16,6 +16,7 @@ function sanitizeMigrationTarget(value: any) {
     tradeoffQuality: String(value.tradeoffQuality || "").trim(),
     attributionDepth: String(value.attributionDepth || "").trim(),
     landingRigor: String(value.landingRigor || "").trim(),
+    migrationCheck: String(value.migrationCheck || "").trim(),
     href: String(value.href || "").trim(),
   };
 }

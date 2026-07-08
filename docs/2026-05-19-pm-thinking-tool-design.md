@@ -160,6 +160,7 @@ Dashboard 支持用户把“面试跳槽冲刺”或“高级产品思维训练�
 - `/api/training/sessions?date=...` 会把最近一张 `thinking_upgrade_saved` 资产作为 `latestThinkingUpgrade` 返回训练实战页；当用户进入高级产品思维主线时，作答前会看到“本题迁移目标”，明确上一张思维升级卡中的判断、取舍、归因和落地要求，并随题目缓存写入 `training_sessions.questions`，刷新后不丢失迁移上下文。
 - 训练实战页提交答案时会把 `migrationTarget` 传给 `/api/train?action=analyze`，AI 反馈在 `thinking_upgrade.migration_check` 中判断用户是否把上一张思维升级卡迁移到本题，并在反馈面板展示“迁移验证”；该结果随既有 `training_records.ai_feedback` 落库，不新增 schema。
 - 历史复盘页会在“主线资产复盘 / 思维升级卡”中读回并展示 `thinking_upgrade.migration_check`，用户点击“沉淀思维升级”时会把迁移验证一起写入 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade`；`buildGrowthProfile` 再读回为 `thinkingAssets[].migrationCheck`，让“上一题升级点是否迁移成功”成为后续画像和处方可引用的长期证据。
+- 当 `thinkingAssets[].migrationCheck` 显示用户没有迁移成功、证据不足或仍停留在功能清单时，`buildRecommendationPlan` 会把下一题训练处方改为“补迁移缺口”，训练实战页也会在“本题迁移目标”中展示“上次迁移验证”；`/api/training/questions` 会把这条迁移验证随 `migrationTarget` 存入当天题目缓存，确保刷新后仍围绕同一个缺口练习。
 
 ---
 

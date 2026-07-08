@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: 迁移缺口驱动下一题
+
+### 背景判断
+- 高级产品思维训练的关键不是生成更多题，而是识别“上一题升级点有没有迁移到新场景”。
+- 已入账的 `migrationCheck` 如果只存档、不改变下一题处方，系统仍会回到泛化推荐。
+
+### 完成内容
+- `buildRecommendationPlan` 读取 `thinkingAssets[].migrationCheck`，当迁移验证显示未迁移、证据不足或仍停留在功能清单时，下一题训练处方改为“补上某维度的迁移缺口”。
+- 训练实战页的“本题迁移目标”新增“上次迁移验证”，让用户作答前明确上一轮到底缺什么。
+- `/api/training/questions` 的 `sanitizeMigrationTarget` 保留 `migrationCheck`，刷新或恢复当天题目时不会丢失迁移缺口上下文。
+- 产品设计文档和 `feature_list.json` 同步记录“迁移验证 → 缺口处方 → 下一题迁移练习”的闭环。
+
+### 验证记录
+- TDD 红灯：推荐引擎测试先失败于标题仍是“延续思维升级”；训练页源测试先失败于缺少 `migrationCheck/上次迁移验证`；题目缓存 API 测试先失败于未保存 `migrationCheck`。
+- GREEN：`node --test src/lib/profile/recommendation.test.mjs` 通过 3 项；`node --test src/components/training/TrainingSessionClient.test.mjs` 通过 8 项；`node --test src/app/api/training/questions/route.test.mjs` 通过 4 项。
+- 回归：`node --test src/lib/profile/recommendation.test.mjs src/components/training/TrainingSessionClient.test.mjs src/app/api/training/questions/route.test.mjs src/app/api/profile/recommendation/route.test.mjs src/app/api/training/sessions/route.test.mjs src/lib/profile/growth-profile.test.mjs feature_list.test.mjs` 通过 26 项。
+- `npx tsc --noEmit`、针对性 ESLint、`feature_list.json` 解析、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-08] Feature: 思维迁移验证入账
 
 ### 背景判断
