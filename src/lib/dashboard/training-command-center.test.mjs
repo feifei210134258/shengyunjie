@@ -109,3 +109,46 @@ test("builds two outcome paths for interview sprint and long-term thinking train
   assert.match(trainingPath.promise, /真实任务|判断/);
   assert.equal(trainingPath.evidenceLabel, "今日 1 题 / 累计 1 条证据");
 });
+
+test("builds an action dossier from recent training evidence", () => {
+  const result = buildCommandCenter({
+    todayCount: 1,
+    recentRecords: [
+      {
+        id: "ready-1",
+        dimension: "commercial_thinking",
+        score: 82,
+        question_scenario: "CRM 套餐调整后，续费团队和交付团队对客户分层口径产生冲突。",
+        ai_feedback: {
+          source: "training",
+          strength: "你能把付费边界、交付成本和续费风险放在同一个判断里。",
+          __revision: {
+            revisedAnswer: "我会先按客户价值和交付成本分层，再明确哪些客户适合升级套餐。",
+            savedAt: "2026-07-08T08:00:00.000Z",
+          },
+        },
+      },
+      {
+        id: "revise-1",
+        dimension: "system_design",
+        score: 61,
+        question_scenario: "权限重构上线前，销售、实施和客户管理员对默认权限有分歧。",
+        ai_feedback: {
+          improvement: "需要补充边界、灰度节奏和验收口径。",
+        },
+      },
+    ],
+    dimAverages: { commercial_thinking: 8.2 },
+    profileWeaknesses: ["system_design"],
+    latestReport: { id: "report-1" },
+    date: new Date("2026-07-08T10:00:00+08:00"),
+  });
+
+  assert.equal(result.actionDossier.readyCount, 1);
+  assert.equal(result.actionDossier.revisionCount, 1);
+  assert.equal(result.actionDossier.featuredAsset?.id, "ready-1");
+  assert.equal(result.actionDossier.featuredAsset?.readiness, "面试可用");
+  assert.match(result.actionDossier.featuredAsset?.proofPoint || "", /客户价值/);
+  assert.equal(result.actionDossier.revisionAction?.href, "/training/history/revise-1?revise=1");
+  assert.match(result.actionDossier.nextTraining.href, /\/training\/session/);
+});

@@ -59,6 +59,7 @@ export interface DashboardData {
     missionMap: MissionMapItem[];
     blindSpots: BlindSpotItem[];
     productPaths: ProductPath[];
+    actionDossier: ActionDossier;
     nextPractice: {
       missionId: string;
       missionLabel: string;
@@ -121,6 +122,28 @@ interface ProductPath {
 }
 
 type NextPractice = NonNullable<DashboardData["commandCenter"]>["nextPractice"];
+
+interface DossierAsset {
+  id: string;
+  title: string;
+  proofPoint: string;
+  readiness: "面试可用" | "待修正后可用";
+  href: string;
+  sourceLabel: string;
+  score: number | null;
+}
+
+interface ActionDossier {
+  readyCount: number;
+  revisionCount: number;
+  featuredAsset: DossierAsset | null;
+  revisionAction: DossierAsset | null;
+  nextTraining: {
+    title: string;
+    href: string;
+    reason: string;
+  };
+}
 
 interface GrowthProfileDimension {
   id: string;
@@ -452,6 +475,89 @@ function BlindSpotPanel({
           </p>
         </div>
       )}
+    </section>
+  );
+}
+
+function ActionDossierPanel({
+  actionDossier,
+}: {
+  actionDossier: ActionDossier | undefined;
+}) {
+  const featuredAsset = actionDossier?.featuredAsset;
+  const revisionAction = actionDossier?.revisionAction;
+  const nextTraining = actionDossier?.nextTraining || {
+    title: "先完成一次训练",
+    href: TRAINING_SESSION_ROUTE,
+    reason: "训练、反馈和二次修正会在这里形成可复用的面试表达资产。",
+  };
+
+  return (
+    <section className="grid gap-4 rounded-xl border border-line bg-surface-raised p-4 shadow-xs lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)_minmax(280px,0.85fr)]">
+      <div className="rounded-lg bg-ink px-5 py-5 text-white">
+        <p className="text-label font-bold text-white/65">今日行动档案</p>
+        <h2 className="mt-2 text-heading-md font-bold">最新面试资产</h2>
+        <p className="mt-3 max-w-xl text-body-sm leading-relaxed text-white/72">
+          {featuredAsset
+            ? featuredAsset.proofPoint
+            : "现在还没有可展示的表达资产。先做一题，再把反馈改成能讲给面试官听的版本。"}
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2 text-label font-bold">
+          <span className="rounded-md bg-white/12 px-3 py-1.5">
+            可用 {actionDossier?.readyCount ?? 0}
+          </span>
+          <span className="rounded-md bg-white/12 px-3 py-1.5">
+            待修正 {actionDossier?.revisionCount ?? 0}
+          </span>
+          {featuredAsset?.score != null && (
+            <span className="rounded-md bg-white/12 px-3 py-1.5">
+              {featuredAsset.score} 分
+            </span>
+          )}
+        </div>
+        <Link
+          href={featuredAsset?.href || TRAINING_SESSION_ROUTE}
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-body-sm font-bold text-ink transition-all hover:bg-white/90 active:scale-[0.98]"
+        >
+          {featuredAsset ? "查看表达卡" : "开始训练"}
+          <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+        </Link>
+      </div>
+
+      <div className="rounded-lg bg-warning-soft px-5 py-5">
+        <p className="text-label font-bold text-warning">待修正材料</p>
+        <h3 className="mt-2 text-heading-sm font-bold text-ink">
+          {revisionAction?.title || "没有待修正回答"}
+        </h3>
+        <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
+          {revisionAction?.proofPoint ||
+            "复盘队列清空时，说明近期训练已经沉淀成更稳定的表达材料。"}
+        </p>
+        <Link
+          href={revisionAction?.href || "/training"}
+          className="mt-5 inline-flex items-center gap-2 rounded-lg border border-line-strong bg-surface-raised px-4 py-2.5 text-body-sm font-bold text-ink transition-all hover:bg-surface-hover active:scale-[0.98]"
+        >
+          {revisionAction ? "继续修正" : "查看训练"}
+          <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+        </Link>
+      </div>
+
+      <div className="rounded-lg bg-secondary-soft px-5 py-5">
+        <p className="text-label font-bold text-secondary">下一题处方</p>
+        <h3 className="mt-2 text-heading-sm font-bold text-ink">
+          {nextTraining.title}
+        </h3>
+        <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
+          {nextTraining.reason}
+        </p>
+        <Link
+          href={nextTraining.href}
+          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-secondary/90 active:scale-[0.98]"
+        >
+          开始下一题
+          <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+        </Link>
+      </div>
     </section>
   );
 }
@@ -833,6 +939,10 @@ export default function DashboardPage() {
             fallbackFocus={focusLabel}
             latestReport={latestReport}
             stats={stats}
+          />
+
+          <ActionDossierPanel
+            actionDossier={data?.commandCenter?.actionDossier}
           />
 
           <GrowthProfileLedger growthProfile={data?.growthProfile} />

@@ -61,6 +61,7 @@ export type TrainingCommandCenter = {
   primary: CommandAction;
   secondary: CommandAction[];
   productPaths: ProductPath[];
+  actionDossier: ActionDossier;
   missionMap: MissionMapItem[];
   blindSpots: BlindSpotItem[];
   nextPractice: {
@@ -86,6 +87,28 @@ export type ProductPath = {
   evidenceLabel: string;
   nextStep: string;
   emphasis: "career" | "growth";
+};
+
+export type DossierAsset = {
+  id: string;
+  title: string;
+  proofPoint: string;
+  readiness: "面试可用" | "待修正后可用";
+  href: string;
+  sourceLabel: string;
+  score: number | null;
+};
+
+export type ActionDossier = {
+  readyCount: number;
+  revisionCount: number;
+  featuredAsset: DossierAsset | null;
+  revisionAction: DossierAsset | null;
+  nextTraining: {
+    title: string;
+    href: string;
+    reason: string;
+  };
 };
 
 const missionActionLabels: Record<string, string> = {
@@ -168,6 +191,17 @@ function stringifyFeedback(value: unknown): string {
     return Object.values(value as Record<string, unknown>).map(stringifyFeedback).join(" ");
   }
   return String(value);
+}
+
+function asFeedbackObject(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, any>)
+    : {};
+}
+
+function truncateText(value: string, length: number) {
+  const text = value.replace(/\s+/g, " ").trim();
+  return text.length > length ? `${text.slice(0, length - 1)}…` : text;
 }
 
 function getWeakestDimension(input: CommandCenterInput) {
@@ -321,6 +355,76 @@ function buildTrainingPath(
   };
 }
 
+function getRecordProofPoint(record: DashboardRecord, feedback: Record<string, any>) {
+  const revision = feedback.__revision;
+  if (revision && typeof revision.revisedAnswer === "string") {
+    const revisedAnswer = revision.revisedAnswer.trim();
+    if (revisedAnswer) return revisedAnswer;
+  }
+
+  const candidates = [
+    feedback.strength,
+    feedback.improvement,
+    feedback.next_practice,
+    feedback.weakness,
+    feedback.analysis,
+  ];
+  return (
+    candidates.find((item) => typeof item === "string" && item.trim()) ||
+    record.question_scenario ||
+    "完成二次修正后，这条记录会变成可复述的能力证据。"
+  );
+}
+
+function buildDossierAsset(record: DashboardRecord): DossierAsset | null {
+  if (!record.id) return null;
+  const feedback = asFeedbackObject(record.ai_feedback);
+  const revision = feedback.__revision;
+  const hasRevision =
+    revision &&
+    typeof revision.revisedAnswer === "string" &&
+    revision.revisedAnswer.trim();
+  const title = truncateText(record.question_scenario || "训练回答", 48);
+
+  return {
+    id: record.id,
+    title,
+    proofPoint: truncateText(getRecordProofPoint(record, feedback), 96),
+    readiness: hasRevision ? "面试可用" : "待修正后可用",
+    href: hasRevision
+      ? `/training/history/${record.id}`
+      : `/training/history/${record.id}?revise=1`,
+    sourceLabel: feedback.source === "case_simulation" ? "案例推演" : "训练回答",
+    score: typeof record.score === "number" ? record.score : null,
+  };
+}
+
+function buildActionDossier(
+  records: DashboardRecord[],
+  priorityMission: TrainingMission,
+  actionLabel: string
+): ActionDossier {
+  const assets = records
+    .map(buildDossierAsset)
+    .filter(Boolean) as DossierAsset[];
+  const readyAssets = assets.filter((asset) => asset.readiness === "面试可用");
+  const revisionAssets = assets.filter(
+    (asset) => asset.readiness === "待修正后可用"
+  );
+
+  return {
+    readyCount: readyAssets.length,
+    revisionCount: revisionAssets.length,
+    featuredAsset: readyAssets[0] || assets[0] || null,
+    revisionAction: revisionAssets[0] || null,
+    nextTraining: {
+      title: `${priorityMission.displayLabel} / ${actionLabel}`,
+      href: "/training/session",
+      reason: "下一题继续服务画像处方，练完后会进入反馈、修正和表达资产链路。",
+    },
+  };
+}
+
 export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCenter {
   const date = input.date || new Date();
   const weakestDimension = getWeakestDimension(input);
@@ -424,6 +528,11 @@ export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCe
     primary,
     secondary: visibleSecondary,
     productPaths,
+    actionDossier: buildActionDossier(
+      input.recentRecords,
+      priorityMission,
+      actionLabel
+    ),
     missionMap: buildMissionMap(priorityMission, input.dimAverages),
     blindSpots,
     nextPractice: {

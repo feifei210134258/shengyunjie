@@ -24,3 +24,11 @@ test("dashboard renders and persists a personalized training prescription", () =
   assert.match(source, /设为本周处方/);
   assert.match(source, /\/api\/profile\/recommendation/);
 });
+
+test("dashboard surfaces a first-screen action dossier for evidence assets", () => {
+  assert.match(source, /actionDossier/);
+  assert.match(source, /今日行动档案/);
+  assert.match(source, /最新面试资产/);
+  assert.match(source, /待修正材料/);
+  assert.match(source, /下一题处方/);
+});

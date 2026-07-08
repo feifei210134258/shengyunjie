@@ -1,5 +1,18 @@
 # 会话进度日志
 
+## [2026-07-08] Dashboard：今日行动档案
+
+### 完成内容
+- `buildCommandCenter` 新增 `actionDossier`，从最近训练记录派生“面试可用 / 待修正后可用”资产、待修正入口和下一题处方。
+- Dashboard 双路径首屏下方新增“今日行动档案”，直接展示最新面试资产、待修正材料和下一题处方，避免表达资产只藏在训练详情页。
+- 该改造复用已有 `training_records.ai_feedback.__revision` 与训练历史页，不新增 schema。
+
+### 验证记录
+- TDD 红灯：`node --test src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 先失败于缺少 `actionDossier` 和首页“今日行动档案”。
+- 已通过：`node --test src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs'`（9 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' src/lib/dashboard/training-command-center.ts src/lib/dashboard/training-command-center.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+
 ## [2026-07-08] 面试表达卡：沉淀到画像账本
 
 ### 完成内容

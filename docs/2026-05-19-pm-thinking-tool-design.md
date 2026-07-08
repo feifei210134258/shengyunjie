@@ -137,6 +137,7 @@
 - `/api/training/stats` 会把最近训练记录、AI 反馈和二次修正整理为 `evidenceAssets`；训练首页展示“能力证据资产”，区分“面试可用”和“待修正后可用”，并链接到历史复盘或项目故事库，让日常训练能沉淀为跳槽面试可复用材料。
 - `/api/training/history/[id]` 在读回训练记录时派生 `interviewExpressionCard`，历史复盘页展示“面试表达卡”：开场判断、证据抓手、追问风险和可复制表达版本。该卡片优先使用二次修正内容，不新增 schema，让每次复盘都能转成面试表达材料。
 - 历史复盘页的面试表达卡支持“沉淀到画像账本”：前端调用 `POST /api/profile/summary`，`trigger=expression_card_saved`，把表达卡摘要写入 `growth_snapshots.dimension_scores.__trigger.expressionCard` 并读回 snapshot，让表达资产进入后续画像推荐闭环。
+- Dashboard 首屏新增“今日行动档案”：`buildCommandCenter` 从最近训练记录派生 `actionDossier`，把最新面试资产、待修正材料和下一题处方直接放到两条结果路径之后，避免表达资产只埋在训练详情页。
 
 ---
 
