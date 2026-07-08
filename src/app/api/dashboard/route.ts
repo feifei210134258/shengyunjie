@@ -172,7 +172,7 @@ export async function GET() {
 
     const { data: growthSnapshots } = await supabase
       .from("growth_snapshots")
-      .select("id, snapshot_date, overall_score")
+      .select("id, snapshot_date, overall_score, dimension_scores")
       .eq("user_id", userId)
       .order("snapshot_date", { ascending: false })
       .limit(12);

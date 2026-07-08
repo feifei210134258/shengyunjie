@@ -32,3 +32,10 @@ test("dashboard surfaces a first-screen action dossier for evidence assets", () 
   assert.match(source, /待修正材料/);
   assert.match(source, /下一题处方/);
 });
+
+test("dashboard surfaces saved project story packs in the profile ledger", () => {
+  assert.match(source, /storyAssets/);
+  assert.match(source, /已入账项目资产/);
+  assert.match(source, /项目故事包/);
+  assert.match(source, /\/bootcamp\/story-bank/);
+});

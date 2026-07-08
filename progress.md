@@ -1508,6 +1508,29 @@
 - `feature_list.json` JSON 解析通过。
 - `./init.sh` 通过，环境健康检查 10/10。
 
+## [2026-07-08] Feature: 已入账项目资产读回
+
+### 背景判断
+- 项目故事包已经能写入 `growth_snapshots.dimension_scores.__trigger.projectStory`，但 Dashboard/画像聚合只读取快照计数，没有把可讲项目资产展示出来。
+- 从第一性原理看，面试跳槽强化需要用户持续看到“我已经有哪些可复用证据资产”，否则保存动作只是心理安慰，不会影响下一步补证据。
+
+### 完成内容
+- `buildGrowthProfile` 新增 `storyAssets`，从 `project_story_saved` 快照读回项目名、公司、角色、成熟度、证据缺口和讲述稿预览。
+- `/api/profile/summary` 与 `/api/dashboard` 的 `growth_snapshots` 查询增加 `dimension_scores`，让画像和 Dashboard 都能读回已入账项目资产。
+- Dashboard 能力证据账本的面试就绪侧栏新增“已入账项目资产”，展示最新项目故事包、成熟度、首个证据缺口，并链接回 `/bootcamp/story-bank`。
+- 产品设计文档和 `feature_list.json` 同步记录项目故事包读回链路。
+
+### 验证结果
+- TDD 红灯：新增 storyAssets 领域测试、Dashboard/API 源测试，先捕获缺少 `storyAssets`、缺少 `dimension_scores` select 和 Dashboard 缺少“已入账项目资产”。
+- `node --test src/lib/profile/growth-profile.test.mjs src/app/api/profile/summary/route.test.mjs src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 通过，15 项。
+- `node --test src/lib/profile/growth-profile.test.mjs src/app/api/profile/summary/route.test.mjs src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs` 通过，17 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/profile/growth-profile.ts src/lib/profile/growth-profile.test.mjs src/app/api/profile/summary/route.ts src/app/api/profile/summary/route.test.mjs src/app/api/dashboard/route.ts src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，`/api/dashboard`、`/api/profile/summary` 和 `/dashboard` 构建正常。
+- `git diff --check` 通过。
+- `feature_list.json` JSON 解析通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-08] Feature: 项目故事包入账
 
 ### 背景判断

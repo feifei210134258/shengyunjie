@@ -40,6 +40,19 @@ type GrowthSnapshot = {
   id?: string;
   snapshot_date?: string | null;
   overall_score?: number | null;
+  dimension_scores?: unknown;
+};
+
+export type GrowthProfileStoryAsset = {
+  snapshotId: string;
+  savedAt: string | null;
+  projectName: string;
+  company: string;
+  role: string;
+  readinessScore: number | null;
+  proofGaps: string[];
+  scriptPreview: string;
+  href: string;
 };
 
 export type GrowthProfileDimension = {
@@ -79,6 +92,7 @@ export type GrowthProfile = {
     href: string;
     targetDimension: string;
   };
+  storyAssets: GrowthProfileStoryAsset[];
 };
 
 const canonicalDimensions = [
@@ -111,6 +125,11 @@ function normalizeScore(score: unknown) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
 function toGrade(score: number) {
   if (score >= 85) return "A";
   if (score >= 70) return "B";
@@ -138,6 +157,54 @@ function average(values: number[]) {
 function latestDate(dates: Array<string | null | undefined>) {
   const valid = dates.filter(Boolean).sort();
   return valid.at(-1) || null;
+}
+
+function normalizeProofGaps(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((gap) => compactText(gap))
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function buildStoryAssets(
+  growthSnapshots: GrowthSnapshot[]
+): GrowthProfileStoryAsset[] {
+  return growthSnapshots
+    .map((snapshot) => {
+      const dimensionScores = asRecord(snapshot.dimension_scores);
+      const trigger = asRecord(dimensionScores?.__trigger);
+      if (trigger?.trigger !== "project_story_saved") return null;
+
+      const projectStory = asRecord(trigger.projectStory);
+      const interviewScript = asRecord(projectStory?.interviewScript);
+      const projectName = compactText(projectStory?.projectName);
+      if (!projectName) return null;
+
+      const fullScript = compactText(interviewScript?.fullScript);
+      const scriptPreview =
+        fullScript ||
+        [projectName, projectStory?.role, projectStory?.company]
+          .map(compactText)
+          .filter(Boolean)
+          .join(" / ");
+      const readinessScore = normalizeScore(projectStory?.readinessScore);
+
+      return {
+        snapshotId: compactText(snapshot.id) || `${projectName}-${snapshot.snapshot_date || ""}`,
+        savedAt: snapshot.snapshot_date || null,
+        projectName,
+        company: compactText(projectStory?.company),
+        role: compactText(projectStory?.role),
+        readinessScore:
+          readinessScore == null ? null : Math.round(readinessScore / 10),
+        proofGaps: normalizeProofGaps(projectStory?.proofGaps),
+        scriptPreview: scriptPreview.slice(0, 180),
+        href: "/bootcamp/story-bank",
+      };
+    })
+    .filter((asset): asset is GrowthProfileStoryAsset => asset != null)
+    .sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
 }
 
 function normalizeInterviewDimension(type: string | null | undefined) {
@@ -262,6 +329,7 @@ export function buildGrowthProfile({
     10,
     Math.round(answeredInterviewCount * 1.5 + evaluatedInterviewCount * 2)
   );
+  const storyAssets = buildStoryAssets(growthSnapshots);
 
   return {
     summary: {
@@ -295,5 +363,6 @@ export function buildGrowthProfile({
       href: "/training/session",
       targetDimension: focusDimension.id,
     },
+    storyAssets,
   };
 }

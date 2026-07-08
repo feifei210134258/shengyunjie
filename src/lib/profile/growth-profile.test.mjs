@@ -76,3 +76,51 @@ test("builds a growth profile from diagnosis, training, interviews, and snapshot
   assert.match(profile.focusPlan.reason, /战略思维|反证|结果证据/);
   assert.equal(profile.careerReadiness.evaluatedInterviewCount, 1);
 });
+
+test("surfaces saved project story packs from growth snapshots", () => {
+  const profile = buildGrowthProfile({
+    growthSnapshots: [
+      {
+        id: "snap-story-1",
+        snapshot_date: "2026-07-08",
+        overall_score: 78,
+        dimension_scores: {
+          __trigger: {
+            trigger: "project_story_saved",
+            projectStory: {
+              projectName: "客户健康度评分系统",
+              company: "云杉科技",
+              role: "产品负责人",
+              readinessScore: 8,
+              proofGaps: ["归因证据还需补强"],
+              interviewScript: {
+                fullScript:
+                  "我负责客户健康度评分系统，从续费风险识别切入，重建了评分口径和运营跟进机制。",
+              },
+            },
+          },
+        },
+      },
+      {
+        id: "snap-ignored",
+        snapshot_date: "2026-07-07",
+        overall_score: 70,
+        dimension_scores: {
+          __trigger: {
+            trigger: "training_feedback",
+          },
+        },
+      },
+    ],
+  });
+
+  assert.equal(profile.storyAssets.length, 1);
+  assert.equal(profile.storyAssets[0].snapshotId, "snap-story-1");
+  assert.equal(profile.storyAssets[0].projectName, "客户健康度评分系统");
+  assert.equal(profile.storyAssets[0].company, "云杉科技");
+  assert.equal(profile.storyAssets[0].role, "产品负责人");
+  assert.equal(profile.storyAssets[0].readinessScore, 8);
+  assert.deepEqual(profile.storyAssets[0].proofGaps, ["归因证据还需补强"]);
+  assert.match(profile.storyAssets[0].scriptPreview, /客户健康度评分系统/);
+  assert.equal(profile.storyAssets[0].href, "/bootcamp/story-bank");
+});

@@ -158,6 +158,18 @@ interface GrowthProfileDimension {
   insight: string;
 }
 
+interface GrowthProfileStoryAsset {
+  snapshotId: string;
+  savedAt: string | null;
+  projectName: string;
+  company: string;
+  role: string;
+  readinessScore: number | null;
+  proofGaps: string[];
+  scriptPreview: string;
+  href: string;
+}
+
 interface GrowthProfile {
   summary: {
     overallScore: number | null;
@@ -182,6 +194,7 @@ interface GrowthProfile {
     href: string;
     targetDimension: string;
   };
+  storyAssets: GrowthProfileStoryAsset[];
 }
 
 interface RecommendationItem {
@@ -630,6 +643,8 @@ function GrowthProfileLedger({
   const dimensions = growthProfile?.dimensions ?? [];
   const weakest = growthProfile?.weakestDimensions?.[0];
   const readiness = growthProfile?.careerReadiness;
+  const storyAssets = growthProfile?.storyAssets ?? [];
+  const latestStoryAsset = storyAssets[0];
 
   return (
     <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
@@ -733,6 +748,63 @@ function GrowthProfileLedger({
               </p>
             </div>
           )}
+          <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-label font-bold text-ink-muted">
+                已入账项目资产
+              </p>
+              <span className="font-mono text-label font-bold text-ink-faint">
+                {storyAssets.length}
+              </span>
+            </div>
+            {latestStoryAsset ? (
+              <div className="mt-3">
+                <p className="text-body-sm font-bold text-ink">
+                  {latestStoryAsset.projectName}
+                </p>
+                <p className="mt-1 text-label font-semibold text-ink-faint">
+                  {latestStoryAsset.company || "未标注公司"} ·{" "}
+                  {latestStoryAsset.role || "未标注角色"}
+                </p>
+                <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
+                  {latestStoryAsset.scriptPreview}
+                </p>
+                {latestStoryAsset.proofGaps.length > 0 && (
+                  <p className="mt-2 text-label font-semibold text-warning">
+                    缺口：{latestStoryAsset.proofGaps[0]}
+                  </p>
+                )}
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="rounded-md bg-primary-soft px-2.5 py-1 text-label font-bold text-primary">
+                    项目故事包
+                    {latestStoryAsset.readinessScore != null
+                      ? ` ${latestStoryAsset.readinessScore}/10`
+                      : ""}
+                  </span>
+                  <Link
+                    href={latestStoryAsset.href}
+                    className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
+                  >
+                    查看
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3">
+                <p className="text-body-sm leading-relaxed text-ink-muted">
+                  故事库保存项目后，会在这里读回已入账的项目故事包。
+                </p>
+                <Link
+                  href="/bootcamp/story-bank"
+                  className="mt-3 inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
+                >
+                  去整理项目故事包
+                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                </Link>
+              </div>
+            )}
+          </div>
         </aside>
       </div>
     </section>

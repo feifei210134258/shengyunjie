@@ -43,3 +43,7 @@ test("profile summary API can tag snapshots created from saved project story pac
   assert.match(source, /readinessScore/);
   assert.match(source, /interviewScript/);
 });
+
+test("profile summary API reads snapshot dimension scores for saved assets", () => {
+  assert.match(source, /\.select\("id, snapshot_date, overall_score, dimension_scores"\)/);
+});
