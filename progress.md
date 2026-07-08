@@ -1,5 +1,16 @@
 # 会话进度日志
 
+## [2026-07-08] 项目故事库：接入日常训练表达资产
+
+### 完成内容
+- 抽出 `src/lib/training/interview-expression-card.ts`，历史复盘页和故事库共用同一套面试表达卡派生逻辑。
+- `/api/bootcamp/story-bank` 读取最近 `training_records`，传入 `buildStoryBank` 生成 `trainingExpressionAssets`。
+- `/bootcamp/story-bank` 侧栏新增“日常训练表达资产”，展示训练回答的面试可用状态、开场判断和训练复盘入口，让日常训练回答进入跳槽资产链。
+
+### 验证记录
+- TDD 红灯：`node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs'` 先失败于缺少 `trainingExpressionAssets`、`training_records` 读取和页面区块。
+- 已通过：`node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs'`（11 项）。
+
 ## [2026-07-08] Dashboard：今日行动档案
 
 ### 完成内容

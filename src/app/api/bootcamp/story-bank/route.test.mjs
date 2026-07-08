@@ -14,6 +14,13 @@ test("story bank API reads persisted bootcamp session and interview answers", ()
   assert.match(source, /ai_evaluation/);
 });
 
+test("story bank API also reads daily training records as expression assets", () => {
+  assert.match(source, /\.from\("training_records"\)/);
+  assert.match(source, /question_scenario/);
+  assert.match(source, /ai_feedback/);
+  assert.match(source, /trainingRecords/);
+});
+
 test("story bank API persists project evidence edits into parsed profile", () => {
   assert.match(source, /export async function PATCH/);
   assert.match(source, /updateParsedProfileProject/);

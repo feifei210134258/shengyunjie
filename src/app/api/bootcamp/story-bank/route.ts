@@ -60,9 +60,24 @@ export async function GET() {
       );
     }
 
+    const { data: trainingRecords, error: trainingError } = await supabase
+      .from("training_records")
+      .select("id, dimension, question_scenario, user_answer, score, ai_feedback, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (trainingError) {
+      return NextResponse.json(
+        { error: trainingError.message },
+        { status: 500 }
+      );
+    }
+
     const storyBank = buildStoryBank({
       session,
       interviews: interviews || [],
+      trainingRecords: trainingRecords || [],
     });
 
     return NextResponse.json({
@@ -148,9 +163,24 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const { data: trainingRecords, error: trainingError } = await supabase
+      .from("training_records")
+      .select("id, dimension, question_scenario, user_answer, score, ai_feedback, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (trainingError) {
+      return NextResponse.json(
+        { error: trainingError.message },
+        { status: 500 }
+      );
+    }
+
     const storyBank = buildStoryBank({
       session: updatedSession,
       interviews: interviews || [],
+      trainingRecords: trainingRecords || [],
     });
 
     return NextResponse.json({

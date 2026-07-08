@@ -7,6 +7,7 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
   FileText,
+  Layers3,
   MessageSquareQuote,
   Save,
   Target,
@@ -223,6 +224,8 @@ export default function StoryBankPage() {
               <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
             </Link>
           </div>
+
+          <TrainingExpressionAssets storyBank={storyBank} />
         </aside>
 
         {activeStory && (
@@ -235,6 +238,51 @@ export default function StoryBankPage() {
         )}
       </section>
     </main>
+  );
+}
+
+function TrainingExpressionAssets({ storyBank }: { storyBank: StoryBank }) {
+  const assets = storyBank.trainingExpressionAssets ?? [];
+
+  return (
+    <div className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+      <div className="mb-4 flex items-center gap-2">
+        <Layers3 className="h-4 w-4 text-primary" strokeWidth={1.5} />
+        <h2 className="text-heading-sm font-semibold text-ink">
+          日常训练表达资产
+        </h2>
+      </div>
+      <p className="mb-4 text-body-sm leading-relaxed text-ink-muted">
+        训练回答经过二次修正后，也可以变成跳槽时可复述的判断证据。
+      </p>
+      <div className="space-y-3">
+        {assets.length ? (
+          assets.slice(0, 3).map((asset) => (
+            <Link
+              key={asset.sourceRecordId}
+              href={asset.href}
+              className="block rounded-lg bg-surface px-3 py-3 transition hover:bg-surface-hover active:scale-[0.99]"
+            >
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-label font-bold text-ink-muted">
+                <span>训练回答</span>
+                <span>{asset.readiness}</span>
+                {asset.score != null && <span>{asset.score} 分</span>}
+              </div>
+              <p className="text-body-sm font-bold leading-relaxed text-ink">
+                {asset.openingClaim}
+              </p>
+              <p className="mt-1 text-label font-bold text-primary">
+                查看训练复盘
+              </p>
+            </Link>
+          ))
+        ) : (
+          <div className="rounded-lg border border-dashed border-line-strong bg-surface px-3 py-4 text-body-sm leading-relaxed text-ink-muted">
+            暂无训练表达资产。完成训练并保存二次修正后，这里会出现可迁移到面试的表达材料。
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

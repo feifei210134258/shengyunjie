@@ -26,3 +26,10 @@ test("story bank page renders a copy-ready two minute interview script", () => {
   assert.match(source, /interviewScript/);
   assert.match(source, /navigator\.clipboard\.writeText/);
 });
+
+test("story bank page surfaces daily training expression assets", () => {
+  assert.match(source, /trainingExpressionAssets/);
+  assert.match(source, /日常训练表达资产/);
+  assert.match(source, /训练回答/);
+  assert.match(source, /查看训练复盘/);
+});

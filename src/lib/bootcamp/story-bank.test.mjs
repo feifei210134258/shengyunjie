@@ -118,6 +118,44 @@ test("keeps unmatched interview answers as general story assets", () => {
   assert.match(result.recommendedNextAction.href, /interview|resume/);
 });
 
+test("adds daily training expression cards as interview story assets", () => {
+  const result = buildStoryBank({
+    session: {
+      id: "session-1",
+      current_day: 1,
+      status: "in_progress",
+      parsed_profile: parsedProfile,
+      weakness_prediction: null,
+    },
+    interviews: [],
+    trainingRecords: [
+      {
+        id: "training-1",
+        dimension: "commercial_thinking",
+        question_scenario: "CRM 套餐调整后，续费团队和交付团队对客户分层口径产生冲突。",
+        user_answer: "我会先按客户价值和交付成本分层。",
+        score: 82,
+        ai_feedback: {
+          strength: "你能把客户价值、付费边界和交付成本放在同一个判断里。",
+          weakness: "还需要补充续费结果如何归因到产品动作。",
+          __revision: {
+            revisedAnswer:
+              "我会先按客户价值和交付成本分层，再明确哪些客户适合升级套餐，并用续费率和交付投入变化验证。",
+            savedAt: "2026-07-08T08:00:00.000Z",
+          },
+        },
+      },
+    ],
+  });
+
+  assert.equal(result.trainingExpressionAssets.length, 1);
+  assert.equal(result.trainingExpressionAssets[0].sourceRecordId, "training-1");
+  assert.equal(result.trainingExpressionAssets[0].readiness, "面试可用");
+  assert.match(result.trainingExpressionAssets[0].copyScript, /客户价值/);
+  assert.equal(result.generalAssets[0].questionId, "training-1");
+  assert.equal(result.generalAssets[0].sourceLabel, "日常训练");
+});
+
 test("updates one resume project evidence without changing other projects", () => {
   const updated = updateParsedProfileProject(parsedProfile, {
     projectName: "权限审批流重构",

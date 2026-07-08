@@ -1,3 +1,8 @@
+import {
+  buildInterviewExpressionCard,
+  type InterviewExpressionCard,
+} from "../training/interview-expression-card.ts";
+
 type ResumeProject = {
   name?: string;
   company?: string;
@@ -48,6 +53,16 @@ type StoryBankInterview = {
   status?: string | null;
 };
 
+type StoryBankTrainingRecord = {
+  id: string;
+  dimension?: string | null;
+  question_scenario?: string | null;
+  user_answer?: string | null;
+  score?: number | null;
+  ai_feedback?: unknown;
+  created_at?: string | null;
+};
+
 export type StoryEvidenceItem = {
   questionId: string;
   dayNumber: number;
@@ -59,6 +74,21 @@ export type StoryEvidenceItem = {
   score: number | null;
   strengths: string[];
   gaps: string[];
+  sourceLabel?: string;
+  href?: string;
+};
+
+export type TrainingExpressionAsset = {
+  sourceRecordId: string;
+  dimension: string;
+  questionScenario: string;
+  score: number | null;
+  readiness: InterviewExpressionCard["readiness"];
+  openingClaim: string;
+  proofPoint: string;
+  followupRisk: string;
+  copyScript: string;
+  href: string;
 };
 
 export type ProjectStory = {
@@ -91,6 +121,7 @@ export type StoryBank = {
   };
   projectStories: ProjectStory[];
   generalAssets: StoryEvidenceItem[];
+  trainingExpressionAssets: TrainingExpressionAsset[];
   weaknessFocus: string[];
   recommendedNextAction: {
     label: string;
@@ -179,6 +210,46 @@ function toEvidenceItem(interview: StoryBankInterview): StoryEvidenceItem {
         : null,
     strengths: normalizeList(evaluation.strengths),
     gaps: normalizeList(evaluation.gaps),
+  };
+}
+
+function toTrainingExpressionAsset(
+  record: StoryBankTrainingRecord
+): TrainingExpressionAsset {
+  const card = buildInterviewExpressionCard(record);
+  return {
+    sourceRecordId: record.id,
+    dimension: compactText(record.dimension),
+    questionScenario: compactText(record.question_scenario),
+    score: typeof record.score === "number" ? record.score : null,
+    readiness: card.readiness,
+    openingClaim: card.openingClaim,
+    proofPoint: card.proofPoint,
+    followupRisk: card.followupRisk,
+    copyScript: card.copyScript,
+    href:
+      card.readiness === "面试可用"
+        ? `/training/history/${record.id}`
+        : `/training/history/${record.id}?revise=1`,
+  };
+}
+
+function trainingAssetToEvidenceItem(
+  asset: TrainingExpressionAsset
+): StoryEvidenceItem {
+  return {
+    questionId: asset.sourceRecordId,
+    dayNumber: 0,
+    questionIndex: 0,
+    questionText: asset.questionScenario || "日常训练表达资产",
+    questionType: "daily_training_expression",
+    userAnswer: asset.openingClaim,
+    improvedAnswer: asset.copyScript,
+    score: asset.score,
+    strengths: [asset.proofPoint].filter(Boolean),
+    gaps: [asset.followupRisk].filter(Boolean),
+    sourceLabel: "日常训练",
+    href: asset.href,
   };
 }
 
@@ -318,9 +389,11 @@ function getWeaknessFocus(session: StoryBankSession) {
 export function buildStoryBank({
   session,
   interviews = [],
+  trainingRecords = [],
 }: {
   session: StoryBankSession;
   interviews?: StoryBankInterview[];
+  trainingRecords?: StoryBankTrainingRecord[];
 }): StoryBank {
   const projects = session.parsed_profile?.projects || [];
   const weaknessFocus = getWeaknessFocus(session);
@@ -354,6 +427,13 @@ export function buildStoryBank({
     .filter((interview) => compactText(interview.user_answer))
     .map(toEvidenceItem)
     .filter((item) => !matchedInterviewIds.has(item.questionId));
+  const trainingExpressionAssets = trainingRecords
+    .filter((record) => record.id)
+    .map(toTrainingExpressionAsset);
+  const allGeneralAssets = [
+    ...generalAssets,
+    ...trainingExpressionAssets.map(trainingAssetToEvidenceItem),
+  ];
 
   const strongestProject = sortedByReadiness[0]?.projectName || "待补充项目";
   const highestRiskProject =
@@ -388,7 +468,8 @@ export function buildStoryBank({
       highestRiskProject,
     },
     projectStories,
-    generalAssets,
+    generalAssets: allGeneralAssets,
+    trainingExpressionAssets,
     weaknessFocus,
     recommendedNextAction,
   };
