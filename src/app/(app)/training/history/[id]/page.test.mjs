@@ -27,3 +27,11 @@ test("training history saves a profile snapshot after revision", () => {
   assert.match(source, /revision_saved/);
   assert.match(source, /二次修正已进入能力证据账本/);
 });
+
+test("training history renders an interview expression card from the record", () => {
+  assert.match(source, /interviewExpressionCard/);
+  assert.match(source, /面试表达卡/);
+  assert.match(source, /开场判断/);
+  assert.match(source, /追问风险/);
+  assert.match(source, /copyScript/);
+});

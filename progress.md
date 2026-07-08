@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-08] 历史复盘：面试表达卡
+
+### 完成内容
+- `/api/training/history/[id]` 在从 Supabase 读回 `training_records` 后，基于原回答、AI 反馈和 `ai_feedback.__revision` 派生 `interviewExpressionCard`。
+- 历史复盘页新增“面试表达卡”，展示开场判断、证据抓手、追问风险和可复制表达版本。
+- 面试表达卡优先使用二次修正内容；没有修正版时标记“待二次修正”，把用户拉回复盘动作，而不是直接把弱材料当成可用资产。
+
+### 验证记录
+- TDD 红灯：`node 'src/app/api/training/history/[id]/route.test.mjs' && node 'src/app/(app)/training/history/[id]/page.test.mjs'` 先失败于缺少 `interviewExpressionCard`、`面试表达卡`、`开场判断`、`追问风险` 和 `copyScript`。
+- 已通过：`node 'src/app/api/training/history/[id]/route.test.mjs' && node 'src/app/(app)/training/history/[id]/page.test.mjs'`（5 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/api/training/history/[id]/route.ts' 'src/app/api/training/history/[id]/route.test.mjs' 'src/app/(app)/training/history/[id]/page.tsx' 'src/app/(app)/training/history/[id]/page.test.mjs' --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析。
+
 ## [2026-07-08] 训练首页：能力证据资产
 
 ### 完成内容

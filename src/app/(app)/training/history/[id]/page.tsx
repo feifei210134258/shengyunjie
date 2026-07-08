@@ -88,6 +88,7 @@ export default function HistoryDetailPage() {
   const revisionSavedAt =
     revision && typeof revision.savedAt === "string" ? revision.savedAt : "";
   const showRevisionWorkbench = shouldOpenRevision || Boolean(revisedAnswer);
+  const interviewExpressionCard = record.interviewExpressionCard;
 
   const handleSaveRevision = async () => {
     const nextRevision = revisionText.trim();
@@ -292,6 +293,66 @@ export default function HistoryDetailPage() {
 
           {/* AI analysis */}
           <div className="space-y-6">
+          {interviewExpressionCard && (
+            <Card size="md" className="border-primary-muted bg-white">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-label font-bold text-primary">
+                    面试表达卡
+                  </p>
+                  <h2 className="mt-1 text-heading-sm font-bold text-ink">
+                    把这次训练讲成一段高级 PM 回答
+                  </h2>
+                </div>
+                <Badge
+                  variant={
+                    interviewExpressionCard.readiness === "面试可用"
+                      ? "success"
+                      : "neutral"
+                  }
+                >
+                  {interviewExpressionCard.readiness}
+                </Badge>
+              </div>
+
+              <div className="grid gap-3">
+                <div className="rounded-lg bg-surface px-4 py-3">
+                  <p className="text-label font-bold text-ink-muted">
+                    开场判断
+                  </p>
+                  <p className="mt-1 text-body-sm leading-6 text-ink">
+                    {interviewExpressionCard.openingClaim}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-surface px-4 py-3">
+                  <p className="text-label font-bold text-ink-muted">
+                    证据抓手
+                  </p>
+                  <p className="mt-1 text-body-sm leading-6 text-ink">
+                    {interviewExpressionCard.proofPoint}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-warning-soft px-4 py-3">
+                  <p className="text-label font-bold text-warning">
+                    追问风险
+                  </p>
+                  <p className="mt-1 text-body-sm leading-6 text-ink">
+                    {interviewExpressionCard.followupRisk}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-lg border border-line bg-surface-raised p-4">
+                <p className="text-label font-bold text-ink-muted">
+                  可复制表达版本
+                </p>
+                <p className="mt-2 text-body-sm leading-6 text-ink">
+                  {interviewExpressionCard.copyScript}
+                </p>
+              </div>
+            </Card>
+          )}
+
           {evaluation && (
             <div className="grid gap-3 sm:grid-cols-3">
               <Card size="sm" className="bg-primary-soft">

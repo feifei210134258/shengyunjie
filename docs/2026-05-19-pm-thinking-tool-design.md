@@ -135,6 +135,7 @@
 - 画像快照保存成功后，训练反馈页会立即读取 `GET /api/profile/recommendation`，展示基于新证据生成的“下一轮处方”；用户可直接在反馈页调用 `POST /api/profile/recommendation` 把该处方设为本周处方，形成“反馈 → 画像 → 推荐 → 下一题”的闭环。
 - 训练首页的主行动也读取 `GET /api/profile/recommendation`，优先使用画像处方中的训练建议作为开始训练入口，确保二次修正和画像快照能影响下一次打开训练页时练什么。
 - `/api/training/stats` 会把最近训练记录、AI 反馈和二次修正整理为 `evidenceAssets`；训练首页展示“能力证据资产”，区分“面试可用”和“待修正后可用”，并链接到历史复盘或项目故事库，让日常训练能沉淀为跳槽面试可复用材料。
+- `/api/training/history/[id]` 在读回训练记录时派生 `interviewExpressionCard`，历史复盘页展示“面试表达卡”：开场判断、证据抓手、追问风险和可复制表达版本。该卡片优先使用二次修正内容，不新增 schema，让每次复盘都能转成面试表达材料。
 
 ---
 
