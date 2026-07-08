@@ -15,3 +15,9 @@ test("dashboard API returns the latest selected recommendation snapshot", () => 
   assert.match(source, /__recommendation/);
   assert.match(source, /recommendationPlan/);
 });
+
+test("dashboard API reads the latest persisted outcome goal focus", () => {
+  assert.match(source, /latestGoalFocus/);
+  assert.match(source, /__goalFocus/);
+  assert.match(source, /selectedGoalFocus/);
+});

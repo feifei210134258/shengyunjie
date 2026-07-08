@@ -13,6 +13,7 @@ async function readSnapshotTrigger(req?: Request) {
         "revision_saved",
         "expression_card_saved",
         "project_story_saved",
+        "goal_focus_selected",
       ].includes(triggerType)
     ) {
       return null;
@@ -67,6 +68,11 @@ async function readSnapshotTrigger(req?: Request) {
                 : null,
           }
         : null;
+    const goalFocus =
+      body.goalFocus === "interview_sprint" ||
+      body.goalFocus === "thinking_training"
+        ? body.goalFocus
+        : "";
     return {
       trigger: triggerType,
       trainingRecordId: String(body.trainingRecordId || "").trim(),
@@ -78,6 +84,7 @@ async function readSnapshotTrigger(req?: Request) {
       expressionCard:
         triggerType === "expression_card_saved" ? expressionCard : null,
       projectStory: triggerType === "project_story_saved" ? projectStory : null,
+      goalFocus: triggerType === "goal_focus_selected" ? goalFocus : "",
     };
   } catch {
     return null;
@@ -186,6 +193,7 @@ export async function POST(req: Request) {
       ? {
           ...dimensionScores,
           __trigger: trigger,
+          ...(trigger.goalFocus ? { __goalFocus: trigger.goalFocus } : {}),
         }
       : dimensionScores;
 

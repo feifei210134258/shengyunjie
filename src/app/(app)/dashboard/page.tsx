@@ -54,12 +54,14 @@ export interface DashboardData {
   growthProfile?: GrowthProfile;
   recommendationPlan?: RecommendationPlan;
   latestRecommendation?: SelectedRecommendation | null;
+  latestGoalFocus?: GoalFocus["id"] | null;
   commandCenter?: {
     primary: CommandAction;
     secondary: CommandAction[];
     missionMap: MissionMapItem[];
     blindSpots: BlindSpotItem[];
     productPaths: ProductPath[];
+    goalFocus: GoalFocus | null;
     actionDossier: ActionDossier;
     nextPractice: {
       missionId: string;
@@ -120,6 +122,12 @@ interface ProductPath {
   evidenceLabel: string;
   nextStep: string;
   emphasis: "career" | "growth";
+}
+
+interface GoalFocus {
+  id: ProductPath["id"];
+  label: string;
+  description: string;
 }
 
 type NextPractice = NonNullable<DashboardData["commandCenter"]>["nextPractice"];
@@ -310,11 +318,15 @@ function PathFirstHero({
   fallbackFocus,
   stats,
   latestReport,
+  savingGoalFocus,
+  onSelectGoalFocus,
 }: {
   commandCenter: DashboardData["commandCenter"] | undefined;
   fallbackFocus: string;
   stats: DashboardData["trainingStats"] | null;
   latestReport: DashboardData["latestReport"];
+  savingGoalFocus: string;
+  onSelectGoalFocus: (goalFocus: ProductPath["id"]) => Promise<void>;
 }) {
   const primary =
     commandCenter?.primary || {
@@ -333,6 +345,7 @@ function PathFirstHero({
     signals?.recentAverage != null
       ? `推荐依据：${signals.weakestDimension ?? fallbackFocus}偏弱，近次均分 ${signals.recentAverage}/10`
       : `推荐依据：优先补 ${signals?.weakestDimension ?? fallbackFocus}`;
+  const goalFocus = commandCenter?.goalFocus;
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-line bg-surface-raised shadow-xs">
@@ -353,6 +366,45 @@ function PathFirstHero({
         <p className="mt-5 max-w-3xl text-body-lg leading-relaxed text-ink-muted">
           面试跳槽需要把项目讲成证据，长期升阶需要把判断练成肌肉。升云阶现在先帮你选结果路径，再把诊断、训练、复盘收进同一条链路。
         </p>
+
+        <div className="mt-6 rounded-lg border border-line bg-surface px-4 py-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-label font-bold text-primary">当前主线</p>
+              <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                {goalFocus?.description ||
+                  "先选一个当下最重要的结果目标，系统会把首页顺序、今日建议和证据生产线向这条主线倾斜。"}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {paths.map((path) => {
+                const selected = goalFocus?.id === path.id;
+                return (
+                  <button
+                    key={path.id}
+                    onClick={() => onSelectGoalFocus(path.id)}
+                    disabled={Boolean(savingGoalFocus)}
+                    className={cn(
+                      "inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-label font-bold transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+                      selected
+                        ? "border-primary bg-primary text-white"
+                        : "border-line-strong bg-surface-raised text-ink hover:bg-surface-hover"
+                    )}
+                  >
+                    {savingGoalFocus === path.id
+                      ? "保存中"
+                      : selected
+                        ? "当前主线"
+                        : "设为主线"}
+                    <span className={selected ? "text-white/80" : "text-ink-muted"}>
+                      {path.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
         <div className="mt-8 grid gap-4 lg:grid-cols-2">
           {paths.map((path) => (
@@ -990,6 +1042,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [savingRecommendationId, setSavingRecommendationId] = useState("");
   const [selectedRecommendationId, setSelectedRecommendationId] = useState("");
+  const [savingGoalFocus, setSavingGoalFocus] = useState("");
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -1033,6 +1086,52 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleSelectGoalFocus(goalFocus: ProductPath["id"]) {
+    setSavingGoalFocus(goalFocus);
+    try {
+      const response = await fetch("/api/profile/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trigger: "goal_focus_selected",
+          goalFocus,
+        }),
+      });
+      if (!response.ok) throw new Error("保存当前主线失败");
+      const refreshed = await fetch("/api/dashboard");
+      if (refreshed.ok) {
+        setData(await refreshed.json());
+        return;
+      }
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              latestGoalFocus: goalFocus,
+              commandCenter: current.commandCenter
+                ? {
+                    ...current.commandCenter,
+                    goalFocus: {
+                      id: goalFocus,
+                      label:
+                        goalFocus === "interview_sprint"
+                          ? "面试跳槽主线"
+                          : "高级产品思维主线",
+                      description:
+                        goalFocus === "interview_sprint"
+                          ? "优先把训练回答、项目故事和模拟追问沉淀成可复用面试证据。"
+                          : "优先用真实业务任务训练判断、取舍、归因和落地闭环。",
+                    },
+                  }
+                : current.commandCenter,
+            }
+          : current
+      );
+    } finally {
+      setSavingGoalFocus("");
+    }
+  }
+
   return (
     <main className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
       {loading ? (
@@ -1050,7 +1149,9 @@ export default function DashboardPage() {
           <PathFirstHero
             commandCenter={data?.commandCenter}
             fallbackFocus={focusLabel}
+            onSelectGoalFocus={handleSelectGoalFocus}
             latestReport={latestReport}
+            savingGoalFocus={savingGoalFocus}
             stats={stats}
           />
 

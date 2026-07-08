@@ -188,6 +188,10 @@ export async function GET() {
       (growthSnapshots || []).find(
         (snapshot: any) => snapshot.dimension_scores?.__recommendation
       )?.dimension_scores?.__recommendation || null;
+    const latestGoalFocus =
+      (growthSnapshots || []).find(
+        (snapshot: any) => snapshot.dimension_scores?.__goalFocus
+      )?.dimension_scores?.__goalFocus || null;
 
     /* ------- Profile Calculation ------- */
 
@@ -278,6 +282,7 @@ export async function GET() {
       profileWeaknesses: profile?.weaknesses || [],
       latestReport: latestReport ? { id: latestReport.id } : null,
       hasCaseSimulation,
+      selectedGoalFocus: latestGoalFocus,
       bootcampSession: bootcampSession
         ? {
             status: bootcampSession.status,
@@ -297,6 +302,7 @@ export async function GET() {
       growthProfile,
       recommendationPlan,
       latestRecommendation,
+      latestGoalFocus,
       trainingStats,
       growthTrend,
       latestReport: reportResponse,

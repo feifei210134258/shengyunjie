@@ -1,5 +1,20 @@
 # 会话进度日志
 
+## [2026-07-08] Dashboard：当前主线目标
+
+### 完成内容
+- Dashboard 首屏新增“当前主线”，用户可把“面试跳槽冲刺”或“高级产品思维训练”设为主线。
+- `POST /api/profile/summary` 支持 `goal_focus_selected`，把主线写入 `growth_snapshots.dimension_scores.__goalFocus`，复用既有成长快照，不新增 schema。
+- `/api/dashboard` 读回最近 `__goalFocus` 并传入 `buildCommandCenter`；命令中心会按主线重排路径顺序、主行动和下一题处方说明。
+- 保存主线后前端重新拉取 `/api/dashboard`，确保页面展示的是后端读回后的真实调度结果。
+
+### 验证记录
+- TDD 红灯：`node --test src/lib/dashboard/training-command-center.test.mjs src/app/api/dashboard/route.test.mjs src/app/api/profile/summary/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 先失败于缺少 `goalFocus`、`__goalFocus`、`latestGoalFocus`、`goal_focus_selected` 和页面“当前主线”入口。
+- 已通过：`node --test src/lib/dashboard/training-command-center.test.mjs src/app/api/dashboard/route.test.mjs src/app/api/profile/summary/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs'`（24 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/dashboard/training-command-center.ts src/lib/dashboard/training-command-center.test.mjs src/app/api/dashboard/route.ts src/app/api/dashboard/route.test.mjs src/app/api/profile/summary/route.ts src/app/api/profile/summary/route.test.mjs 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`。
+
 ## [2026-07-08] Dashboard：本周处方读回
 
 ### 完成内容

@@ -110,6 +110,54 @@ test("builds two outcome paths for interview sprint and long-term thinking train
   assert.equal(trainingPath.evidenceLabel, "今日 1 题 / 累计 1 条证据");
 });
 
+test("prioritizes the selected interview sprint goal in the command center", () => {
+  const result = buildCommandCenter({
+    todayCount: 0,
+    recentRecords: [],
+    dimAverages: { strategic_thinking: 6.2 },
+    profileWeaknesses: ["strategic_thinking"],
+    latestReport: { id: "report-1" },
+    selectedGoalFocus: "interview_sprint",
+    bootcampSession: {
+      status: "in_progress",
+      currentDay: 1,
+      hasResume: true,
+      weaknessCount: 2,
+    },
+    date: new Date("2026-07-08T10:00:00+08:00"),
+  });
+
+  assert.equal(result.goalFocus?.id, "interview_sprint");
+  assert.equal(result.productPaths[0].id, "interview_sprint");
+  assert.equal(result.primary.kind, "review");
+  assert.match(result.primary.title, /项目证据|面试/);
+  assert.match(result.actionDossier.nextTraining.reason, /面试跳槽/);
+});
+
+test("prioritizes the selected thinking training goal in the command center", () => {
+  const result = buildCommandCenter({
+    todayCount: 0,
+    recentRecords: [],
+    dimAverages: { commercial_thinking: 6.4 },
+    profileWeaknesses: ["commercial_thinking"],
+    latestReport: { id: "report-1" },
+    selectedGoalFocus: "thinking_training",
+    bootcampSession: {
+      status: "in_progress",
+      currentDay: 1,
+      hasResume: true,
+      weaknessCount: 2,
+    },
+    date: new Date("2026-07-08T10:00:00+08:00"),
+  });
+
+  assert.equal(result.goalFocus?.id, "thinking_training");
+  assert.equal(result.productPaths[0].id, "thinking_training");
+  assert.equal(result.primary.kind, "training");
+  assert.match(result.primary.title, /今日任务/);
+  assert.match(result.actionDossier.nextTraining.reason, /高级产品思维/);
+});
+
 test("builds an action dossier from recent training evidence", () => {
   const result = buildCommandCenter({
     todayCount: 1,

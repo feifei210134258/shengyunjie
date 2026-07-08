@@ -26,6 +26,8 @@
 
 诊断、训练、案例和特训继续作为底层能力模块存在，但首页与导航优先呈现用户要达成的结果。`/api/dashboard` 会读取训练记录、诊断报告和特训会话状态，生成两条路径的当前状态、下一步动作和证据沉淀提示。
 
+Dashboard 支持用户把“面试跳槽冲刺”或“高级产品思维训练”设为当前主线。该选择通过 `POST /api/profile/summary` 写入 `growth_snapshots.dimension_scores.__goalFocus`，刷新后由 `/api/dashboard` 读回，并用于重排路径顺序、主行动和下一题处方说明；不新增 schema。
+
 ---
 
 ## 模块一：诊断模块

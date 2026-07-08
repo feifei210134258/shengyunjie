@@ -44,6 +44,12 @@ test("profile summary API can tag snapshots created from saved project story pac
   assert.match(source, /interviewScript/);
 });
 
+test("profile summary API can persist the selected outcome goal focus", () => {
+  assert.match(source, /goal_focus_selected/);
+  assert.match(source, /goalFocus/);
+  assert.match(source, /__goalFocus/);
+});
+
 test("profile summary API reads snapshot dimension scores for saved assets", () => {
   assert.match(source, /\.select\("id, snapshot_date, overall_score, dimension_scores"\)/);
 });

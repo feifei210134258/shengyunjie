@@ -11,6 +11,15 @@ test("dashboard foregrounds two product outcome paths instead of one module entr
   assert.doesNotMatch(source, /今日只做一件事/);
 });
 
+test("dashboard lets users persist their current outcome goal focus", () => {
+  assert.match(source, /goalFocus/);
+  assert.match(source, /handleSelectGoalFocus/);
+  assert.match(source, /goal_focus_selected/);
+  assert.match(source, /fetch\("\/api\/dashboard"\)/);
+  assert.match(source, /当前主线/);
+  assert.match(source, /设为主线/);
+});
+
 test("dashboard renders the growth profile as an evidence ledger", () => {
   assert.match(source, /growthProfile/);
   assert.match(source, /能力证据账本/);

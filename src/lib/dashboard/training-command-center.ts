@@ -27,6 +27,7 @@ type CommandCenterInput = {
     hasResume?: boolean;
     weaknessCount?: number;
   } | null;
+  selectedGoalFocus?: ProductPath["id"] | null;
   date?: Date;
 };
 
@@ -61,6 +62,7 @@ export type TrainingCommandCenter = {
   primary: CommandAction;
   secondary: CommandAction[];
   productPaths: ProductPath[];
+  goalFocus: GoalFocus | null;
   actionDossier: ActionDossier;
   missionMap: MissionMapItem[];
   blindSpots: BlindSpotItem[];
@@ -87,6 +89,12 @@ export type ProductPath = {
   evidenceLabel: string;
   nextStep: string;
   emphasis: "career" | "growth";
+};
+
+export type GoalFocus = {
+  id: ProductPath["id"];
+  label: string;
+  description: string;
 };
 
 export type DossierAsset = {
@@ -402,7 +410,8 @@ function buildDossierAsset(record: DashboardRecord): DossierAsset | null {
 function buildActionDossier(
   records: DashboardRecord[],
   priorityMission: TrainingMission,
-  actionLabel: string
+  actionLabel: string,
+  goalFocus: GoalFocus | null
 ): ActionDossier {
   const assets = records
     .map(buildDossierAsset)
@@ -420,9 +429,75 @@ function buildActionDossier(
     nextTraining: {
       title: `${priorityMission.displayLabel} / ${actionLabel}`,
       href: "/training/session",
-      reason: "下一题继续服务画像处方，练完后会进入反馈、修正和表达资产链路。",
+      reason: goalFocus
+        ? `下一题继续服务${goalFocus.label}，练完后会进入反馈、修正和表达资产链路。`
+        : "下一题继续服务画像处方，练完后会进入反馈、修正和表达资产链路。",
     },
   };
+}
+
+function normalizeGoalFocus(value: unknown): ProductPath["id"] | null {
+  return value === "interview_sprint" || value === "thinking_training"
+    ? value
+    : null;
+}
+
+function buildGoalFocus(value: unknown): GoalFocus | null {
+  const id = normalizeGoalFocus(value);
+  if (!id) return null;
+  return id === "interview_sprint"
+    ? {
+        id,
+        label: "面试跳槽主线",
+        description: "优先把训练回答、项目故事和模拟追问沉淀成可复用面试证据。",
+      }
+    : {
+        id,
+        label: "高级产品思维主线",
+        description: "优先用真实业务任务训练判断、取舍、归因和落地闭环。",
+      };
+}
+
+function sortProductPathsByGoal(
+  paths: ProductPath[],
+  goalFocus: GoalFocus | null
+) {
+  if (!goalFocus) return paths;
+  return [...paths].sort((a, b) => {
+    if (a.id === goalFocus.id) return -1;
+    if (b.id === goalFocus.id) return 1;
+    return 0;
+  });
+}
+
+function buildGoalPrimaryAction(
+  goalFocus: GoalFocus | null,
+  paths: ProductPath[],
+  fallback: CommandAction
+): CommandAction {
+  if (!goalFocus) return fallback;
+  const selectedPath = paths.find((path) => path.id === goalFocus.id);
+  if (!selectedPath) return fallback;
+
+  if (goalFocus.id === "interview_sprint") {
+    return {
+      title: `面试主线：${selectedPath.primaryAction}`,
+      description: selectedPath.nextStep,
+      href: selectedPath.href,
+      cta: selectedPath.primaryAction,
+      kind: "review",
+    };
+  }
+
+  return fallback.kind === "training"
+    ? fallback
+    : {
+        title: "今日任务：产品判断训练",
+        description: selectedPath.nextStep,
+        href: selectedPath.href,
+        cta: selectedPath.primaryAction,
+        kind: "training",
+      };
 }
 
 export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCenter {
@@ -438,8 +513,9 @@ export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCe
     priorityMission
   );
   const actionLabel = getMissionActionLabel(priorityMission.id);
+  const goalFocus = buildGoalFocus(input.selectedGoalFocus);
 
-  const primary: CommandAction = !input.latestReport
+  const basePrimary: CommandAction = !input.latestReport
     ? {
         title: "先建立一份能力基线",
         description: "完成诊断后，系统会把训练任务、案例推演和复盘建议收拢到真实短板上。",
@@ -485,7 +561,7 @@ export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCe
               missionId: priorityMission.id,
               missionLabel: priorityMission.displayLabel,
               actionLabel,
-            };
+          };
 
   const latestRecord = input.recentRecords[0];
   const secondary = [
@@ -516,22 +592,25 @@ export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCe
       kind: "review",
     },
   ] satisfies CommandAction[];
-  const visibleSecondary = secondary.filter((action) => action.kind !== primary.kind);
 
   const blindSpots = blindSpotsWithMission.map(({ missionId: _missionId, ...item }) => item);
-  const productPaths = [
+  const productPaths = sortProductPathsByGoal([
     buildInterviewPath(input),
     buildTrainingPath(input, priorityMission, actionLabel, recentAverage),
-  ];
+  ], goalFocus);
+  const primary = buildGoalPrimaryAction(goalFocus, productPaths, basePrimary);
+  const visibleSecondary = secondary.filter((action) => action.kind !== primary.kind);
 
   return {
     primary,
     secondary: visibleSecondary,
     productPaths,
+    goalFocus,
     actionDossier: buildActionDossier(
       input.recentRecords,
       priorityMission,
-      actionLabel
+      actionLabel,
+      goalFocus
     ),
     missionMap: buildMissionMap(priorityMission, input.dimAverages),
     blindSpots,
