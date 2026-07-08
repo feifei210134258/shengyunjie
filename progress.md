@@ -1,5 +1,18 @@
 # 会话进度日志
 
+## [2026-07-08] 训练实战页：思维升级迁移目标前置
+
+### 完成内容
+- `/api/training/sessions?date=...` 读取最近 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade`，通过 `buildThinkingAssets` 派生 `latestThinkingUpgrade` 返回训练实战页。
+- 高级产品思维主线进入 `/training/session` 时，作答前展示“本题迁移目标”，直接呈现上一张思维升级卡的判断、取舍、归因和落地要求。
+- 新生成题目和草稿保存都会把 `migrationTarget` 写入当天 `training_sessions.questions`，刷新后仍能读回迁移上下文；不新增 schema。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/training/sessions/route.test.mjs` 先失败于缺少 `buildThinkingAssets/latestThinkingUpgrade`。
+- TDD 红灯：`node --test src/components/training/TrainingSessionClient.test.mjs` 先失败于缺少 `latestThinkingUpgrade/migrationTarget/本题迁移目标`。
+- GREEN：上述两个测试通过，`npx tsc --noEmit` 通过。
+- 后续完整验证见本轮提交说明。
+
 ## [2026-07-08] 推荐处方：思维升级资产反哺下一题
 
 ### 完成内容

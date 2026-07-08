@@ -2,6 +2,24 @@ import { createServerClient } from "@/lib/supabase-server";
 import { getBeijingDate } from "@/lib/date";
 import { NextRequest, NextResponse } from "next/server";
 
+function sanitizeMigrationTarget(value: any) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const trainingRecordId = String(value.trainingRecordId || "").trim();
+  if (!trainingRecordId) return null;
+  return {
+    snapshotId: String(value.snapshotId || "").trim(),
+    savedAt: value.savedAt ? String(value.savedAt).trim() : null,
+    trainingRecordId,
+    dimension: String(value.dimension || "").trim(),
+    dimensionLabel: String(value.dimensionLabel || "产品思维").trim(),
+    judgmentQuality: String(value.judgmentQuality || "").trim(),
+    tradeoffQuality: String(value.tradeoffQuality || "").trim(),
+    attributionDepth: String(value.attributionDepth || "").trim(),
+    landingRigor: String(value.landingRigor || "").trim(),
+    href: String(value.href || "").trim(),
+  };
+}
+
 // 保存/更新当天某维度的题目
 export async function POST(req: NextRequest) {
   try {
@@ -61,6 +79,9 @@ export async function POST(req: NextRequest) {
               prescriptionId: String(
                 question?.prescriptionId ?? previousQuestion?.prescriptionId ?? ""
               ).trim(),
+              migrationTarget:
+                sanitizeMigrationTarget(question?.migrationTarget) ??
+                sanitizeMigrationTarget(previousQuestion?.migrationTarget),
               draftAnswer:
                 typeof question?.draftAnswer === "string"
                   ? question.draftAnswer

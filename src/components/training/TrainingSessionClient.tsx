@@ -57,6 +57,7 @@ const MISSION_PLAN = getDailyTrainingMissionPlan();
 type PrescriptionMeta = {
   profileFocus?: string;
   prescriptionId?: string;
+  migrationTarget?: ThinkingUpgradeMigrationTarget | null;
 };
 
 function getDefaultTargetState(
@@ -83,6 +84,7 @@ type QuestionState = {
   targetLabel?: string;
   profileFocus?: string;
   prescriptionId?: string;
+  migrationTarget?: ThinkingUpgradeMigrationTarget | null;
   draftAnswer?: string;
 };
 type AnswerState = {
@@ -128,6 +130,7 @@ type DailySessionResponse = {
   completedDimensions?: string[];
   nextIndex?: number;
   latestGoalFocus?: string | null;
+  latestThinkingUpgrade?: ThinkingUpgradeMigrationTarget | null;
 };
 
 type StoredQuestion = {
@@ -141,7 +144,21 @@ type StoredQuestion = {
   targetLabel?: string;
   profileFocus?: string;
   prescriptionId?: string;
+  migrationTarget?: ThinkingUpgradeMigrationTarget | null;
   draftAnswer?: string;
+};
+
+type ThinkingUpgradeMigrationTarget = {
+  snapshotId: string;
+  savedAt: string | null;
+  trainingRecordId: string;
+  dimension: string;
+  dimensionLabel: string;
+  judgmentQuality: string;
+  tradeoffQuality: string;
+  attributionDepth: string;
+  landingRigor: string;
+  href: string;
 };
 
 type ReadinessItem = {
@@ -188,6 +205,31 @@ function getQuestionHint(question: QuestionState | undefined) {
   const hint = question?.hint?.trim();
   if (hint && hint.length >= 30) return hint;
   return null;
+}
+
+function normalizeMigrationTarget(
+  value?: ThinkingUpgradeMigrationTarget | null
+): ThinkingUpgradeMigrationTarget | null {
+  if (!value?.trainingRecordId) return null;
+  const hasUpgradeCue = [
+    value.judgmentQuality,
+    value.tradeoffQuality,
+    value.attributionDepth,
+    value.landingRigor,
+  ].some((item) => String(item || "").trim());
+  if (!hasUpgradeCue) return null;
+  return {
+    snapshotId: String(value.snapshotId || "").trim(),
+    savedAt: value.savedAt || null,
+    trainingRecordId: String(value.trainingRecordId || "").trim(),
+    dimension: String(value.dimension || "").trim(),
+    dimensionLabel: String(value.dimensionLabel || "产品思维").trim(),
+    judgmentQuality: String(value.judgmentQuality || "").trim(),
+    tradeoffQuality: String(value.tradeoffQuality || "").trim(),
+    attributionDepth: String(value.attributionDepth || "").trim(),
+    landingRigor: String(value.landingRigor || "").trim(),
+    href: String(value.href || "").trim(),
+  };
 }
 
 function getAnswerReadiness(answerText: string): ReadinessItem[] {
@@ -265,6 +307,7 @@ function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState 
     targetLabel: String(value.targetLabel || "").trim() || undefined,
     profileFocus: String(value.profileFocus || "").trim() || undefined,
     prescriptionId: String(value.prescriptionId || "").trim() || undefined,
+    migrationTarget: normalizeMigrationTarget(value.migrationTarget),
     draftAnswer:
       typeof value.draftAnswer === "string" ? value.draftAnswer : undefined,
   };
@@ -280,6 +323,7 @@ interface RealTrainingProps {
   score: number;
   streamedText: string;
   prescriptionLabel?: string;
+  migrationTarget?: ThinkingUpgradeMigrationTarget | null;
   goalFocusFrame?: {
     badge: string;
     description: string;
@@ -656,6 +700,7 @@ function A1BeforeSubmit({
   analysis,
   streamedText,
   prescriptionLabel,
+  migrationTarget,
   goalFocusFrame,
   onAnswerChange,
   onSubmit,
@@ -711,6 +756,44 @@ function A1BeforeSubmit({
                   {question?.targetLabel || "定向练习"}
                 </span>
               </div>
+              {migrationTarget && (
+                <div className="mt-3 rounded-lg border border-primary/10 bg-primary-soft/45 px-3 py-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-md bg-white px-2 py-1 text-label font-semibold text-primary">
+                      本题迁移目标
+                    </span>
+                    <span className="text-label font-semibold text-ink-muted">
+                      上一张思维升级卡 · {migrationTarget.dimensionLabel}
+                    </span>
+                  </div>
+                  <div className="mt-2 grid gap-2 md:grid-cols-2">
+                    {migrationTarget.judgmentQuality && (
+                      <p className="text-body-sm leading-relaxed text-ink">
+                        <span className="font-semibold">判断：</span>
+                        {migrationTarget.judgmentQuality}
+                      </p>
+                    )}
+                    {migrationTarget.tradeoffQuality && (
+                      <p className="text-body-sm leading-relaxed text-ink">
+                        <span className="font-semibold">取舍：</span>
+                        {migrationTarget.tradeoffQuality}
+                      </p>
+                    )}
+                    {migrationTarget.attributionDepth && (
+                      <p className="text-body-sm leading-relaxed text-ink">
+                        <span className="font-semibold">归因：</span>
+                        {migrationTarget.attributionDepth}
+                      </p>
+                    )}
+                    {migrationTarget.landingRigor && (
+                      <p className="text-body-sm leading-relaxed text-ink">
+                        <span className="font-semibold">落地：</span>
+                        {migrationTarget.landingRigor}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
@@ -1520,12 +1603,18 @@ export default function TrainingSessionClient() {
   const effectiveProfileFocus = urlProfileFocus || persistedGoalFocus;
   const prescriptionId =
     searchParams.get("prescription") || searchParams.get("recommendationId") || "";
+  const [latestThinkingUpgrade, setLatestThinkingUpgrade] =
+    useState<ThinkingUpgradeMigrationTarget | null>(null);
   const prescriptionMeta = useMemo(
     () => ({
       profileFocus: effectiveProfileFocus || undefined,
       prescriptionId: prescriptionId || undefined,
+      migrationTarget:
+        effectiveProfileFocus === "thinking_training"
+          ? latestThinkingUpgrade
+          : null,
     }),
-    [effectiveProfileFocus, prescriptionId]
+    [effectiveProfileFocus, latestThinkingUpgrade, prescriptionId]
   );
   const prescriptionMissionPlan = useMemo(
     () => getPrescriptionAwareMissionPlan(effectiveProfileFocus, MISSION_PLAN),
@@ -1559,6 +1648,10 @@ export default function TrainingSessionClient() {
   const answer = answers[currentKey];
   const analysis = analyses[currentKey];
   const hasAnalysis = !!analysis?.text && !analysis.loading;
+  const migrationTarget =
+    effectiveProfileFocus === "thinking_training"
+      ? question?.migrationTarget || latestThinkingUpgrade
+      : null;
 
   const generateQuestion = useCallback(
     async (
@@ -1643,6 +1736,7 @@ export default function TrainingSessionClient() {
               targetLabel: targetState.targetLabel,
               profileFocus: targetState.profileFocus,
               prescriptionId: targetState.prescriptionId,
+              migrationTarget: targetState.migrationTarget,
             },
           }),
         }).catch((err) => console.error("保存题目失败:", err));
@@ -1679,6 +1773,10 @@ export default function TrainingSessionClient() {
       .then((data: DailySessionResponse | null) => {
         if (cancelled || !data) return;
         const latestGoalFocus = normalizeGoalFocus(data.latestGoalFocus);
+        const latestThinkingUpgrade = normalizeMigrationTarget(
+          data.latestThinkingUpgrade
+        );
+        setLatestThinkingUpgrade(latestThinkingUpgrade);
         if (!urlProfileFocus && latestGoalFocus) {
           setPersistedGoalFocus(latestGoalFocus);
         }
@@ -1798,6 +1896,7 @@ export default function TrainingSessionClient() {
             targetLabel: q.targetLabel,
             profileFocus: q.profileFocus,
             prescriptionId: q.prescriptionId,
+            migrationTarget: q.migrationTarget,
             draftAnswer,
           },
         }),
@@ -2307,6 +2406,7 @@ export default function TrainingSessionClient() {
     score,
     streamedText,
     prescriptionLabel,
+    migrationTarget,
     onAnswerChange: handleAnswerChange,
     onSubmit: handleSubmit,
     onNext: handleNext,

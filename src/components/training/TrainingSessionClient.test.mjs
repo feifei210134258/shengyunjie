@@ -38,6 +38,15 @@ test("training session inherits persisted goal focus when the URL has no focus",
   assert.match(source, /思维升阶训练/);
 });
 
+test("thinking training session shows the previous thinking upgrade as a migration target", () => {
+  assert.match(source, /latestThinkingUpgrade/);
+  assert.match(source, /migrationTarget/);
+  assert.match(source, /本题迁移目标/);
+  assert.match(source, /上一张思维升级卡/);
+  assert.match(source, /judgmentQuality/);
+  assert.match(source, /landingRigor/);
+});
+
 test("training analysis sends the effective goal focus into feedback generation", () => {
   assert.match(source, /action: "analyze"/);
   assert.match(source, /profileFocus: effectiveProfileFocus \|\| undefined/);

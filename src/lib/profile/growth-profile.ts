@@ -221,7 +221,7 @@ function buildStoryAssets(
     .sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
 }
 
-function buildThinkingAssets(
+export function buildThinkingAssets(
   growthSnapshots: GrowthSnapshot[]
 ): GrowthProfileThinkingAsset[] {
   return growthSnapshots

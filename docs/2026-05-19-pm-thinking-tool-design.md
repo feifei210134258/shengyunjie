@@ -157,6 +157,7 @@ Dashboard 支持用户把“面试跳槽冲刺”或“高级产品思维训练�
 - `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.projectStory` 读回已保存的项目故事包，Dashboard 能力证据账本展示“已入账项目资产”、最新项目名、角色、成熟度和证据缺口，并链接回 `/bootcamp/story-bank` 继续补证据。
 - `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 读回已保存的思维升级卡，Dashboard 能力证据账本展示“已入账思维升级”、最新维度和判断/取舍/归因/落地摘要，并链接回对应训练复盘页。
 - `buildRecommendationPlan` 会优先读取最近的 `thinkingAssets`，把最新思维升级卡转成下一题训练处方：标题延续对应维度，理由引用判断/取舍/归因/落地摘要，入口指向 `/training/session?focus=thinking_training`，复盘处方指向原训练复盘页，让“思维升级卡入账 → 下一题迁移练习”形成闭环。
+- `/api/training/sessions?date=...` 会把最近一张 `thinking_upgrade_saved` 资产作为 `latestThinkingUpgrade` 返回训练实战页；当用户进入高级产品思维主线时，作答前会看到“本题迁移目标”，明确上一张思维升级卡中的判断、取舍、归因和落地要求，并随题目缓存写入 `training_sessions.questions`，刷新后不丢失迁移上下文。
 
 ---
 

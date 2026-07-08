@@ -9,6 +9,7 @@ import {
   getNextTrainingIndexFromCompleted,
   getRotatedTrainingDimensions,
 } from "@/lib/training/session-progress";
+import { buildThinkingAssets } from "@/lib/profile/growth-profile";
 import { NextRequest, NextResponse } from "next/server";
 
 // 查询训练会话
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
           .order("created_at", { ascending: true }),
         supabase
           .from("growth_snapshots")
-          .select("dimension_scores")
+          .select("id, snapshot_date, dimension_scores")
           .eq("user_id", user.id)
           .order("snapshot_date", { ascending: false })
           .limit(12),
@@ -66,11 +67,20 @@ export async function GET(req: NextRequest) {
         (growthSnapshots || []).find(
           (snapshot: any) => snapshot.dimension_scores?.__goalFocus
         )?.dimension_scores?.__goalFocus || null;
+      const latestThinkingUpgrade =
+        buildThinkingAssets(
+          (growthSnapshots || []).filter(
+            (snapshot: any) =>
+              snapshot.dimension_scores?.__trigger?.trigger ===
+              "thinking_upgrade_saved"
+          )
+        )[0] || null;
       return NextResponse.json({
         session,
         completedDimensions,
         nextIndex,
         latestGoalFocus,
+        latestThinkingUpgrade,
       });
     }
 
