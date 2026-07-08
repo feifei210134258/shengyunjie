@@ -89,3 +89,35 @@ test("derives an interview evidence bank with gaps, risks, and expression assets
   assert.equal(result.evidenceBank.primaryNextAction.href, "/bootcamp/story-bank");
   assert.match(result.evidenceBank.primaryNextAction.label, /补证据|整理/);
 });
+
+test("frames the evidence bank around the persisted goal brief", () => {
+  const result = buildBootcampHub({
+    session: {
+      id: "session-3",
+      status: "in_progress",
+      current_day: 1,
+      parsed_profile: {
+        projects: [{ name: "客户成功平台" }],
+      },
+      weakness_prediction: {
+        likely_gaps: [{ area: "缺少可量化续费结果" }],
+      },
+    },
+    interviews: [],
+    trainingRecords: [],
+    latestGoalBrief: {
+      targetRole: "高级 B 端产品经理",
+      targetScenario: "两周后 SaaS 平台负责人面试",
+      targetDeadline: "2026-07-22",
+    },
+  });
+
+  assert.deepEqual(result.latestGoalBrief, {
+    targetRole: "高级 B 端产品经理",
+    targetScenario: "两周后 SaaS 平台负责人面试",
+    targetDeadline: "2026-07-22",
+  });
+  assert.match(result.sprintBrief.primaryGoal, /高级 B 端产品经理/);
+  assert.match(result.evidenceBank.primaryNextAction.reason, /SaaS 平台负责人面试/);
+  assert.match(result.evidenceBank.proofGaps.note, /2026-07-22/);
+});

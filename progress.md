@@ -1,5 +1,24 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: 面试证据库接入目标简报
+
+### 背景判断
+- Dashboard 已经能保存目标岗位、目标场景和目标期限；训练首页和训练实战页也已围绕这个目标出题。
+- 面试证据库如果不读这份目标，用户进入 `/bootcamp` 后仍会看到泛化的“补项目证据”，而不是“为了某个岗位/面试场景补哪类证据”。
+
+### 完成内容
+- `buildBootcampHub` 新增 `latestGoalBrief` 入参和返回值；当存在目标简报时，`sprintBrief.primaryGoal` 会改成服务目标岗位的面试证据。
+- `evidenceBank.primaryNextAction.reason` 和 `proofGaps.note` 会引用目标场景和目标期限，让补证据动作更贴近实际面试。
+- `GET /api/bootcamp/hub` 从 `growth_snapshots.dimension_scores.__goalBrief` 读回最近目标简报，并传入 hub 聚合。
+- `/bootcamp` 右侧新增“目标证据令”，展示目标岗位、目标场景、目标期限；缺省时给出未设置/默认准备态。
+- 复用既有 `growth_snapshots`，不新增 schema。
+
+### 验证记录
+- TDD 红灯：`hub.test.mjs` 先失败于缺少 `latestGoalBrief`；`route.test.mjs` 先失败于没有读取 `growth_snapshots/__goalBrief`；`page.test.mjs` 先失败于缺少“目标证据令 / 目标岗位 / 目标场景 / 目标期限”。
+- GREEN：`node --test src/lib/bootcamp/hub.test.mjs`、`node --test src/app/api/bootcamp/hub/route.test.mjs`、`node --test 'src/app/(app)/bootcamp/page.test.mjs'` 通过。
+- 完整验证：`node --test src/lib/bootcamp/hub.test.mjs src/app/api/bootcamp/hub/route.test.mjs 'src/app/(app)/bootcamp/page.test.mjs' feature_list.test.mjs`、`npx tsc --noEmit`、针对性 ESLint、`feature_list.json` 解析、`git diff --check`、`npm run build` 均通过。
+- 浏览器插件检查本地 `/bootcamp` 时连续超时，未作为完成证据；本轮以前述测试、类型、lint、构建和 `./init.sh` 作为验证证据。
+
 ## [2026-07-08] Feature: 面试证据库首屏
 
 ### 背景判断

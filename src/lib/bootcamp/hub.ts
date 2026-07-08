@@ -26,6 +26,12 @@ type HubTrainingRecord = {
   ai_feedback?: unknown;
 };
 
+type GoalBrief = {
+  targetRole?: string | null;
+  targetScenario?: string | null;
+  targetDeadline?: string | null;
+} | null;
+
 export type BootcampHub = {
   sprintBrief: {
     statusLabel: string;
@@ -79,6 +85,7 @@ export type BootcampHub = {
     reason: string;
     tone: "primary" | "secondary";
   }>;
+  latestGoalBrief: GoalBrief;
 };
 
 function hasText(value: unknown) {
@@ -122,51 +129,73 @@ function getWeaknessCount(session: HubSession) {
     : 0;
 }
 
+function goalBriefText(goalBrief: GoalBrief) {
+  const parts = [
+    goalBrief?.targetRole,
+    goalBrief?.targetScenario,
+    goalBrief?.targetDeadline,
+  ].filter(hasText);
+  return parts.join(" / ");
+}
+
 function buildEvidenceBank({
   resumeReady,
   projectCount,
   weaknessCount,
   evaluatedCount,
   trainingExpressionAssets,
+  latestGoalBrief,
 }: {
   resumeReady: boolean;
   projectCount: number;
   weaknessCount: number;
   evaluatedCount: number;
   trainingExpressionAssets: number;
+  latestGoalBrief: GoalBrief;
 }): BootcampHub["evidenceBank"] {
+  const targetContext = goalBriefText(latestGoalBrief);
   const primaryNextAction = !resumeReady
     ? {
         label: "上传简历",
         href: "/bootcamp/resume",
-        reason: "先把真实经历解析成项目证据，后续追问才不会空转。",
+        reason: targetContext
+          ? `先把真实经历解析成服务 ${targetContext} 的项目证据。`
+          : "先把真实经历解析成项目证据，后续追问才不会空转。",
         tone: "primary" as const,
       }
     : weaknessCount > 0
       ? {
           label: "补证据缺口",
           href: "/bootcamp/story-bank",
-          reason: "先补齐项目结果、角色边界和取舍依据，再继续模拟面试。",
+          reason: targetContext
+            ? `先补齐能支撑 ${targetContext} 的项目结果、角色边界和取舍依据。`
+            : "先补齐项目结果、角色边界和取舍依据，再继续模拟面试。",
           tone: "primary" as const,
         }
       : evaluatedCount === 0
         ? {
             label: "生成追问题",
             href: "/bootcamp/interview",
-            reason: "用模拟追问检查项目故事是否经得起深挖。",
+            reason: targetContext
+              ? `用模拟追问检查这些项目能否支撑 ${targetContext}。`
+              : "用模拟追问检查项目故事是否经得起深挖。",
             tone: "primary" as const,
           }
         : trainingExpressionAssets === 0
           ? {
               label: "沉淀表达资产",
               href: "/training",
-              reason: "把日常训练里的判断和取舍改写成面试可复述版本。",
+              reason: targetContext
+                ? `把日常训练里的判断和取舍改写成面向 ${targetContext} 的表达。`
+                : "把日常训练里的判断和取舍改写成面试可复述版本。",
               tone: "primary" as const,
             }
           : {
               label: "整理最终讲稿",
               href: "/bootcamp/story-bank",
-              reason: "把项目故事、追问风险和表达资产收束成可讲材料。",
+              reason: targetContext
+                ? `把项目故事、追问风险和表达资产收束成面向 ${targetContext} 的讲稿。`
+                : "把项目故事、追问风险和表达资产收束成可讲材料。",
               tone: "primary" as const,
             };
 
@@ -186,7 +215,9 @@ function buildEvidenceBank({
       status: weaknessCount > 0 ? "需要补证据" : "暂无明显缺口",
       note:
         weaknessCount > 0
-          ? "优先补结果指标、个人角色、取舍理由和业务影响。"
+          ? latestGoalBrief?.targetDeadline
+            ? `优先补结果指标、个人角色、取舍理由和业务影响，期限：${latestGoalBrief.targetDeadline}。`
+            : "优先补结果指标、个人角色、取舍理由和业务影响。"
           : "继续用追问检查是否还有隐藏漏洞。",
     },
     followupRisks: {
@@ -215,10 +246,12 @@ export function buildBootcampHub({
   session,
   interviews = [],
   trainingRecords = [],
+  latestGoalBrief = null,
 }: {
   session: HubSession;
   interviews?: HubInterview[];
   trainingRecords?: HubTrainingRecord[];
+  latestGoalBrief?: GoalBrief;
 }): BootcampHub {
   const projectCount = session?.parsed_profile?.projects?.length || 0;
   const currentDay = Number(session?.current_day || 0);
@@ -276,7 +309,9 @@ export function buildBootcampHub({
   return {
     sprintBrief: {
       statusLabel,
-      primaryGoal: "把真实项目讲成高级 PM 面试证据",
+      primaryGoal: latestGoalBrief?.targetRole
+        ? `把真实项目讲成 ${latestGoalBrief.targetRole} 面试证据`
+        : "把真实项目讲成高级 PM 面试证据",
       projectCount,
       weaknessCount,
       answeredCount,
@@ -294,7 +329,9 @@ export function buildBootcampHub({
       weaknessCount,
       evaluatedCount,
       trainingExpressionAssets,
+      latestGoalBrief,
     }),
     nextActions,
+    latestGoalBrief,
   };
 }

@@ -109,6 +109,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - `/bootcamp` 是面试跳槽路径的证据库入口，而不是静态模块入口或单纯训练营首页。
 - `GET /api/bootcamp/hub` 从 `bootcamp_sessions`、`bootcamp_interviews` 和 `training_records` 读回当前冲刺状态，生成 `sprintBrief`、`assetPipeline`、`evidenceBank` 和 `nextActions`。
 - 证据库首屏展示“可讲项目、证据缺口、追问风险、表达资产”，并根据最弱证据链生成“下一步只做这件事”。
+- `GET /api/bootcamp/hub` 还会从最近 `growth_snapshots.dimension_scores.__goalBrief` 读回 `latestGoalBrief`；证据库首屏展示“目标证据令”，并把目标岗位、目标场景和目标期限写入主目标、证据缺口说明和下一步动作理由。
 - 证据库继续保留简历项目、项目故事、模拟追问、日常训练表达资产四段生产线；已有简历后优先引导补项目证据，而不是继续泛化开新题。
 - 页面不直接连接 Supabase；所有状态经 API 聚合后读回，确保特训首页、故事库和日常训练表达资产使用同一套后端事实。
 

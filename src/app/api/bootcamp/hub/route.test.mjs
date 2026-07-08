@@ -8,7 +8,10 @@ test("bootcamp hub API aggregates sprint, interview, and training evidence state
   assert.match(source, /\.from\("bootcamp_sessions"\)/);
   assert.match(source, /\.from\("bootcamp_interviews"\)/);
   assert.match(source, /\.from\("training_records"\)/);
+  assert.match(source, /\.from\("growth_snapshots"\)/);
+  assert.match(source, /__goalBrief/);
   assert.match(source, /buildBootcampHub/);
+  assert.match(source, /latestGoalBrief/);
   assert.match(source, /sprintBrief/);
   assert.match(source, /assetPipeline/);
   assert.match(source, /evidenceBank/);

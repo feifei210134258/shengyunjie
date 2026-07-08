@@ -73,6 +73,7 @@ const fallbackHub: BootcampHub = {
       tone: "primary",
     },
   ],
+  latestGoalBrief: null,
 };
 
 export default function BootcampPage() {
@@ -94,10 +95,8 @@ export default function BootcampPage() {
   const sprintBrief = hub?.sprintBrief || fallbackHub.sprintBrief;
   const assetPipeline = hub?.assetPipeline || fallbackHub.assetPipeline;
   const evidenceBank = hub?.evidenceBank || fallbackHub.evidenceBank;
+  const latestGoalBrief = hub?.latestGoalBrief || fallbackHub.latestGoalBrief;
   const primaryAction = evidenceBank.primaryNextAction;
-  const nextActions = hub?.nextActions?.length
-    ? hub.nextActions
-    : fallbackHub.nextActions;
 
   return (
     <main className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-8">
@@ -134,6 +133,7 @@ export default function BootcampPage() {
           </div>
 
           <div className="rounded-lg bg-ink px-5 py-5 text-white">
+            <GoalBriefPanel latestGoalBrief={latestGoalBrief} />
             <p className="text-label font-bold text-white/65">
               下一步只做这件事
             </p>
@@ -212,6 +212,41 @@ export default function BootcampPage() {
         </aside>
       </section>
     </main>
+  );
+}
+
+function GoalBriefPanel({
+  latestGoalBrief,
+}: {
+  latestGoalBrief: BootcampHub["latestGoalBrief"];
+}) {
+  return (
+    <div className="mb-5 rounded-lg bg-white/10 px-4 py-4">
+      <p className="text-label font-bold text-white/60">目标证据令</p>
+      <div className="mt-3 space-y-2">
+        <BriefLine
+          label="目标岗位"
+          value={latestGoalBrief?.targetRole || "未设置"}
+        />
+        <BriefLine
+          label="目标场景"
+          value={latestGoalBrief?.targetScenario || "先按高级 PM 面试准备"}
+        />
+        <BriefLine
+          label="目标期限"
+          value={latestGoalBrief?.targetDeadline || "未设置"}
+        />
+      </div>
+    </div>
+  );
+}
+
+function BriefLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 text-label leading-relaxed">
+      <span className="font-bold text-white/45">{label}</span>
+      <span className="font-semibold text-white">{value}</span>
+    </div>
   );
 }
 

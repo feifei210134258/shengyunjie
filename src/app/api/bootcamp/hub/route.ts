@@ -51,18 +51,44 @@ export async function GET() {
       );
     }
 
+    const { data: growthSnapshots, error: snapshotError } = await supabase
+      .from("growth_snapshots")
+      .select("id, snapshot_date, dimension_scores")
+      .eq("user_id", user.id)
+      .order("snapshot_date", { ascending: false })
+      .limit(12);
+
+    if (snapshotError) {
+      return NextResponse.json(
+        { error: snapshotError.message },
+        { status: 500 }
+      );
+    }
+
+    const latestGoalBrief =
+      (growthSnapshots || []).find(
+        (snapshot: any) => snapshot.dimension_scores?.__goalBrief
+      )?.dimension_scores?.__goalBrief || null;
+
     const hub = buildBootcampHub({
       session,
       interviews,
       trainingRecords: trainingRecords || [],
+      latestGoalBrief,
     });
-    const { sprintBrief, assetPipeline, evidenceBank, nextActions } = hub;
+    const {
+      sprintBrief,
+      assetPipeline,
+      evidenceBank,
+      nextActions,
+    } = hub;
 
     return NextResponse.json({
       sprintBrief,
       assetPipeline,
       evidenceBank,
       nextActions,
+      latestGoalBrief,
     });
   } catch (error: any) {
     return NextResponse.json(
