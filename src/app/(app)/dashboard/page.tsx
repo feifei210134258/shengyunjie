@@ -831,7 +831,7 @@ function RecommendationPrescription({
           <p className="text-label font-bold text-primary">画像推荐</p>
           <h2 className="mt-1 text-heading-md font-bold text-ink">训练处方</h2>
           <p className="mt-2 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
-            系统把诊断、训练、面试追问和画像快照合成下一步动作。你可以把其中一条设为本周处方，系统会写入成长快照，后续继续读回。
+            系统把诊断、训练、面试追问和画像快照合成下一步动作；项目故事包入账后，也会生成项目证据处方。你可以把其中一条设为本周处方，系统会写入成长快照，后续继续读回。
           </p>
         </div>
         <div className="rounded-lg bg-primary-soft px-4 py-3">

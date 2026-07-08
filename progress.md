@@ -1508,6 +1508,30 @@
 - `feature_list.json` JSON 解析通过。
 - `./init.sh` 通过，环境健康检查 10/10。
 
+## [2026-07-08] Feature: 项目证据处方
+
+### 背景判断
+- Dashboard 已能读回已入账项目资产，但推荐引擎仍然把面试建议写成“整理可复述项目证据”这类泛动作。
+- 从第一性原理看，真正有用的面试冲刺处方应该点名某个项目和当前缺口：例如“客户健康度评分系统还缺续费归因反证”，这样用户下一步才知道补哪段证据。
+
+### 完成内容
+- `buildRecommendationPlan` 在 `growthProfile.storyAssets` 存在时，优先用最近项目故事包生成 interview 类型处方。
+- 项目证据处方包含项目名、首个 `proofGaps` 缺口、成熟度证据标签，并指向 `/bootcamp/story-bank`。
+- Dashboard 训练处方说明补充“项目证据处方”，让用户理解项目故事包入账后会直接影响推荐。
+- `/api/profile/recommendation` 源测试确认读取 `growth_snapshots.dimension_scores`，确保推荐 API 能拿到故事资产来源。
+- 产品设计文档和 `feature_list.json` 同步记录这条“已入账资产 → 证据缺口 → 下一步处方”的闭环。
+
+### 验证结果
+- TDD 红灯：新增 recommendation 领域测试、推荐 API 源测试和 Dashboard 文案测试，先捕获仍返回泛面试建议、缺少项目证据处方文案等问题。
+- `node --test src/lib/profile/recommendation.test.mjs src/app/api/profile/recommendation/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 通过，9 项。
+- `node --test src/lib/profile/recommendation.test.mjs src/app/api/profile/recommendation/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs` 通过，11 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/lib/profile/recommendation.ts src/lib/profile/recommendation.test.mjs src/app/api/profile/recommendation/route.ts src/app/api/profile/recommendation/route.test.mjs 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，`/api/profile/recommendation` 和 `/dashboard` 构建正常。
+- `git diff --check` 通过。
+- `feature_list.json` JSON 解析通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-08] Feature: 已入账项目资产读回
 
 ### 背景判断

@@ -66,6 +66,7 @@ test("builds an actionable recommendation plan from the growth profile", () => {
       href: "/training/session",
       targetDimension: "strategic_thinking",
     },
+    storyAssets: [],
   });
 
   assert.equal(plan.primaryFocus.dimensionId, "strategic_thinking");
@@ -76,4 +77,68 @@ test("builds an actionable recommendation plan from the growth profile", () => {
   );
   assert.match(plan.recommendations[0].reason, /战略思维|反证|归因/);
   assert.match(plan.recommendations[1].href, /bootcamp/);
+});
+
+test("turns saved story asset proof gaps into project-specific interview prescriptions", () => {
+  const plan = buildRecommendationPlan({
+    summary: {
+      overallScore: 78,
+      overallGrade: "B",
+      evidenceCount: 12,
+      snapshotCount: 4,
+      lastEvidenceAt: "2026-07-08T10:00:00.000Z",
+    },
+    dimensions: [
+      {
+        id: "data_decision",
+        label: "数据决策能力",
+        shortLabel: "数据决策",
+        score: 70,
+        grade: "B",
+        diagnosisScore: 72,
+        trainingAverage: 68,
+        evidenceCount: 5,
+        lastEvidenceAt: "2026-07-08T09:00:00.000Z",
+        insight: "归因噪音识别还需要更多业务证据",
+      },
+    ],
+    weakestDimensions: [],
+    strongestDimensions: [],
+    careerReadiness: {
+      label: "可进入高压追问",
+      score: 8,
+      evaluatedInterviewCount: 4,
+      answeredInterviewCount: 5,
+      nextAction: "整理可复述项目证据。",
+    },
+    focusPlan: {
+      title: "优先补强 数据决策",
+      reason: "数据决策需要补强归因链路。",
+      href: "/training/session",
+      targetDimension: "data_decision",
+    },
+    storyAssets: [
+      {
+        snapshotId: "snap-story-1",
+        savedAt: "2026-07-08",
+        projectName: "客户健康度评分系统",
+        company: "云杉科技",
+        role: "产品负责人",
+        readinessScore: 8,
+        proofGaps: ["续费提升归因还缺反证", "运营跟进动作缺少前后对照"],
+        scriptPreview: "我负责客户健康度评分系统。",
+        href: "/bootcamp/story-bank",
+      },
+    ],
+  });
+
+  const interviewPrescription = plan.recommendations.find(
+    (item) => item.type === "interview"
+  );
+
+  assert.equal(interviewPrescription.id, "story-gap-snap-story-1");
+  assert.match(interviewPrescription.title, /客户健康度评分系统/);
+  assert.match(interviewPrescription.reason, /续费提升归因还缺反证/);
+  assert.equal(interviewPrescription.href, "/bootcamp/story-bank");
+  assert.equal(interviewPrescription.evidence, "项目故事包 8/10");
 });

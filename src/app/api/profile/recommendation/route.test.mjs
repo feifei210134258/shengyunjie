@@ -10,6 +10,7 @@ test("profile recommendation API builds recommendations from persisted profile e
   assert.match(source, /from\("diagnosis_reports"\)/);
   assert.match(source, /from\("training_records"\)/);
   assert.match(source, /from\("bootcamp_interviews"\)/);
+  assert.match(source, /\.select\("id, snapshot_date, overall_score, dimension_scores"\)/);
 });
 
 test("profile recommendation API persists selected recommendation into growth snapshots", () => {

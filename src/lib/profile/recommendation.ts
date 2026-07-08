@@ -38,6 +38,48 @@ function getEvidenceLabel(profile: GrowthProfile) {
   return `${evidenceCount} 条训练/面试证据`;
 }
 
+function buildInterviewRecommendation(
+  profile: GrowthProfile,
+  targetDimension: string
+): ProfileRecommendation {
+  const latestStoryAsset = profile.storyAssets[0];
+  if (latestStoryAsset) {
+    const firstGap = latestStoryAsset.proofGaps[0];
+    const readinessLabel =
+      latestStoryAsset.readinessScore == null
+        ? "项目故事包已入账"
+        : `项目故事包 ${latestStoryAsset.readinessScore}/10`;
+
+    return {
+      id: `story-gap-${latestStoryAsset.snapshotId}`,
+      type: "interview",
+      title: `补齐 ${latestStoryAsset.projectName} 的项目证据缺口`,
+      reason: firstGap
+        ? `已入账项目故事包还缺：${firstGap}。先补这个缺口，再进入高压追问会更稳。`
+        : `这个项目故事包已经入账，继续补充结果证据和追问反证，让面试回答更可复述。`,
+      href: latestStoryAsset.href,
+      cta: "补项目证据",
+      priority: 2,
+      targetDimension,
+      evidence: readinessLabel,
+    };
+  }
+
+  const needsInterviewEvidence = profile.careerReadiness.score < 7;
+
+  return {
+    id: "interview-evidence",
+    type: "interview",
+    title: needsInterviewEvidence ? "补一轮项目追问证据" : "整理可复述项目证据",
+    reason: profile.careerReadiness.nextAction,
+    href: needsInterviewEvidence ? "/bootcamp/interview" : "/bootcamp/story-bank",
+    cta: needsInterviewEvidence ? "进入模拟面试" : "整理故事库",
+    priority: 2,
+    targetDimension,
+    evidence: `${profile.careerReadiness.evaluatedInterviewCount} 条已评面试题`,
+  };
+}
+
 export function buildRecommendationPlan(profile: GrowthProfile): RecommendationPlan {
   const focus = safeDimension(profile);
   const focusReason =
@@ -48,7 +90,7 @@ export function buildRecommendationPlan(profile: GrowthProfile): RecommendationP
   const label = focus?.shortLabel || focus?.label || "产品判断";
   const score = focus?.score || 0;
   const evidenceLabel = getEvidenceLabel(profile);
-  const needsInterviewEvidence = profile.careerReadiness.score < 7;
+  const interviewRecommendation = buildInterviewRecommendation(profile, dimensionId);
 
   return {
     primaryFocus: {
@@ -70,15 +112,7 @@ export function buildRecommendationPlan(profile: GrowthProfile): RecommendationP
         evidence: evidenceLabel,
       },
       {
-        id: "interview-evidence",
-        type: "interview",
-        title: needsInterviewEvidence ? "补一轮项目追问证据" : "整理可复述项目证据",
-        reason: profile.careerReadiness.nextAction,
-        href: needsInterviewEvidence ? "/bootcamp/interview" : "/bootcamp/story-bank",
-        cta: needsInterviewEvidence ? "进入模拟面试" : "整理故事库",
-        priority: 2,
-        targetDimension: dimensionId,
-        evidence: `${profile.careerReadiness.evaluatedInterviewCount} 条已评面试题`,
+        ...interviewRecommendation,
       },
       {
         id: "review-ledger",
