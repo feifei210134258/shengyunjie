@@ -20,6 +20,17 @@ test("dashboard lets users persist their current outcome goal focus", () => {
   assert.match(source, /设为主线/);
 });
 
+test("dashboard lets users save and read back a concrete outcome goal brief", () => {
+  assert.match(source, /latestGoalBrief/);
+  assert.match(source, /goalBriefDraft/);
+  assert.match(source, /handleSaveGoalBrief/);
+  assert.match(source, /goal_brief_saved/);
+  assert.match(source, /目标简报/);
+  assert.match(source, /目标岗位/);
+  assert.match(source, /目标场景/);
+  assert.match(source, /目标期限/);
+});
+
 test("dashboard renders the growth profile as an evidence ledger", () => {
   assert.match(source, /growthProfile/);
   assert.match(source, /能力证据账本/);

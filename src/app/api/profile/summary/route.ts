@@ -15,6 +15,7 @@ async function readSnapshotTrigger(req?: Request) {
         "project_story_saved",
         "thinking_upgrade_saved",
         "goal_focus_selected",
+        "goal_brief_saved",
       ].includes(triggerType)
     ) {
       return null;
@@ -94,6 +95,20 @@ async function readSnapshotTrigger(req?: Request) {
       body.goalFocus === "thinking_training"
         ? body.goalFocus
         : "";
+    const goalBrief =
+      body.goalBrief && typeof body.goalBrief === "object"
+        ? {
+            targetRole: String(body.goalBrief.targetRole || "").slice(0, 120),
+            targetScenario: String(body.goalBrief.targetScenario || "").slice(
+              0,
+              240
+            ),
+            targetDeadline: String(body.goalBrief.targetDeadline || "").slice(
+              0,
+              80
+            ),
+          }
+        : null;
     return {
       trigger: triggerType,
       trainingRecordId: String(body.trainingRecordId || "").trim(),
@@ -108,6 +123,7 @@ async function readSnapshotTrigger(req?: Request) {
       thinkingUpgrade:
         triggerType === "thinking_upgrade_saved" ? thinkingUpgrade : null,
       goalFocus: triggerType === "goal_focus_selected" ? goalFocus : "",
+      goalBrief: triggerType === "goal_brief_saved" ? goalBrief : null,
     };
   } catch {
     return null;
@@ -217,6 +233,7 @@ export async function POST(req: Request) {
           ...dimensionScores,
           __trigger: trigger,
           ...(trigger.goalFocus ? { __goalFocus: trigger.goalFocus } : {}),
+          ...(trigger.goalBrief ? { __goalBrief: trigger.goalBrief } : {}),
         }
       : dimensionScores;
 

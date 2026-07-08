@@ -21,3 +21,9 @@ test("dashboard API reads the latest persisted outcome goal focus", () => {
   assert.match(source, /__goalFocus/);
   assert.match(source, /selectedGoalFocus/);
 });
+
+test("dashboard API returns the latest concrete outcome goal brief", () => {
+  assert.match(source, /latestGoalBrief/);
+  assert.match(source, /__goalBrief/);
+  assert.match(source, /goalBrief/);
+});

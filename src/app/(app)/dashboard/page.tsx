@@ -55,6 +55,7 @@ export interface DashboardData {
   recommendationPlan?: RecommendationPlan;
   latestRecommendation?: SelectedRecommendation | null;
   latestGoalFocus?: GoalFocus["id"] | null;
+  latestGoalBrief?: GoalBrief | null;
   commandCenter?: {
     primary: CommandAction;
     secondary: CommandAction[];
@@ -128,6 +129,12 @@ interface GoalFocus {
   id: ProductPath["id"];
   label: string;
   description: string;
+}
+
+interface GoalBrief {
+  targetRole: string;
+  targetScenario: string;
+  targetDeadline: string;
 }
 
 type NextPractice = NonNullable<DashboardData["commandCenter"]>["nextPractice"];
@@ -332,6 +339,11 @@ function PathFirstHero({
   fallbackFocus,
   stats,
   latestReport,
+  goalBrief,
+  goalBriefDraft,
+  savingGoalBrief,
+  onGoalBriefChange,
+  onSaveGoalBrief,
   savingGoalFocus,
   onSelectGoalFocus,
 }: {
@@ -339,6 +351,11 @@ function PathFirstHero({
   fallbackFocus: string;
   stats: DashboardData["trainingStats"] | null;
   latestReport: DashboardData["latestReport"];
+  goalBrief: GoalBrief | null | undefined;
+  goalBriefDraft: GoalBrief;
+  savingGoalBrief: boolean;
+  onGoalBriefChange: (field: keyof GoalBrief, value: string) => void;
+  onSaveGoalBrief: () => Promise<void>;
   savingGoalFocus: string;
   onSelectGoalFocus: (goalFocus: ProductPath["id"]) => Promise<void>;
 }) {
@@ -417,6 +434,61 @@ function PathFirstHero({
                 );
               })}
             </div>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-line bg-white px-4 py-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+            <div className="min-w-[180px] flex-1">
+              <p className="text-label font-bold text-primary">目标简报</p>
+              <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                {goalBrief?.targetRole || goalBrief?.targetScenario
+                  ? `已读回：${goalBrief.targetRole || "未填岗位"} / ${
+                      goalBrief.targetScenario || "未填场景"
+                    } / ${goalBrief.targetDeadline || "未填期限"}`
+                  : "把当前面试目标或业务训练目标写清楚，后续推荐会围绕这个结果收敛。"}
+              </p>
+            </div>
+            <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
+              目标岗位
+              <input
+                value={goalBriefDraft.targetRole}
+                onChange={(event) =>
+                  onGoalBriefChange("targetRole", event.target.value)
+                }
+                className="h-10 w-full min-w-[180px] rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                placeholder="高级 B 端产品经理"
+              />
+            </label>
+            <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
+              目标场景
+              <input
+                value={goalBriefDraft.targetScenario}
+                onChange={(event) =>
+                  onGoalBriefChange("targetScenario", event.target.value)
+                }
+                className="h-10 w-full min-w-[220px] rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                placeholder="面试跳槽 / 平台化能力补强"
+              />
+            </label>
+            <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
+              目标期限
+              <input
+                value={goalBriefDraft.targetDeadline}
+                onChange={(event) =>
+                  onGoalBriefChange("targetDeadline", event.target.value)
+                }
+                className="h-10 w-full min-w-[140px] rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                placeholder="30 天内"
+              />
+            </label>
+            <button
+              onClick={onSaveGoalBrief}
+              disabled={savingGoalBrief}
+              className="inline-flex h-10 items-center justify-center rounded-lg bg-ink px-4 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+            >
+              {savingGoalBrief ? "保存中" : "保存目标简报"}
+            </button>
           </div>
         </div>
 
@@ -1101,6 +1173,12 @@ export default function DashboardPage() {
   const [savingRecommendationId, setSavingRecommendationId] = useState("");
   const [selectedRecommendationId, setSelectedRecommendationId] = useState("");
   const [savingGoalFocus, setSavingGoalFocus] = useState("");
+  const [savingGoalBrief, setSavingGoalBrief] = useState(false);
+  const [goalBriefDraft, setGoalBriefDraft] = useState<GoalBrief>({
+    targetRole: "",
+    targetScenario: "",
+    targetDeadline: "",
+  });
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -1108,6 +1186,11 @@ export default function DashboardPage() {
       .then((data) => {
         setData(data);
         setSelectedRecommendationId(data.latestRecommendation?.id || "");
+        setGoalBriefDraft({
+          targetRole: data.latestGoalBrief?.targetRole || "",
+          targetScenario: data.latestGoalBrief?.targetScenario || "",
+          targetDeadline: data.latestGoalBrief?.targetDeadline || "",
+        });
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -1190,6 +1273,40 @@ export default function DashboardPage() {
     }
   }
 
+  function handleGoalBriefChange(field: keyof GoalBrief, value: string) {
+    setGoalBriefDraft((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  async function handleSaveGoalBrief() {
+    setSavingGoalBrief(true);
+    try {
+      const response = await fetch("/api/profile/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trigger: "goal_brief_saved",
+          goalBrief: goalBriefDraft,
+        }),
+      });
+      if (!response.ok) throw new Error("保存目标简报失败");
+      const refreshed = await fetch("/api/dashboard");
+      if (refreshed.ok) {
+        const nextData = await refreshed.json();
+        setData(nextData);
+        setGoalBriefDraft({
+          targetRole: nextData.latestGoalBrief?.targetRole || "",
+          targetScenario: nextData.latestGoalBrief?.targetScenario || "",
+          targetDeadline: nextData.latestGoalBrief?.targetDeadline || "",
+        });
+      }
+    } finally {
+      setSavingGoalBrief(false);
+    }
+  }
+
   return (
     <main className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
       {loading ? (
@@ -1207,8 +1324,13 @@ export default function DashboardPage() {
           <PathFirstHero
             commandCenter={data?.commandCenter}
             fallbackFocus={focusLabel}
+            goalBrief={data?.latestGoalBrief}
+            goalBriefDraft={goalBriefDraft}
             onSelectGoalFocus={handleSelectGoalFocus}
+            onGoalBriefChange={handleGoalBriefChange}
+            onSaveGoalBrief={handleSaveGoalBrief}
             latestReport={latestReport}
+            savingGoalBrief={savingGoalBrief}
             savingGoalFocus={savingGoalFocus}
             stats={stats}
           />

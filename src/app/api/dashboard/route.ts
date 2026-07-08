@@ -192,6 +192,10 @@ export async function GET() {
       (growthSnapshots || []).find(
         (snapshot: any) => snapshot.dimension_scores?.__goalFocus
       )?.dimension_scores?.__goalFocus || null;
+    const latestGoalBrief =
+      (growthSnapshots || []).find(
+        (snapshot: any) => snapshot.dimension_scores?.__goalBrief
+      )?.dimension_scores?.__goalBrief || null;
 
     /* ------- Profile Calculation ------- */
 
@@ -303,6 +307,7 @@ export async function GET() {
       recommendationPlan,
       latestRecommendation,
       latestGoalFocus,
+      latestGoalBrief,
       trainingStats,
       growthTrend,
       latestReport: reportResponse,

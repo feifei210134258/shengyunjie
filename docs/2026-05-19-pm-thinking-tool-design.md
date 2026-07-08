@@ -28,6 +28,8 @@
 
 Dashboard 支持用户把“面试跳槽冲刺”或“高级产品思维训练”设为当前主线。该选择通过 `POST /api/profile/summary` 写入 `growth_snapshots.dimension_scores.__goalFocus`，刷新后由 `/api/dashboard` 读回，并用于重排路径顺序、主行动和下一题处方说明；不新增 schema。
 
+Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标场景和目标期限。前端调用 `POST /api/profile/summary`，`trigger=goal_brief_saved`，写入 `growth_snapshots.dimension_scores.__goalBrief`；`/api/dashboard` 刷新时读回 `latestGoalBrief` 并回填首页输入，让用户的面试/升阶目标不再只停留在抽象主线。
+
 ---
 
 ## 模块一：诊断模块

@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: Dashboard 目标简报
+
+### 背景判断
+- 当前产品已经能选择“面试跳槽冲刺 / 高级产品思维训练”主线，但第一性原理上，训练处方还需要更具体的目标上下文：目标岗位、目标场景和期限。
+- 本轮先把目标简报作为可持久化、可读回的首页状态落地，避免用户每次打开都重新解释自己到底为什么训练。
+
+### 完成内容
+- `/api/profile/summary` 新增 `trigger=goal_brief_saved`，将 `targetRole/targetScenario/targetDeadline` 写入既有 `growth_snapshots.dimension_scores.__goalBrief`，不新增 schema。
+- `/api/dashboard` 从最近的 `growth_snapshots.dimension_scores.__goalBrief` 读回 `latestGoalBrief`。
+- Dashboard 首屏新增“目标简报”编辑区，用户可保存目标岗位、目标场景和目标期限；保存后刷新 `/api/dashboard` 并回填已读回内容。
+- 产品设计文档和 `feature_list.json` 同步记录目标简报闭环。
+
+### 验证记录
+- TDD 红灯：profile summary API 测试先失败于缺少 `goal_brief_saved/__goalBrief`；dashboard API 和页面测试先失败于缺少 `latestGoalBrief/goalBriefDraft/handleSaveGoalBrief`。
+- GREEN：`node --test src/app/api/profile/summary/route.test.mjs` 通过 10 项；`node --test src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 通过 12 项。
+- 回归：`node --test src/app/api/profile/summary/route.test.mjs src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs` 通过 24 项。
+- `npx tsc --noEmit`、针对性 ESLint、`feature_list.json` 解析、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-08] Feature: 迁移缺口驱动下一题
 
 ### 背景判断

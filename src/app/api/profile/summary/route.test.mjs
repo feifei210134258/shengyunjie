@@ -60,6 +60,15 @@ test("profile summary API can persist the selected outcome goal focus", () => {
   assert.match(source, /__goalFocus/);
 });
 
+test("profile summary API can persist a concrete outcome goal brief", () => {
+  assert.match(source, /goal_brief_saved/);
+  assert.match(source, /goalBrief/);
+  assert.match(source, /targetRole/);
+  assert.match(source, /targetScenario/);
+  assert.match(source, /targetDeadline/);
+  assert.match(source, /__goalBrief/);
+});
+
 test("profile summary API reads snapshot dimension scores for saved assets", () => {
   assert.match(source, /\.select\("id, snapshot_date, overall_score, dimension_scores"\)/);
 });
