@@ -24,6 +24,7 @@ export interface TrainingEvaluation {
     tradeoff_quality: string;
     attribution_depth: string;
     landing_rigor: string;
+    migration_check?: string;
   };
 }
 
@@ -131,6 +132,7 @@ function normalizeThinkingUpgrade(value: unknown) {
       data.landing_rigor,
       "落地需要说明节奏、风险护栏和复盘动作。"
     ),
+    migration_check: normalizeText(data.migration_check, ""),
   };
 }
 

@@ -53,6 +53,11 @@ test("training analysis sends the effective goal focus into feedback generation"
   assert.match(source, /goalFocusFrame=\{goalFocusFrame\}/);
 });
 
+test("training analysis sends the migration target into feedback generation", () => {
+  assert.match(source, /migrationTarget/);
+  assert.match(source, /migrationTarget: migrationTarget \|\| undefined/);
+});
+
 test("training feedback panel exposes goal-aware assets to the user", () => {
   const panelSource = readFileSync(
     new URL("./TrainingEvaluationPanel.tsx", import.meta.url),
@@ -65,4 +70,6 @@ test("training feedback panel exposes goal-aware assets to the user", () => {
   assert.match(panelSource, /思维升级卡/);
   assert.match(panelSource, /判断质量/);
   assert.match(panelSource, /落地严谨度/);
+  assert.match(panelSource, /迁移验证/);
+  assert.match(panelSource, /migration_check/);
 });

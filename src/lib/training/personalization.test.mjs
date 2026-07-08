@@ -54,6 +54,7 @@ test("normalizes goal-aware interview expression and thinking upgrade assets", (
       tradeoff_quality: "需要说清放弃什么",
       attribution_depth: "需要补反证指标",
       landing_rigor: "需要明确上线后复盘节奏",
+      migration_check: "上一张卡的取舍要求已经部分迁移，但落地验证还没跟上。",
     },
   });
 
@@ -75,6 +76,10 @@ test("normalizes goal-aware interview expression and thinking upgrade assets", (
   );
   assert.equal(evaluation.thinking_upgrade?.tradeoff_quality, "需要说清放弃什么");
   assert.equal(evaluation.thinking_upgrade?.attribution_depth, "需要补反证指标");
+  assert.equal(
+    evaluation.thinking_upgrade?.migration_check,
+    "上一张卡的取舍要求已经部分迁移，但落地验证还没跟上。"
+  );
 });
 
 test("extracts recommendation reason from generated question text", () => {

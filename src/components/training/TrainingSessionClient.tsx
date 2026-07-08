@@ -1977,6 +1977,7 @@ export default function TrainingSessionClient() {
           dimension: currentDim,
           missionId: currentMission?.id,
           profileFocus: effectiveProfileFocus || undefined,
+          migrationTarget: migrationTarget || undefined,
           question: q,
           userAnswer: answerText,
         }),

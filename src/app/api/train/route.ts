@@ -42,6 +42,24 @@ function normalizeCurrentQuestions(value: unknown) {
   return [];
 }
 
+function formatMigrationTarget(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "暂无";
+  const target = value as Record<string, unknown>;
+  const parts = [
+    ["维度", target.dimensionLabel || target.dimension],
+    ["判断", target.judgmentQuality],
+    ["取舍", target.tradeoffQuality],
+    ["归因", target.attributionDepth],
+    ["落地", target.landingRigor],
+  ]
+    .map(([label, item]) => {
+      const text = String(item || "").trim();
+      return text ? `${label}：${text}` : "";
+    })
+    .filter(Boolean);
+  return parts.length ? parts.join("\n") : "暂无";
+}
+
 async function getPersonalizationContext(
   dimension?: string,
   currentQuestions?: unknown
@@ -125,6 +143,7 @@ export async function POST(req: Request) {
     userAnswer,
     question,
     currentQuestions,
+    migrationTarget,
   } = await req.json();
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -247,11 +266,12 @@ ${formatTrainingTarget(target)}
     // 使用深度思考模型
     const thinkingModel = getThinkingModel(apiKey, "deepseek-v4-flash");
     const dimensionStrategy = getTrainingDimensionStrategy(dimension);
+    const migrationTargetSummary = formatMigrationTarget(migrationTarget);
     const goalFocusAnalysisGuidance =
       profileFocus === "interview_sprint"
         ? "当前目标是面试跳槽冲刺。反馈必须把本次训练回答转成可复述的面试表达资产，尤其是开场判断、证据抓手、追问风险和一版可直接复述的答案。"
         : profileFocus === "thinking_training"
-          ? "当前目标是高级产品思维训练。反馈必须聚焦判断质量、取舍质量、归因深度和落地严谨度，帮助用户把答案升级成高级 PM 的思考方式。"
+          ? "当前目标是高级产品思维训练。反馈必须聚焦判断质量、取舍质量、归因深度和落地严谨度，帮助用户把答案升级成高级 PM 的思考方式；如果存在迁移目标，还要判断用户是否把上一张思维升级卡迁移到本题。"
           : "当前目标未指定。反馈需要同时兼顾面试表达资产和高级产品思维训练。";
     const result = streamText({
       model: thinkingModel,
@@ -261,6 +281,9 @@ ${formatTrainingTarget(target)}
 
 当前题目维度的训练策略：
 ${formatTrainingDimensionStrategy(dimensionStrategy)}
+
+上一张思维升级卡的迁移目标：
+${migrationTargetSummary}
 
 请只返回 JSON，不要使用 Markdown 代码块，不要添加解释。
 JSON 结构必须为：
@@ -287,7 +310,8 @@ JSON 结构必须为：
     "judgment_quality": "这份回答的判断质量如何升级",
     "tradeoff_quality": "取舍表达如何升级",
     "attribution_depth": "归因、证据和反证如何升级",
-    "landing_rigor": "落地节奏、风险护栏和复盘如何升级"
+    "landing_rigor": "落地节奏、风险护栏和复盘如何升级",
+    "migration_check": "如果存在迁移目标，说明用户是否把上一张思维升级卡迁移到本题；如果没有迁移目标，返回空字符串"
   }
 }
 评分标准：
@@ -298,12 +322,14 @@ JSON 结构必须为：
 5. 维度专项：必须优先参考上面的“回答应训练”，指出用户在哪些专项动作上做到了或缺失了什么。
 6. 面试冲刺主线：如果目标主线是 interview_sprint，interview_expression 必须比通用示例更具体，能直接进入项目故事库或历史复盘。
 7. 思维升阶主线：如果目标主线是 thinking_training，thinking_upgrade 必须明确判断、取舍、归因、落地四个升级方向。
+8. 迁移验证：如果“上一张思维升级卡的迁移目标”不是“暂无”，thinking_upgrade.migration_check 必须明确回答是否把上一张思维升级卡迁移到本题，并引用用户原文说明证据或缺口。
 反馈必须引用用户原文，避免空泛夸奖或空泛批评。`,
       messages: [
         {
           role: "user",
           content: `题目维度：${dimension || "未知"}
 目标主线：${profileFocus || "未指定"}
+迁移目标：${migrationTargetSummary}
 题目：${question}
 
 用户的回答：${userAnswer}

@@ -1,5 +1,20 @@
 # 会话进度日志
 
+## [2026-07-08] 训练反馈：校验思维升级是否迁移成功
+
+### 完成内容
+- `/training/session` 提交分析时把当前 `migrationTarget` 传给 `/api/train?action=analyze`。
+- `/api/train` 的分析 prompt 会把上一张思维升级卡作为迁移目标，要求 AI 在 `thinking_upgrade.migration_check` 中判断用户是否迁移成功，并引用用户原文说明证据或缺口。
+- `normalizeTrainingEvaluation` 保留 `thinking_upgrade.migration_check`；`TrainingEvaluationPanel` 在思维升级卡中展示“迁移验证”。
+- 迁移验证随既有 `training_records.ai_feedback` 落库，不新增 schema。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/train/route.test.mjs` 先失败于缺少 `migrationTarget/migration_check`。
+- TDD 红灯：`node --test src/lib/training/personalization.test.mjs` 先失败于 `migration_check` 未归一化。
+- TDD 红灯：`node --test src/components/training/TrainingSessionClient.test.mjs` 先失败于未传 `migrationTarget` 且反馈面板缺“迁移验证”。
+- GREEN：上述三个测试通过，`npx tsc --noEmit` 通过。
+- 后续完整验证见本轮提交说明。
+
 ## [2026-07-08] 训练实战页：思维升级迁移目标前置
 
 ### 完成内容

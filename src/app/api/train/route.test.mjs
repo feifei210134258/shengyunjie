@@ -68,3 +68,10 @@ test("training analysis prompt adapts feedback assets to the active goal focus",
   assert.match(source, /profileFocus === "interview_sprint"/);
   assert.match(source, /profileFocus === "thinking_training"/);
 });
+
+test("training analysis prompt checks whether the previous thinking upgrade was transferred", () => {
+  assert.match(source, /migrationTarget/);
+  assert.match(source, /迁移目标/);
+  assert.match(source, /migration_check/);
+  assert.match(source, /是否把上一张思维升级卡迁移到本题/);
+});

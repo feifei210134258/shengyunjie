@@ -169,6 +169,14 @@ export default function TrainingEvaluationPanel({
               </div>
             ))}
           </div>
+          {evaluation.thinking_upgrade.migration_check && (
+            <div className="mt-3 rounded-lg border border-primary/15 bg-primary-soft/45 p-3">
+              <p className="text-label font-bold text-primary">迁移验证</p>
+              <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                {evaluation.thinking_upgrade.migration_check}
+              </p>
+            </div>
+          )}
         </section>
       )}
 
