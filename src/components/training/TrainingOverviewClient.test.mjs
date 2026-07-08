@@ -19,3 +19,11 @@ test("training overview uses the profile recommendation as the primary start act
   assert.match(source, /画像处方/);
   assert.match(source, /primaryRecommendation\.href/);
 });
+
+test("training overview surfaces recent training as ability evidence assets", () => {
+  assert.match(source, /evidenceAssets/);
+  assert.match(source, /能力证据资产/);
+  assert.match(source, /面试可用/);
+  assert.match(source, /proofPoint/);
+  assert.match(source, /待修正后可用/);
+});

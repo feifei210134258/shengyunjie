@@ -10,3 +10,11 @@ test("training stats exposes a review queue for records without second-pass revi
   assert.match(source, /needsRevision/);
   assert.match(source, /revisionSavedAt/);
 });
+
+test("training stats exposes recent records as reusable evidence assets", () => {
+  assert.match(source, /evidenceAssets/);
+  assert.match(source, /buildEvidenceAssets/);
+  assert.match(source, /readiness/);
+  assert.match(source, /proofPoint/);
+  assert.match(source, /__revision/);
+});

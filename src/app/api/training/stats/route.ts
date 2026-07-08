@@ -43,6 +43,62 @@ function buildReviewQueue(records: any[] = []) {
     .slice(0, 4);
 }
 
+function extractProofPoint(feedback: any, revision: any) {
+  if (revision && typeof revision.revisedAnswer === "string") {
+    const revisedAnswer = revision.revisedAnswer.trim();
+    if (revisedAnswer) {
+      return revisedAnswer;
+    }
+  }
+
+  const candidates = [
+    feedback?.next_practice,
+    feedback?.improvement,
+    feedback?.weakness,
+    feedback?.strength,
+    feedback?.analysis,
+  ];
+  const proofPoint = candidates.find(
+    (item) => typeof item === "string" && item.trim()
+  );
+
+  return proofPoint?.trim() || "完成二次修正后，这条记录会变成可复述的能力证据。";
+}
+
+function buildEvidenceAssets(records: any[] = []) {
+  return records.slice(0, 5).map((record) => {
+    const feedback =
+      record.ai_feedback && typeof record.ai_feedback === "object"
+        ? record.ai_feedback
+        : {};
+    const revision = feedback.__revision;
+    const hasRevision =
+      revision &&
+      typeof revision.revisedAnswer === "string" &&
+      revision.revisedAnswer.trim();
+    const questionTitle = String(record.question_scenario || "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return {
+      id: record.id,
+      dimension: record.dimension,
+      title: questionTitle || "训练回答",
+      score: record.score,
+      proofPoint: extractProofPoint(feedback, revision).slice(0, 140),
+      readiness: hasRevision ? "面试可用" : "待修正后可用",
+      href: hasRevision
+        ? `/training/history/${record.id}`
+        : `/training/history/${record.id}?revise=1`,
+      sourceLabel: feedback.source === "case_simulation" ? "案例推演" : "训练回答",
+      updatedAt:
+        revision && typeof revision.savedAt === "string"
+          ? revision.savedAt
+          : record.created_at,
+    };
+  });
+}
+
 export async function GET() {
   try {
     const supabase = await createServerClient();
@@ -107,6 +163,7 @@ export async function GET() {
 
     const streak = await calcStreak(supabase, user.id);
     const reviewQueue = buildReviewQueue(recent || []);
+    const evidenceAssets = buildEvidenceAssets(recent || []);
 
     return NextResponse.json({
       totalCount: totalCount || 0,
@@ -116,6 +173,7 @@ export async function GET() {
       streak,
       recent,
       reviewQueue,
+      evidenceAssets,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "服务器错误" }, { status: 500 });

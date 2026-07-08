@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-08] 训练首页：能力证据资产
+
+### 完成内容
+- `/api/training/stats` 新增 `evidenceAssets`，从最近 `training_records` 读回题目、得分、AI 反馈和 `ai_feedback.__revision`，加工成可展示的能力证据资产。
+- 训练首页新增“能力证据资产”区块，把记录标记为“面试可用 / 待修正后可用”，并根据状态跳转到历史复盘或二次修正入口。
+- 入口文案把日常训练、二次修正和项目故事库连起来，弱化“刷题归档”，强化“训练回答 → 可讲述材料 → 面试资产”。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/training/stats/route.test.mjs src/components/training/TrainingOverviewClient.test.mjs` 先失败于缺少 `evidenceAssets`、`buildEvidenceAssets`、`能力证据资产`、`proofPoint` 和“待修正后可用”。
+- 已通过：`node --test src/app/api/training/stats/route.test.mjs src/components/training/TrainingOverviewClient.test.mjs`（5 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/training/stats/route.ts src/app/api/training/stats/route.test.mjs src/components/training/TrainingOverviewClient.tsx src/components/training/TrainingOverviewClient.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析。
+
 ## [2026-07-07] 训练首页：画像处方驱动主入口
 
 ### 完成内容
