@@ -7,10 +7,34 @@ async function readSnapshotTrigger(req?: Request) {
   try {
     const body = await req.json();
     const triggerType = String(body?.trigger || "");
-    if (!["training_feedback", "revision_saved"].includes(triggerType)) {
+    if (
+      ![
+        "training_feedback",
+        "revision_saved",
+        "expression_card_saved",
+      ].includes(triggerType)
+    ) {
       return null;
     }
     const revisedAnswer = String(body.revisedAnswer || "").trim();
+    const expressionCard =
+      body.expressionCard && typeof body.expressionCard === "object"
+        ? {
+            readiness: String(body.expressionCard.readiness || "").slice(0, 40),
+            openingClaim: String(body.expressionCard.openingClaim || "").slice(
+              0,
+              240
+            ),
+            proofPoint: String(body.expressionCard.proofPoint || "").slice(
+              0,
+              320
+            ),
+            followupRisk: String(body.expressionCard.followupRisk || "").slice(
+              0,
+              240
+            ),
+          }
+        : null;
     return {
       trigger: triggerType,
       trainingRecordId: String(body.trainingRecordId || "").trim(),
@@ -19,6 +43,8 @@ async function readSnapshotTrigger(req?: Request) {
       score: Number.isFinite(Number(body.score)) ? Number(body.score) : null,
       revisedAnswer:
         triggerType === "revision_saved" ? revisedAnswer.slice(0, 600) : "",
+      expressionCard:
+        triggerType === "expression_card_saved" ? expressionCard : null,
     };
   } catch {
     return null;

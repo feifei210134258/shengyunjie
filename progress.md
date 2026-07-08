@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-08] 面试表达卡：沉淀到画像账本
+
+### 完成内容
+- `POST /api/profile/summary` 支持 `expression_card_saved` 触发来源，会把训练记录 ID、维度、表达卡 readiness、开场判断、证据抓手和追问风险写入 `growth_snapshots.dimension_scores.__trigger.expressionCard`。
+- 历史复盘页的“面试表达卡”新增“沉淀到画像账本”动作，调用画像快照接口并要求读回 `snapshot.id` 后才显示“表达卡已入账”。
+- 该动作复用既有 `growth_snapshots`，不新增 schema，让面试表达资产进入画像证据账本和后续推荐闭环。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/profile/summary/route.test.mjs && node 'src/app/(app)/training/history/[id]/page.test.mjs'` 先失败于缺少 `expression_card_saved`、`expressionCard`、`handleSaveExpressionCard` 和“沉淀到画像账本”。
+- 已通过：`node --test src/app/api/profile/summary/route.test.mjs && node 'src/app/(app)/training/history/[id]/page.test.mjs'`（10 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/profile/summary/route.ts src/app/api/profile/summary/route.test.mjs 'src/app/(app)/training/history/[id]/page.tsx' 'src/app/(app)/training/history/[id]/page.test.mjs' --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`、`git diff --check`、`feature_list.json` JSON 解析。
+
 ## [2026-07-08] 历史复盘：面试表达卡
 
 ### 完成内容

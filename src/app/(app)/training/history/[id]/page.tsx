@@ -27,6 +27,9 @@ export default function HistoryDetailPage() {
   const [revisionProfileStatus, setRevisionProfileStatus] = useState<
     "idle" | "syncing" | "saved" | "failed"
   >("idle");
+  const [expressionCardStatus, setExpressionCardStatus] = useState<
+    "idle" | "saving" | "saved" | "failed"
+  >("idle");
   const revisionEditorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -137,6 +140,35 @@ export default function HistoryDetailPage() {
       setRevisionStatus("saved");
     } catch {
       setRevisionStatus("failed");
+    }
+  };
+
+  const handleSaveExpressionCard = async () => {
+    if (!id || !interviewExpressionCard) return;
+
+    setExpressionCardStatus("saving");
+    try {
+      const response = await fetch("/api/profile/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trigger: "expression_card_saved",
+          trainingRecordId: id,
+          dimension: record.dimension,
+          expressionCard: {
+            readiness: interviewExpressionCard.readiness,
+            openingClaim: interviewExpressionCard.openingClaim,
+            proofPoint: interviewExpressionCard.proofPoint,
+            followupRisk: interviewExpressionCard.followupRisk,
+          },
+        }),
+      });
+      if (!response.ok) throw new Error("表达卡入账失败");
+      const result = await response.json();
+      if (!result.snapshot?.id) throw new Error("表达卡未读回快照");
+      setExpressionCardStatus("saved");
+    } catch {
+      setExpressionCardStatus("failed");
     }
   };
 
@@ -349,6 +381,25 @@ export default function HistoryDetailPage() {
                 <p className="mt-2 text-body-sm leading-6 text-ink">
                   {interviewExpressionCard.copyScript}
                 </p>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-label font-semibold text-ink-muted">
+                  {expressionCardStatus === "saved"
+                    ? "表达卡已入账，画像处方会参考这条材料"
+                    : expressionCardStatus === "failed"
+                      ? "入账失败，请稍后重试"
+                      : "把这张表达卡沉淀到画像账本，作为下一轮推荐的证据。"}
+                </p>
+                <button
+                  onClick={handleSaveExpressionCard}
+                  disabled={expressionCardStatus === "saving"}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <FileCheck2 className="h-4 w-4" />
+                  {expressionCardStatus === "saving"
+                    ? "入账中"
+                    : "沉淀到画像账本"}
+                </button>
               </div>
             </Card>
           )}

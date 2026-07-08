@@ -35,3 +35,11 @@ test("training history renders an interview expression card from the record", ()
   assert.match(source, /追问风险/);
   assert.match(source, /copyScript/);
 });
+
+test("training history can save the interview expression card into the profile ledger", () => {
+  assert.match(source, /handleSaveExpressionCard/);
+  assert.match(source, /expression_card_saved/);
+  assert.match(source, /\/api\/profile\/summary/);
+  assert.match(source, /沉淀到画像账本/);
+  assert.match(source, /表达卡已入账/);
+});
