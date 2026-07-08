@@ -30,7 +30,11 @@ export async function GET(req: NextRequest) {
       const endUtc = new Date(startUtc);
       endUtc.setDate(endUtc.getDate() + 1);
 
-      const [{ data: session }, { data: records }] = await Promise.all([
+      const [
+        { data: session },
+        { data: records },
+        { data: growthSnapshots },
+      ] = await Promise.all([
         supabase
           .from("training_sessions")
           .select("*")
@@ -44,6 +48,12 @@ export async function GET(req: NextRequest) {
           .gte("created_at", startUtc.toISOString())
           .lt("created_at", endUtc.toISOString())
           .order("created_at", { ascending: true }),
+        supabase
+          .from("growth_snapshots")
+          .select("dimension_scores")
+          .eq("user_id", user.id)
+          .order("snapshot_date", { ascending: false })
+          .limit(12),
       ]);
 
       const completedDimensions = getCompletedTrainingDimensions(records || []);
@@ -52,7 +62,16 @@ export async function GET(req: NextRequest) {
         completedDimensions,
         trainingOrder
       );
-      return NextResponse.json({ session, completedDimensions, nextIndex });
+      const latestGoalFocus =
+        (growthSnapshots || []).find(
+          (snapshot: any) => snapshot.dimension_scores?.__goalFocus
+        )?.dimension_scores?.__goalFocus || null;
+      return NextResponse.json({
+        session,
+        completedDimensions,
+        nextIndex,
+        latestGoalFocus,
+      });
     }
 
     // 按月查询 — 返回当月已提交训练答案的日期数组

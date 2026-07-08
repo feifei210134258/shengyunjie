@@ -29,3 +29,11 @@ test("question card primary label uses mission display label rather than old dim
     /function A1BeforeSubmit\(\{[\s\S]{0,400}currentDim/
   );
 });
+
+test("training session inherits persisted goal focus when the URL has no focus", () => {
+  assert.match(source, /latestGoalFocus/);
+  assert.match(source, /effectiveProfileFocus/);
+  assert.match(source, /setPersistedGoalFocus/);
+  assert.match(source, /面试冲刺训练/);
+  assert.match(source, /思维升阶训练/);
+});

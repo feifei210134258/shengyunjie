@@ -137,6 +137,7 @@ Dashboard 支持用户把“面试跳槽冲刺”或“高级产品思维训练�
 - Dashboard 会从最近的 `growth_snapshots.dimension_scores.__recommendation` 读回用户已选的本周处方，刷新后继续高亮对应推荐，并展示“本周处方”执行入口。
 - 当画像中已有 `storyAssets` 时，`buildRecommendationPlan` 会优先把最近一个项目故事包的 `proofGaps` 转成“项目证据处方”，指向 `/bootcamp/story-bank`，让推荐不再泛泛要求整理项目，而是明确补齐某个已入账项目的证据缺口。
 - 今日训练处方链接会携带 `focus` 进入 `/training/session`，训练页把画像维度映射为具体高阶 PM 任务（如资源排期、平台抽象、增长诊断），并把 `profileFocus/prescriptionId` 与题目一起写入 `training_sessions.questions`，刷新后可读回。
+- 直接进入 `/training/session` 时，`GET /api/training/sessions?date=...` 会读回最近 `growth_snapshots.dimension_scores.__goalFocus` 并返回 `latestGoalFocus`；训练实战页用它恢复主线任务计划和顶部训练框架，避免用户绕过首页后退回默认刷题。
 - 训练页作答区会把用户草稿保存到当天 `training_sessions.questions[missionId].draftAnswer`，刷新或重新进入当天训练时恢复答案；提交前展示“判断、依据、取舍、验证”四项作答质检，帮助用户把回答从直觉表达拉回高级 PM 的结构化表达。
 - AI 反馈页提供“二次修正”输入，用户可基于反馈当场重写关键答案；`PATCH /api/training/record` 会把修正内容写入 `training_records.ai_feedback.__revision`，历史复盘页会读回原回答、AI 反馈和用户修正版。
 - 训练首页通过 `/api/training/stats` 读取最近训练记录，生成“复盘队列”：优先展示还没有二次修正的记录，引导用户先把反馈改成能复述的版本，再继续开新题。

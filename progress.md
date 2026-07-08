@@ -1,5 +1,22 @@
 # 会话进度日志
 
+## [2026-07-08] 训练实战页：直接继承当前主线
+
+### 完成内容
+- `GET /api/training/sessions?date=...` 读回最近 `growth_snapshots.dimension_scores.__goalFocus` 并返回 `latestGoalFocus`。
+- `/training/session` 在 URL 没有 `focus` 时，会使用 `latestGoalFocus` 作为 `effectiveProfileFocus`，即时重排当前 mission plan，不等下一轮 state 再生效。
+- 训练实战页顶部新增主线框架：面试跳槽显示“面试冲刺训练”，强调沉淀面试表达资产；高级产品思维显示“思维升阶训练”，强调判断、取舍、归因和落地推演。
+- 该改造复用既有 `growth_snapshots` 与 `training_sessions.questions.profileFocus`，不新增 schema。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/training/sessions/route.test.mjs src/components/training/TrainingSessionClient.test.mjs` 先失败于缺少 `latestGoalFocus`、`effectiveProfileFocus`、`setPersistedGoalFocus` 和主线文案。
+- 已通过：`node --test src/app/api/training/sessions/route.test.mjs src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs`（7 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/training/sessions/route.ts src/app/api/training/sessions/route.test.mjs src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`。
+- 已通过：`git diff --check`、`feature_list.json` JSON 解析。
+- 已通过：`./init.sh`（10/10）。
+
 ## [2026-07-08] 训练首页：当前主线目标跟随
 
 ### 完成内容

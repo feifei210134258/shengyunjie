@@ -127,6 +127,7 @@ type DailySessionResponse = {
   } | null;
   completedDimensions?: string[];
   nextIndex?: number;
+  latestGoalFocus?: string | null;
 };
 
 type StoredQuestion = {
@@ -148,6 +149,27 @@ type ReadinessItem = {
   label: string;
   matched: boolean;
 };
+
+const GOAL_FOCUS_SESSION_FRAMES = {
+  interview_sprint: {
+    badge: "面试冲刺训练",
+    description:
+      "本题会优先把你的判断、证据和取舍沉淀成可复述的面试表达资产。",
+  },
+  thinking_training: {
+    badge: "思维升阶训练",
+    description:
+      "本题会优先训练高级产品判断、取舍、归因和落地推演。",
+  },
+} as const;
+
+type GoalFocusId = keyof typeof GOAL_FOCUS_SESSION_FRAMES;
+
+function normalizeGoalFocus(value?: string | null): GoalFocusId | "" {
+  return value === "interview_sprint" || value === "thinking_training"
+    ? value
+    : "";
+}
 
 function getPrescriptionAwareMissionPlan(
   profileFocus?: string | null,
@@ -258,6 +280,10 @@ interface RealTrainingProps {
   score: number;
   streamedText: string;
   prescriptionLabel?: string;
+  goalFocusFrame?: {
+    badge: string;
+    description: string;
+  } | null;
   onAnswerChange: (value: string) => void;
   onSubmit: () => void;
   onNext: () => void;
@@ -630,6 +656,7 @@ function A1BeforeSubmit({
   analysis,
   streamedText,
   prescriptionLabel,
+  goalFocusFrame,
   onAnswerChange,
   onSubmit,
   onRegenerate,
@@ -666,18 +693,22 @@ function A1BeforeSubmit({
         </div>
 
         <div className="space-y-4">
-          {question?.profileFocus && (
+          {(question?.profileFocus || goalFocusFrame) && (
             <section className="rounded-xl border border-primary/15 bg-white px-4 py-3 shadow-[0_10px_28px_rgba(67,56,202,0.05)]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-label font-bold text-primary">处方训练</p>
+                  <p className="text-label font-bold text-primary">
+                    {goalFocusFrame?.badge || "处方训练"}
+                  </p>
                   <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                    来自训练处方：优先补{" "}
-                    {prescriptionLabel || currentDisplayLabel}，本题会写入今日训练缓存。
+                    {goalFocusFrame?.description ||
+                      `来自训练处方：优先补 ${
+                        prescriptionLabel || currentDisplayLabel
+                      }，本题会写入今日训练缓存。`}
                   </p>
                 </div>
                 <span className="rounded-md bg-primary-soft px-3 py-1.5 text-label font-semibold text-primary">
-                  {question.targetLabel || "定向练习"}
+                  {question?.targetLabel || "定向练习"}
                 </span>
               </div>
             </section>
@@ -1484,19 +1515,21 @@ function ReviewBoard() {
 export default function TrainingSessionClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const profileFocus = searchParams.get("focus") || "";
+  const urlProfileFocus = normalizeGoalFocus(searchParams.get("focus"));
+  const [persistedGoalFocus, setPersistedGoalFocus] = useState<GoalFocusId | "">("");
+  const effectiveProfileFocus = urlProfileFocus || persistedGoalFocus;
   const prescriptionId =
     searchParams.get("prescription") || searchParams.get("recommendationId") || "";
   const prescriptionMeta = useMemo(
     () => ({
-      profileFocus: profileFocus || undefined,
+      profileFocus: effectiveProfileFocus || undefined,
       prescriptionId: prescriptionId || undefined,
     }),
-    [prescriptionId, profileFocus]
+    [effectiveProfileFocus, prescriptionId]
   );
   const prescriptionMissionPlan = useMemo(
-    () => getPrescriptionAwareMissionPlan(profileFocus, MISSION_PLAN),
-    [profileFocus]
+    () => getPrescriptionAwareMissionPlan(effectiveProfileFocus, MISSION_PLAN),
+    [effectiveProfileFocus]
   );
   const [active, setActive] = useState<VariantId>("before");
   const [activeMissions, setActiveMissions] =
@@ -1506,9 +1539,12 @@ export default function TrainingSessionClient() {
   const currentKey = currentMission?.id || "mission";
   const currentDim = currentMission?.primaryDimension || "通用产品能力";
   const currentDisplayLabel = currentMission?.displayLabel || currentDim;
-  const prescriptionLabel = profileFocus
-    ? getTrainingMissionForProfileFocus(profileFocus)?.displayLabel || currentDisplayLabel
+  const prescriptionLabel = effectiveProfileFocus
+    ? getTrainingMissionForProfileFocus(effectiveProfileFocus)?.displayLabel || currentDisplayLabel
     : "";
+  const goalFocusFrame = effectiveProfileFocus
+    ? GOAL_FOCUS_SESSION_FRAMES[effectiveProfileFocus]
+    : null;
   const totalCount = activeMissions.length || MISSION_PLAN.length;
   const [questions, setQuestions] = useState<Record<string, QuestionState>>({});
   const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
@@ -1642,6 +1678,15 @@ export default function TrainingSessionClient() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data: DailySessionResponse | null) => {
         if (cancelled || !data) return;
+        const latestGoalFocus = normalizeGoalFocus(data.latestGoalFocus);
+        if (!urlProfileFocus && latestGoalFocus) {
+          setPersistedGoalFocus(latestGoalFocus);
+        }
+        const sessionProfileFocus = urlProfileFocus || latestGoalFocus;
+        const sessionMissionPlan = getPrescriptionAwareMissionPlan(
+          sessionProfileFocus,
+          MISSION_PLAN
+        );
         const cachedQuestions = data.session?.questions || {};
         const restoredEntries = Object.entries(cachedQuestions)
           .map(([dim, value]): [string, QuestionState | null] => {
@@ -1660,7 +1705,7 @@ export default function TrainingSessionClient() {
           string,
           QuestionState
         >;
-        let nextPlan = prescriptionMissionPlan;
+        let nextPlan = sessionMissionPlan;
 
         if (Object.keys(restoredQuestions).length) {
           const restoredAnswers = Object.fromEntries(
@@ -1686,11 +1731,11 @@ export default function TrainingSessionClient() {
           }
           nextPlan = getMissionPlanWithCachedQuestions(
             Object.keys(restoredQuestions),
-            prescriptionMissionPlan
+            sessionMissionPlan
           );
           setActiveMissions(nextPlan);
         } else {
-          setActiveMissions(prescriptionMissionPlan);
+          setActiveMissions(sessionMissionPlan);
         }
 
         const nextIndex =
@@ -1709,7 +1754,7 @@ export default function TrainingSessionClient() {
     return () => {
       cancelled = true;
     };
-  }, [prescriptionMissionPlan]);
+  }, [prescriptionMissionPlan, urlProfileFocus]);
 
   useEffect(() => {
     if (
@@ -2270,6 +2315,7 @@ export default function TrainingSessionClient() {
     onSelectNextPrescription: handleSelectNextPrescription,
     onRevisionChange: handleRevisionChange,
     onSaveRevision: handleSaveRevision,
+    goalFocusFrame,
   };
 
   return (
