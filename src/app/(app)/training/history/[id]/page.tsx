@@ -190,6 +190,16 @@ export default function HistoryDetailPage() {
   };
 
   const sections = extractSections(analysis);
+  const interviewExpressionAsset =
+    record.ai_feedback?.interview_expression &&
+    typeof record.ai_feedback.interview_expression === "object"
+      ? record.ai_feedback.interview_expression
+      : null;
+  const thinkingUpgradeAsset =
+    record.ai_feedback?.thinking_upgrade &&
+    typeof record.ai_feedback.thinking_upgrade === "object"
+      ? record.ai_feedback.thinking_upgrade
+      : null;
 
   return (
     <>
@@ -325,6 +335,103 @@ export default function HistoryDetailPage() {
 
           {/* AI analysis */}
           <div className="space-y-6">
+          {(interviewExpressionAsset || thinkingUpgradeAsset) && (
+            <Card size="md" className="border-primary-muted bg-primary-soft/35">
+              <div className="mb-4">
+                <p className="text-label font-bold text-primary">
+                  主线资产复盘
+                </p>
+                <h2 className="mt-1 text-heading-sm font-bold text-ink">
+                  这次训练已经沉淀出的可复用材料
+                </h2>
+              </div>
+
+              <div className="space-y-4">
+                {interviewExpressionAsset && (
+                  <section className="rounded-xl border border-line bg-white p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <FileCheck2 className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold text-ink">面试表达资产</h3>
+                    </div>
+                    <p className="text-body-sm font-semibold leading-6 text-ink">
+                      {interviewExpressionAsset.opening_judgment ||
+                        "先给出清晰判断，再补证据和取舍。"}
+                    </p>
+                    <p className="mt-2 text-body-sm leading-7 text-ink-muted">
+                      {interviewExpressionAsset.answer_version ||
+                        "补充可复述版本后，这条训练记录会更适合面试调用。"}
+                    </p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="text-label font-bold text-primary">
+                          证据抓手
+                        </p>
+                        <ul className="mt-1 space-y-1">
+                          {(interviewExpressionAsset.evidence_hooks || []).map(
+                            (item: string) => (
+                              <li
+                                key={item}
+                                className="text-body-sm leading-relaxed text-ink-muted"
+                              >
+                                {item}
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-label font-bold text-warning">
+                          追问风险
+                        </p>
+                        <ul className="mt-1 space-y-1">
+                          {(interviewExpressionAsset.follow_up_risks || []).map(
+                            (item: string) => (
+                              <li
+                                key={item}
+                                className="text-body-sm leading-relaxed text-ink-muted"
+                              >
+                                {item}
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {thinkingUpgradeAsset && (
+                  <section className="rounded-xl border border-line bg-white p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Lightbulb className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold text-ink">思维升级卡</h3>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        ["判断质量", thinkingUpgradeAsset.judgment_quality],
+                        ["取舍质量", thinkingUpgradeAsset.tradeoff_quality],
+                        ["归因深度", thinkingUpgradeAsset.attribution_depth],
+                        ["落地严谨度", thinkingUpgradeAsset.landing_rigor],
+                      ].map(([label, value]) => (
+                        <div
+                          key={label}
+                          className="rounded-lg border border-line bg-surface px-3 py-2"
+                        >
+                          <p className="text-label font-bold text-primary">
+                            {label}
+                          </p>
+                          <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                            {value || "继续补充具体判断、证据和落地动作。"}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </div>
+            </Card>
+          )}
+
           {interviewExpressionCard && (
             <Card size="md" className="border-primary-muted bg-white">
               <div className="mb-4 flex flex-wrap items-start justify-between gap-3">

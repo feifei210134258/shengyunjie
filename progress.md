@@ -1,5 +1,22 @@
 # 会话进度日志
 
+## [2026-07-08] 历史复盘：读回主线资产
+
+### 完成内容
+- `buildInterviewExpressionCard` 优先使用已落库的 `ai_feedback.interview_expression` 派生表达卡，避免新训练反馈资产在历史页退回通用拼接。
+- `/training/history/[id]` 新增“主线资产复盘”，直接读回并展示 `interview_expression` 和 `thinking_upgrade`。
+- 面试主线资产展示开场判断、可复述版本、证据抓手和追问风险；思维训练资产展示判断质量、取舍质量、归因深度和落地严谨度。
+- 该改造复用既有 `training_records.ai_feedback` 和历史记录 API，不新增 schema。
+
+### 验证记录
+- TDD 红灯：`node --test src/lib/training/interview-expression-card.test.mjs` 先失败于 `interview_expression` 没有被识别为“面试可用”；历史页新增源测试覆盖 `interviewExpressionAsset`、`thinkingUpgradeAsset` 和“主线资产复盘”文案。
+- 已通过：`node --test src/lib/training/interview-expression-card.test.mjs && node 'src/app/(app)/training/history/[id]/page.test.mjs'`（8 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/training/history/[id]/page.tsx' 'src/app/(app)/training/history/[id]/page.test.mjs' src/lib/training/interview-expression-card.ts src/lib/training/interview-expression-card.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`。
+- 已通过：`git diff --check`、`feature_list.json` JSON 解析。
+- 已通过：`./init.sh`（10/10）。
+
 ## [2026-07-08] 训练反馈：按当前主线产出资产
 
 ### 完成内容

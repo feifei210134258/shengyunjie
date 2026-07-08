@@ -43,3 +43,13 @@ test("training history can save the interview expression card into the profile l
   assert.match(source, /沉淀到画像账本/);
   assert.match(source, /表达卡已入账/);
 });
+
+test("training history elevates goal-aware feedback assets in the review workspace", () => {
+  assert.match(source, /interviewExpressionAsset/);
+  assert.match(source, /thinkingUpgradeAsset/);
+  assert.match(source, /主线资产复盘/);
+  assert.match(source, /面试表达资产/);
+  assert.match(source, /思维升级卡/);
+  assert.match(source, /evidence_hooks/);
+  assert.match(source, /landing_rigor/);
+});
