@@ -35,6 +35,48 @@ test("normalizes structured training evaluation from fenced AI JSON", () => {
   assert.equal(evaluation.next_practice, "下一题练指标归因");
 });
 
+test("normalizes goal-aware interview expression and thinking upgrade assets", () => {
+  const evaluation = normalizeTrainingEvaluation({
+    overall_score: 8,
+    understanding: 8,
+    framework: 7,
+    solution: 8,
+    decision_logic: 7,
+    feedback: "判断清楚，但面试表达还需要补证据。",
+    interview_expression: {
+      opening_judgment: "我会先把这个问题定义为续费风险的提前识别。",
+      evidence_hooks: ["续费率变化", "客户成功跟进记录"],
+      follow_up_risks: ["指标归因是否足够干净"],
+      answer_version: "面试中我会先说判断，再补充证据和取舍。",
+    },
+    thinking_upgrade: {
+      judgment_quality: "能抓核心矛盾",
+      tradeoff_quality: "需要说清放弃什么",
+      attribution_depth: "需要补反证指标",
+      landing_rigor: "需要明确上线后复盘节奏",
+    },
+  });
+
+  assert.equal(
+    evaluation.interview_expression?.opening_judgment,
+    "我会先把这个问题定义为续费风险的提前识别。"
+  );
+  assert.deepEqual(evaluation.interview_expression?.evidence_hooks, [
+    "续费率变化",
+    "客户成功跟进记录",
+  ]);
+  assert.equal(
+    evaluation.interview_expression?.follow_up_risks[0],
+    "指标归因是否足够干净"
+  );
+  assert.match(
+    evaluation.interview_expression?.answer_version || "",
+    /先说判断/
+  );
+  assert.equal(evaluation.thinking_upgrade?.tradeoff_quality, "需要说清放弃什么");
+  assert.equal(evaluation.thinking_upgrade?.attribution_depth, "需要补反证指标");
+});
+
 test("extracts recommendation reason from generated question text", () => {
   const result = parseGeneratedQuestionText(`【为什么练这题：最近数据决策得分偏低，需要补证据链】
 题目：你负责一个客户健康度模块，销售希望增加预警标签，客户成功希望直接生成行动建议。请说明你会如何定义核心指标、验证价值，并处理两个团队的优先级冲突。`);

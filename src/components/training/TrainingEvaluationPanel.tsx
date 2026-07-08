@@ -6,6 +6,7 @@ import {
   Activity,
   ArrowRight,
   Check,
+  FileText,
   Lightbulb,
   MessageSquare,
   Target,
@@ -109,6 +110,67 @@ export default function TrainingEvaluationPanel({
           </p>
         </section>
       </div>
+
+      {evaluation.interview_expression && (
+        <section className="rounded-xl border border-primary/15 bg-primary-soft/45 p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" strokeWidth={1.8} />
+            <h4 className="font-semibold text-ink">面试表达资产</h4>
+          </div>
+          <p className="text-body-sm font-semibold leading-relaxed text-ink">
+            {evaluation.interview_expression.opening_judgment}
+          </p>
+          <p className="mt-3 text-body-sm leading-7 text-ink-muted">
+            {evaluation.interview_expression.answer_version}
+          </p>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div>
+              <p className="text-label font-bold text-primary">证据抓手</p>
+              <ul className="mt-2 space-y-1">
+                {evaluation.interview_expression.evidence_hooks.map((item, idx) => (
+                  <li key={idx} className="text-body-sm leading-relaxed text-ink-muted">
+                    {cleanItem(item)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-label font-bold text-danger">追问风险</p>
+              <ul className="mt-2 space-y-1">
+                {evaluation.interview_expression.follow_up_risks.map((item, idx) => (
+                  <li key={idx} className="text-body-sm leading-relaxed text-ink-muted">
+                    {cleanItem(item)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {evaluation.thinking_upgrade && (
+        <section className="rounded-xl border border-line bg-white p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-primary" strokeWidth={1.8} />
+            <h4 className="font-semibold text-ink">思维升级卡</h4>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["判断质量", evaluation.thinking_upgrade.judgment_quality],
+              ["取舍质量", evaluation.thinking_upgrade.tradeoff_quality],
+              ["归因深度", evaluation.thinking_upgrade.attribution_depth],
+              ["落地严谨度", evaluation.thinking_upgrade.landing_rigor],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg border border-line bg-[#F8FAFC] p-3">
+                <p className="text-label font-bold text-primary">{label}</p>
+                <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-xl border border-line bg-[#F8FAFC] px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">

@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-08] 训练反馈：按当前主线产出资产
+
+### 完成内容
+- `/training/session` 提交答案分析时把 `effectiveProfileFocus` 传给 `/api/train?action=analyze`。
+- `/api/train` 的分析 prompt 按主线改写反馈目标：面试跳槽主线产出 `interview_expression`，高级产品思维主线产出 `thinking_upgrade`。
+- `normalizeTrainingEvaluation` 支持读回面试表达资产和思维升级卡；这些结构化字段随 `training_records.ai_feedback` 保存。
+- 训练反馈面板新增“面试表达资产”和“思维升级卡”，让用户当场看到开场判断、证据抓手、追问风险，以及判断/取舍/归因/落地四类升级建议。
+- 该改造复用既有 `/api/train`、`training_records.ai_feedback` 和训练记录保存流程，不新增 schema。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/train/route.test.mjs src/lib/training/personalization.test.mjs src/components/training/TrainingSessionClient.test.mjs` 先失败于缺少目标主线分析 prompt、`interview_expression`/`thinking_upgrade` 归一化和训练页 `profileFocus` 传参。
+- 已通过：`node --test src/app/api/train/route.test.mjs src/lib/training/personalization.test.mjs src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs`（23 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/train/route.ts src/app/api/train/route.test.mjs src/lib/training/personalization.ts src/lib/training/personalization.test.mjs src/components/training/TrainingEvaluationPanel.tsx src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`。
+- 已通过：`git diff --check`、`feature_list.json` JSON 解析。
+- 已通过：`./init.sh`（10/10）。
+
 ## [2026-07-08] 训练实战页：直接继承当前主线
 
 ### 完成内容

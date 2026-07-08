@@ -54,3 +54,17 @@ test("training generation route accepts profile prescription focus as mission in
   assert.match(source, /getTrainingMissionForProfileFocus/);
   assert.match(source, /训练处方聚焦/);
 });
+
+test("training analysis prompt adapts feedback assets to the active goal focus", () => {
+  assert.match(source, /目标主线：\$\{profileFocus \|\| "未指定"\}/);
+  assert.match(source, /interview_expression/);
+  assert.match(source, /opening_judgment/);
+  assert.match(source, /evidence_hooks/);
+  assert.match(source, /follow_up_risks/);
+  assert.match(source, /thinking_upgrade/);
+  assert.match(source, /tradeoff_quality/);
+  assert.match(source, /attribution_depth/);
+  assert.match(source, /landing_rigor/);
+  assert.match(source, /profileFocus === "interview_sprint"/);
+  assert.match(source, /profileFocus === "thinking_training"/);
+});

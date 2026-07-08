@@ -247,9 +247,18 @@ ${formatTrainingTarget(target)}
     // 使用深度思考模型
     const thinkingModel = getThinkingModel(apiKey, "deepseek-v4-flash");
     const dimensionStrategy = getTrainingDimensionStrategy(dimension);
+    const goalFocusAnalysisGuidance =
+      profileFocus === "interview_sprint"
+        ? "当前目标是面试跳槽冲刺。反馈必须把本次训练回答转成可复述的面试表达资产，尤其是开场判断、证据抓手、追问风险和一版可直接复述的答案。"
+        : profileFocus === "thinking_training"
+          ? "当前目标是高级产品思维训练。反馈必须聚焦判断质量、取舍质量、归因深度和落地严谨度，帮助用户把答案升级成高级 PM 的思考方式。"
+          : "当前目标未指定。反馈需要同时兼顾面试表达资产和高级产品思维训练。";
     const result = streamText({
       model: thinkingModel,
       system: `你是一位要求严格但不刻薄的 B 端产品教练。你的目标不是只打分，而是把用户的回答改到真实高阶 PM 训练可用。
+目标主线：${profileFocus || "未指定"}
+主线反馈要求：${goalFocusAnalysisGuidance}
+
 当前题目维度的训练策略：
 ${formatTrainingDimensionStrategy(dimensionStrategy)}
 
@@ -267,7 +276,19 @@ JSON 结构必须为：
   "suggestions": ["可执行改进建议"],
   "thinking_framework": ["这道题推荐的答题框架，4-6 条"],
   "example_answer": "给一段 120-220 字的示例回答，示范高阶 PM 应该怎么答",
-  "next_practice": "下一题前最该练的一件事"
+  "next_practice": "下一题前最该练的一件事",
+  "interview_expression": {
+    "opening_judgment": "如果用于面试，第一句话应该怎样给判断",
+    "evidence_hooks": ["最值得在面试里展开的证据抓手，2-4 条"],
+    "follow_up_risks": ["面试官可能追问的风险点，2-4 条"],
+    "answer_version": "把用户回答改写成 120-220 字的面试可复述版本"
+  },
+  "thinking_upgrade": {
+    "judgment_quality": "这份回答的判断质量如何升级",
+    "tradeoff_quality": "取舍表达如何升级",
+    "attribution_depth": "归因、证据和反证如何升级",
+    "landing_rigor": "落地节奏、风险护栏和复盘如何升级"
+  }
 }
 评分标准：
 1. 理解问题：是否抓住真实业务矛盾和关键角色。
@@ -275,11 +296,14 @@ JSON 结构必须为：
 3. 方案质量：是否具体、可落地，并考虑边界条件。
 4. 决策逻辑：是否解释为什么这样做，有取舍标准、证据和反证意识。
 5. 维度专项：必须优先参考上面的“回答应训练”，指出用户在哪些专项动作上做到了或缺失了什么。
+6. 面试冲刺主线：如果目标主线是 interview_sprint，interview_expression 必须比通用示例更具体，能直接进入项目故事库或历史复盘。
+7. 思维升阶主线：如果目标主线是 thinking_training，thinking_upgrade 必须明确判断、取舍、归因、落地四个升级方向。
 反馈必须引用用户原文，避免空泛夸奖或空泛批评。`,
       messages: [
         {
           role: "user",
           content: `题目维度：${dimension || "未知"}
+目标主线：${profileFocus || "未指定"}
 题目：${question}
 
 用户的回答：${userAnswer}

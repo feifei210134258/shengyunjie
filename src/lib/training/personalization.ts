@@ -13,6 +13,18 @@ export interface TrainingEvaluation {
   thinking_framework: string[];
   example_answer: string;
   next_practice: string;
+  interview_expression?: {
+    opening_judgment: string;
+    evidence_hooks: string[];
+    follow_up_risks: string[];
+    answer_version: string;
+  };
+  thinking_upgrade?: {
+    judgment_quality: string;
+    tradeoff_quality: string;
+    attribution_depth: string;
+    landing_rigor: string;
+  };
 }
 
 export interface TrainingPersonalization {
@@ -78,6 +90,50 @@ function normalizeText(value: unknown, fallback: string) {
   return text || fallback;
 }
 
+function normalizeInterviewExpression(value: unknown) {
+  if (!value || typeof value !== "object") return undefined;
+  const data = value as Record<string, unknown>;
+  return {
+    opening_judgment: normalizeText(
+      data.opening_judgment,
+      "先用一句话给出判断，再说明业务问题、关键证据和取舍边界。"
+    ),
+    evidence_hooks: normalizeList(data.evidence_hooks, [
+      "补充能被面试官追问的用户、业务或数据证据。",
+    ]),
+    follow_up_risks: normalizeList(data.follow_up_risks, [
+      "准备解释指标归因、反证和落地风险。",
+    ]),
+    answer_version: normalizeText(
+      data.answer_version,
+      "面试表达版本：先给判断，再补证据、取舍和复盘结论。"
+    ),
+  };
+}
+
+function normalizeThinkingUpgrade(value: unknown) {
+  if (!value || typeof value !== "object") return undefined;
+  const data = value as Record<string, unknown>;
+  return {
+    judgment_quality: normalizeText(
+      data.judgment_quality,
+      "判断需要更清楚地落到业务矛盾和成功标准。"
+    ),
+    tradeoff_quality: normalizeText(
+      data.tradeoff_quality,
+      "取舍需要说明优先做什么、暂时放弃什么，以及为什么。"
+    ),
+    attribution_depth: normalizeText(
+      data.attribution_depth,
+      "归因需要补充证据来源、反证指标和噪音排除。"
+    ),
+    landing_rigor: normalizeText(
+      data.landing_rigor,
+      "落地需要说明节奏、风险护栏和复盘动作。"
+    ),
+  };
+}
+
 export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation {
   const data = (parsed || {}) as Record<string, any>;
   const rawScores = (data.scores || {}) as Record<string, unknown>;
@@ -133,6 +189,8 @@ export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation
       data.next_practice ?? data.next_exercise,
       "下一题前，先把答案压缩成 5 句话：目标、证据、方案、取舍、结果。"
     ),
+    interview_expression: normalizeInterviewExpression(data.interview_expression),
+    thinking_upgrade: normalizeThinkingUpgrade(data.thinking_upgrade),
   };
 }
 

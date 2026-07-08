@@ -37,3 +37,23 @@ test("training session inherits persisted goal focus when the URL has no focus",
   assert.match(source, /面试冲刺训练/);
   assert.match(source, /思维升阶训练/);
 });
+
+test("training analysis sends the effective goal focus into feedback generation", () => {
+  assert.match(source, /action: "analyze"/);
+  assert.match(source, /profileFocus: effectiveProfileFocus \|\| undefined/);
+  assert.match(source, /goalFocusFrame=\{goalFocusFrame\}/);
+});
+
+test("training feedback panel exposes goal-aware assets to the user", () => {
+  const panelSource = readFileSync(
+    new URL("./TrainingEvaluationPanel.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(panelSource, /面试表达资产/);
+  assert.match(panelSource, /证据抓手/);
+  assert.match(panelSource, /追问风险/);
+  assert.match(panelSource, /思维升级卡/);
+  assert.match(panelSource, /判断质量/);
+  assert.match(panelSource, /落地严谨度/);
+});

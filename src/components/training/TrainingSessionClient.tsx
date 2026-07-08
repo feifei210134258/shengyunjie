@@ -1877,6 +1877,7 @@ export default function TrainingSessionClient() {
           action: "analyze",
           dimension: currentDim,
           missionId: currentMission?.id,
+          profileFocus: effectiveProfileFocus || undefined,
           question: q,
           userAnswer: answerText,
         }),
@@ -2320,8 +2321,12 @@ export default function TrainingSessionClient() {
 
   return (
     <>
-      {active === "before" && <A1BeforeSubmit {...realProps} />}
-      {active === "after" && <A1AfterSubmit {...realProps} />}
+      {active === "before" && (
+        <A1BeforeSubmit {...realProps} goalFocusFrame={goalFocusFrame} />
+      )}
+      {active === "after" && (
+        <A1AfterSubmit {...realProps} goalFocusFrame={goalFocusFrame} />
+      )}
     </>
   );
 }
