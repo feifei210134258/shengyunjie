@@ -50,6 +50,9 @@ export default function StoryBankPage() {
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [savingProject, setSavingProject] = useState<string>("");
   const [saveError, setSaveError] = useState<string>("");
+  const [storyPackStatus, setStoryPackStatus] = useState<
+    "idle" | "saving" | "saved" | "failed"
+  >("idle");
 
   useEffect(() => {
     fetch("/api/bootcamp/story-bank")
@@ -73,6 +76,11 @@ export default function StoryBankPage() {
     );
   }, [selectedProject, storyBank]);
 
+  function handleSelectProject(projectName: string) {
+    setSelectedProject(projectName);
+    setStoryPackStatus("idle");
+  }
+
   async function onSaveProjectEvidence(patch: ProjectEvidencePatch) {
     setSavingProject(patch.projectName);
     setSaveError("");
@@ -93,6 +101,35 @@ export default function StoryBankPage() {
       setSaveError(error.message || "保存失败，请稍后重试");
     } finally {
       setSavingProject("");
+    }
+  }
+
+  async function handleSaveProjectStoryPack(story: ProjectStory) {
+    setStoryPackStatus("saving");
+    try {
+      const response = await fetch("/api/profile/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trigger: "project_story_saved",
+          projectStory: {
+            projectName: story.projectName,
+            company: story.company,
+            role: story.role,
+            readinessScore: story.readinessScore,
+            proofGaps: story.proofGaps,
+            interviewScript: {
+              fullScript: story.interviewScript.fullScript,
+            },
+          },
+        }),
+      });
+      if (!response.ok) throw new Error("故事包入账失败");
+      const result = await response.json();
+      if (!result.snapshot?.id) throw new Error("故事包未读回快照");
+      setStoryPackStatus("saved");
+    } catch {
+      setStoryPackStatus("failed");
     }
   }
 
@@ -178,7 +215,7 @@ export default function StoryBankPage() {
               {storyBank.projectStories.map((story) => (
                 <button
                   key={story.projectName}
-                  onClick={() => setSelectedProject(story.projectName)}
+                  onClick={() => handleSelectProject(story.projectName)}
                   className={cn(
                     "w-full rounded-lg px-3 py-3 text-left transition-all active:scale-[0.99]",
                     activeStory?.projectName === story.projectName
@@ -230,9 +267,11 @@ export default function StoryBankPage() {
 
         {activeStory && (
           <StoryDetail
+            onSaveProjectStoryPack={handleSaveProjectStoryPack}
             onSaveProjectEvidence={onSaveProjectEvidence}
             saveError={saveError}
             saving={savingProject === activeStory.projectName}
+            storyPackStatus={storyPackStatus}
             story={activeStory}
           />
         )}
@@ -289,13 +328,17 @@ function TrainingExpressionAssets({ storyBank }: { storyBank: StoryBank }) {
 function StoryDetail({
   story,
   onSaveProjectEvidence,
+  onSaveProjectStoryPack,
   saveError,
   saving,
+  storyPackStatus,
 }: {
   story: ProjectStory;
   onSaveProjectEvidence: (patch: ProjectEvidencePatch) => Promise<void>;
+  onSaveProjectStoryPack: (story: ProjectStory) => Promise<void>;
   saveError: string;
   saving: boolean;
+  storyPackStatus: "idle" | "saving" | "saved" | "failed";
 }) {
   const [role, setRole] = useState(story.role);
   const [description, setDescription] = useState(story.description);
@@ -338,6 +381,35 @@ function StoryDetail({
             {getReadinessLabel(story.readinessScore)}
             {story.readinessScore}/10
           </span>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-3 rounded-lg bg-surface px-4 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-body-sm font-bold text-ink">
+              沉淀到画像账本
+            </p>
+            <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+              把这份项目讲述稿、成熟度和证据缺口写入能力证据链，后续推荐会知道你已经有可讲项目资产。
+            </p>
+            {storyPackStatus === "saved" && (
+              <p className="mt-2 text-label font-bold text-success">
+                故事包已入账
+              </p>
+            )}
+            {storyPackStatus === "failed" && (
+              <p className="mt-2 text-label font-bold text-danger">
+                故事包入账失败，请稍后重试
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => onSaveProjectStoryPack(story)}
+            disabled={storyPackStatus === "saving"}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-ink-muted active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45"
+          >
+            <Save className="h-4 w-4" strokeWidth={1.5} />
+            {storyPackStatus === "saving" ? "入账中" : "沉淀到画像账本"}
+          </button>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">

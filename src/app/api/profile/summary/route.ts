@@ -12,6 +12,7 @@ async function readSnapshotTrigger(req?: Request) {
         "training_feedback",
         "revision_saved",
         "expression_card_saved",
+        "project_story_saved",
       ].includes(triggerType)
     ) {
       return null;
@@ -33,6 +34,37 @@ async function readSnapshotTrigger(req?: Request) {
               0,
               240
             ),
+        }
+      : null;
+    const projectStory =
+      body.projectStory && typeof body.projectStory === "object"
+        ? {
+            projectName: String(body.projectStory.projectName || "").slice(
+              0,
+              160
+            ),
+            company: String(body.projectStory.company || "").slice(0, 120),
+            role: String(body.projectStory.role || "").slice(0, 240),
+            readinessScore: Number.isFinite(
+              Number(body.projectStory.readinessScore)
+            )
+              ? Number(body.projectStory.readinessScore)
+              : null,
+            proofGaps: Array.isArray(body.projectStory.proofGaps)
+              ? body.projectStory.proofGaps
+                  .map((gap: unknown) => String(gap || "").slice(0, 180))
+                  .filter(Boolean)
+                  .slice(0, 6)
+              : [],
+            interviewScript:
+              body.projectStory.interviewScript &&
+              typeof body.projectStory.interviewScript === "object"
+                ? {
+                    fullScript: String(
+                      body.projectStory.interviewScript.fullScript || ""
+                    ).slice(0, 1200),
+                  }
+                : null,
           }
         : null;
     return {
@@ -45,6 +77,7 @@ async function readSnapshotTrigger(req?: Request) {
         triggerType === "revision_saved" ? revisedAnswer.slice(0, 600) : "",
       expressionCard:
         triggerType === "expression_card_saved" ? expressionCard : null,
+      projectStory: triggerType === "project_story_saved" ? projectStory : null,
     };
   } catch {
     return null;

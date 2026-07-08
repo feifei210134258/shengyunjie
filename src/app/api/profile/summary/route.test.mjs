@@ -36,3 +36,10 @@ test("profile summary API can tag snapshots created from saved expression cards"
   assert.match(source, /expressionCard/);
   assert.match(source, /readiness/);
 });
+
+test("profile summary API can tag snapshots created from saved project story packs", () => {
+  assert.match(source, /project_story_saved/);
+  assert.match(source, /projectStory/);
+  assert.match(source, /readinessScore/);
+  assert.match(source, /interviewScript/);
+});

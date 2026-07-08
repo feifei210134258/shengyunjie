@@ -1508,6 +1508,28 @@
 - `feature_list.json` JSON 解析通过。
 - `./init.sh` 通过，环境健康检查 10/10。
 
+## [2026-07-08] Feature: 项目故事包入账
+
+### 背景判断
+- 项目故事库已经能把简历项目、模拟追问和日常训练表达资产组织成可讲版本，但它仍然主要停留在故事库页面。
+- 从第一性原理看，面试跳槽强化的关键是“可讲项目资产”也进入画像证据账本，这样后续推荐才能知道用户已经具备某个项目故事，而不是反复要求补同类材料。
+
+### 完成内容
+- `/api/profile/summary` 的 `POST` 支持 `trigger=project_story_saved`，把项目名、公司、角色、成熟度、证据缺口和 2 分钟讲述稿摘要写入 `growth_snapshots.dimension_scores.__trigger.projectStory`。
+- `/bootcamp/story-bank` 项目详情新增“沉淀到画像账本”动作，调用既有画像快照 API，不新增 schema。
+- 切换项目会重置故事包入账状态，避免用户误以为另一个项目也已入账。
+- 产品设计文档和 `feature_list.json` 同步记录项目故事包进入画像证据链。
+
+### 验证结果
+- TDD 红灯：新增 profile summary API 源测试和故事库页面源测试，先捕获缺少 `project_story_saved/projectStory`、缺少 `handleSaveProjectStoryPack` 和“故事包已入账”反馈。
+- `node --test src/app/api/profile/summary/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs feature_list.test.mjs` 通过，20 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/bootcamp/story-bank/page.tsx' 'src/app/(app)/bootcamp/story-bank/page.test.mjs' src/app/api/profile/summary/route.ts src/app/api/profile/summary/route.test.mjs src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs feature_list.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，`/bootcamp/story-bank` 构建体积更新为 6.28 kB。
+- `git diff --check` 通过。
+- `feature_list.json` JSON 解析通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-07] Feature: 用户画像引擎 — 个性化训练处方
 
 ### 背景判断

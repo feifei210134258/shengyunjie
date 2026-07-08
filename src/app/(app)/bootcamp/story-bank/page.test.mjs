@@ -33,3 +33,11 @@ test("story bank page surfaces daily training expression assets", () => {
   assert.match(source, /训练回答/);
   assert.match(source, /查看训练复盘/);
 });
+
+test("story bank page can save a project story pack into the profile ledger", () => {
+  assert.match(source, /handleSaveProjectStoryPack/);
+  assert.match(source, /project_story_saved/);
+  assert.match(source, /\/api\/profile\/summary/);
+  assert.match(source, /沉淀到画像账本/);
+  assert.match(source, /故事包已入账/);
+});
