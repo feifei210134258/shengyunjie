@@ -24,6 +24,12 @@ export type RecommendationPlan = {
   recommendations: ProfileRecommendation[];
 };
 
+export type GoalBrief = {
+  targetRole?: string;
+  targetScenario?: string;
+  targetDeadline?: string;
+} | null;
+
 function safeDimension(profile: GrowthProfile) {
   return (
     profile.weakestDimensions[0] ||
@@ -42,9 +48,39 @@ function hasMigrationGap(migrationCheck: string) {
   return /未|没有|缺|不足|偏弱|仍然|还需|未能|失败/.test(migrationCheck);
 }
 
+function normalizeGoalBrief(goalBrief?: GoalBrief) {
+  const targetRole = String(goalBrief?.targetRole || "").trim();
+  const targetScenario = String(goalBrief?.targetScenario || "").trim();
+  const targetDeadline = String(goalBrief?.targetDeadline || "").trim();
+  if (!targetRole && !targetScenario && !targetDeadline) return null;
+  return { targetRole, targetScenario, targetDeadline };
+}
+
+function formatGoalBriefReason(goalBrief?: GoalBrief) {
+  const normalized = normalizeGoalBrief(goalBrief);
+  if (!normalized) return "";
+  const parts = [
+    normalized.targetRole ? `目标岗位：${normalized.targetRole}` : "",
+    normalized.targetScenario ? `目标场景：${normalized.targetScenario}` : "",
+    normalized.targetDeadline ? `目标期限：${normalized.targetDeadline}` : "",
+  ].filter(Boolean);
+  return `目标简报已锁定 ${parts.join(" / ")}，本轮处方要直接服务这个结果。`;
+}
+
+function withGoalBriefReason(reason: string, goalBrief?: GoalBrief) {
+  const goalBriefReason = formatGoalBriefReason(goalBrief);
+  return goalBriefReason ? `${goalBriefReason} ${reason}` : reason;
+}
+
+function withGoalBriefTitle(title: string, goalBrief?: GoalBrief) {
+  const targetRole = normalizeGoalBrief(goalBrief)?.targetRole;
+  return targetRole ? `围绕 ${targetRole}，${title}` : title;
+}
+
 function buildInterviewRecommendation(
   profile: GrowthProfile,
-  targetDimension: string
+  targetDimension: string,
+  goalBrief?: GoalBrief
 ): ProfileRecommendation {
   const latestStoryAsset = profile.storyAssets[0];
   if (latestStoryAsset) {
@@ -57,10 +93,16 @@ function buildInterviewRecommendation(
     return {
       id: `story-gap-${latestStoryAsset.snapshotId}`,
       type: "interview",
-      title: `补齐 ${latestStoryAsset.projectName} 的项目证据缺口`,
-      reason: firstGap
-        ? `已入账项目故事包还缺：${firstGap}。先补这个缺口，再进入高压追问会更稳。`
-        : `这个项目故事包已经入账，继续补充结果证据和追问反证，让面试回答更可复述。`,
+      title: withGoalBriefTitle(
+        `补齐 ${latestStoryAsset.projectName} 的项目证据缺口`,
+        goalBrief
+      ),
+      reason: withGoalBriefReason(
+        firstGap
+          ? `已入账项目故事包还缺：${firstGap}。先补这个缺口，再进入高压追问会更稳。`
+          : `这个项目故事包已经入账，继续补充结果证据和追问反证，让面试回答更可复述。`,
+        goalBrief
+      ),
       href: latestStoryAsset.href,
       cta: "补项目证据",
       priority: 2,
@@ -74,8 +116,11 @@ function buildInterviewRecommendation(
   return {
     id: "interview-evidence",
     type: "interview",
-    title: needsInterviewEvidence ? "补一轮项目追问证据" : "整理可复述项目证据",
-    reason: profile.careerReadiness.nextAction,
+    title: withGoalBriefTitle(
+      needsInterviewEvidence ? "补一轮项目追问证据" : "整理可复述项目证据",
+      goalBrief
+    ),
+    reason: withGoalBriefReason(profile.careerReadiness.nextAction, goalBrief),
     href: needsInterviewEvidence ? "/bootcamp/interview" : "/bootcamp/story-bank",
     cta: needsInterviewEvidence ? "进入模拟面试" : "整理故事库",
     priority: 2,
@@ -90,12 +135,14 @@ function buildTrainingRecommendation({
   label,
   focusReason,
   evidenceLabel,
+  goalBrief,
 }: {
   profile: GrowthProfile;
   dimensionId: string;
   label: string;
   focusReason: string;
   evidenceLabel: string;
+  goalBrief?: GoalBrief;
 }): ProfileRecommendation {
   const latestThinkingAsset = profile.thinkingAssets[0];
   if (latestThinkingAsset) {
@@ -104,8 +151,14 @@ function buildTrainingRecommendation({
       return {
         id: `thinking-upgrade-${latestThinkingAsset.snapshotId}`,
         type: "training",
-        title: `补上 ${latestThinkingAsset.dimensionLabel} 的迁移缺口`,
-        reason: `迁移验证指出：${migrationCheck}。下一题先补迁移，再把判断、取舍、归因和落地要求用到新场景。`,
+        title: withGoalBriefTitle(
+          `补上 ${latestThinkingAsset.dimensionLabel} 的迁移缺口`,
+          goalBrief
+        ),
+        reason: withGoalBriefReason(
+          `迁移验证指出：${migrationCheck}。下一题先补迁移，再把判断、取舍、归因和落地要求用到新场景。`,
+          goalBrief
+        ),
         href: `/training/session?focus=thinking_training&from=${encodeURIComponent(
           latestThinkingAsset.trainingRecordId
         )}`,
@@ -134,10 +187,16 @@ function buildTrainingRecommendation({
     return {
       id: `thinking-upgrade-${latestThinkingAsset.snapshotId}`,
       type: "training",
-      title: `延续 ${latestThinkingAsset.dimensionLabel} 的思维升级`,
-      reason: followupReason
-        ? `上一张思维升级卡指出：${followupReason}。下一题要把这个升级点迁移到新场景。`
-        : `上一张思维升级卡已经入账，下一题要把 ${nextFocus || label} 迁移到新场景。`,
+      title: withGoalBriefTitle(
+        `延续 ${latestThinkingAsset.dimensionLabel} 的思维升级`,
+        goalBrief
+      ),
+      reason: withGoalBriefReason(
+        followupReason
+          ? `上一张思维升级卡指出：${followupReason}。下一题要把这个升级点迁移到新场景。`
+          : `上一张思维升级卡已经入账，下一题要把 ${nextFocus || label} 迁移到新场景。`,
+        goalBrief
+      ),
       href: `/training/session?focus=thinking_training&from=${encodeURIComponent(
         latestThinkingAsset.trainingRecordId
       )}`,
@@ -151,8 +210,11 @@ function buildTrainingRecommendation({
   return {
     id: `train-${dimensionId}`,
     type: "training",
-    title: `先练 ${label} 的真实任务`,
-    reason: `${focusReason} 本轮训练要把判断落到依据、取舍和验证口径。`,
+    title: withGoalBriefTitle(`先练 ${label} 的真实任务`, goalBrief),
+    reason: withGoalBriefReason(
+      `${focusReason} 本轮训练要把判断落到依据、取舍和验证口径。`,
+      goalBrief
+    ),
     href: `/training/session?focus=${encodeURIComponent(dimensionId)}`,
     cta: "开始训练",
     priority: 1,
@@ -207,7 +269,10 @@ function buildReviewRecommendation({
   };
 }
 
-export function buildRecommendationPlan(profile: GrowthProfile): RecommendationPlan {
+export function buildRecommendationPlan(
+  profile: GrowthProfile,
+  goalBrief?: GoalBrief
+): RecommendationPlan {
   const focus = safeDimension(profile);
   const focusReason =
     profile.focusPlan.reason ||
@@ -217,13 +282,18 @@ export function buildRecommendationPlan(profile: GrowthProfile): RecommendationP
   const label = focus?.shortLabel || focus?.label || "产品判断";
   const score = focus?.score || 0;
   const evidenceLabel = getEvidenceLabel(profile);
-  const interviewRecommendation = buildInterviewRecommendation(profile, dimensionId);
+  const interviewRecommendation = buildInterviewRecommendation(
+    profile,
+    dimensionId,
+    goalBrief
+  );
   const trainingRecommendation = buildTrainingRecommendation({
     profile,
     dimensionId,
     label,
     focusReason,
     evidenceLabel,
+    goalBrief,
   });
   const reviewRecommendation = buildReviewRecommendation({
     profile,

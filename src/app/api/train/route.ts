@@ -60,6 +60,22 @@ function formatMigrationTarget(value: unknown) {
   return parts.length ? parts.join("\n") : "暂无";
 }
 
+function formatGoalBrief(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "暂无";
+  const brief = value as Record<string, unknown>;
+  const parts = [
+    ["目标岗位", brief.targetRole],
+    ["目标场景", brief.targetScenario],
+    ["目标期限", brief.targetDeadline],
+  ]
+    .map(([label, item]) => {
+      const text = String(item || "").trim();
+      return text ? `${label}：${text}` : "";
+    })
+    .filter(Boolean);
+  return parts.length ? parts.join("\n") : "暂无";
+}
+
 async function getPersonalizationContext(
   dimension?: string,
   currentQuestions?: unknown
@@ -144,6 +160,7 @@ export async function POST(req: Request) {
     question,
     currentQuestions,
     migrationTarget,
+    goalBrief,
   } = await req.json();
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -152,6 +169,7 @@ export async function POST(req: Request) {
   }
 
   const chatModel = getChatModel(apiKey, "deepseek-v4-flash");
+  const goalBriefSummary = formatGoalBrief(goalBrief);
 
   if (action === "generate") {
     const mission =
@@ -213,6 +231,8 @@ ${formatTrainingTarget(target)}
 个性化上下文：
 - 本题聚焦维度：${personalization.focusDimension || effectiveDimension}
 - 训练处方聚焦：${profileFocus || "未指定"}
+- 目标简报：
+${goalBriefSummary}
 - 用户当前短板：${personalization.weakDimensions.join("、") || "暂无明确画像"}
 - 最近低分维度：${personalization.recentLowDimensions.join("、") || "暂无"}
 - 最近训练盲区：${personalization.recentGaps.join("；") || "暂无"}
@@ -233,6 +253,7 @@ ${formatTrainingTarget(target)}
 - 不要复用近期已练题目的产品类型、业务动作、冲突角色、指标组合和问题结构
 - 如果当前种子与近期题目过于接近，就切换到同维度、同靶点的其他种子家族再出题
 - 题目要自然嵌入用户短板，但不要暴露内部评分细节
+- 如果目标简报不是“暂无”，题目必须服务目标岗位、目标场景和目标期限；但不要生硬复述目标简报字段
 - 从维度“允许题型”和靶点“可用变化轴”中选择 2-3 个变化轴自然组合，不能写成机械填空题
 - 今日已出题目如果已经集中在 B2B SaaS、免费/付费、权限、试用、上线、灰度、回滚、指标验证这类题面骨架，下一题必须换到不同产品域和不同决策动作
 - 不要把每道题都收束成“请设计验证方案，包含关键指标、观察周期、决策标准、是否回滚”；只有种子或靶点明确要求时才使用验证/回滚追问
@@ -277,6 +298,8 @@ ${formatTrainingTarget(target)}
       model: thinkingModel,
       system: `你是一位要求严格但不刻薄的 B 端产品教练。你的目标不是只打分，而是把用户的回答改到真实高阶 PM 训练可用。
 目标主线：${profileFocus || "未指定"}
+目标简报：
+${goalBriefSummary}
 主线反馈要求：${goalFocusAnalysisGuidance}
 
 当前题目维度的训练策略：
@@ -323,12 +346,15 @@ JSON 结构必须为：
 6. 面试冲刺主线：如果目标主线是 interview_sprint，interview_expression 必须比通用示例更具体，能直接进入项目故事库或历史复盘。
 7. 思维升阶主线：如果目标主线是 thinking_training，thinking_upgrade 必须明确判断、取舍、归因、落地四个升级方向。
 8. 迁移验证：如果“上一张思维升级卡的迁移目标”不是“暂无”，thinking_upgrade.migration_check 必须明确回答是否把上一张思维升级卡迁移到本题，并引用用户原文说明证据或缺口。
+9. 目标简报：如果目标简报不是“暂无”，所有反馈、示例回答、面试表达和下一题建议都要明确服务目标岗位、目标场景和目标期限。
 反馈必须引用用户原文，避免空泛夸奖或空泛批评。`,
       messages: [
         {
           role: "user",
           content: `题目维度：${dimension || "未知"}
 目标主线：${profileFocus || "未指定"}
+目标简报：
+${goalBriefSummary}
 迁移目标：${migrationTargetSummary}
 题目：${question}
 

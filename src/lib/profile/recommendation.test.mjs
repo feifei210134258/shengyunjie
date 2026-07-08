@@ -217,3 +217,65 @@ test("turns saved thinking upgrade cards into the next training prescription", (
   assert.equal(reviewPrescription.href, "/training/history/record-1");
   assert.match(reviewPrescription.reason, /取舍标准迁移到新场景/);
 });
+
+test("uses the outcome goal brief to frame recommendations around the user's target", () => {
+  const plan = buildRecommendationPlan(
+    {
+      summary: {
+        overallScore: 72,
+        overallGrade: "B",
+        evidenceCount: 8,
+        snapshotCount: 3,
+        lastEvidenceAt: "2026-07-08T12:00:00.000Z",
+      },
+      dimensions: [
+        {
+          id: "system_design",
+          label: "系统设计能力",
+          shortLabel: "系统设计",
+          score: 64,
+          grade: "C",
+          diagnosisScore: 66,
+          trainingAverage: 62,
+          evidenceCount: 4,
+          lastEvidenceAt: "2026-07-08T10:00:00.000Z",
+          insight: "复杂角色和异常路径还需要补强。",
+        },
+      ],
+      weakestDimensions: [],
+      strongestDimensions: [],
+      careerReadiness: {
+        label: "还需补项目证据",
+        score: 5,
+        evaluatedInterviewCount: 2,
+        answeredInterviewCount: 3,
+        nextAction: "补充项目证据并准备高压追问。",
+      },
+      focusPlan: {
+        title: "优先补强 系统设计",
+        reason: "系统设计需要补强角色、权限和异常路径。",
+        href: "/training/session",
+        targetDimension: "system_design",
+      },
+      storyAssets: [],
+      thinkingAssets: [],
+    },
+    {
+      targetRole: "高级 B 端产品经理",
+      targetScenario: "30 天内面试平台产品负责人",
+      targetDeadline: "30 天内",
+    }
+  );
+
+  const trainingPrescription = plan.recommendations.find(
+    (item) => item.type === "training"
+  );
+  const interviewPrescription = plan.recommendations.find(
+    (item) => item.type === "interview"
+  );
+
+  assert.match(trainingPrescription.title, /高级 B 端产品经理/);
+  assert.match(trainingPrescription.reason, /30 天内面试平台产品负责人/);
+  assert.match(trainingPrescription.reason, /30 天内/);
+  assert.match(interviewPrescription.reason, /高级 B 端产品经理/);
+});

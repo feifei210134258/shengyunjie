@@ -67,6 +67,10 @@ export async function GET(req: NextRequest) {
         (growthSnapshots || []).find(
           (snapshot: any) => snapshot.dimension_scores?.__goalFocus
         )?.dimension_scores?.__goalFocus || null;
+      const latestGoalBrief =
+        (growthSnapshots || []).find(
+          (snapshot: any) => snapshot.dimension_scores?.__goalBrief
+        )?.dimension_scores?.__goalBrief || null;
       const latestThinkingUpgrade =
         buildThinkingAssets(
           (growthSnapshots || []).filter(
@@ -80,6 +84,7 @@ export async function GET(req: NextRequest) {
         completedDimensions,
         nextIndex,
         latestGoalFocus,
+        latestGoalBrief,
         latestThinkingUpgrade,
       });
     }

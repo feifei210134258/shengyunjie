@@ -30,6 +30,8 @@ Dashboard 支持用户把“面试跳槽冲刺”或“高级产品思维训练�
 
 Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标场景和目标期限。前端调用 `POST /api/profile/summary`，`trigger=goal_brief_saved`，写入 `growth_snapshots.dimension_scores.__goalBrief`；`/api/dashboard` 刷新时读回 `latestGoalBrief` 并回填首页输入，让用户的面试/升阶目标不再只停留在抽象主线。
 
+目标简报现在会继续进入后续训练链路：`GET /api/profile/recommendation` 从最近的 `__goalBrief` 读回 `latestGoalBrief`，并传入 `buildRecommendationPlan`，让训练处方和项目证据处方直接围绕目标岗位、目标场景和目标期限表达；`GET /api/training/sessions?date=...` 也会返回 `latestGoalBrief`，训练实战页在顶部展示“目标简报”，新生成题目会把 `goalBrief` 写入 `training_sessions.questions`，刷新后不丢失目标上下文；`/api/train` 的出题和评估 prompt 同时接收目标简报，让题目、反馈、示例回答、面试表达资产和下一题建议都服务同一个结果目标。
+
 ---
 
 ## 模块一：诊断模块

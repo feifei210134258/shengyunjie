@@ -1,5 +1,25 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: 目标简报驱动推荐与训练
+
+### 背景判断
+- 第一性原理上，产品不是“多练几道题”，而是把用户的目标岗位、目标场景和期限变成训练调度信号。
+- 上一轮已经能保存目标简报，但它只停留在 Dashboard 回填；本轮把它接入推荐、训练实战、题目缓存和 AI prompt。
+
+### 完成内容
+- `GET /api/profile/recommendation` 读取最近 `growth_snapshots.dimension_scores.__goalBrief`，返回 `latestGoalBrief`，并把它传入 `buildRecommendationPlan`。
+- `buildRecommendationPlan` 会在训练处方和面试证据处方中引用目标岗位、目标场景和目标期限，让推荐不再泛化。
+- `GET /api/training/sessions?date=...` 返回 `latestGoalBrief`；训练实战页顶部展示“目标简报”，并把目标简报随题目写入 `training_sessions.questions`。
+- `/api/training/questions` 保存并读回 `goalBrief`，刷新训练页后不丢失目标上下文。
+- `/api/train` 出题与分析 prompt 接收目标简报，要求题目、反馈、示例回答、面试表达资产和下一题建议服务同一个结果目标。
+- 产品设计文档和 `feature_list.json` 同步记录该闭环；本轮不新增 schema。
+
+### 验证记录
+- TDD 红灯：推荐引擎、推荐 API、训练 sessions API、题目缓存 API、训练实战页和 `/api/train` 测试先失败于缺少 `goalBrief/latestGoalBrief`。
+- GREEN：`node --test src/lib/profile/recommendation.test.mjs src/app/api/profile/recommendation/route.test.mjs src/app/api/training/sessions/route.test.mjs src/app/api/training/questions/route.test.mjs src/components/training/TrainingSessionClient.test.mjs src/app/api/train/route.test.mjs` 通过 36 项。
+- `npx tsc --noEmit` 通过。
+- 后续完整验证见本轮提交说明。
+
 ## [2026-07-08] Feature: Dashboard 目标简报
 
 ### 背景判断

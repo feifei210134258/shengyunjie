@@ -26,3 +26,11 @@ test("training question cache preserves thinking migration check context", () =>
   assert.match(source, /sanitizeMigrationTarget/);
   assert.match(source, /migrationCheck/);
 });
+
+test("training question cache preserves the outcome goal brief for refreshed sessions", () => {
+  assert.match(source, /sanitizeGoalBrief/);
+  assert.match(source, /goalBrief/);
+  assert.match(source, /targetRole/);
+  assert.match(source, /targetScenario/);
+  assert.match(source, /targetDeadline/);
+});

@@ -58,6 +58,7 @@ type PrescriptionMeta = {
   profileFocus?: string;
   prescriptionId?: string;
   migrationTarget?: ThinkingUpgradeMigrationTarget | null;
+  goalBrief?: GoalBrief | null;
 };
 
 function getDefaultTargetState(
@@ -85,6 +86,7 @@ type QuestionState = {
   profileFocus?: string;
   prescriptionId?: string;
   migrationTarget?: ThinkingUpgradeMigrationTarget | null;
+  goalBrief?: GoalBrief | null;
   draftAnswer?: string;
 };
 type AnswerState = {
@@ -130,6 +132,7 @@ type DailySessionResponse = {
   completedDimensions?: string[];
   nextIndex?: number;
   latestGoalFocus?: string | null;
+  latestGoalBrief?: GoalBrief | null;
   latestThinkingUpgrade?: ThinkingUpgradeMigrationTarget | null;
 };
 
@@ -145,6 +148,7 @@ type StoredQuestion = {
   profileFocus?: string;
   prescriptionId?: string;
   migrationTarget?: ThinkingUpgradeMigrationTarget | null;
+  goalBrief?: GoalBrief | null;
   draftAnswer?: string;
 };
 
@@ -160,6 +164,12 @@ type ThinkingUpgradeMigrationTarget = {
   landingRigor: string;
   migrationCheck: string;
   href: string;
+};
+
+type GoalBrief = {
+  targetRole: string;
+  targetScenario: string;
+  targetDeadline: string;
 };
 
 type ReadinessItem = {
@@ -231,6 +241,19 @@ function normalizeMigrationTarget(
     landingRigor: String(value.landingRigor || "").trim(),
     migrationCheck: String(value.migrationCheck || "").trim(),
     href: String(value.href || "").trim(),
+  };
+}
+
+function normalizeGoalBrief(value?: GoalBrief | null): GoalBrief | null {
+  if (!value) return null;
+  const targetRole = String(value.targetRole || "").trim();
+  const targetScenario = String(value.targetScenario || "").trim();
+  const targetDeadline = String(value.targetDeadline || "").trim();
+  if (!targetRole && !targetScenario && !targetDeadline) return null;
+  return {
+    targetRole,
+    targetScenario,
+    targetDeadline,
   };
 }
 
@@ -310,6 +333,7 @@ function normalizeStoredQuestion(value: string | StoredQuestion): QuestionState 
     profileFocus: String(value.profileFocus || "").trim() || undefined,
     prescriptionId: String(value.prescriptionId || "").trim() || undefined,
     migrationTarget: normalizeMigrationTarget(value.migrationTarget),
+    goalBrief: normalizeGoalBrief(value.goalBrief),
     draftAnswer:
       typeof value.draftAnswer === "string" ? value.draftAnswer : undefined,
   };
@@ -326,6 +350,7 @@ interface RealTrainingProps {
   streamedText: string;
   prescriptionLabel?: string;
   migrationTarget?: ThinkingUpgradeMigrationTarget | null;
+  goalBrief?: GoalBrief | null;
   goalFocusFrame?: {
     badge: string;
     description: string;
@@ -703,6 +728,7 @@ function A1BeforeSubmit({
   streamedText,
   prescriptionLabel,
   migrationTarget,
+  goalBrief,
   goalFocusFrame,
   onAnswerChange,
   onSubmit,
@@ -758,6 +784,32 @@ function A1BeforeSubmit({
                   {question?.targetLabel || "定向练习"}
                 </span>
               </div>
+              {goalBrief && (
+                <div className="mt-3 grid gap-2 rounded-lg border border-line bg-surface px-3 py-3 md:grid-cols-3">
+                  <p className="text-body-sm leading-relaxed text-ink md:col-span-3">
+                    <span className="font-semibold text-primary">目标简报：</span>
+                    本题会围绕这个结果生成场景、评价答案和沉淀资产。
+                  </p>
+                  <p className="text-body-sm leading-relaxed text-ink">
+                    <span className="block text-label font-bold text-primary">
+                      目标岗位
+                    </span>
+                    {goalBrief.targetRole || "未填写"}
+                  </p>
+                  <p className="text-body-sm leading-relaxed text-ink">
+                    <span className="block text-label font-bold text-primary">
+                      目标场景
+                    </span>
+                    {goalBrief.targetScenario || "未填写"}
+                  </p>
+                  <p className="text-body-sm leading-relaxed text-ink">
+                    <span className="block text-label font-bold text-primary">
+                      目标期限
+                    </span>
+                    {goalBrief.targetDeadline || "未填写"}
+                  </p>
+                </div>
+              )}
               {migrationTarget && (
                 <div className="mt-3 rounded-lg border border-primary/10 bg-primary-soft/45 px-3 py-3">
                   <div className="flex flex-wrap items-center gap-2">
@@ -1613,6 +1665,7 @@ export default function TrainingSessionClient() {
     searchParams.get("prescription") || searchParams.get("recommendationId") || "";
   const [latestThinkingUpgrade, setLatestThinkingUpgrade] =
     useState<ThinkingUpgradeMigrationTarget | null>(null);
+  const [latestGoalBrief, setLatestGoalBrief] = useState<GoalBrief | null>(null);
   const prescriptionMeta = useMemo(
     () => ({
       profileFocus: effectiveProfileFocus || undefined,
@@ -1621,8 +1674,9 @@ export default function TrainingSessionClient() {
         effectiveProfileFocus === "thinking_training"
           ? latestThinkingUpgrade
           : null,
+      goalBrief: latestGoalBrief,
     }),
-    [effectiveProfileFocus, latestThinkingUpgrade, prescriptionId]
+    [effectiveProfileFocus, latestGoalBrief, latestThinkingUpgrade, prescriptionId]
   );
   const prescriptionMissionPlan = useMemo(
     () => getPrescriptionAwareMissionPlan(effectiveProfileFocus, MISSION_PLAN),
@@ -1660,6 +1714,7 @@ export default function TrainingSessionClient() {
     effectiveProfileFocus === "thinking_training"
       ? question?.migrationTarget || latestThinkingUpgrade
       : null;
+  const goalBrief = question?.goalBrief || latestGoalBrief;
 
   const generateQuestion = useCallback(
     async (
@@ -1688,6 +1743,7 @@ export default function TrainingSessionClient() {
           missionId: targetState.missionId,
           profileFocus: targetState.profileFocus,
           prescriptionId: targetState.prescriptionId,
+          goalBrief: targetState.goalBrief,
           currentQuestions: getGeneratedQuestionTexts(questions),
         }),
       });
@@ -1745,6 +1801,7 @@ export default function TrainingSessionClient() {
               profileFocus: targetState.profileFocus,
               prescriptionId: targetState.prescriptionId,
               migrationTarget: targetState.migrationTarget,
+              goalBrief: targetState.goalBrief,
             },
           }),
         }).catch((err) => console.error("保存题目失败:", err));
@@ -1784,7 +1841,9 @@ export default function TrainingSessionClient() {
         const latestThinkingUpgrade = normalizeMigrationTarget(
           data.latestThinkingUpgrade
         );
+        const latestGoalBrief = normalizeGoalBrief(data.latestGoalBrief);
         setLatestThinkingUpgrade(latestThinkingUpgrade);
+        setLatestGoalBrief(latestGoalBrief);
         if (!urlProfileFocus && latestGoalFocus) {
           setPersistedGoalFocus(latestGoalFocus);
         }
@@ -1905,6 +1964,7 @@ export default function TrainingSessionClient() {
             profileFocus: q.profileFocus,
             prescriptionId: q.prescriptionId,
             migrationTarget: q.migrationTarget,
+            goalBrief: q.goalBrief,
             draftAnswer,
           },
         }),
@@ -1986,6 +2046,7 @@ export default function TrainingSessionClient() {
           missionId: currentMission?.id,
           profileFocus: effectiveProfileFocus || undefined,
           migrationTarget: migrationTarget || undefined,
+          goalBrief: goalBrief || undefined,
           question: q,
           userAnswer: answerText,
         }),
@@ -2416,6 +2477,7 @@ export default function TrainingSessionClient() {
     streamedText,
     prescriptionLabel,
     migrationTarget,
+    goalBrief,
     onAnswerChange: handleAnswerChange,
     onSubmit: handleSubmit,
     onNext: handleNext,

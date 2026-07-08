@@ -21,6 +21,19 @@ function sanitizeMigrationTarget(value: any) {
   };
 }
 
+function sanitizeGoalBrief(value: any) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const targetRole = String(value.targetRole || "").trim();
+  const targetScenario = String(value.targetScenario || "").trim();
+  const targetDeadline = String(value.targetDeadline || "").trim();
+  if (!targetRole && !targetScenario && !targetDeadline) return null;
+  return {
+    targetRole,
+    targetScenario,
+    targetDeadline,
+  };
+}
+
 // 保存/更新当天某维度的题目
 export async function POST(req: NextRequest) {
   try {
@@ -83,6 +96,9 @@ export async function POST(req: NextRequest) {
               migrationTarget:
                 sanitizeMigrationTarget(question?.migrationTarget) ??
                 sanitizeMigrationTarget(previousQuestion?.migrationTarget),
+              goalBrief:
+                sanitizeGoalBrief(question?.goalBrief) ??
+                sanitizeGoalBrief(previousQuestion?.goalBrief),
               draftAnswer:
                 typeof question?.draftAnswer === "string"
                   ? question.draftAnswer

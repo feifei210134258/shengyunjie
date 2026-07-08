@@ -17,6 +17,15 @@ test("daily training session API returns the latest thinking upgrade asset for m
   assert.match(source, /thinking_upgrade_saved/);
   assert.match(
     source,
-    /completedDimensions,\s*nextIndex,\s*latestGoalFocus,\s*latestThinkingUpgrade/
+    /completedDimensions,\s*nextIndex,\s*latestGoalFocus,[\s\S]*latestThinkingUpgrade/
+  );
+});
+
+test("daily training session API returns the latest outcome goal brief", () => {
+  assert.match(source, /latestGoalBrief/);
+  assert.match(source, /__goalBrief/);
+  assert.match(
+    source,
+    /completedDimensions,\s*nextIndex,\s*latestGoalFocus,\s*latestGoalBrief,\s*latestThinkingUpgrade/
   );
 });

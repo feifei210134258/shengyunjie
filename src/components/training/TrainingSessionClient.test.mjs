@@ -60,6 +60,17 @@ test("training analysis sends the migration target into feedback generation", ()
   assert.match(source, /migrationTarget: migrationTarget \|\| undefined/);
 });
 
+test("training session displays and sends the outcome goal brief", () => {
+  assert.match(source, /latestGoalBrief/);
+  assert.match(source, /goalBrief/);
+  assert.match(source, /目标简报/);
+  assert.match(source, /targetRole/);
+  assert.match(source, /targetScenario/);
+  assert.match(source, /targetDeadline/);
+  assert.match(source, /goalBrief: targetState\.goalBrief/);
+  assert.match(source, /goalBrief: goalBrief \|\| undefined/);
+});
+
 test("training feedback panel exposes goal-aware assets to the user", () => {
   const panelSource = readFileSync(
     new URL("./TrainingEvaluationPanel.tsx", import.meta.url),

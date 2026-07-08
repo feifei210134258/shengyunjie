@@ -75,3 +75,12 @@ test("training analysis prompt checks whether the previous thinking upgrade was 
   assert.match(source, /migration_check/);
   assert.match(source, /是否把上一张思维升级卡迁移到本题/);
 });
+
+test("training generation and analysis prompts include the outcome goal brief", () => {
+  assert.match(source, /goalBrief/);
+  assert.match(source, /formatGoalBrief/);
+  assert.match(source, /目标岗位/);
+  assert.match(source, /目标场景/);
+  assert.match(source, /目标期限/);
+  assert.match(source, /目标简报/);
+});

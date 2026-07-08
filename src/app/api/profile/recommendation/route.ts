@@ -61,7 +61,6 @@ async function loadProfileEvidence(supabase: any, userId: string) {
   });
   const thinkingAssets = growthProfile.thinkingAssets;
   const latestThinkingUpgrade = thinkingAssets[0] || null;
-  const recommendationPlan = buildRecommendationPlan(growthProfile);
   const latestRecommendation =
     (growthSnapshots || []).find(
       (snapshot: any) => snapshot.dimension_scores?.__recommendation
@@ -70,12 +69,18 @@ async function loadProfileEvidence(supabase: any, userId: string) {
     (growthSnapshots || []).find(
       (snapshot: any) => snapshot.dimension_scores?.__goalFocus
     )?.dimension_scores?.__goalFocus || null;
+  const latestGoalBrief =
+    (growthSnapshots || []).find(
+      (snapshot: any) => snapshot.dimension_scores?.__goalBrief
+    )?.dimension_scores?.__goalBrief || null;
+  const recommendationPlan = buildRecommendationPlan(growthProfile, latestGoalBrief);
 
   return {
     growthProfile,
     recommendationPlan,
     latestRecommendation,
     latestGoalFocus,
+    latestGoalBrief,
     thinkingAssets,
     latestThinkingUpgrade,
   };
