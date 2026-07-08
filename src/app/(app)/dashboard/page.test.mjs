@@ -56,6 +56,14 @@ test("dashboard surfaces a first-screen action dossier for evidence assets", () 
   assert.match(source, /下一题处方/);
 });
 
+test("dashboard action dossier shows the highest-priority target evidence action", () => {
+  assert.match(source, /targetEvidenceAction/);
+  assert.match(source, /目标证据行动/);
+  assert.match(source, /先修项目/);
+  assert.match(source, /目标匹配/);
+  assert.match(source, /补这条证据/);
+});
+
 test("dashboard surfaces saved project story packs in the profile ledger", () => {
   assert.match(source, /storyAssets/);
   assert.match(source, /已入账项目资产/);

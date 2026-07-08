@@ -200,3 +200,51 @@ test("builds an action dossier from recent training evidence", () => {
   assert.equal(result.actionDossier.revisionAction?.href, "/training/history/revise-1?revise=1");
   assert.match(result.actionDossier.nextTraining.href, /\/training\/session/);
 });
+
+test("turns saved story target gaps into the next target evidence action", () => {
+  const result = buildCommandCenter({
+    todayCount: 1,
+    recentRecords: [],
+    dimAverages: { commercial_thinking: 7.1 },
+    profileWeaknesses: ["commercial_thinking"],
+    latestReport: { id: "report-1" },
+    selectedGoalFocus: "interview_sprint",
+    latestGoalBrief: {
+      targetRole: "B 端高级产品经理",
+      targetScenario: "SaaS 商业化负责人面试",
+      targetDeadline: "两周内",
+    },
+    storyAssets: [
+      {
+        snapshotId: "story-1",
+        projectName: "客户健康度评分系统",
+        company: "云阶科技",
+        role: "产品负责人",
+        readinessScore: 82,
+        proofGaps: ["缺少续费提升的量化结果"],
+        targetFit: {
+          score: 9,
+          priorityLabel: "优先讲",
+          reason: "最能支撑商业化和客户分层判断。",
+          missingEvidence: ["补齐续费率提升数据", "补一次客户分层取舍"],
+        },
+        scriptPreview: "我负责客户健康度评分系统。",
+        href: "/bootcamp/story-bank",
+      },
+    ],
+    date: new Date("2026-07-08T10:00:00+08:00"),
+  });
+
+  assert.equal(result.actionDossier.targetEvidenceAction?.projectName, "客户健康度评分系统");
+  assert.equal(result.actionDossier.targetEvidenceAction?.priorityLabel, "优先讲");
+  assert.equal(result.actionDossier.targetEvidenceAction?.targetFitScore, 9);
+  assert.equal(result.actionDossier.targetEvidenceAction?.href, "/bootcamp/story-bank");
+  assert.deepEqual(result.actionDossier.targetEvidenceAction?.missingEvidence, [
+    "补齐续费率提升数据",
+    "补一次客户分层取舍",
+  ]);
+  assert.match(
+    result.actionDossier.targetEvidenceAction?.reason || "",
+    /B 端高级产品经理|SaaS 商业化负责人面试|补齐续费率提升数据/
+  );
+});

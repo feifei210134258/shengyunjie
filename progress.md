@@ -1,5 +1,27 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: Dashboard 目标证据行动
+
+### 背景判断
+- 当前产品的第一性原理是帮用户为了目标岗位快速补齐可信证据，而不是让用户自己在故事库、训练复盘和推荐之间来回找线索。
+- 项目故事库已经能把项目与目标岗位/场景匹配起来，但 Dashboard 首屏还没有直接回答“今天为了目标岗位，先修哪个项目、补哪条证据”。
+
+### 完成内容
+- `buildCommandCenter` 新增 `storyAssets` 和 `latestGoalBrief` 入参，`actionDossier` 新增 `targetEvidenceAction`。
+- 当已入账项目故事包带有 `targetFit.missingEvidence` 时，Dashboard 今日行动档案会挑选目标匹配分最高的项目，生成“目标证据行动”。
+- `/api/dashboard` 把 `growthProfile.storyAssets` 和最近目标简报传入命令中心，继续复用既有 `growth_snapshots` 读回链路，不新增 schema。
+- Dashboard 首屏新增“先修项目 / 目标匹配 / 补这条证据”，入口指向 `/bootcamp/story-bank`，让面试跳槽路径的下一步动作更具体。
+- 产品设计文档和 `feature_list.json` 已同步记录本轮调整。
+
+### 验证记录
+- TDD 红灯：`node --test src/lib/dashboard/training-command-center.test.mjs src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 先失败于缺少 `targetEvidenceAction`、缺少 API 入参传递和页面文案。
+- GREEN：同一 focused node 测试通过 22 项。
+- `npx tsc --noEmit` 通过。
+- 针对性 ESLint 通过：`src/lib/dashboard/training-command-center.ts`、Dashboard API/页面及相关测试。
+- `feature_list.json` JSON 解析通过，`git diff --check` 通过。
+- `npm run build` 通过，`/dashboard` 构建体积更新为 38.9 kB。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-08] Feature: 目标项目匹配入账反哺画像
 
 ### 背景判断

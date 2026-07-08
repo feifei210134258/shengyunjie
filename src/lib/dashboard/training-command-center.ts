@@ -20,6 +20,8 @@ type CommandCenterInput = {
   dimAverages: Record<string, number>;
   profileWeaknesses: string[];
   latestReport: { id: string } | null;
+  storyAssets?: DashboardStoryAsset[];
+  latestGoalBrief?: GoalBrief | null;
   hasCaseSimulation?: boolean;
   bootcampSession?: {
     status?: string | null;
@@ -107,11 +109,42 @@ export type DossierAsset = {
   score: number | null;
 };
 
+export type GoalBrief = {
+  targetRole?: string | null;
+  targetScenario?: string | null;
+  targetDeadline?: string | null;
+};
+
+export type DashboardStoryAsset = {
+  projectName: string;
+  company?: string;
+  role?: string;
+  readinessScore?: number | null;
+  proofGaps?: string[];
+  targetFit?: {
+    score?: number | null;
+    priorityLabel?: string | null;
+    reason?: string | null;
+    missingEvidence?: string[];
+  };
+  href?: string;
+};
+
+export type TargetEvidenceAction = {
+  projectName: string;
+  priorityLabel: string;
+  targetFitScore: number | null;
+  missingEvidence: string[];
+  reason: string;
+  href: string;
+};
+
 export type ActionDossier = {
   readyCount: number;
   revisionCount: number;
   featuredAsset: DossierAsset | null;
   revisionAction: DossierAsset | null;
+  targetEvidenceAction: TargetEvidenceAction | null;
   nextTraining: {
     title: string;
     href: string;
@@ -407,11 +440,51 @@ function buildDossierAsset(record: DashboardRecord): DossierAsset | null {
   };
 }
 
+function formatGoalBriefForEvidence(goalBrief: GoalBrief | null | undefined) {
+  const parts = [
+    goalBrief?.targetRole?.trim(),
+    goalBrief?.targetScenario?.trim(),
+    goalBrief?.targetDeadline?.trim(),
+  ].filter(Boolean);
+  return parts.length ? parts.join(" / ") : "当前目标岗位";
+}
+
+function buildTargetEvidenceAction(
+  storyAssets: DashboardStoryAsset[] | undefined,
+  goalBrief: GoalBrief | null | undefined
+): TargetEvidenceAction | null {
+  const candidate = [...(storyAssets || [])]
+    .filter((asset) => asset.targetFit?.missingEvidence?.length)
+    .sort(
+      (a, b) =>
+        Number(b.targetFit?.score ?? -1) - Number(a.targetFit?.score ?? -1)
+    )[0];
+
+  if (!candidate?.targetFit?.missingEvidence?.length) return null;
+
+  const missingEvidence = candidate.targetFit.missingEvidence.filter(Boolean);
+  const firstGap = missingEvidence[0] || "补齐目标岗位最关心的结果证据";
+  const targetContext = formatGoalBriefForEvidence(goalBrief);
+  const reason = `${targetContext} 先修 ${candidate.projectName}：${firstGap}`;
+
+  return {
+    projectName: candidate.projectName,
+    priorityLabel: candidate.targetFit.priorityLabel || "优先讲",
+    targetFitScore:
+      typeof candidate.targetFit.score === "number" ? candidate.targetFit.score : null,
+    missingEvidence,
+    reason,
+    href: candidate.href || "/bootcamp/story-bank",
+  };
+}
+
 function buildActionDossier(
   records: DashboardRecord[],
   priorityMission: TrainingMission,
   actionLabel: string,
-  goalFocus: GoalFocus | null
+  goalFocus: GoalFocus | null,
+  storyAssets?: DashboardStoryAsset[],
+  latestGoalBrief?: GoalBrief | null
 ): ActionDossier {
   const assets = records
     .map(buildDossierAsset)
@@ -426,6 +499,7 @@ function buildActionDossier(
     revisionCount: revisionAssets.length,
     featuredAsset: readyAssets[0] || assets[0] || null,
     revisionAction: revisionAssets[0] || null,
+    targetEvidenceAction: buildTargetEvidenceAction(storyAssets, latestGoalBrief),
     nextTraining: {
       title: `${priorityMission.displayLabel} / ${actionLabel}`,
       href: "/training/session",
@@ -610,7 +684,9 @@ export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCe
       input.recentRecords,
       priorityMission,
       actionLabel,
-      goalFocus
+      goalFocus,
+      input.storyAssets,
+      input.latestGoalBrief
     ),
     missionMap: buildMissionMap(priorityMission, input.dimAverages),
     blindSpots,

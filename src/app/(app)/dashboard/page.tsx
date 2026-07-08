@@ -149,11 +149,21 @@ interface DossierAsset {
   score: number | null;
 }
 
+interface TargetEvidenceAction {
+  projectName: string;
+  priorityLabel: string;
+  targetFitScore: number | null;
+  missingEvidence: string[];
+  reason: string;
+  href: string;
+}
+
 interface ActionDossier {
   readyCount: number;
   revisionCount: number;
   featuredAsset: DossierAsset | null;
   revisionAction: DossierAsset | null;
+  targetEvidenceAction: TargetEvidenceAction | null;
   nextTraining: {
     title: string;
     href: string;
@@ -653,6 +663,7 @@ function ActionDossierPanel({
 }) {
   const featuredAsset = actionDossier?.featuredAsset;
   const revisionAction = actionDossier?.revisionAction;
+  const targetEvidenceAction = actionDossier?.targetEvidenceAction;
   const nextTraining = actionDossier?.nextTraining || {
     title: "先完成一次训练",
     href: TRAINING_SESSION_ROUTE,
@@ -660,7 +671,42 @@ function ActionDossierPanel({
   };
 
   return (
-    <section className="grid gap-4 rounded-xl border border-line bg-surface-raised p-4 shadow-xs lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)_minmax(280px,0.85fr)]">
+    <section className="grid gap-4 rounded-xl border border-line bg-surface-raised p-4 shadow-xs lg:grid-cols-2 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1.05fr)_minmax(260px,0.8fr)_minmax(260px,0.8fr)]">
+      <div className="rounded-lg border border-primary/20 bg-primary-soft px-5 py-5">
+        <p className="text-label font-bold text-primary">目标证据行动</p>
+        <h2 className="mt-2 text-heading-sm font-bold text-ink">
+          先修项目：
+          {targetEvidenceAction?.projectName || "选择最能支撑目标岗位的项目"}
+        </h2>
+        <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
+          {targetEvidenceAction?.reason ||
+            "保存目标简报并沉淀项目故事包后，这里会直接指出今天先补哪条目标证据。"}
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2 text-label font-bold">
+          <span className="rounded-md bg-surface-raised px-3 py-1.5 text-primary">
+            {targetEvidenceAction?.priorityLabel || "等待目标匹配"}
+          </span>
+          <span className="rounded-md bg-surface-raised px-3 py-1.5 text-ink">
+            目标匹配{" "}
+            {targetEvidenceAction?.targetFitScore != null
+              ? `${targetEvidenceAction.targetFitScore}/10`
+              : "待计算"}
+          </span>
+        </div>
+        <p className="mt-4 text-label font-bold text-ink">补这条证据</p>
+        <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+          {targetEvidenceAction?.missingEvidence?.[0] ||
+            "先补项目结果、取舍依据或追问风险中最缺的一条。"}
+        </p>
+        <Link
+          href={targetEvidenceAction?.href || "/bootcamp/story-bank"}
+          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-primary/90 active:scale-[0.98]"
+        >
+          补这条证据
+          <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+        </Link>
+      </div>
+
       <div className="rounded-lg bg-ink px-5 py-5 text-white">
         <p className="text-label font-bold text-white/65">今日行动档案</p>
         <h2 className="mt-2 text-heading-md font-bold">最新面试资产</h2>

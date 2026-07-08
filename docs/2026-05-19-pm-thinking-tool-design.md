@@ -159,6 +159,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 历史复盘页的面试表达卡支持“沉淀到画像账本”：前端调用 `POST /api/profile/summary`，`trigger=expression_card_saved`，把表达卡摘要写入 `growth_snapshots.dimension_scores.__trigger.expressionCard` 并读回 snapshot，让表达资产进入后续画像推荐闭环。
 - 历史复盘页的思维升级卡支持“沉淀思维升级”：前端调用 `POST /api/profile/summary`，`trigger=thinking_upgrade_saved`，把判断质量、取舍质量、归因深度和落地严谨度写入 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 并读回 snapshot，让高级产品思维训练也进入画像证据账本。
 - Dashboard 首屏新增“今日行动档案”：`buildCommandCenter` 从最近训练记录派生 `actionDossier`，把最新面试资产、待修正材料和下一题处方直接放到两条结果路径之后，避免表达资产只埋在训练详情页。
+- 今日行动档案会继续读取 `growthProfile.storyAssets` 和 `latestGoalBrief`，当已入账项目故事包含目标匹配缺口时，首屏生成“目标证据行动”：明确今天先修哪个项目、目标匹配分、优先级标签和第一条待补证据，入口指向 `/bootcamp/story-bank`。
 - 项目故事库会读取最近 `training_records`，复用面试表达卡生成逻辑派生 `trainingExpressionAssets`，并在 `/bootcamp/story-bank` 展示“日常训练表达资产”。这些资产链接回训练复盘页，不新增 schema，让日常训练回答可以进入面试跳槽资产链。
 - 项目故事库的项目详情页支持把当前项目故事包沉淀到画像账本：前端调用 `POST /api/profile/summary`，`trigger=project_story_saved`，把项目名、角色、成熟度、证据缺口、目标匹配信息和 2 分钟讲述稿写入 `growth_snapshots.dimension_scores.__trigger.projectStory`，让可讲项目资产进入后续画像推荐闭环。
 - 项目故事库会从最近 `growth_snapshots.dimension_scores.__goalBrief` 读回 `latestGoalBrief`，并为每个简历项目生成“目标匹配度、优先讲/备选讲/暂缓讲、补齐目标证据”。页面左侧展示“目标项目优先级”，项目详情页展示该项目对目标岗位/目标场景的证据缺口，帮助用户先打磨最能支撑跳槽目标的项目。

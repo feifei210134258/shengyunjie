@@ -27,3 +27,9 @@ test("dashboard API returns the latest concrete outcome goal brief", () => {
   assert.match(source, /__goalBrief/);
   assert.match(source, /goalBrief/);
 });
+
+test("dashboard API passes target story assets and goal brief into the command center", () => {
+  assert.match(source, /buildCommandCenter\(\{/);
+  assert.match(source, /storyAssets:\s*growthProfile\.storyAssets/);
+  assert.match(source, /latestGoalBrief/);
+});

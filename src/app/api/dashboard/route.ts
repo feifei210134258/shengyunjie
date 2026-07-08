@@ -285,6 +285,8 @@ export async function GET() {
       dimAverages,
       profileWeaknesses: profile?.weaknesses || [],
       latestReport: latestReport ? { id: latestReport.id } : null,
+      storyAssets: growthProfile.storyAssets,
+      latestGoalBrief,
       hasCaseSimulation,
       selectedGoalFocus: latestGoalFocus,
       bootcampSession: bootcampSession
