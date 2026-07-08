@@ -55,6 +55,19 @@ export type GrowthProfileStoryAsset = {
   href: string;
 };
 
+export type GrowthProfileThinkingAsset = {
+  snapshotId: string;
+  savedAt: string | null;
+  trainingRecordId: string;
+  dimension: string;
+  dimensionLabel: string;
+  judgmentQuality: string;
+  tradeoffQuality: string;
+  attributionDepth: string;
+  landingRigor: string;
+  href: string;
+};
+
 export type GrowthProfileDimension = {
   id: string;
   label: string;
@@ -93,6 +106,7 @@ export type GrowthProfile = {
     targetDimension: string;
   };
   storyAssets: GrowthProfileStoryAsset[];
+  thinkingAssets: GrowthProfileThinkingAsset[];
 };
 
 const canonicalDimensions = [
@@ -204,6 +218,54 @@ function buildStoryAssets(
       };
     })
     .filter((asset): asset is GrowthProfileStoryAsset => asset != null)
+    .sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
+}
+
+function buildThinkingAssets(
+  growthSnapshots: GrowthSnapshot[]
+): GrowthProfileThinkingAsset[] {
+  return growthSnapshots
+    .map((snapshot) => {
+      const dimensionScores = asRecord(snapshot.dimension_scores);
+      const trigger = asRecord(dimensionScores?.__trigger);
+      if (trigger?.trigger !== "thinking_upgrade_saved") return null;
+
+      const thinkingUpgrade = asRecord(trigger.thinkingUpgrade);
+      const trainingRecordId = compactText(trigger.trainingRecordId);
+      const dimension = compactText(trigger.dimension);
+      const judgmentQuality = compactText(thinkingUpgrade?.judgment_quality);
+      const tradeoffQuality = compactText(thinkingUpgrade?.tradeoff_quality);
+      const attributionDepth = compactText(thinkingUpgrade?.attribution_depth);
+      const landingRigor = compactText(thinkingUpgrade?.landing_rigor);
+
+      if (
+        !trainingRecordId ||
+        ![
+          judgmentQuality,
+          tradeoffQuality,
+          attributionDepth,
+          landingRigor,
+        ].some(Boolean)
+      ) {
+        return null;
+      }
+
+      return {
+        snapshotId:
+          compactText(snapshot.id) ||
+          `${trainingRecordId}-${snapshot.snapshot_date || ""}`,
+        savedAt: snapshot.snapshot_date || null,
+        trainingRecordId,
+        dimension,
+        dimensionLabel: getDimensionLabel(dimension) || "产品思维",
+        judgmentQuality,
+        tradeoffQuality,
+        attributionDepth,
+        landingRigor,
+        href: `/training/history/${trainingRecordId}`,
+      };
+    })
+    .filter((asset): asset is GrowthProfileThinkingAsset => asset != null)
     .sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
 }
 
@@ -330,6 +392,7 @@ export function buildGrowthProfile({
     Math.round(answeredInterviewCount * 1.5 + evaluatedInterviewCount * 2)
   );
   const storyAssets = buildStoryAssets(growthSnapshots);
+  const thinkingAssets = buildThinkingAssets(growthSnapshots);
 
   return {
     summary: {
@@ -364,5 +427,6 @@ export function buildGrowthProfile({
       targetDimension: focusDimension.id,
     },
     storyAssets,
+    thinkingAssets,
   };
 }

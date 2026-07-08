@@ -30,6 +30,9 @@ export default function HistoryDetailPage() {
   const [expressionCardStatus, setExpressionCardStatus] = useState<
     "idle" | "saving" | "saved" | "failed"
   >("idle");
+  const [thinkingUpgradeStatus, setThinkingUpgradeStatus] = useState<
+    "idle" | "saving" | "saved" | "failed"
+  >("idle");
   const revisionEditorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -169,6 +172,36 @@ export default function HistoryDetailPage() {
       setExpressionCardStatus("saved");
     } catch {
       setExpressionCardStatus("failed");
+    }
+  };
+
+  const handleSaveThinkingUpgrade = async () => {
+    const thinkingUpgrade = record.ai_feedback?.thinking_upgrade;
+    if (!id || !thinkingUpgrade || typeof thinkingUpgrade !== "object") return;
+
+    setThinkingUpgradeStatus("saving");
+    try {
+      const response = await fetch("/api/profile/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trigger: "thinking_upgrade_saved",
+          trainingRecordId: id,
+          dimension: record.dimension,
+          thinkingUpgrade: {
+            judgment_quality: thinkingUpgrade.judgment_quality,
+            tradeoff_quality: thinkingUpgrade.tradeoff_quality,
+            attribution_depth: thinkingUpgrade.attribution_depth,
+            landing_rigor: thinkingUpgrade.landing_rigor,
+          },
+        }),
+      });
+      if (!response.ok) throw new Error("思维升级入账失败");
+      const result = await response.json();
+      if (!result.snapshot?.id) throw new Error("思维升级未读回快照");
+      setThinkingUpgradeStatus("saved");
+    } catch {
+      setThinkingUpgradeStatus("failed");
     }
   };
 
@@ -425,6 +458,25 @@ export default function HistoryDetailPage() {
                           </p>
                         </div>
                       ))}
+                    </div>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-label font-semibold text-ink-muted">
+                        {thinkingUpgradeStatus === "saved"
+                          ? "思维升级已入账，后续训练会参考这次判断证据"
+                          : thinkingUpgradeStatus === "failed"
+                            ? "入账失败，请稍后重试"
+                            : "把这张思维升级卡沉淀进画像账本，作为长期升阶证据。"}
+                      </p>
+                      <button
+                        onClick={handleSaveThinkingUpgrade}
+                        disabled={thinkingUpgradeStatus === "saving"}
+                        className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                      >
+                        <Lightbulb className="h-4 w-4" />
+                        {thinkingUpgradeStatus === "saving"
+                          ? "入账中"
+                          : "沉淀思维升级"}
+                      </button>
                     </div>
                   </section>
                 )}

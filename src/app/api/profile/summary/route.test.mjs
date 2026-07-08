@@ -44,6 +44,15 @@ test("profile summary API can tag snapshots created from saved project story pac
   assert.match(source, /interviewScript/);
 });
 
+test("profile summary API can tag snapshots created from saved thinking upgrades", () => {
+  assert.match(source, /thinking_upgrade_saved/);
+  assert.match(source, /thinkingUpgrade/);
+  assert.match(source, /judgment_quality/);
+  assert.match(source, /tradeoff_quality/);
+  assert.match(source, /attribution_depth/);
+  assert.match(source, /landing_rigor/);
+});
+
 test("profile summary API can persist the selected outcome goal focus", () => {
   assert.match(source, /goal_focus_selected/);
   assert.match(source, /goalFocus/);

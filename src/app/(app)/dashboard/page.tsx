@@ -179,6 +179,19 @@ interface GrowthProfileStoryAsset {
   href: string;
 }
 
+interface GrowthProfileThinkingAsset {
+  snapshotId: string;
+  savedAt: string | null;
+  trainingRecordId: string;
+  dimension: string;
+  dimensionLabel: string;
+  judgmentQuality: string;
+  tradeoffQuality: string;
+  attributionDepth: string;
+  landingRigor: string;
+  href: string;
+}
+
 interface GrowthProfile {
   summary: {
     overallScore: number | null;
@@ -204,6 +217,7 @@ interface GrowthProfile {
     targetDimension: string;
   };
   storyAssets: GrowthProfileStoryAsset[];
+  thinkingAssets: GrowthProfileThinkingAsset[];
 }
 
 interface RecommendationItem {
@@ -706,7 +720,9 @@ function GrowthProfileLedger({
   const weakest = growthProfile?.weakestDimensions?.[0];
   const readiness = growthProfile?.careerReadiness;
   const storyAssets = growthProfile?.storyAssets ?? [];
+  const thinkingAssets = growthProfile?.thinkingAssets ?? [];
   const latestStoryAsset = storyAssets[0];
+  const latestThinkingAsset = thinkingAssets[0];
 
   return (
     <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
@@ -810,6 +826,48 @@ function GrowthProfileLedger({
               </p>
             </div>
           )}
+          <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-label font-bold text-ink-muted">
+                已入账思维升级
+              </p>
+              <span className="font-mono text-label font-bold text-ink-faint">
+                {thinkingAssets.length}
+              </span>
+            </div>
+            {latestThinkingAsset ? (
+              <div className="mt-3">
+                <p className="text-body-sm font-bold text-ink">
+                  {latestThinkingAsset.dimensionLabel} · 思维升级卡
+                </p>
+                <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
+                  {latestThinkingAsset.judgmentQuality ||
+                    latestThinkingAsset.tradeoffQuality ||
+                    latestThinkingAsset.attributionDepth ||
+                    latestThinkingAsset.landingRigor}
+                </p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="rounded-md bg-primary-soft px-2.5 py-1 text-label font-bold text-primary">
+                    判断 / 取舍 / 归因 / 落地
+                  </span>
+                  <Link
+                    href={
+                      latestThinkingAsset.href ||
+                      `/training/history/${latestThinkingAsset.trainingRecordId}`
+                    }
+                    className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
+                  >
+                    查看
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
+                训练复盘页保存思维升级卡后，会在这里读回长期升阶证据。
+              </p>
+            )}
+          </div>
           <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-label font-bold text-ink-muted">

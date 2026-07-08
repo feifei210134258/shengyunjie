@@ -150,10 +150,12 @@ Dashboard 支持用户把“面试跳槽冲刺”或“高级产品思维训练�
 - `/api/training/stats` 会把最近训练记录、AI 反馈和二次修正整理为 `evidenceAssets`；训练首页展示“能力证据资产”，区分“面试可用”和“待修正后可用”，并链接到历史复盘或项目故事库，让日常训练能沉淀为跳槽面试可复用材料。
 - `/api/training/history/[id]` 在读回训练记录时派生 `interviewExpressionCard`，历史复盘页展示“面试表达卡”：开场判断、证据抓手、追问风险和可复制表达版本。该卡片优先使用二次修正内容，也会优先读回 `ai_feedback.interview_expression`；历史复盘页还会把 `interview_expression` 与 `thinking_upgrade` 抬到“主线资产复盘”，不新增 schema，让每次复盘都能转成面试表达材料或思维升级材料。
 - 历史复盘页的面试表达卡支持“沉淀到画像账本”：前端调用 `POST /api/profile/summary`，`trigger=expression_card_saved`，把表达卡摘要写入 `growth_snapshots.dimension_scores.__trigger.expressionCard` 并读回 snapshot，让表达资产进入后续画像推荐闭环。
+- 历史复盘页的思维升级卡支持“沉淀思维升级”：前端调用 `POST /api/profile/summary`，`trigger=thinking_upgrade_saved`，把判断质量、取舍质量、归因深度和落地严谨度写入 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 并读回 snapshot，让高级产品思维训练也进入画像证据账本。
 - Dashboard 首屏新增“今日行动档案”：`buildCommandCenter` 从最近训练记录派生 `actionDossier`，把最新面试资产、待修正材料和下一题处方直接放到两条结果路径之后，避免表达资产只埋在训练详情页。
 - 项目故事库会读取最近 `training_records`，复用面试表达卡生成逻辑派生 `trainingExpressionAssets`，并在 `/bootcamp/story-bank` 展示“日常训练表达资产”。这些资产链接回训练复盘页，不新增 schema，让日常训练回答可以进入面试跳槽资产链。
 - 项目故事库的项目详情页支持把当前项目故事包沉淀到画像账本：前端调用 `POST /api/profile/summary`，`trigger=project_story_saved`，把项目名、角色、成熟度、证据缺口和 2 分钟讲述稿写入 `growth_snapshots.dimension_scores.__trigger.projectStory`，让可讲项目资产进入后续画像推荐闭环。
 - `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.projectStory` 读回已保存的项目故事包，Dashboard 能力证据账本展示“已入账项目资产”、最新项目名、角色、成熟度和证据缺口，并链接回 `/bootcamp/story-bank` 继续补证据。
+- `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 读回已保存的思维升级卡，Dashboard 能力证据账本展示“已入账思维升级”、最新维度和判断/取舍/归因/落地摘要，并链接回对应训练复盘页。
 
 ---
 

@@ -1,5 +1,18 @@
 # 会话进度日志
 
+## [2026-07-08] 思维升级卡：入账画像账本
+
+### 完成内容
+- `/api/profile/summary` 新增 `trigger=thinking_upgrade_saved`，把 `thinkingUpgrade` 的判断质量、取舍质量、归因深度和落地严谨度写入 `growth_snapshots.dimension_scores.__trigger`，不新增 schema。
+- `/training/history/[id]` 的“思维升级卡”新增“沉淀思维升级”动作，保存后必须读回 snapshot id 才显示“思维升级已入账”。
+- `buildGrowthProfile` 新增 `thinkingAssets`，从已保存快照读回训练记录、维度和四类升级摘要。
+- Dashboard 能力证据账本新增“已入账思维升级”，展示最新思维升级卡并链接回对应训练复盘页。
+
+### 验证记录
+- TDD 红灯：新增 profile summary、历史复盘页、growth profile 和 Dashboard 源测试，先失败于缺少 `thinking_upgrade_saved`、`handleSaveThinkingUpgrade`、`thinkingAssets` 和“已入账思维升级”展示。
+- 已通过：`node --test src/app/api/profile/summary/route.test.mjs src/lib/profile/growth-profile.test.mjs 'src/app/(app)/dashboard/page.test.mjs' && node 'src/app/(app)/training/history/[id]/page.test.mjs'`（26 项）。
+- 后续已运行完整验证，结果记录在本轮提交说明中。
+
 ## [2026-07-08] 历史复盘：读回主线资产
 
 ### 完成内容

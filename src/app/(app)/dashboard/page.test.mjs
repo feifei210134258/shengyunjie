@@ -51,3 +51,11 @@ test("dashboard surfaces saved project story packs in the profile ledger", () =>
   assert.match(source, /项目故事包/);
   assert.match(source, /\/bootcamp\/story-bank/);
 });
+
+test("dashboard surfaces saved thinking upgrade cards in the profile ledger", () => {
+  assert.match(source, /thinkingAssets/);
+  assert.match(source, /已入账思维升级/);
+  assert.match(source, /思维升级卡/);
+  assert.match(source, /judgmentQuality/);
+  assert.match(source, /\/training\/history\//);
+});

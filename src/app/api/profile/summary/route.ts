@@ -13,6 +13,7 @@ async function readSnapshotTrigger(req?: Request) {
         "revision_saved",
         "expression_card_saved",
         "project_story_saved",
+        "thinking_upgrade_saved",
         "goal_focus_selected",
       ].includes(triggerType)
     ) {
@@ -66,6 +67,23 @@ async function readSnapshotTrigger(req?: Request) {
                     ).slice(0, 1200),
                   }
                 : null,
+        }
+      : null;
+    const thinkingUpgrade =
+      body.thinkingUpgrade && typeof body.thinkingUpgrade === "object"
+        ? {
+            judgment_quality: String(
+              body.thinkingUpgrade.judgment_quality || ""
+            ).slice(0, 360),
+            tradeoff_quality: String(
+              body.thinkingUpgrade.tradeoff_quality || ""
+            ).slice(0, 360),
+            attribution_depth: String(
+              body.thinkingUpgrade.attribution_depth || ""
+            ).slice(0, 360),
+            landing_rigor: String(
+              body.thinkingUpgrade.landing_rigor || ""
+            ).slice(0, 360),
           }
         : null;
     const goalFocus =
@@ -84,6 +102,8 @@ async function readSnapshotTrigger(req?: Request) {
       expressionCard:
         triggerType === "expression_card_saved" ? expressionCard : null,
       projectStory: triggerType === "project_story_saved" ? projectStory : null,
+      thinkingUpgrade:
+        triggerType === "thinking_upgrade_saved" ? thinkingUpgrade : null,
       goalFocus: triggerType === "goal_focus_selected" ? goalFocus : "",
     };
   } catch {

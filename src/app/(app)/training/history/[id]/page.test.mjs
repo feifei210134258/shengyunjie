@@ -53,3 +53,12 @@ test("training history elevates goal-aware feedback assets in the review workspa
   assert.match(source, /evidence_hooks/);
   assert.match(source, /landing_rigor/);
 });
+
+test("training history can save the thinking upgrade card into the profile ledger", () => {
+  assert.match(source, /handleSaveThinkingUpgrade/);
+  assert.match(source, /thinking_upgrade_saved/);
+  assert.match(source, /thinkingUpgradeStatus/);
+  assert.match(source, /\/api\/profile\/summary/);
+  assert.match(source, /沉淀思维升级/);
+  assert.match(source, /思维升级已入账/);
+});

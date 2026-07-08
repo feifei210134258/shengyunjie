@@ -124,3 +124,49 @@ test("surfaces saved project story packs from growth snapshots", () => {
   assert.match(profile.storyAssets[0].scriptPreview, /客户健康度评分系统/);
   assert.equal(profile.storyAssets[0].href, "/bootcamp/story-bank");
 });
+
+test("surfaces saved thinking upgrade cards from growth snapshots", () => {
+  const profile = buildGrowthProfile({
+    growthSnapshots: [
+      {
+        id: "snap-thinking-1",
+        snapshot_date: "2026-07-08",
+        overall_score: 82,
+        dimension_scores: {
+          __trigger: {
+            trigger: "thinking_upgrade_saved",
+            trainingRecordId: "record-1",
+            dimension: "strategic_thinking",
+            thinkingUpgrade: {
+              judgment_quality: "先判断是否值得做，而不是直接列功能。",
+              tradeoff_quality: "说明为什么先放弃低频客户的定制需求。",
+              attribution_depth: "把增长变化拆成渠道、人群和激活动作。",
+              landing_rigor: "用一周灰度和续费风险指标验证。",
+            },
+          },
+        },
+      },
+      {
+        id: "snap-ignored",
+        snapshot_date: "2026-07-07",
+        overall_score: 70,
+        dimension_scores: {
+          __trigger: {
+            trigger: "expression_card_saved",
+          },
+        },
+      },
+    ],
+  });
+
+  assert.equal(profile.thinkingAssets.length, 1);
+  assert.equal(profile.thinkingAssets[0].snapshotId, "snap-thinking-1");
+  assert.equal(profile.thinkingAssets[0].trainingRecordId, "record-1");
+  assert.equal(profile.thinkingAssets[0].dimension, "strategic_thinking");
+  assert.equal(profile.thinkingAssets[0].dimensionLabel, "战略思维");
+  assert.match(profile.thinkingAssets[0].judgmentQuality, /是否值得做/);
+  assert.match(profile.thinkingAssets[0].tradeoffQuality, /放弃低频客户/);
+  assert.match(profile.thinkingAssets[0].attributionDepth, /渠道/);
+  assert.match(profile.thinkingAssets[0].landingRigor, /灰度/);
+  assert.equal(profile.thinkingAssets[0].href, "/training/history/record-1");
+});
