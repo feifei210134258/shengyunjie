@@ -105,10 +105,11 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 系统基于项目描述、个人角色、结果指标和高质量面试改写，派生“2 分钟讲述稿”，包含开场定位、我的角色、关键判断、结果证据和复盘升级，并支持一键复制。
 - 不新增 schema；第一版使用已落库的简历解析和面试记录派生，确保每次打开页面都能从数据库读回。
 
-### 面试冲刺作战台
-- `/bootcamp` 是面试跳槽路径的作战台，而不是静态模块入口。
-- `GET /api/bootcamp/hub` 从 `bootcamp_sessions`、`bootcamp_interviews` 和 `training_records` 读回当前冲刺状态，生成 `sprintBrief`、`assetPipeline` 和 `nextActions`。
-- 作战台展示简历项目、项目故事、模拟追问、日常训练表达资产四段证据生产线，并把“整理项目证据”作为已有简历后的主行动。
+### 面试证据库
+- `/bootcamp` 是面试跳槽路径的证据库入口，而不是静态模块入口或单纯训练营首页。
+- `GET /api/bootcamp/hub` 从 `bootcamp_sessions`、`bootcamp_interviews` 和 `training_records` 读回当前冲刺状态，生成 `sprintBrief`、`assetPipeline`、`evidenceBank` 和 `nextActions`。
+- 证据库首屏展示“可讲项目、证据缺口、追问风险、表达资产”，并根据最弱证据链生成“下一步只做这件事”。
+- 证据库继续保留简历项目、项目故事、模拟追问、日常训练表达资产四段生产线；已有简历后优先引导补项目证据，而不是继续泛化开新题。
 - 页面不直接连接 Supabase；所有状态经 API 聚合后读回，确保特训首页、故事库和日常训练表达资产使用同一套后端事实。
 
 ---

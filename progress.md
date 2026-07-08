@@ -1,5 +1,24 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: 面试证据库首屏
+
+### 背景判断
+- 面试跳槽产品的第一性原理不是“进入训练营”，而是让用户知道自己手里有哪些能被面试官相信的证据。
+- `/bootcamp` 需要从作战台进一步收束为证据库：可讲项目、证据缺口、追问风险、表达资产，以及下一步只做一件事。
+
+### 完成内容
+- `buildBootcampHub` 新增 `evidenceBank`，从既有 `bootcamp_sessions`、`bootcamp_interviews` 和 `training_records.ai_feedback` 派生证据库状态，不新增 schema。
+- `GET /api/bootcamp/hub` 返回 `evidenceBank`，前端继续只通过 API 读取持久化事实。
+- `/bootcamp` 首屏标题改为“面试证据库”，展示“可讲项目 / 证据缺口 / 追问风险 / 表达资产”四个证据维度。
+- 右侧主行动改为“下一步只做这件事”，按证据缺口优先引导补项目证据；下方保留资产生产线和故事库/模拟面试/报告入口。
+- 产品设计文档与实施计划同步记录本轮证据库切片。
+
+### 验证记录
+- TDD 红灯：`hub.test.mjs` 先失败于缺少 `evidenceBank`；`route.test.mjs` 先失败于 API 未返回 `evidenceBank`；`page.test.mjs` 先失败于缺少“面试证据库 / 证据缺口 / 下一步只做这件事”等文案。
+- GREEN：`node --test src/lib/bootcamp/hub.test.mjs`、`node --test src/app/api/bootcamp/hub/route.test.mjs`、`node --test 'src/app/(app)/bootcamp/page.test.mjs'` 已通过。
+- 完整验证：`node --test src/lib/bootcamp/hub.test.mjs src/app/api/bootcamp/hub/route.test.mjs 'src/app/(app)/bootcamp/page.test.mjs' feature_list.test.mjs`、`npx tsc --noEmit`、针对性 ESLint、`feature_list.json` 解析、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+- 浏览器渲染检查：本地 `http://localhost:3000/bootcamp` 可见“面试证据库”“证据缺口”“下一步只做这件事”，无横向溢出；检查后已清理临时浏览器本地登录态。
+
 ## [2026-07-08] Feature: 训练首页今日作战台
 
 ### 背景判断

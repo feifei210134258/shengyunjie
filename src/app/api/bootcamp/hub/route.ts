@@ -56,11 +56,12 @@ export async function GET() {
       interviews,
       trainingRecords: trainingRecords || [],
     });
-    const { sprintBrief, assetPipeline, nextActions } = hub;
+    const { sprintBrief, assetPipeline, evidenceBank, nextActions } = hub;
 
     return NextResponse.json({
       sprintBrief,
       assetPipeline,
+      evidenceBank,
       nextActions,
     });
   } catch (error: any) {

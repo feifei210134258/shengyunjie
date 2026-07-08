@@ -33,6 +33,38 @@ const fallbackHub: BootcampHub = {
     evaluatedInterviews: 0,
     trainingExpressionAssets: 0,
   },
+  evidenceBank: {
+    tellableProjects: {
+      label: "可讲项目",
+      count: 0,
+      status: "缺简历项目",
+      note: "上传简历后，系统会先抽取可讲项目。",
+    },
+    proofGaps: {
+      label: "证据缺口",
+      count: 0,
+      status: "等待解析",
+      note: "解析简历后会标记结果指标、角色边界和取舍依据缺口。",
+    },
+    followupRisks: {
+      label: "追问风险",
+      count: 0,
+      status: "待模拟面试暴露",
+      note: "生成模拟面试后，追问会回流到证据库。",
+    },
+    expressionAssets: {
+      label: "表达资产",
+      count: 0,
+      status: "待从训练沉淀",
+      note: "完成训练复盘后，可把答案改成面试表达资产。",
+    },
+    primaryNextAction: {
+      label: "上传简历",
+      href: "/bootcamp/resume",
+      reason: "先把真实经历解析成项目证据，后续追问才不会空转。",
+      tone: "primary",
+    },
+  },
   nextActions: [
     {
       label: "上传简历",
@@ -61,6 +93,8 @@ export default function BootcampPage() {
 
   const sprintBrief = hub?.sprintBrief || fallbackHub.sprintBrief;
   const assetPipeline = hub?.assetPipeline || fallbackHub.assetPipeline;
+  const evidenceBank = hub?.evidenceBank || fallbackHub.evidenceBank;
+  const primaryAction = evidenceBank.primaryNextAction;
   const nextActions = hub?.nextActions?.length
     ? hub.nextActions
     : fallbackHub.nextActions;
@@ -72,48 +106,52 @@ export default function BootcampPage() {
           <div>
             <p className="text-label font-bold text-primary">面试跳槽冲刺</p>
             <h1 className="mt-2 max-w-4xl text-[34px] font-bold leading-[1.08] text-ink sm:text-[48px]">
-              面试冲刺作战台
+              面试证据库
             </h1>
             <p className="mt-4 max-w-3xl text-body-md leading-relaxed text-ink-muted">
-              {sprintBrief.primaryGoal}。这里不再只是进入特训，而是把简历项目、模拟追问、日常训练表达资产和报告串成一条面试证据生产线。
+              {sprintBrief.primaryGoal}。这里优先回答一件事：哪些项目能讲，哪里缺证据，哪些追问有风险，哪些表达已经能直接用于面试。
             </p>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <Metric label="当前状态" value={sprintBrief.statusLabel} />
-              <Metric label="项目材料" value={`${sprintBrief.projectCount} 个`} />
-              <Metric label="已评面试" value={`${sprintBrief.evaluatedCount} 题`} />
-              <Metric label="风险焦点" value={`${sprintBrief.weaknessCount} 个`} />
+              <EvidenceTile
+                icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
+                item={evidenceBank.tellableProjects}
+              />
+              <EvidenceTile
+                icon={<FileText className="h-4 w-4" strokeWidth={1.5} />}
+                item={evidenceBank.proofGaps}
+                urgent={evidenceBank.proofGaps.count > 0}
+              />
+              <EvidenceTile
+                icon={<MessageSquareQuote className="h-4 w-4" strokeWidth={1.5} />}
+                item={evidenceBank.followupRisks}
+              />
+              <EvidenceTile
+                icon={<BarChart3 className="h-4 w-4" strokeWidth={1.5} />}
+                item={evidenceBank.expressionAssets}
+              />
             </div>
           </div>
 
           <div className="rounded-lg bg-ink px-5 py-5 text-white">
-            <p className="text-label font-bold text-white/65">下一步</p>
-            <div className="mt-4 space-y-3">
-              {nextActions.slice(0, 2).map((action) => (
-                <Link
-                  key={action.href + action.label}
-                  href={action.href}
-                  className={cn(
-                    "block rounded-lg px-4 py-3 transition-all hover:-translate-y-0.5 active:scale-[0.99]",
-                    action.tone === "primary"
-                      ? "bg-white text-ink"
-                      : "bg-white/10 text-white"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-body-sm font-bold">{action.label}</p>
-                    <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-                  </div>
-                  <p
-                    className={cn(
-                      "mt-1 text-label leading-relaxed",
-                      action.tone === "primary" ? "text-ink-muted" : "text-white/65"
-                    )}
-                  >
-                    {action.reason}
-                  </p>
-                </Link>
-              ))}
+            <p className="text-label font-bold text-white/65">
+              下一步只做这件事
+            </p>
+            <Link
+              href={primaryAction.href}
+              className="mt-4 block rounded-lg bg-white px-4 py-4 text-ink transition-all hover:-translate-y-0.5 active:scale-[0.99]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-heading-sm font-bold">{primaryAction.label}</p>
+                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+              </div>
+              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                {primaryAction.reason}
+              </p>
+            </Link>
+            <div className="mt-5 grid grid-cols-2 gap-3 text-white/75">
+              <MiniMetric label="状态" value={sprintBrief.statusLabel} />
+              <MiniMetric label="已评追问" value={`${sprintBrief.evaluatedCount} 题`} />
             </div>
           </div>
         </div>
@@ -177,11 +215,42 @@ export default function BootcampPage() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function EvidenceTile({
+  icon,
+  item,
+  urgent = false,
+}: {
+  icon: ReactNode;
+  item: BootcampHub["evidenceBank"]["tellableProjects"];
+  urgent?: boolean;
+}) {
   return (
-    <div className="rounded-lg bg-surface px-4 py-3">
-      <p className="text-label font-bold text-ink-muted">{label}</p>
-      <p className="mt-1 text-body-md font-bold text-ink">{value}</p>
+    <div
+      className={cn(
+        "rounded-lg px-4 py-4",
+        urgent ? "bg-primary-soft" : "bg-surface"
+      )}
+    >
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-primary">
+          {icon}
+        </div>
+        <span className="text-heading-sm font-bold text-ink">{item.count}</span>
+      </div>
+      <p className="text-body-sm font-bold text-ink">{item.label}</p>
+      <p className="mt-1 text-label font-bold text-ink-muted">{item.status}</p>
+      <p className="mt-3 text-label leading-relaxed text-ink-subtle">
+        {item.note}
+      </p>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white/10 px-3 py-3">
+      <p className="text-label font-bold text-white/55">{label}</p>
+      <p className="mt-1 text-body-sm font-bold text-white">{value}</p>
     </div>
   );
 }

@@ -11,9 +11,18 @@ test("bootcamp hub links to story bank as the interview asset center", () => {
 
 test("bootcamp hub is an interview sprint cockpit driven by API state", () => {
   assert.match(source, /\/api\/bootcamp\/hub/);
-  assert.match(source, /面试冲刺作战台/);
+  assert.match(source, /面试证据库/);
   assert.match(source, /sprintBrief/);
   assert.match(source, /assetPipeline/);
+  assert.match(source, /evidenceBank/);
   assert.match(source, /训练表达资产/);
   assert.doesNotMatch(source, /supabase\.auth\.getUser/);
+});
+
+test("bootcamp hub first screen centers the evidence bank decision surface", () => {
+  assert.match(source, /可讲项目/);
+  assert.match(source, /证据缺口/);
+  assert.match(source, /追问风险/);
+  assert.match(source, /表达资产/);
+  assert.match(source, /下一步只做这件事/);
 });

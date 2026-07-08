@@ -11,5 +11,6 @@ test("bootcamp hub API aggregates sprint, interview, and training evidence state
   assert.match(source, /buildBootcampHub/);
   assert.match(source, /sprintBrief/);
   assert.match(source, /assetPipeline/);
+  assert.match(source, /evidenceBank/);
   assert.match(source, /nextActions/);
 });

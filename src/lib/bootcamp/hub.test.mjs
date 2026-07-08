@@ -44,3 +44,48 @@ test("builds an interview sprint cockpit from session, interviews, and training 
   assert.equal(result.nextActions[0].href, "/bootcamp/story-bank");
   assert.match(result.nextActions[0].label, /整理项目证据/);
 });
+
+test("derives an interview evidence bank with gaps, risks, and expression assets", () => {
+  const result = buildBootcampHub({
+    session: {
+      id: "session-2",
+      status: "in_progress",
+      current_day: 1,
+      parsed_profile: {
+        projects: [
+          { name: "客户健康度评分系统" },
+          { name: "审批流重构" },
+        ],
+      },
+      weakness_prediction: {
+        likely_gaps: [
+          { area: "结果指标不清晰" },
+          { area: "系统边界讲不透" },
+        ],
+      },
+    },
+    interviews: [
+      { id: "i1", status: "evaluated", user_answer: "回答", ai_evaluation: {} },
+      { id: "i2", status: "pending", user_answer: "", ai_evaluation: null },
+    ],
+    trainingRecords: [
+      {
+        id: "t1",
+        score: 82,
+        question_scenario: "客户分层和交付成本冲突。",
+        ai_feedback: {
+          interview_expression: {
+            reusable_version: "我会先定义客户分层，再说明取舍。",
+          },
+        },
+      },
+    ],
+  });
+
+  assert.equal(result.evidenceBank.tellableProjects.count, 2);
+  assert.equal(result.evidenceBank.proofGaps.count, 2);
+  assert.equal(result.evidenceBank.followupRisks.count, 1);
+  assert.equal(result.evidenceBank.expressionAssets.count, 1);
+  assert.equal(result.evidenceBank.primaryNextAction.href, "/bootcamp/story-bank");
+  assert.match(result.evidenceBank.primaryNextAction.label, /补证据|整理/);
+});
