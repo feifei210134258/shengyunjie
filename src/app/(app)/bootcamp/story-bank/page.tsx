@@ -121,6 +121,7 @@ export default function StoryBankPage() {
             role: story.role,
             readinessScore: story.readinessScore,
             proofGaps: story.proofGaps,
+            targetFit: story.targetFit,
             interviewScript: {
               fullScript: story.interviewScript.fullScript,
             },

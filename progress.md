@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: 目标项目匹配入账反哺画像
+
+### 背景判断
+- 上一轮项目故事库已经能判断哪个项目最适合当前目标，但用户点击“沉淀到画像账本”时只保存成熟度和证据缺口，目标匹配理由还没有进入长期画像。
+- 如果目标匹配不入账，Dashboard 和推荐仍只能说“某项目有缺口”，不能说“这个项目为什么服务当前目标、下一步补哪条目标证据”。
+
+### 完成内容
+- `/bootcamp/story-bank` 保存项目故事包时，把 `story.targetFit` 一并 POST 到 `/api/profile/summary`。
+- `/api/profile/summary` 在 `project_story_saved` 中清洗并保存 `targetFit.score/priorityLabel/reason/missingEvidence`，继续写入既有 `growth_snapshots.dimension_scores.__trigger.projectStory`，不新增 schema。
+- `buildGrowthProfile` 从成长快照读回项目故事包的目标匹配信息，`storyAssets[].targetFit` 成为画像证据账本的一部分。
+- Dashboard 的“已入账项目资产”展示目标匹配标签和目标证据缺口。
+- 推荐引擎优先使用 `targetFit.missingEvidence` 生成项目证据处方，并把证据标签从单纯成熟度升级为“优先讲 · 目标匹配 x/10”。
+
+### 验证记录
+- TDD 红灯：故事库页面测试先失败于未 POST `targetFit`；profile summary 测试先失败于未清洗 `targetFit`；growth-profile 测试先失败于未读回 `storyAssets[].targetFit`；Dashboard 测试先失败于未展示目标匹配；recommendation 测试先失败于仍用普通 `proofGaps` 而不是目标证据缺口。
+- GREEN：`node --test 'src/app/(app)/bootcamp/story-bank/page.test.mjs' src/app/api/profile/summary/route.test.mjs src/lib/profile/growth-profile.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/lib/profile/recommendation.test.mjs` 通过 32 项。
+- `npx tsc --noEmit` 通过。
+
 ## [2026-07-08] Feature: 项目故事库目标项目优先级
 
 ### 背景判断

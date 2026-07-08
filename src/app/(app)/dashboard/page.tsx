@@ -182,6 +182,12 @@ interface GrowthProfileStoryAsset {
   role: string;
   readinessScore: number | null;
   proofGaps: string[];
+  targetFit?: {
+    score: number | null;
+    priorityLabel: string;
+    reason: string;
+    missingEvidence: string[];
+  };
   scriptPreview: string;
   href: string;
 }
@@ -961,6 +967,20 @@ function GrowthProfileLedger({
                 <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
                   {latestStoryAsset.scriptPreview}
                 </p>
+                {latestStoryAsset.targetFit && (
+                  <div className="mt-2 rounded-md bg-primary-soft px-3 py-2">
+                    <p className="text-label font-bold text-primary">
+                      目标匹配：{latestStoryAsset.targetFit.priorityLabel || "待判断"}
+                      {latestStoryAsset.targetFit.score != null
+                        ? ` · ${latestStoryAsset.targetFit.score}/10`
+                        : ""}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-label leading-relaxed text-ink-muted">
+                      {latestStoryAsset.targetFit.missingEvidence?.[0] ||
+                        latestStoryAsset.targetFit.reason}
+                    </p>
+                  </div>
+                )}
                 {latestStoryAsset.proofGaps.length > 0 && (
                   <p className="mt-2 text-label font-semibold text-warning">
                     缺口：{latestStoryAsset.proofGaps[0]}

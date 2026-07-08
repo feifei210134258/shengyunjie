@@ -51,6 +51,12 @@ export type GrowthProfileStoryAsset = {
   role: string;
   readinessScore: number | null;
   proofGaps: string[];
+  targetFit?: {
+    score: number | null;
+    priorityLabel: string;
+    reason: string;
+    missingEvidence: string[];
+  };
   scriptPreview: string;
   href: string;
 };
@@ -182,6 +188,18 @@ function normalizeProofGaps(value: unknown) {
     .slice(0, 6);
 }
 
+function buildStoryTargetFit(value: unknown): GrowthProfileStoryAsset["targetFit"] {
+  const targetFit = asRecord(value);
+  if (!targetFit) return undefined;
+  const score = normalizeScore(targetFit.score);
+  return {
+    score: score == null ? null : Math.round(score / 10),
+    priorityLabel: compactText(targetFit.priorityLabel),
+    reason: compactText(targetFit.reason),
+    missingEvidence: normalizeProofGaps(targetFit.missingEvidence),
+  };
+}
+
 function buildStoryAssets(
   growthSnapshots: GrowthSnapshot[]
 ): GrowthProfileStoryAsset[] {
@@ -205,7 +223,7 @@ function buildStoryAssets(
           .join(" / ");
       const readinessScore = normalizeScore(projectStory?.readinessScore);
 
-      return {
+      const asset: GrowthProfileStoryAsset = {
         snapshotId: compactText(snapshot.id) || `${projectName}-${snapshot.snapshot_date || ""}`,
         savedAt: snapshot.snapshot_date || null,
         projectName,
@@ -214,9 +232,11 @@ function buildStoryAssets(
         readinessScore:
           readinessScore == null ? null : Math.round(readinessScore / 10),
         proofGaps: normalizeProofGaps(projectStory?.proofGaps),
+        targetFit: buildStoryTargetFit(projectStory?.targetFit),
         scriptPreview: scriptPreview.slice(0, 180),
         href: "/bootcamp/story-bank",
       };
+      return asset;
     })
     .filter((asset): asset is GrowthProfileStoryAsset => asset != null)
     .sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));

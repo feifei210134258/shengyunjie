@@ -160,9 +160,9 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 历史复盘页的思维升级卡支持“沉淀思维升级”：前端调用 `POST /api/profile/summary`，`trigger=thinking_upgrade_saved`，把判断质量、取舍质量、归因深度和落地严谨度写入 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 并读回 snapshot，让高级产品思维训练也进入画像证据账本。
 - Dashboard 首屏新增“今日行动档案”：`buildCommandCenter` 从最近训练记录派生 `actionDossier`，把最新面试资产、待修正材料和下一题处方直接放到两条结果路径之后，避免表达资产只埋在训练详情页。
 - 项目故事库会读取最近 `training_records`，复用面试表达卡生成逻辑派生 `trainingExpressionAssets`，并在 `/bootcamp/story-bank` 展示“日常训练表达资产”。这些资产链接回训练复盘页，不新增 schema，让日常训练回答可以进入面试跳槽资产链。
-- 项目故事库的项目详情页支持把当前项目故事包沉淀到画像账本：前端调用 `POST /api/profile/summary`，`trigger=project_story_saved`，把项目名、角色、成熟度、证据缺口和 2 分钟讲述稿写入 `growth_snapshots.dimension_scores.__trigger.projectStory`，让可讲项目资产进入后续画像推荐闭环。
+- 项目故事库的项目详情页支持把当前项目故事包沉淀到画像账本：前端调用 `POST /api/profile/summary`，`trigger=project_story_saved`，把项目名、角色、成熟度、证据缺口、目标匹配信息和 2 分钟讲述稿写入 `growth_snapshots.dimension_scores.__trigger.projectStory`，让可讲项目资产进入后续画像推荐闭环。
 - 项目故事库会从最近 `growth_snapshots.dimension_scores.__goalBrief` 读回 `latestGoalBrief`，并为每个简历项目生成“目标匹配度、优先讲/备选讲/暂缓讲、补齐目标证据”。页面左侧展示“目标项目优先级”，项目详情页展示该项目对目标岗位/目标场景的证据缺口，帮助用户先打磨最能支撑跳槽目标的项目。
-- `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.projectStory` 读回已保存的项目故事包，Dashboard 能力证据账本展示“已入账项目资产”、最新项目名、角色、成熟度和证据缺口，并链接回 `/bootcamp/story-bank` 继续补证据。
+- `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.projectStory` 读回已保存的项目故事包，Dashboard 能力证据账本展示“已入账项目资产”、最新项目名、角色、成熟度、目标匹配和证据缺口，并链接回 `/bootcamp/story-bank` 继续补证据；推荐引擎优先使用目标匹配里的 `missingEvidence` 生成项目证据处方。
 - `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 读回已保存的思维升级卡，Dashboard 能力证据账本展示“已入账思维升级”、最新维度和判断/取舍/归因/落地摘要，并链接回对应训练复盘页。
 - `buildRecommendationPlan` 会优先读取最近的 `thinkingAssets`，把最新思维升级卡转成下一题训练处方：标题延续对应维度，理由引用判断/取舍/归因/落地摘要，入口指向 `/training/session?focus=thinking_training`，复盘处方指向原训练复盘页，让“思维升级卡入账 → 下一题迁移练习”形成闭环。
 - `/api/training/sessions?date=...` 会把最近一张 `thinking_upgrade_saved` 资产作为 `latestThinkingUpgrade` 返回训练实战页；当用户进入高级产品思维主线时，作答前会看到“本题迁移目标”，明确上一张思维升级卡中的判断、取舍、归因和落地要求，并随题目缓存写入 `training_sessions.questions`，刷新后不丢失迁移上下文。

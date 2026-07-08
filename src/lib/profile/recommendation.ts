@@ -84,11 +84,19 @@ function buildInterviewRecommendation(
 ): ProfileRecommendation {
   const latestStoryAsset = profile.storyAssets[0];
   if (latestStoryAsset) {
-    const firstGap = latestStoryAsset.proofGaps[0];
+    const firstGap =
+      latestStoryAsset.targetFit?.missingEvidence?.[0] ||
+      latestStoryAsset.proofGaps[0];
+    const targetFitLabel =
+      latestStoryAsset.targetFit?.priorityLabel &&
+      latestStoryAsset.targetFit?.score != null
+        ? `${latestStoryAsset.targetFit.priorityLabel} · 目标匹配 ${latestStoryAsset.targetFit.score}/10`
+        : "";
     const readinessLabel =
-      latestStoryAsset.readinessScore == null
+      targetFitLabel ||
+      (latestStoryAsset.readinessScore == null
         ? "项目故事包已入账"
-        : `项目故事包 ${latestStoryAsset.readinessScore}/10`;
+        : `项目故事包 ${latestStoryAsset.readinessScore}/10`);
 
     return {
       id: `story-gap-${latestStoryAsset.snapshotId}`,

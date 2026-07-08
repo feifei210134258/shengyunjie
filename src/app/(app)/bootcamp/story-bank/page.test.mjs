@@ -49,3 +49,10 @@ test("story bank page can save a project story pack into the profile ledger", ()
   assert.match(source, /沉淀到画像账本/);
   assert.match(source, /故事包已入账/);
 });
+
+test("story bank page saves target fit with the project story pack", () => {
+  assert.match(source, /targetFit/);
+  assert.match(source, /priorityLabel/);
+  assert.match(source, /missingEvidence/);
+  assert.match(source, /targetFit:\s*story\.targetFit/);
+});

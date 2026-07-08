@@ -93,6 +93,12 @@ test("surfaces saved project story packs from growth snapshots", () => {
               role: "产品负责人",
               readinessScore: 8,
               proofGaps: ["归因证据还需补强"],
+              targetFit: {
+                score: 9,
+                priorityLabel: "优先讲",
+                reason: "命中续费增长和数据经营，适合作为目标岗位主讲项目。",
+                missingEvidence: ["补齐目标场景里的续费归因反证"],
+              },
               interviewScript: {
                 fullScript:
                   "我负责客户健康度评分系统，从续费风险识别切入，重建了评分口径和运营跟进机制。",
@@ -121,6 +127,12 @@ test("surfaces saved project story packs from growth snapshots", () => {
   assert.equal(profile.storyAssets[0].role, "产品负责人");
   assert.equal(profile.storyAssets[0].readinessScore, 8);
   assert.deepEqual(profile.storyAssets[0].proofGaps, ["归因证据还需补强"]);
+  assert.equal(profile.storyAssets[0].targetFit.score, 9);
+  assert.equal(profile.storyAssets[0].targetFit.priorityLabel, "优先讲");
+  assert.match(profile.storyAssets[0].targetFit.reason, /续费增长/);
+  assert.deepEqual(profile.storyAssets[0].targetFit.missingEvidence, [
+    "补齐目标场景里的续费归因反证",
+  ]);
   assert.match(profile.storyAssets[0].scriptPreview, /客户健康度评分系统/);
   assert.equal(profile.storyAssets[0].href, "/bootcamp/story-bank");
 });

@@ -59,6 +59,33 @@ async function readSnapshotTrigger(req?: Request) {
                   .filter(Boolean)
                   .slice(0, 6)
               : [],
+            targetFit:
+              body.projectStory.targetFit &&
+              typeof body.projectStory.targetFit === "object"
+                ? {
+                    score: Number.isFinite(
+                      Number(body.projectStory.targetFit.score)
+                    )
+                      ? Number(body.projectStory.targetFit.score)
+                      : null,
+                    priorityLabel: String(
+                      body.projectStory.targetFit.priorityLabel || ""
+                    ).slice(0, 40),
+                    reason: String(
+                      body.projectStory.targetFit.reason || ""
+                    ).slice(0, 360),
+                    missingEvidence: Array.isArray(
+                      body.projectStory.targetFit.missingEvidence
+                    )
+                      ? body.projectStory.targetFit.missingEvidence
+                          .map((item: unknown) =>
+                            String(item || "").slice(0, 220)
+                          )
+                          .filter(Boolean)
+                          .slice(0, 6)
+                      : [],
+                  }
+                : null,
             interviewScript:
               body.projectStory.interviewScript &&
               typeof body.projectStory.interviewScript === "object"

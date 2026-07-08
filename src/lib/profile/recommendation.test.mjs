@@ -127,6 +127,12 @@ test("turns saved story asset proof gaps into project-specific interview prescri
         role: "产品负责人",
         readinessScore: 8,
         proofGaps: ["续费提升归因还缺反证", "运营跟进动作缺少前后对照"],
+        targetFit: {
+          score: 9,
+          priorityLabel: "优先讲",
+          reason: "命中续费增长和数据经营，是当前目标岗位的主讲项目。",
+          missingEvidence: ["目标场景里的续费归因反证还要补齐"],
+        },
         scriptPreview: "我负责客户健康度评分系统。",
         href: "/bootcamp/story-bank",
       },
@@ -140,9 +146,9 @@ test("turns saved story asset proof gaps into project-specific interview prescri
 
   assert.equal(interviewPrescription.id, "story-gap-snap-story-1");
   assert.match(interviewPrescription.title, /客户健康度评分系统/);
-  assert.match(interviewPrescription.reason, /续费提升归因还缺反证/);
+  assert.match(interviewPrescription.reason, /目标场景里的续费归因反证还要补齐/);
   assert.equal(interviewPrescription.href, "/bootcamp/story-bank");
-  assert.equal(interviewPrescription.evidence, "项目故事包 8/10");
+  assert.equal(interviewPrescription.evidence, "优先讲 · 目标匹配 9/10");
 });
 
 test("turns saved thinking upgrade cards into the next training prescription", () => {
