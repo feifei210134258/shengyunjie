@@ -193,6 +193,7 @@ export default function HistoryDetailPage() {
             tradeoff_quality: thinkingUpgrade.tradeoff_quality,
             attribution_depth: thinkingUpgrade.attribution_depth,
             landing_rigor: thinkingUpgrade.landing_rigor,
+            migration_check: thinkingUpgrade.migration_check,
           },
         }),
       });
@@ -445,6 +446,7 @@ export default function HistoryDetailPage() {
                         ["取舍质量", thinkingUpgradeAsset.tradeoff_quality],
                         ["归因深度", thinkingUpgradeAsset.attribution_depth],
                         ["落地严谨度", thinkingUpgradeAsset.landing_rigor],
+                        ["迁移验证", thinkingUpgradeAsset.migration_check],
                       ].map(([label, value]) => (
                         <div
                           key={label}

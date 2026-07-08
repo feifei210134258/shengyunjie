@@ -1,5 +1,24 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: 思维迁移验证入账
+
+### 背景判断
+- 当前产品的第一性原理不是“多刷题”，而是让每次训练产生可迁移的高级 PM 判断证据。
+- 上一轮已经让 AI 在反馈里产出 `thinking_upgrade.migration_check`，但如果它只停留在反馈面板，下一轮画像和处方无法判断用户是否真的把升级点迁移到了新题。
+
+### 完成内容
+- 历史复盘页的“思维升级卡”新增“迁移验证”，直接读回 `training_records.ai_feedback.thinking_upgrade.migration_check`。
+- “沉淀思维升级”会把 `migration_check` 随同判断、取舍、归因、落地四项一起提交到 `/api/profile/summary`。
+- `/api/profile/summary` 将迁移验证写入既有 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade`，不新增 schema。
+- `buildGrowthProfile` 读回 `thinkingAssets[].migrationCheck`，让迁移验证成为画像账本里的长期证据。
+- 产品设计文档同步记录这条“迁移验证 → 画像账本 → 后续处方可引用”的闭环。
+
+### 验证记录
+- TDD 红灯：历史页、profile summary API、growth profile 测试先捕获缺少 `migration_check` 展示、提交、入账和读回。
+- GREEN：`node 'src/app/(app)/training/history/[id]/page.test.mjs'` 通过 7 项；`node --test src/app/api/profile/summary/route.test.mjs src/lib/profile/growth-profile.test.mjs` 通过 12 项。
+- 回归：`node --test src/app/api/profile/summary/route.test.mjs src/lib/profile/growth-profile.test.mjs src/app/api/train/route.test.mjs src/lib/training/personalization.test.mjs src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 38 项。
+- `npx tsc --noEmit`、针对性 ESLint、`git diff --check`、`feature_list.json` 解析、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-08] 训练反馈：校验思维升级是否迁移成功
 
 ### 完成内容

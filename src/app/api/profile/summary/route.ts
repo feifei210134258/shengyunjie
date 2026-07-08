@@ -84,6 +84,9 @@ async function readSnapshotTrigger(req?: Request) {
             landing_rigor: String(
               body.thinkingUpgrade.landing_rigor || ""
             ).slice(0, 360),
+            migration_check: String(
+              body.thinkingUpgrade.migration_check || ""
+            ).slice(0, 360),
           }
         : null;
     const goalFocus =

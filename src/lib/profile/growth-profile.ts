@@ -65,6 +65,7 @@ export type GrowthProfileThinkingAsset = {
   tradeoffQuality: string;
   attributionDepth: string;
   landingRigor: string;
+  migrationCheck: string;
   href: string;
 };
 
@@ -237,6 +238,7 @@ export function buildThinkingAssets(
       const tradeoffQuality = compactText(thinkingUpgrade?.tradeoff_quality);
       const attributionDepth = compactText(thinkingUpgrade?.attribution_depth);
       const landingRigor = compactText(thinkingUpgrade?.landing_rigor);
+      const migrationCheck = compactText(thinkingUpgrade?.migration_check);
 
       if (
         !trainingRecordId ||
@@ -245,6 +247,7 @@ export function buildThinkingAssets(
           tradeoffQuality,
           attributionDepth,
           landingRigor,
+          migrationCheck,
         ].some(Boolean)
       ) {
         return null;
@@ -262,6 +265,7 @@ export function buildThinkingAssets(
         tradeoffQuality,
         attributionDepth,
         landingRigor,
+        migrationCheck,
         href: `/training/history/${trainingRecordId}`,
       };
     })

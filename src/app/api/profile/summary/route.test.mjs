@@ -51,6 +51,7 @@ test("profile summary API can tag snapshots created from saved thinking upgrades
   assert.match(source, /tradeoff_quality/);
   assert.match(source, /attribution_depth/);
   assert.match(source, /landing_rigor/);
+  assert.match(source, /migration_check/);
 });
 
 test("profile summary API can persist the selected outcome goal focus", () => {

@@ -142,6 +142,7 @@ test("surfaces saved thinking upgrade cards from growth snapshots", () => {
               tradeoff_quality: "说明为什么先放弃低频客户的定制需求。",
               attribution_depth: "把增长变化拆成渠道、人群和激活动作。",
               landing_rigor: "用一周灰度和续费风险指标验证。",
+              migration_check: "本题已迁移上一轮的取舍要求，但归因证据仍偏弱。",
             },
           },
         },
@@ -168,5 +169,6 @@ test("surfaces saved thinking upgrade cards from growth snapshots", () => {
   assert.match(profile.thinkingAssets[0].tradeoffQuality, /放弃低频客户/);
   assert.match(profile.thinkingAssets[0].attributionDepth, /渠道/);
   assert.match(profile.thinkingAssets[0].landingRigor, /灰度/);
+  assert.match(profile.thinkingAssets[0].migrationCheck, /迁移上一轮/);
   assert.equal(profile.thinkingAssets[0].href, "/training/history/record-1");
 });
