@@ -34,6 +34,14 @@ test("story bank page surfaces daily training expression assets", () => {
   assert.match(source, /查看训练复盘/);
 });
 
+test("story bank page ranks projects against the saved target brief", () => {
+  assert.match(source, /latestGoalBrief/);
+  assert.match(source, /目标项目优先级/);
+  assert.match(source, /目标匹配度/);
+  assert.match(source, /优先讲/);
+  assert.match(source, /补齐目标证据/);
+});
+
 test("story bank page can save a project story pack into the profile ledger", () => {
   assert.match(source, /handleSaveProjectStoryPack/);
   assert.match(source, /project_story_saved/);

@@ -156,6 +156,35 @@ test("adds daily training expression cards as interview story assets", () => {
   assert.equal(result.generalAssets[0].sourceLabel, "日常训练");
 });
 
+test("prioritizes projects against the persisted interview target brief", () => {
+  const result = buildStoryBank({
+    session: {
+      id: "session-target",
+      current_day: 1,
+      status: "in_progress",
+      parsed_profile: parsedProfile,
+      weakness_prediction: null,
+    },
+    interviews: [],
+    latestGoalBrief: {
+      targetRole: "高级 B 端产品经理",
+      targetScenario: "SaaS 平台负责人面试，重点考续费增长和数据经营",
+      targetDeadline: "2026-07-22",
+    },
+  });
+
+  assert.deepEqual(result.latestGoalBrief, {
+    targetRole: "高级 B 端产品经理",
+    targetScenario: "SaaS 平台负责人面试，重点考续费增长和数据经营",
+    targetDeadline: "2026-07-22",
+  });
+  assert.equal(result.summary.targetPriorityProject, "客户健康度评分系统");
+  assert.equal(result.projectStories[0].targetFit.priorityLabel, "优先讲");
+  assert.ok(result.projectStories[0].targetFit.score > result.projectStories[1].targetFit.score);
+  assert.match(result.projectStories[0].targetFit.reason, /续费增长|SaaS|数据经营/);
+  assert.match(result.projectStories[0].targetFit.missingEvidence.join(" "), /目标岗位|目标场景/);
+});
+
 test("updates one resume project evidence without changing other projects", () => {
   const updated = updateParsedProfileProject(parsedProfile, {
     projectName: "权限审批流重构",

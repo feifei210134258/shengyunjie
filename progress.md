@@ -1,5 +1,21 @@
 # 会话进度日志
 
+## [2026-07-08] Feature: 项目故事库目标项目优先级
+
+### 背景判断
+- 面试证据库已经能读取目标岗位、目标场景和目标期限，但故事库内仍主要按项目成熟度展示，用户还需要自己判断哪个项目最适合当前跳槽目标。
+- 从第一性原理看，面试准备不是平均打磨所有项目，而是先找到最能证明目标岗位能力的项目，再补齐岗位/场景相关证据。
+
+### 完成内容
+- `buildStoryBank` 新增 `latestGoalBrief` 入参和返回值；每个 `ProjectStory` 增加 `targetFit`，包含目标匹配分、优先级标签、匹配理由和目标证据缺口。
+- `GET/PATCH /api/bootcamp/story-bank` 从 `growth_snapshots.dimension_scores.__goalBrief` 读回最近目标简报，并传给故事库聚合；不新增 schema。
+- `/bootcamp/story-bank` 左侧新增“目标项目优先级”，项目列表展示“优先讲/备选讲/暂缓讲”和目标匹配度；项目详情新增“目标匹配度”和“补齐目标证据”。
+- 推荐动作在存在目标简报时从“泛化高风险项目”改为优先打磨最能支撑目标的项目。
+
+### 验证记录
+- TDD 红灯：`story-bank.test.mjs` 先失败于没有 `latestGoalBrief/targetFit/targetPriorityProject`；`route.test.mjs` 先失败于没有读取 `growth_snapshots/__goalBrief`；`page.test.mjs` 先失败于没有“目标项目优先级 / 目标匹配度 / 补齐目标证据”。
+- GREEN：`node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs'` 通过；`npx tsc --noEmit` 通过。
+
 ## [2026-07-08] Feature: 面试证据库接入目标简报
 
 ### 背景判断

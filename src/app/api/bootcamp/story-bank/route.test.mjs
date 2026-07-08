@@ -21,6 +21,13 @@ test("story bank API also reads daily training records as expression assets", ()
   assert.match(source, /trainingRecords/);
 });
 
+test("story bank API reads the persisted target brief for project priority", () => {
+  assert.match(source, /\.from\("growth_snapshots"\)/);
+  assert.match(source, /__goalBrief/);
+  assert.match(source, /latestGoalBrief/);
+  assert.match(source, /buildStoryBank\(\{[\s\S]*latestGoalBrief/);
+});
+
 test("story bank API persists project evidence edits into parsed profile", () => {
   assert.match(source, /export async function PATCH/);
   assert.match(source, /updateParsedProfileProject/);

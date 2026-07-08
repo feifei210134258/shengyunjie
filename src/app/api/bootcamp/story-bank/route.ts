@@ -6,6 +6,28 @@ import {
   updateParsedProfileProject,
 } from "@/lib/bootcamp/story-bank";
 
+async function readLatestGoalBrief(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  userId: string
+) {
+  const { data: growthSnapshots, error: snapshotError } = await supabase
+    .from("growth_snapshots")
+    .select("id, snapshot_date, dimension_scores")
+    .eq("user_id", userId)
+    .order("snapshot_date", { ascending: false })
+    .limit(12);
+
+  if (snapshotError) {
+    throw new Error(snapshotError.message);
+  }
+
+  return (
+    (growthSnapshots || []).find(
+      (snapshot: any) => snapshot.dimension_scores?.__goalBrief
+    )?.dimension_scores?.__goalBrief || null
+  );
+}
+
 export async function GET() {
   try {
     const supabase = await createServerClient();
@@ -74,15 +96,19 @@ export async function GET() {
       );
     }
 
+    const latestGoalBrief = await readLatestGoalBrief(supabase, user.id);
+
     const storyBank = buildStoryBank({
       session,
       interviews: interviews || [],
       trainingRecords: trainingRecords || [],
+      latestGoalBrief,
     });
 
     return NextResponse.json({
       setupNeeded: false,
       storyBank,
+      latestGoalBrief,
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -177,15 +203,19 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const latestGoalBrief = await readLatestGoalBrief(supabase, user.id);
+
     const storyBank = buildStoryBank({
       session: updatedSession,
       interviews: interviews || [],
       trainingRecords: trainingRecords || [],
+      latestGoalBrief,
     });
 
     return NextResponse.json({
       setupNeeded: false,
       storyBank,
+      latestGoalBrief,
     });
   } catch (error: any) {
     return NextResponse.json(

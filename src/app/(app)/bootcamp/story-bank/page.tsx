@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 type StoryBankResponse = {
   setupNeeded?: boolean;
   storyBank?: StoryBank | null;
+  latestGoalBrief?: StoryBank["latestGoalBrief"];
   nextAction?: {
     label: string;
     href: string;
@@ -67,6 +68,8 @@ export default function StoryBankPage() {
   }, []);
 
   const storyBank = data?.storyBank || null;
+  const latestGoalBrief =
+    data?.latestGoalBrief || storyBank?.latestGoalBrief || null;
   const activeStory = useMemo(() => {
     if (!storyBank?.projectStories.length) return null;
     return (
@@ -231,6 +234,10 @@ export default function StoryBankPage() {
                       <p className="mt-1 text-label opacity-75">
                         {story.company || "公司待补"} · {story.role || "角色待补"}
                       </p>
+                      <p className="mt-2 text-label font-bold opacity-80">
+                        {story.targetFit.priorityLabel} · 目标匹配度{" "}
+                        {story.targetFit.score}/10
+                      </p>
                     </div>
                     <span
                       className={cn(
@@ -245,6 +252,11 @@ export default function StoryBankPage() {
               ))}
             </div>
           </div>
+
+          <TargetPriorityPanel
+            storyBank={storyBank}
+            latestGoalBrief={latestGoalBrief}
+          />
 
           <div className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
             <h2 className="text-heading-sm font-semibold text-ink">
@@ -277,6 +289,59 @@ export default function StoryBankPage() {
         )}
       </section>
     </main>
+  );
+}
+
+function TargetPriorityPanel({
+  storyBank,
+  latestGoalBrief,
+}: {
+  storyBank: StoryBank;
+  latestGoalBrief: StoryBank["latestGoalBrief"];
+}) {
+  const priorityStory =
+    storyBank.projectStories.find(
+      (story) => story.projectName === storyBank.summary.targetPriorityProject
+    ) || storyBank.projectStories[0];
+
+  return (
+    <div className="rounded-xl border border-line bg-ink p-4 text-white shadow-xs">
+      <div className="mb-4 flex items-center gap-2">
+        <Target className="h-4 w-4 text-white/80" strokeWidth={1.5} />
+        <h2 className="text-heading-sm font-semibold">
+          目标项目优先级
+        </h2>
+      </div>
+      <div className="space-y-2 text-label leading-relaxed text-white/65">
+        <p>目标岗位：{latestGoalBrief?.targetRole || "未设置"}</p>
+        <p>
+          目标场景：
+          {latestGoalBrief?.targetScenario || "先按高级 PM 面试准备"}
+        </p>
+        <p>优先讲 / 备选讲 / 暂缓讲</p>
+      </div>
+      {priorityStory && (
+        <div className="mt-4 rounded-lg bg-white/10 px-3 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-body-sm font-bold">
+                {priorityStory.projectName}
+              </p>
+              <p className="mt-1 text-label font-bold text-white/60">
+                {priorityStory.targetFit.priorityLabel} · 目标匹配度{" "}
+                {priorityStory.targetFit.score}/10
+              </p>
+            </div>
+            <span className="rounded-md bg-white px-2 py-1 text-label font-bold text-ink">
+              先讲
+            </span>
+          </div>
+          <p className="mt-3 text-body-sm leading-relaxed text-white/80">
+            {priorityStory.targetFit.reason}
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -413,6 +478,23 @@ function StoryDetail({
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <EvidenceBox
+            title="目标匹配度"
+            icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
+            items={[
+              `${story.targetFit.priorityLabel} · ${story.targetFit.score}/10`,
+              story.targetFit.reason,
+            ]}
+          />
+          <EvidenceBox
+            title="补齐目标证据"
+            icon={<TriangleAlert className="h-4 w-4" strokeWidth={1.5} />}
+            items={
+              story.targetFit.missingEvidence.length
+                ? story.targetFit.missingEvidence
+                : ["这个项目已经能支撑当前目标，下一步用模拟追问检查讲述稳定性。"]
+            }
+          />
           <EvidenceBox
             title="结果证据"
             icon={<CheckCircle2 className="h-4 w-4" strokeWidth={1.5} />}
