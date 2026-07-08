@@ -64,11 +64,16 @@ async function loadProfileEvidence(supabase: any, userId: string) {
     (growthSnapshots || []).find(
       (snapshot: any) => snapshot.dimension_scores?.__recommendation
     )?.dimension_scores?.__recommendation || null;
+  const latestGoalFocus =
+    (growthSnapshots || []).find(
+      (snapshot: any) => snapshot.dimension_scores?.__goalFocus
+    )?.dimension_scores?.__goalFocus || null;
 
   return {
     growthProfile,
     recommendationPlan,
     latestRecommendation,
+    latestGoalFocus,
   };
 }
 

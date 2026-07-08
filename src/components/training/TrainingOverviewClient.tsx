@@ -85,6 +85,35 @@ type RecommendationPlan = {
   recommendations?: ProfileRecommendation[];
 };
 
+type GoalFocus = "interview_sprint" | "thinking_training";
+
+const GOAL_FOCUS_FRAMES: Record<
+  GoalFocus,
+  { badge: string; titleSuffix: string; description: string; cta: string }
+> = {
+  interview_sprint: {
+    badge: "面试跳槽主线",
+    titleSuffix: "产出面试表达资产",
+    description:
+      "本次训练要优先把判断、取舍和结果证据沉淀成面试表达资产，方便进入项目故事库继续打磨。",
+    cta: "练出一张表达资产",
+  },
+  thinking_training: {
+    badge: "高级产品思维主线",
+    titleSuffix: "训练高级产品判断",
+    description:
+      "本次训练优先锻炼判断、取舍、归因和落地推演，先把思考质量练稳，再沉淀为画像证据。",
+    cta: "开始思维训练",
+  },
+};
+
+function getGoalFocusFrame(goalFocus?: string | null) {
+  if (goalFocus === "interview_sprint" || goalFocus === "thinking_training") {
+    return GOAL_FOCUS_FRAMES[goalFocus];
+  }
+  return null;
+}
+
 function getRecommendedDimension(stats: TrainingStats | null) {
   const dimensionEntries = Object.entries(DIM_LABELS);
   if (!stats) {
@@ -143,6 +172,7 @@ export default function TrainingPage() {
   const [stats, setStats] = useState<TrainingStats | null>(null);
   const [recommendationPlan, setRecommendationPlan] =
     useState<RecommendationPlan | null>(null);
+  const [latestGoalFocus, setLatestGoalFocus] = useState<GoalFocus | null>(null);
 
   const [trainedDays, setTrainedDays] = useState<number[]>([]);
   const [monthCount, setMonthCount] = useState(0);
@@ -159,6 +189,7 @@ export default function TrainingPage() {
   const primaryTrainingLabel =
     getDimensionShortLabel(primaryRecommendation?.targetDimension) ||
     recommendedDimension.label;
+  const goalFocusFrame = getGoalFocusFrame(latestGoalFocus);
   const practicedDimensionCount = Object.values(stats?.dimStats ?? {}).filter(
     (count) => count > 0
   ).length;
@@ -173,7 +204,10 @@ export default function TrainingPage() {
 
     fetch("/api/profile/recommendation")
       .then((r) => r.json())
-      .then((data) => setRecommendationPlan(data.recommendationPlan || null))
+      .then((data) => {
+        setRecommendationPlan(data.recommendationPlan || null);
+        setLatestGoalFocus(data.latestGoalFocus || null);
+      })
       .catch((err) => console.error("获取画像处方失败:", err));
 
     fetch(`/api/training/sessions?month=${monthStr}`)
@@ -215,14 +249,18 @@ export default function TrainingPage() {
               <div className="max-w-2xl">
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <Badge>画像处方</Badge>
+                  {goalFocusFrame && <Badge>{goalFocusFrame.badge}</Badge>}
                   <Badge variant="neutral">{primaryTrainingLabel}</Badge>
                 </div>
                 <h3 className="text-heading-lg font-bold text-ink">
-                  {primaryRecommendation?.title ||
-                    `用一题校准 ${recommendedDimension.label} 的判断链路`}
+                  {goalFocusFrame
+                    ? `${primaryRecommendation?.title || `校准 ${recommendedDimension.label} 的判断链路`}：${goalFocusFrame.titleSuffix}`
+                    : primaryRecommendation?.title ||
+                      `用一题校准 ${recommendedDimension.label} 的判断链路`}
                 </h3>
                 <p className="mt-2 text-body-md text-ink-muted">
-                  {primaryRecommendation?.reason ||
+                  {goalFocusFrame?.description ||
+                    primaryRecommendation?.reason ||
                     "先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。"}
                 </p>
                 {primaryRecommendation?.evidence && (
@@ -245,7 +283,7 @@ export default function TrainingPage() {
                 }
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
               >
-                {primaryRecommendation?.cta || "开始今日训练"}
+                {goalFocusFrame?.cta || primaryRecommendation?.cta || "开始今日训练"}
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link

@@ -27,3 +27,11 @@ test("training overview surfaces recent training as ability evidence assets", ()
   assert.match(source, /proofPoint/);
   assert.match(source, /待修正后可用/);
 });
+
+test("training overview adapts the primary training frame to the persisted goal focus", () => {
+  assert.match(source, /latestGoalFocus/);
+  assert.match(source, /goalFocusFrame/);
+  assert.match(source, /面试跳槽主线/);
+  assert.match(source, /高级产品思维主线/);
+  assert.match(source, /面试表达资产/);
+});

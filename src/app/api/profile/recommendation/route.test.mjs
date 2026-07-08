@@ -19,3 +19,8 @@ test("profile recommendation API persists selected recommendation into growth sn
   assert.match(source, /__recommendation/);
   assert.match(source, /from\("growth_snapshots"\)[\s\S]*\.insert/);
 });
+
+test("profile recommendation API reads the latest persisted goal focus", () => {
+  assert.match(source, /latestGoalFocus/);
+  assert.match(source, /__goalFocus/);
+});

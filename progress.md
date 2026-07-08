@@ -1,5 +1,20 @@
 # 会话进度日志
 
+## [2026-07-08] 训练首页：当前主线目标跟随
+
+### 完成内容
+- `GET /api/profile/recommendation` 从最近 `growth_snapshots.dimension_scores.__goalFocus` 读回 `latestGoalFocus`，复用 Dashboard 已落库的当前主线，不新增 schema。
+- 训练首页读取 `latestGoalFocus` 后调整首屏主行动：面试跳槽主线强调把训练产出转成“面试表达资产”，高级产品思维主线强调判断、取舍、归因和落地推演。
+- 训练入口仍然优先使用画像处方的 `href`，但按钮和说明会随用户选择的结果路径变化，避免训练页又退回泛泛刷题入口。
+
+### 验证记录
+- TDD 红灯：`node --test src/app/api/profile/recommendation/route.test.mjs src/components/training/TrainingOverviewClient.test.mjs` 先失败于缺少 `latestGoalFocus`、`__goalFocus`、`goalFocusFrame` 和主线文案。
+- 已通过：`node --test src/app/api/profile/recommendation/route.test.mjs src/components/training/TrainingOverviewClient.test.mjs feature_list.test.mjs`（9 项）。
+- 已通过：`npx tsc --noEmit`。
+- 已通过：`ESLINT_USE_FLAT_CONFIG=false npx eslint src/app/api/profile/recommendation/route.ts src/app/api/profile/recommendation/route.test.mjs src/components/training/TrainingOverviewClient.tsx src/components/training/TrainingOverviewClient.test.mjs feature_list.test.mjs --max-warnings 0`（仅 ESLint 9 配置弃用提示）。
+- 已通过：`npm run build`。
+- 已通过：`git diff --check`、`feature_list.json` JSON 解析。
+
 ## [2026-07-08] Dashboard：当前主线目标
 
 ### 完成内容
