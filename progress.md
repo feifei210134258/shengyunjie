@@ -1554,6 +1554,28 @@
 - `feature_list.json` JSON 解析通过。
 - `./init.sh` 通过，环境健康检查 10/10。
 
+## [2026-07-08] Feature: 面试冲刺作战台
+
+### 背景判断
+- 用户目标不是“进入特训模块”，而是在跳槽前快速把简历项目、模拟追问和日常训练回答转成可复述的面试证据。
+- 因此 `/bootcamp` 应该承担作战台职责：告诉用户当前冲刺状态、资产缺口、下一步最该做什么，而不是只展示 Day 0/Day 1-3/报告入口。
+
+### 完成内容
+- 新增 `buildBootcampHub`，聚合 `bootcamp_sessions`、`bootcamp_interviews` 和 `training_records`，输出 `sprintBrief`、`assetPipeline`、`nextActions`。
+- 新增 `GET /api/bootcamp/hub`，登录后从 Supabase 读回简历项目、面试评价和最近训练记录，不新增 schema。
+- `/bootcamp` 移除客户端 Supabase 直连，改为请求 `/api/bootcamp/hub`；页面重构为“面试冲刺作战台”，展示简历项目、项目故事、模拟追问、训练表达资产四段证据生产线。
+- `feature_list.json` 和产品设计文档同步记录作战台改造。
+
+### 验证结果
+- TDD 红灯：新增 hub 领域测试、API 源测试和页面源测试，先捕获缺少 `/api/bootcamp/hub`、缺少 API 聚合、页面仍旧客户端直连 Supabase 等问题。
+- `node --test src/lib/bootcamp/hub.test.mjs src/app/api/bootcamp/hub/route.test.mjs 'src/app/(app)/bootcamp/page.test.mjs'` 通过，4 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/bootcamp/page.tsx' 'src/app/(app)/bootcamp/page.test.mjs' src/app/api/bootcamp/hub/route.ts src/app/api/bootcamp/hub/route.test.mjs src/lib/bootcamp/hub.ts src/lib/bootcamp/hub.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过，新增 `/api/bootcamp/hub` 路由出现在构建结果中。
+- `git diff --check` 通过。
+- `feature_list.json` JSON 解析通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-07] Feature: 训练反馈自动更新画像
 
 ### 背景判断
