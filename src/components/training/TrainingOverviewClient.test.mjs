@@ -35,3 +35,21 @@ test("training overview adapts the primary training frame to the persisted goal 
   assert.match(source, /高级产品思维主线/);
   assert.match(source, /面试表达资产/);
 });
+
+test("training overview reads and displays the outcome goal brief as a mission order", () => {
+  assert.match(source, /latestGoalBrief/);
+  assert.match(source, /setLatestGoalBrief/);
+  assert.match(source, /目标作战令/);
+  assert.match(source, /目标岗位/);
+  assert.match(source, /目标场景/);
+  assert.match(source, /目标期限/);
+});
+
+test("training overview presents one ordered action chain instead of unrelated cards", () => {
+  assert.match(source, /今日作战台/);
+  assert.match(source, /作战顺序/);
+  assert.match(source, /先复盘/);
+  assert.match(source, /再开题/);
+  assert.match(source, /沉淀证据/);
+  assert.match(source, /把训练变成可复用资产/);
+});

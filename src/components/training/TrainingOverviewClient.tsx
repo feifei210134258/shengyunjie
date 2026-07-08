@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -87,6 +86,12 @@ type RecommendationPlan = {
 
 type GoalFocus = "interview_sprint" | "thinking_training";
 
+type GoalBrief = {
+  targetRole: string;
+  targetScenario: string;
+  targetDeadline: string;
+};
+
 const GOAL_FOCUS_FRAMES: Record<
   GoalFocus,
   { badge: string; titleSuffix: string; description: string; cta: string }
@@ -112,6 +117,18 @@ function getGoalFocusFrame(goalFocus?: string | null) {
     return GOAL_FOCUS_FRAMES[goalFocus];
   }
   return null;
+}
+
+function normalizeGoalBrief(value?: Partial<GoalBrief> | null): GoalBrief | null {
+  const targetRole = String(value?.targetRole || "").trim();
+  const targetScenario = String(value?.targetScenario || "").trim();
+  const targetDeadline = String(value?.targetDeadline || "").trim();
+  if (!targetRole && !targetScenario && !targetDeadline) return null;
+  return {
+    targetRole,
+    targetScenario,
+    targetDeadline,
+  };
 }
 
 function getRecommendedDimension(stats: TrainingStats | null) {
@@ -164,6 +181,47 @@ function StatTile({
   );
 }
 
+function GoalBriefLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-surface px-3 py-2">
+      <p className="text-label font-bold text-ink-muted">{label}</p>
+      <p className="mt-1 line-clamp-2 text-body-sm font-semibold leading-relaxed text-ink">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ActionStep({
+  index,
+  label,
+  text,
+  active,
+}: {
+  index: string;
+  label: string;
+  text: string;
+  active: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-[2.5rem_1fr] gap-3">
+      <div
+        className={`flex h-9 w-9 items-center justify-center rounded-lg font-mono text-label font-bold ${
+          active ? "bg-primary text-white" : "bg-surface text-ink-faint"
+        }`}
+      >
+        {index}
+      </div>
+      <div>
+        <p className="text-body-sm font-bold text-ink">{label}</p>
+        <p className="mt-0.5 text-body-sm leading-relaxed text-ink-muted">
+          {text}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function TrainingPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -173,6 +231,7 @@ export default function TrainingPage() {
   const [recommendationPlan, setRecommendationPlan] =
     useState<RecommendationPlan | null>(null);
   const [latestGoalFocus, setLatestGoalFocus] = useState<GoalFocus | null>(null);
+  const [latestGoalBrief, setLatestGoalBrief] = useState<GoalBrief | null>(null);
 
   const [trainedDays, setTrainedDays] = useState<number[]>([]);
   const [monthCount, setMonthCount] = useState(0);
@@ -195,6 +254,10 @@ export default function TrainingPage() {
   ).length;
   const reviewQueue = stats?.reviewQueue ?? [];
   const evidenceAssets = stats?.evidenceAssets ?? [];
+  const needsReview = reviewQueue.some((item) => item.needsRevision);
+  const readyAssetCount = evidenceAssets.filter(
+    (asset) => asset.readiness === "面试可用"
+  ).length;
 
   useEffect(() => {
     fetch("/api/training/stats")
@@ -207,6 +270,7 @@ export default function TrainingPage() {
       .then((data) => {
         setRecommendationPlan(data.recommendationPlan || null);
         setLatestGoalFocus(data.latestGoalFocus || null);
+        setLatestGoalBrief(normalizeGoalBrief(data.latestGoalBrief));
       })
       .catch((err) => console.error("获取画像处方失败:", err));
 
@@ -239,88 +303,117 @@ export default function TrainingPage() {
 
   return (
     <>
-      <PageHeader title="日常训练" subtitle="围绕薄弱维度，每天完成一次高质量思考" />
+      <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 lg:px-8">
+        <section className="rounded-xl border border-line bg-surface-raised shadow-xs">
+          <div className="grid gap-0 lg:grid-cols-[minmax(0,1.25fr)_360px_320px]">
+            <div className="border-b border-line p-5 sm:p-6 lg:border-b-0 lg:border-r">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <Badge>今日作战台</Badge>
+                {goalFocusFrame && <Badge>{goalFocusFrame.badge}</Badge>}
+                <Badge variant="neutral">{primaryTrainingLabel}</Badge>
+              </div>
+              <h1 className="max-w-4xl text-[30px] font-bold leading-[1.12] text-ink sm:text-[42px]">
+                {primaryRecommendation?.title ||
+                  `用一题校准 ${recommendedDimension.label} 的判断链路`}
+              </h1>
+              <p className="mt-3 max-w-3xl text-body-md leading-relaxed text-ink-muted">
+                {goalFocusFrame?.description ||
+                  primaryRecommendation?.reason ||
+                  "先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。"}
+              </p>
+              <p className="mt-3 text-body-sm font-semibold text-primary">
+                把训练变成可复用资产：答题、复盘、二次修正和画像处方会连成同一条证据链。
+              </p>
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Primary practice focus */}
-        <section className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
-          <Card size="lg" className="relative overflow-hidden">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-2xl">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <Badge>画像处方</Badge>
-                  {goalFocusFrame && <Badge>{goalFocusFrame.badge}</Badge>}
-                  <Badge variant="neutral">{primaryTrainingLabel}</Badge>
-                </div>
-                <h3 className="text-heading-lg font-bold text-ink">
-                  {goalFocusFrame
-                    ? `${primaryRecommendation?.title || `校准 ${recommendedDimension.label} 的判断链路`}：${goalFocusFrame.titleSuffix}`
-                    : primaryRecommendation?.title ||
-                      `用一题校准 ${recommendedDimension.label} 的判断链路`}
-                </h3>
-                <p className="mt-2 text-body-md text-ink-muted">
-                  {goalFocusFrame?.description ||
-                    primaryRecommendation?.reason ||
-                    "先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。"}
-                </p>
-                {primaryRecommendation?.evidence && (
-                  <p className="mt-3 text-label font-semibold text-primary">
-                    推荐依据：{primaryRecommendation.evidence}
-                  </p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link
+                  href={
+                    primaryRecommendation
+                      ? primaryRecommendation.href
+                      : TRAINING_SESSION_ROUTE
+                  }
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
+                >
+                  {goalFocusFrame?.cta || primaryRecommendation?.cta || "开始今日训练"}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                {needsReview && reviewQueue[0] && (
+                  <Link
+                    href={`/training/history/${reviewQueue[0].id}?revise=1`}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-5 py-2.5 text-body-md font-semibold text-ink transition-all hover:bg-surface active:scale-[0.97]"
+                  >
+                    先复盘上一题
+                    <PenLine className="h-4 w-4" strokeWidth={1.5} />
+                  </Link>
                 )}
               </div>
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                <Target className="h-6 w-6" strokeWidth={1.5} />
-              </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link
-                href={
-                  primaryRecommendation
-                    ? primaryRecommendation.href
-                    : TRAINING_SESSION_ROUTE
-                }
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
-              >
-                {goalFocusFrame?.cta || primaryRecommendation?.cta || "开始今日训练"}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/training/cases"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-transparent px-5 py-2.5 text-body-md font-semibold text-ink transition-all hover:bg-surface active:scale-[0.97]"
-              >
-                去案例库找灵感
-                <BookOpen className="w-4 h-4" strokeWidth={1.5} />
-              </Link>
-            </div>
-          </Card>
-
-          <Card size="lg">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <Badge variant={monthCount > 0 ? "default" : "neutral"}>
-                  本月节奏
-                </Badge>
-                <div className="mt-4 flex items-baseline gap-2">
-                  <p className="font-mono text-data-lg font-bold text-ink">
-                    {monthCount}
+            <aside className="border-b border-line p-5 sm:p-6 lg:border-b-0 lg:border-r">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-label font-bold text-primary">目标作战令</p>
+                  <p className="mt-1 text-body-sm text-ink-muted">
+                    每次训练都要服务这个结果。
                   </p>
-                  <p className="text-heading-sm text-ink-muted">天</p>
                 </div>
-                <p className="mt-1 text-body-sm text-ink-muted">
-                  {monthCount > 0 ? "保持训练节奏，持续补齐薄弱维度" : "从一次训练建立今天的思考手感"}
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                  <Target className="h-5 w-5" strokeWidth={1.5} />
+                </div>
+              </div>
+              <div className="mt-5 space-y-3">
+                <GoalBriefLine
+                  label="目标岗位"
+                  value={latestGoalBrief?.targetRole || "先在工作台填写目标岗位"}
+                />
+                <GoalBriefLine
+                  label="目标场景"
+                  value={latestGoalBrief?.targetScenario || "面试跳槽 / 思维升阶"}
+                />
+                <GoalBriefLine
+                  label="目标期限"
+                  value={latestGoalBrief?.targetDeadline || "未设定期限"}
+                />
+              </div>
+              {primaryRecommendation?.evidence && (
+                <p className="mt-4 rounded-lg bg-primary-soft/60 px-3 py-2 text-label font-semibold leading-relaxed text-primary">
+                  推荐依据：{primaryRecommendation.evidence}
                 </p>
+              )}
+            </aside>
+
+            <aside className="p-5 sm:p-6">
+              <p className="text-label font-bold text-primary">作战顺序</p>
+              <div className="mt-5 space-y-3">
+                <ActionStep
+                  index="01"
+                  label="先复盘"
+                  text={
+                    needsReview
+                      ? `${reviewQueue.filter((item) => item.needsRevision).length} 条回答需要二次修正`
+                      : "暂无待修正回答"
+                  }
+                  active={needsReview}
+                />
+                <ActionStep
+                  index="02"
+                  label="再开题"
+                  text={primaryRecommendation?.cta || "完成一题定向训练"}
+                  active
+                />
+                <ActionStep
+                  index="03"
+                  label="沉淀证据"
+                  text={`${readyAssetCount} 条面试可用资产 / ${evidenceAssets.length} 条训练资产`}
+                  active={evidenceAssets.length > 0}
+                />
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-soft text-secondary">
-                <Flame className="h-5 w-5" strokeWidth={1.5} />
-              </div>
-            </div>
-          </Card>
+            </aside>
+          </div>
         </section>
 
         {/* Compact stats strip */}
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <section className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
           <StatTile
             label="累计完成"
             value={stats?.totalCount ?? "-"}
@@ -339,9 +432,15 @@ export default function TrainingPage() {
             meta="已训练维度"
             icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
           />
+          <StatTile
+            label="本月节奏"
+            value={monthCount}
+            meta="训练天数"
+            icon={<Flame className="h-4 w-4" strokeWidth={1.5} />}
+          />
         </section>
 
-        <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+        <section className="mt-5 rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
           <div className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-label font-bold text-primary">复盘队列</p>
@@ -418,7 +517,7 @@ export default function TrainingPage() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-line bg-white p-4 shadow-xs">
+        <section className="mt-5 rounded-xl border border-line bg-white p-4 shadow-xs">
           <div className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-label font-bold text-primary">能力证据资产</p>
@@ -501,7 +600,7 @@ export default function TrainingPage() {
         </section>
 
         {/* Dimension coverage + Calendar + History */}
-        <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <Card size="md">
             <h3 className="text-heading-sm font-semibold text-ink">维度训练分布</h3>
             <p className="mt-0.5 text-body-sm text-ink-muted">
