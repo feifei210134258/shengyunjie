@@ -59,6 +59,8 @@ async function loadProfileEvidence(supabase: any, userId: string) {
     bootcampInterviews,
     growthSnapshots: growthSnapshots || [],
   });
+  const thinkingAssets = growthProfile.thinkingAssets;
+  const latestThinkingUpgrade = thinkingAssets[0] || null;
   const recommendationPlan = buildRecommendationPlan(growthProfile);
   const latestRecommendation =
     (growthSnapshots || []).find(
@@ -74,6 +76,8 @@ async function loadProfileEvidence(supabase: any, userId: string) {
     recommendationPlan,
     latestRecommendation,
     latestGoalFocus,
+    thinkingAssets,
+    latestThinkingUpgrade,
   };
 }
 

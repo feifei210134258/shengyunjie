@@ -156,6 +156,7 @@ Dashboard 支持用户把“面试跳槽冲刺”或“高级产品思维训练�
 - 项目故事库的项目详情页支持把当前项目故事包沉淀到画像账本：前端调用 `POST /api/profile/summary`，`trigger=project_story_saved`，把项目名、角色、成熟度、证据缺口和 2 分钟讲述稿写入 `growth_snapshots.dimension_scores.__trigger.projectStory`，让可讲项目资产进入后续画像推荐闭环。
 - `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.projectStory` 读回已保存的项目故事包，Dashboard 能力证据账本展示“已入账项目资产”、最新项目名、角色、成熟度和证据缺口，并链接回 `/bootcamp/story-bank` 继续补证据。
 - `buildGrowthProfile` 会从 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 读回已保存的思维升级卡，Dashboard 能力证据账本展示“已入账思维升级”、最新维度和判断/取舍/归因/落地摘要，并链接回对应训练复盘页。
+- `buildRecommendationPlan` 会优先读取最近的 `thinkingAssets`，把最新思维升级卡转成下一题训练处方：标题延续对应维度，理由引用判断/取舍/归因/落地摘要，入口指向 `/training/session?focus=thinking_training`，复盘处方指向原训练复盘页，让“思维升级卡入账 → 下一题迁移练习”形成闭环。
 
 ---
 

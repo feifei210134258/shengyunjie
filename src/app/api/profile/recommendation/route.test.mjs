@@ -24,3 +24,9 @@ test("profile recommendation API reads the latest persisted goal focus", () => {
   assert.match(source, /latestGoalFocus/);
   assert.match(source, /__goalFocus/);
 });
+
+test("profile recommendation API can build plans from saved thinking upgrade assets", () => {
+  assert.match(source, /dimension_scores/);
+  assert.match(source, /thinkingAssets/);
+  assert.match(source, /latestThinkingUpgrade/);
+});

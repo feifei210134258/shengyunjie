@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-08] 推荐处方：思维升级资产反哺下一题
+
+### 完成内容
+- `buildRecommendationPlan` 读取最近 `thinkingAssets`，把已入账思维升级卡转成训练处方，而不是继续只按最弱维度泛化推荐。
+- 训练处方会引用上一张思维升级卡的判断、取舍、归因和落地摘要，入口指向 `/training/session?focus=thinking_training`，引导用户把升级点迁移到下一题。
+- 复盘处方会指回原训练复盘页，方便先回看升级卡的落地要求再继续练。
+- `GET /api/profile/recommendation` 继续从 `growth_snapshots.dimension_scores` 读回画像证据，并额外返回 `thinkingAssets/latestThinkingUpgrade`，供前端调试和后续展示使用；不新增 schema。
+
+### 验证记录
+- TDD 红灯：新增推荐引擎测试先失败于训练处方仍是 `train-strategic_thinking`；新增 API 源测试先失败于缺少 `thinkingAssets/latestThinkingUpgrade`。
+- 已通过：`node --test src/lib/profile/recommendation.test.mjs src/app/api/profile/recommendation/route.test.mjs src/components/training/TrainingOverviewClient.test.mjs feature_list.test.mjs`（13 项）。
+- 已通过：`npx tsc --noEmit`。
+- 后续完整验证见本轮提交说明。
+
 ## [2026-07-08] 思维升级卡：入账画像账本
 
 ### 完成内容

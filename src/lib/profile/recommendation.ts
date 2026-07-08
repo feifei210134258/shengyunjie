@@ -80,6 +80,111 @@ function buildInterviewRecommendation(
   };
 }
 
+function buildTrainingRecommendation({
+  profile,
+  dimensionId,
+  label,
+  focusReason,
+  evidenceLabel,
+}: {
+  profile: GrowthProfile;
+  dimensionId: string;
+  label: string;
+  focusReason: string;
+  evidenceLabel: string;
+}): ProfileRecommendation {
+  const latestThinkingAsset = profile.thinkingAssets[0];
+  if (latestThinkingAsset) {
+    const nextFocus =
+      latestThinkingAsset.judgmentQuality ||
+      latestThinkingAsset.tradeoffQuality ||
+      latestThinkingAsset.attributionDepth ||
+      latestThinkingAsset.landingRigor;
+    const followupReason = [
+      latestThinkingAsset.judgmentQuality,
+      latestThinkingAsset.tradeoffQuality,
+      latestThinkingAsset.attributionDepth,
+      latestThinkingAsset.landingRigor,
+    ]
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("；");
+
+    return {
+      id: `thinking-upgrade-${latestThinkingAsset.snapshotId}`,
+      type: "training",
+      title: `延续 ${latestThinkingAsset.dimensionLabel} 的思维升级`,
+      reason: followupReason
+        ? `上一张思维升级卡指出：${followupReason}。下一题要把这个升级点迁移到新场景。`
+        : `上一张思维升级卡已经入账，下一题要把 ${nextFocus || label} 迁移到新场景。`,
+      href: `/training/session?focus=thinking_training&from=${encodeURIComponent(
+        latestThinkingAsset.trainingRecordId
+      )}`,
+      cta: "继续练这一刀",
+      priority: 1,
+      targetDimension: latestThinkingAsset.dimension || dimensionId,
+      evidence: `思维升级卡 ${latestThinkingAsset.savedAt || "已入账"}`,
+    };
+  }
+
+  return {
+    id: `train-${dimensionId}`,
+    type: "training",
+    title: `先练 ${label} 的真实任务`,
+    reason: `${focusReason} 本轮训练要把判断落到依据、取舍和验证口径。`,
+    href: `/training/session?focus=${encodeURIComponent(dimensionId)}`,
+    cta: "开始训练",
+    priority: 1,
+    targetDimension: dimensionId,
+    evidence: evidenceLabel,
+  };
+}
+
+function buildReviewRecommendation({
+  profile,
+  dimensionId,
+  label,
+}: {
+  profile: GrowthProfile;
+  dimensionId: string;
+  label: string;
+}): ProfileRecommendation {
+  const latestThinkingAsset = profile.thinkingAssets[0];
+  if (latestThinkingAsset) {
+    const reviewCue =
+      latestThinkingAsset.landingRigor ||
+      latestThinkingAsset.attributionDepth ||
+      latestThinkingAsset.tradeoffQuality ||
+      latestThinkingAsset.judgmentQuality;
+
+    return {
+      id: `review-thinking-${latestThinkingAsset.snapshotId}`,
+      type: "review",
+      title: "复查最近的思维升级卡",
+      reason: reviewCue
+        ? `先回看这张卡的落地要求：${reviewCue}，再决定下一题是否真正迁移成功。`
+        : `先回看最近入账的思维升级卡，再决定下一题是否真正迁移成功。`,
+      href: latestThinkingAsset.href,
+      cta: "回看升级卡",
+      priority: 3,
+      targetDimension: latestThinkingAsset.dimension || dimensionId,
+      evidence: `${profile.summary.snapshotCount} 次画像快照`,
+    };
+  }
+
+  return {
+    id: "review-ledger",
+    type: "review",
+    title: "把最近反馈沉淀成复盘动作",
+    reason: `用 ${label} 的反馈更新能力证据账本，再决定下一轮题目。`,
+    href: "/dashboard",
+    cta: "回看证据账本",
+    priority: 3,
+    targetDimension: dimensionId,
+    evidence: `${profile.summary.snapshotCount} 次画像快照`,
+  };
+}
+
 export function buildRecommendationPlan(profile: GrowthProfile): RecommendationPlan {
   const focus = safeDimension(profile);
   const focusReason =
@@ -91,6 +196,18 @@ export function buildRecommendationPlan(profile: GrowthProfile): RecommendationP
   const score = focus?.score || 0;
   const evidenceLabel = getEvidenceLabel(profile);
   const interviewRecommendation = buildInterviewRecommendation(profile, dimensionId);
+  const trainingRecommendation = buildTrainingRecommendation({
+    profile,
+    dimensionId,
+    label,
+    focusReason,
+    evidenceLabel,
+  });
+  const reviewRecommendation = buildReviewRecommendation({
+    profile,
+    dimensionId,
+    label,
+  });
 
   return {
     primaryFocus: {
@@ -100,31 +217,11 @@ export function buildRecommendationPlan(profile: GrowthProfile): RecommendationP
       reason: focusReason,
     },
     recommendations: [
-      {
-        id: `train-${dimensionId}`,
-        type: "training",
-        title: `先练 ${label} 的真实任务`,
-        reason: `${focusReason} 本轮训练要把判断落到依据、取舍和验证口径。`,
-        href: `/training/session?focus=${encodeURIComponent(dimensionId)}`,
-        cta: "开始训练",
-        priority: 1,
-        targetDimension: dimensionId,
-        evidence: evidenceLabel,
-      },
+      trainingRecommendation,
       {
         ...interviewRecommendation,
       },
-      {
-        id: "review-ledger",
-        type: "review",
-        title: "把最近反馈沉淀成复盘动作",
-        reason: `用 ${label} 的反馈更新能力证据账本，再决定下一轮题目。`,
-        href: "/dashboard",
-        cta: "回看证据账本",
-        priority: 3,
-        targetDimension: dimensionId,
-        evidence: `${profile.summary.snapshotCount} 次画像快照`,
-      },
+      reviewRecommendation,
     ],
   };
 }

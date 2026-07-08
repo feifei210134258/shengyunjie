@@ -67,6 +67,7 @@ test("builds an actionable recommendation plan from the growth profile", () => {
       targetDimension: "strategic_thinking",
     },
     storyAssets: [],
+    thinkingAssets: [],
   });
 
   assert.equal(plan.primaryFocus.dimensionId, "strategic_thinking");
@@ -130,6 +131,7 @@ test("turns saved story asset proof gaps into project-specific interview prescri
         href: "/bootcamp/story-bank",
       },
     ],
+    thinkingAssets: [],
   });
 
   const interviewPrescription = plan.recommendations.find(
@@ -141,4 +143,76 @@ test("turns saved story asset proof gaps into project-specific interview prescri
   assert.match(interviewPrescription.reason, /续费提升归因还缺反证/);
   assert.equal(interviewPrescription.href, "/bootcamp/story-bank");
   assert.equal(interviewPrescription.evidence, "项目故事包 8/10");
+});
+
+test("turns saved thinking upgrade cards into the next training prescription", () => {
+  const plan = buildRecommendationPlan({
+    summary: {
+      overallScore: 76,
+      overallGrade: "B",
+      evidenceCount: 10,
+      snapshotCount: 5,
+      lastEvidenceAt: "2026-07-08T11:00:00.000Z",
+    },
+    dimensions: [
+      {
+        id: "strategic_thinking",
+        label: "战略思维",
+        shortLabel: "战略思维",
+        score: 74,
+        grade: "B",
+        diagnosisScore: 76,
+        trainingAverage: 72,
+        evidenceCount: 5,
+        lastEvidenceAt: "2026-07-08T10:00:00.000Z",
+        insight: "判断链路正在形成，但取舍依据还需要更具体。",
+      },
+    ],
+    weakestDimensions: [],
+    strongestDimensions: [],
+    careerReadiness: {
+      label: "还需补项目证据",
+      score: 5,
+      evaluatedInterviewCount: 1,
+      answeredInterviewCount: 2,
+      nextAction: "复盘低分追问，把项目证据补进故事库。",
+    },
+    focusPlan: {
+      title: "优先补强 战略思维",
+      reason: "战略思维需要继续补强取舍和归因。",
+      href: "/training/session",
+      targetDimension: "strategic_thinking",
+    },
+    storyAssets: [],
+    thinkingAssets: [
+      {
+        snapshotId: "snap-thinking-1",
+        savedAt: "2026-07-08",
+        trainingRecordId: "record-1",
+        dimension: "strategic_thinking",
+        dimensionLabel: "战略思维",
+        judgmentQuality: "先判断是否值得做，而不是直接列功能。",
+        tradeoffQuality: "说明为什么先放弃低频客户的定制需求。",
+        attributionDepth: "把增长变化拆成渠道、人群和激活动作。",
+        landingRigor: "用一周灰度和续费风险指标验证。",
+        href: "/training/history/record-1",
+      },
+    ],
+  });
+
+  const trainingPrescription = plan.recommendations.find(
+    (item) => item.type === "training"
+  );
+  const reviewPrescription = plan.recommendations.find(
+    (item) => item.type === "review"
+  );
+
+  assert.equal(trainingPrescription.id, "thinking-upgrade-snap-thinking-1");
+  assert.match(trainingPrescription.title, /延续 战略思维 的思维升级/);
+  assert.match(trainingPrescription.reason, /先判断是否值得做/);
+  assert.match(trainingPrescription.reason, /放弃低频客户/);
+  assert.match(trainingPrescription.href, /thinking_training/);
+  assert.equal(trainingPrescription.evidence, "思维升级卡 2026-07-08");
+  assert.equal(reviewPrescription.href, "/training/history/record-1");
+  assert.match(reviewPrescription.reason, /灰度/);
 });
