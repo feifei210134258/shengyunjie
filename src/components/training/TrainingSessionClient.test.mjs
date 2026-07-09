@@ -71,6 +71,17 @@ test("training session displays and sends the outcome goal brief", () => {
   assert.match(source, /goalBrief: goalBrief \|\| undefined/);
 });
 
+test("training session scaffolds answers around senior PM judgment moves", () => {
+  assert.match(source, /ANSWER_SKELETON_ITEMS/);
+  assert.match(source, /高级 PM 作答骨架/);
+  assert.match(source, /插入判断/);
+  assert.match(source, /插入依据/);
+  assert.match(source, /插入取舍/);
+  assert.match(source, /插入验证/);
+  assert.match(source, /handleInsertAnswerSkeleton/);
+  assert.match(source, /onInsertAnswerSkeleton/);
+});
+
 test("training feedback panel exposes goal-aware assets to the user", () => {
   const panelSource = readFileSync(
     new URL("./TrainingEvaluationPanel.tsx", import.meta.url),

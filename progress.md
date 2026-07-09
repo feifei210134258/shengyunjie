@@ -1,5 +1,28 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练实战页高级 PM 作答骨架
+
+### 背景判断
+- 当前训练页已经有草稿自动保存和“判断、依据、取舍、验证”提交前质检，但用户真正卡住的位置往往发生在写答案的第一分钟：知道要结构化，却不知道先落哪一句。
+- 从第一性原理看，升阶训练和面试强化都不是让用户多刷题，而是把每次回答压成可迁移的高级 PM 判断动作。作答区应该主动提供低摩擦骨架，让用户边写边形成“结论、证据、取舍、验证”的表达肌肉。
+
+### 完成内容
+- `/training/session` 作答区从单一大文本框调整为“答案输入 + 高级 PM 作答骨架”双栏。
+- 新增四个可插入动作：插入判断、插入依据、插入取舍、插入验证。
+- 插入骨架会追加到当前答案，并把草稿状态标记为保存中，继续复用既有 `training_sessions.questions[missionId].draftAnswer` 自动保存链路。
+- 作答占位文案改为“先写结论，再补依据、取舍和验证指标”，让用户先完成高级判断而不是铺陈背景。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：`TrainingSessionClient` 源测试先要求 `ANSWER_SKELETON_ITEMS`、`高级 PM 作答骨架`、四个插入动作和 `handleInsertAnswerSkeleton/onInsertAnswerSkeleton`。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 12 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-09] Feature: Dashboard 资产动作并入指挥舱
 
 ### 背景判断

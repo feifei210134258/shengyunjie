@@ -178,6 +178,37 @@ type ReadinessItem = {
   matched: boolean;
 };
 
+const ANSWER_SKELETON_ITEMS = [
+  {
+    id: "judgment",
+    label: "判断",
+    action: "插入判断",
+    template: "我的判断是：",
+    hint: "先明确选什么、不选什么，别先铺背景。",
+  },
+  {
+    id: "evidence",
+    label: "依据",
+    action: "插入依据",
+    template: "关键依据是：",
+    hint: "补用户、数据、业务目标或约束里的证据。",
+  },
+  {
+    id: "tradeoff",
+    label: "取舍",
+    action: "插入取舍",
+    template: "这里的取舍是：",
+    hint: "写清楚代价、风险和暂时不做的部分。",
+  },
+  {
+    id: "validation",
+    label: "验证",
+    action: "插入验证",
+    template: "我会用这些指标验证：",
+    hint: "用结果指标、过程指标和护栏指标收口。",
+  },
+] as const;
+
 const GOAL_FOCUS_SESSION_FRAMES = {
   interview_sprint: {
     badge: "面试冲刺训练",
@@ -356,6 +387,7 @@ interface RealTrainingProps {
     description: string;
   } | null;
   onAnswerChange: (value: string) => void;
+  onInsertAnswerSkeleton: (template: string) => void;
   onSubmit: () => void;
   onNext: () => void;
   onRegenerate: () => void;
@@ -731,6 +763,7 @@ function A1BeforeSubmit({
   goalBrief,
   goalFocusFrame,
   onAnswerChange,
+  onInsertAnswerSkeleton,
   onSubmit,
   onRegenerate,
   onRestart,
@@ -930,13 +963,45 @@ function A1BeforeSubmit({
                 </div>
               )}
             </div>
-            <textarea
-              value={answerText}
-              onChange={(event) => onAnswerChange(event.target.value)}
-              disabled={answer?.submitting}
-              className="min-h-[170px] w-full resize-none rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-sm leading-7 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-              placeholder="写下你的思考..."
-            />
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <textarea
+                value={answerText}
+                onChange={(event) => onAnswerChange(event.target.value)}
+                disabled={answer?.submitting}
+                className="min-h-[230px] w-full resize-none rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-sm leading-7 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+                placeholder="先写结论，再补依据、取舍和验证指标。"
+              />
+              <aside className="rounded-lg border border-line bg-[#F8FAFC] p-3">
+                <p className="text-label font-bold text-primary">
+                  高级 PM 作答骨架
+                </p>
+                <p className="mt-1 text-label font-semibold leading-relaxed text-ink-muted">
+                  不替你答题，只帮你把思考拆成面试和升阶都能复用的四步。
+                </p>
+                <div className="mt-3 grid gap-2">
+                  {ANSWER_SKELETON_ITEMS.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => onInsertAnswerSkeleton(item.template)}
+                      disabled={answer?.submitting}
+                      className="group rounded-lg border border-line bg-white px-3 py-2 text-left transition hover:border-primary/35 hover:bg-primary-soft/35 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      <span className="flex items-center justify-between gap-2 text-label font-bold text-ink">
+                        {item.action}
+                        <ArrowRight
+                          className="h-3.5 w-3.5 text-ink-faint transition group-hover:translate-x-0.5 group-hover:text-primary"
+                          strokeWidth={1.5}
+                        />
+                      </span>
+                      <span className="mt-1 block text-label font-semibold leading-relaxed text-ink-muted">
+                        {item.label}：{item.hint}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </aside>
+            </div>
             <div className="mt-3 border-t border-line pt-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -2018,6 +2083,21 @@ export default function TrainingSessionClient() {
     }));
   };
 
+  const handleInsertAnswerSkeleton = (template: string) => {
+    setAnswers((prev) => {
+      const existing = prev[currentKey]?.text?.trimEnd() || "";
+      const nextText = existing ? `${existing}\n\n${template}` : template;
+      return {
+        ...prev,
+        [currentKey]: {
+          text: nextText,
+          submitting: false,
+          draftStatus: "saving",
+        },
+      };
+    });
+  };
+
   const handleSubmit = async () => {
     const answerText = answers[currentKey]?.text?.trim();
     const q = questions[currentKey]?.text;
@@ -2479,6 +2559,7 @@ export default function TrainingSessionClient() {
     migrationTarget,
     goalBrief,
     onAnswerChange: handleAnswerChange,
+    onInsertAnswerSkeleton: handleInsertAnswerSkeleton,
     onSubmit: handleSubmit,
     onNext: handleNext,
     onRegenerate: handleRegenerate,
