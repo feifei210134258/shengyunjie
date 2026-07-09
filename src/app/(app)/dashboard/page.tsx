@@ -455,206 +455,263 @@ function PathFirstHero({
       ? `推荐依据：${signals.weakestDimension ?? fallbackFocus}偏弱，近次均分 ${signals.recentAverage}/10`
       : `推荐依据：优先补 ${signals?.weakestDimension ?? fallbackFocus}`;
   const goalFocus = commandCenter?.goalFocus;
+  const dossier = commandCenter?.actionDossier;
+  const pipelineEvidence =
+    dossier?.interviewAmmoPack?.projectName ||
+    dossier?.targetEvidenceDepositAction?.projectName ||
+    dossier?.targetEvidenceAction?.projectName ||
+    dossier?.featuredAsset?.title ||
+    "等待第一份证据";
+  const pipelineSteps = [
+    {
+      label: "目标简报",
+      value:
+        goalBrief?.targetRole || goalBrief?.targetScenario
+          ? `${goalBrief?.targetRole || "未填岗位"} / ${goalBrief?.targetScenario || "未填场景"}`
+          : "先写清目标岗位和训练场景",
+      icon: <Target className="h-4 w-4" strokeWidth={1.5} />,
+    },
+    {
+      label: "今日动作",
+      value: primary.title,
+      icon: getActionIcon(primary.kind),
+    },
+    {
+      label: "证据入账",
+      value:
+        dossier?.interviewAmmoPack?.finalInterviewAnswer
+          ? "终版表达已入账，下一步验证复述稳定度"
+          : dossier?.targetEvidenceDepositAction?.targetEvidence
+            ? "目标证据已修好，等待入账"
+            : dossier?.targetEvidenceAction?.missingEvidence?.[0] ||
+              dossier?.featuredAsset?.proofPoint ||
+              "完成动作后生成可追踪证据",
+      icon: <FileCheck2 className="h-4 w-4" strokeWidth={1.5} />,
+    },
+    {
+      label: "下一步处方",
+      value: dossier?.nextTraining?.title || "根据本次证据刷新下一步",
+      icon: <ListChecks className="h-4 w-4" strokeWidth={1.5} />,
+    },
+  ];
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-line bg-surface-raised shadow-xs">
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
-      <div className="p-5 sm:p-7 xl:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-label font-bold text-primary">结果路径</p>
-            <h1 className="mt-2 max-w-4xl text-[32px] font-bold leading-[1.1] text-ink sm:text-[44px] xl:text-[52px]">
-              今天先选路径：冲面试，还是练判断
-            </h1>
+      <div className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+        <div className="p-5 sm:p-7 xl:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-label font-bold text-primary">今日主动作</p>
+            <span className="rounded-md bg-surface px-2.5 py-1.5 text-label font-semibold text-ink-muted">
+              {getTodayLabel()}
+            </span>
           </div>
-          <span className="rounded-md bg-surface px-2.5 py-1.5 text-label font-semibold text-ink-muted">
-            {getTodayLabel()}
-          </span>
-        </div>
 
-        <p className="mt-5 max-w-3xl text-body-lg leading-relaxed text-ink-muted">
-          面试跳槽需要把项目讲成证据，长期升阶需要把判断练成肌肉。升云阶现在先帮你选结果路径，再把诊断、训练、复盘收进同一条链路。
-        </p>
+          <h1 className="mt-4 max-w-4xl text-[32px] font-bold leading-[1.1] text-ink sm:text-[44px] xl:text-[54px]">
+            {primary.title}
+          </h1>
+          <p className="mt-5 max-w-3xl text-body-lg leading-relaxed text-ink-muted">
+            {primary.description}
+          </p>
 
-        <div className="mt-6 rounded-lg border border-line bg-surface px-4 py-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-label font-bold text-primary">当前主线</p>
-              <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                {goalFocus?.description ||
-                  "先选一个当下最重要的结果目标，系统会把首页顺序、今日建议和证据生产线向这条主线倾斜。"}
+          <div className="mt-6 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="rounded-lg border border-line bg-surface px-4 py-4">
+              <p className="text-label font-bold text-primary">行动理由</p>
+              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                {reasonText}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {paths.map((path) => {
-                const selected = goalFocus?.id === path.id;
-                return (
-                  <button
-                    key={path.id}
-                    onClick={() => onSelectGoalFocus(path.id)}
-                    disabled={Boolean(savingGoalFocus)}
-                    className={cn(
-                      "inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-label font-bold transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
-                      selected
-                        ? "border-primary bg-primary text-white"
-                        : "border-line-strong bg-surface-raised text-ink hover:bg-surface-hover"
-                    )}
-                  >
-                    {savingGoalFocus === path.id
-                      ? "保存中"
-                      : selected
-                        ? "当前主线"
-                        : "设为主线"}
-                    <span className={selected ? "text-white/80" : "text-ink-muted"}>
-                      {path.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-line bg-white px-4 py-4">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
-            <div className="min-w-[180px] flex-1">
-              <p className="text-label font-bold text-primary">目标简报</p>
-              <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                {goalBrief?.targetRole || goalBrief?.targetScenario
-                  ? `已读回：${goalBrief.targetRole || "未填岗位"} / ${
-                      goalBrief.targetScenario || "未填场景"
-                    } / ${goalBrief.targetDeadline || "未填期限"}`
-                  : "把当前面试目标或业务训练目标写清楚，后续推荐会围绕这个结果收敛。"}
+            <div className="rounded-lg border border-line bg-white px-4 py-4">
+              <p className="text-label font-bold text-ink-muted">完成后入账</p>
+              <p className="mt-2 text-body-sm leading-relaxed text-ink">
+                {dossier?.interviewAmmoPack
+                  ? "复述稳定度会回写能力证据账本"
+                  : dossier?.targetEvidenceDepositAction
+                    ? "目标证据会写入画像账本"
+                    : "训练反馈会刷新下一步处方"}
               </p>
             </div>
-            <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
-              目标岗位
-              <input
-                value={goalBriefDraft.targetRole}
-                onChange={(event) =>
-                  onGoalBriefChange("targetRole", event.target.value)
-                }
-                className="h-10 w-full min-w-[180px] rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                placeholder="高级 B 端产品经理"
-              />
-            </label>
-            <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
-              目标场景
-              <input
-                value={goalBriefDraft.targetScenario}
-                onChange={(event) =>
-                  onGoalBriefChange("targetScenario", event.target.value)
-                }
-                className="h-10 w-full min-w-[220px] rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                placeholder="面试跳槽 / 平台化能力补强"
-              />
-            </label>
-            <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
-              目标期限
-              <input
-                value={goalBriefDraft.targetDeadline}
-                onChange={(event) =>
-                  onGoalBriefChange("targetDeadline", event.target.value)
-                }
-                className="h-10 w-full min-w-[140px] rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                placeholder="30 天内"
-              />
-            </label>
-            <button
-              onClick={onSaveGoalBrief}
-              disabled={savingGoalBrief}
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-ink px-4 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-            >
-              {savingGoalBrief ? "保存中" : "保存目标简报"}
-            </button>
           </div>
-        </div>
 
-        <div className="mt-8 grid gap-4 lg:grid-cols-2">
-          {paths.map((path) => (
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
-              key={path.id}
-              href={path.href}
-              className={cn(
-                "group flex min-h-[270px] flex-col rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99]",
-                path.emphasis === "career"
-                  ? "border-primary/20 bg-primary-soft/70 hover:border-primary/35"
-                  : "border-secondary/25 bg-secondary-soft/45 hover:border-secondary/45"
-              )}
+              href={primary.href}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-body-sm font-bold text-white transition-all hover:bg-primary/90 active:scale-[0.98]"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-label font-bold text-ink-muted">
-                    {path.statusLabel}
-                  </p>
-                  <h2 className="mt-2 text-heading-lg font-bold text-ink">
-                    {path.label}
-                  </h2>
-                </div>
-                <div
-                  className={cn(
-                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
-                    path.emphasis === "career"
-                      ? "bg-primary text-white"
-                      : "bg-secondary text-white"
-                  )}
-                >
-                  {path.emphasis === "career" ? (
-                    <FileCheck2 className="h-5 w-5" strokeWidth={1.5} />
-                  ) : (
-                    <Target className="h-5 w-5" strokeWidth={1.5} />
-                  )}
-                </div>
-              </div>
-
-              <p className="mt-5 max-w-xl text-body-md leading-relaxed text-ink-muted">
-                {path.promise}
-              </p>
-              <p className="mt-4 text-body-sm leading-relaxed text-ink">
-                {path.nextStep}
-              </p>
-
-              <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-6">
-                <span className="rounded-md bg-white/70 px-3 py-1.5 text-label font-bold text-ink-muted">
-                  {path.evidenceLabel}
-                </span>
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-body-sm font-bold text-white transition-all group-hover:translate-x-0.5",
-                    path.emphasis === "career" ? "bg-primary" : "bg-secondary"
-                  )}
-                >
-                  {path.primaryAction}
-                  <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-                </span>
-              </div>
+              {getActionIcon(primary.kind)}
+              {primary.cta}
+              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
             </Link>
-          ))}
-        </div>
-
-        <div className="mt-5 flex flex-col gap-4 rounded-lg bg-surface px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-label font-bold text-ink-muted">今日系统建议</p>
-            <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-              {primary.description} {reasonText}
-            </p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-label font-semibold text-ink-faint">
+              <span>训练 {stats?.totalCount ?? 0} 次</span>
+              <span>连击 {stats?.streak ?? 0} 天</span>
+              <span>今日 {stats?.todayCount ?? 0} 题</span>
+              <span>
+                诊断 {latestReport?.overall_score ?? "-"}
+                {latestReport?.overall_grade ? ` ${latestReport.overall_grade}` : ""}
+              </span>
+            </div>
           </div>
-          <Link
-            href={primary.href}
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface-raised px-4 py-2.5 text-body-sm font-bold text-ink transition-all hover:bg-surface-hover active:scale-[0.98]"
-          >
-            {getActionIcon(primary.kind)}
-            {primary.cta}
-            <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-          </Link>
+
+          <div className="mt-7 rounded-lg border border-line bg-surface px-4 py-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-label font-bold text-primary">当前主线</p>
+                <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                  {goalFocus?.description ||
+                    "先选一个当下最重要的结果目标，系统会把今日动作和证据流水线向这条主线倾斜。"}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {paths.map((path) => {
+                  const selected = goalFocus?.id === path.id;
+                  return (
+                    <button
+                      key={path.id}
+                      onClick={() => onSelectGoalFocus(path.id)}
+                      disabled={Boolean(savingGoalFocus)}
+                      className={cn(
+                        "inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-label font-bold transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+                        selected
+                          ? "border-primary bg-primary text-white"
+                          : "border-line-strong bg-surface-raised text-ink hover:bg-surface-hover"
+                      )}
+                    >
+                      {savingGoalFocus === path.id
+                        ? "保存中"
+                        : selected
+                          ? "当前主线"
+                          : "设为主线"}
+                      <span className={selected ? "text-white/80" : "text-ink-muted"}>
+                        {path.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="mt-4 grid gap-2 md:grid-cols-2">
+              {paths.map((path) => (
+                <Link
+                  key={path.id}
+                  href={path.href}
+                  className="group rounded-lg border border-line bg-surface-raised px-4 py-3 transition-all hover:bg-surface-hover active:scale-[0.99]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-label font-bold text-ink-muted">
+                        {path.statusLabel}
+                      </p>
+                      <p className="mt-1 text-body-md font-bold text-ink">
+                        {path.label}
+                      </p>
+                    </div>
+                    <ArrowRight
+                      className="h-4 w-4 shrink-0 text-ink-faint transition-all group-hover:translate-x-0.5"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-lg border border-line bg-white px-4 py-4">
+            <div className="grid gap-4 xl:grid-cols-[minmax(180px,1fr)_minmax(160px,0.7fr)_minmax(200px,0.9fr)_minmax(140px,0.6fr)_auto] xl:items-end">
+              <div>
+                <p className="text-label font-bold text-primary">目标简报</p>
+                <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                  {goalBrief?.targetRole || goalBrief?.targetScenario
+                    ? `已读回：${goalBrief.targetRole || "未填岗位"} / ${
+                        goalBrief.targetScenario || "未填场景"
+                      } / ${goalBrief.targetDeadline || "未填期限"}`
+                    : "把当前面试目标或业务训练目标写清楚，推荐会围绕这个结果收敛。"}
+                </p>
+              </div>
+              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
+                目标岗位
+                <input
+                  value={goalBriefDraft.targetRole}
+                  onChange={(event) =>
+                    onGoalBriefChange("targetRole", event.target.value)
+                  }
+                  className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  placeholder="高级 B 端产品经理"
+                />
+              </label>
+              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
+                目标场景
+                <input
+                  value={goalBriefDraft.targetScenario}
+                  onChange={(event) =>
+                    onGoalBriefChange("targetScenario", event.target.value)
+                  }
+                  className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  placeholder="面试跳槽 / 平台化能力补强"
+                />
+              </label>
+              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
+                目标期限
+                <input
+                  value={goalBriefDraft.targetDeadline}
+                  onChange={(event) =>
+                    onGoalBriefChange("targetDeadline", event.target.value)
+                  }
+                  className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  placeholder="30 天内"
+                />
+              </label>
+              <button
+                onClick={onSaveGoalBrief}
+                disabled={savingGoalBrief}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-ink px-4 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              >
+                {savingGoalBrief ? "保存中" : "保存目标简报"}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-label font-semibold text-ink-faint">
-          <span>训练 {stats?.totalCount ?? 0} 次</span>
-          <span>连击 {stats?.streak ?? 0} 天</span>
-          <span>今日 {stats?.todayCount ?? 0} 题</span>
-          <span>诊断 {latestReport?.overall_score ?? "-"}{latestReport?.overall_grade ? ` ${latestReport.overall_grade}` : ""}</span>
-        </div>
+        <aside className="border-t border-line bg-ink px-5 py-6 text-white sm:px-7 xl:border-l xl:border-t-0 xl:px-7 xl:py-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-label font-bold text-white/65">资产流水线</p>
+              <h2 className="mt-2 text-heading-md font-bold">
+                目标简报 → 今日动作 → 证据入账 → 下一步处方
+              </h2>
+            </div>
+            <ShieldCheck className="h-5 w-5 shrink-0 text-white/55" strokeWidth={1.5} />
+          </div>
+          <div className="mt-5 rounded-lg border border-white/12 bg-white/8 px-4 py-4">
+            <p className="text-label font-bold text-white/55">当前资产</p>
+            <p className="mt-1 text-heading-sm font-bold">{pipelineEvidence}</p>
+          </div>
+          <div className="mt-5 space-y-3">
+            {pipelineSteps.map((step, index) => (
+              <div
+                key={step.label}
+                className="grid grid-cols-[34px_minmax(0,1fr)] gap-3 rounded-lg bg-white/8 px-3 py-3"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/12 text-white">
+                  {step.icon}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-label font-bold text-white/45">
+                      0{index + 1}
+                    </span>
+                    <p className="text-label font-bold text-white/68">
+                      {step.label}
+                    </p>
+                  </div>
+                  <p className="mt-1 text-body-sm leading-relaxed text-white/86">
+                    {step.value}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
       </div>
     </section>
   );

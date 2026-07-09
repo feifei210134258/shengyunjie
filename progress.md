@@ -1,5 +1,26 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: Dashboard 今日主动作指挥舱
+
+### 背景判断
+- 当前产品的核心任务不是让用户在模块之间浏览，而是帮助准备跳槽和升阶的产品经理每天完成一个最高杠杆动作，并把动作转成可追踪证据。
+- 原 Dashboard 首屏的双路径大卡片仍然偏“选择入口”，会分散用户注意力。更合理的首屏是：今日只推一个主动作，说明为什么做，做完如何入账，以及下一步处方如何刷新。
+
+### 完成内容
+- Dashboard 首屏从“面试跳槽冲刺 / 高级产品思维训练”两张大路径卡，改为“今日主动作”指挥舱。
+- 主 CTA 直接使用 `commandCenter.primary.href` 和 `commandCenter.primary.cta`，保留后端处方驱动。
+- 新增“行动理由”和“完成后入账”区块，把推荐依据与证据落账结果放到行动前。
+- 路径选择保留为紧凑“当前主线 / 设为主线”，不再作为首屏最大视觉权重。
+- 右侧新增“资产流水线”，用“目标简报 → 今日动作 → 证据入账 → 下一步处方”呈现学习强化和面试资产的闭环。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：Dashboard 页面测试先失败于缺少“今日主动作”，并断言旧 `min-h-[270px]` 大路径卡必须移除。
+- GREEN：`node --test 'src/app/(app)/dashboard/page.test.mjs'` 通过 15 项。
+- 相关回归：`node --test src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs` 通过 27 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过。
+
 ## [2026-07-09] Feature: 终版表达复述稳定度入账
 
 ### 背景判断
