@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 入账目标证据驱动模拟追问
+
+### 背景判断
+- 目标证据入账后，推荐引擎仍会把 `storyAssets[0]` 统一转成“补项目证据”，容易让用户回到已完成缺口。
+- 面试跳槽冲刺的下一步应该是验证这段证据是否经得起高压追问，而不是继续重复补同一条材料。
+
+### 完成内容
+- `buildRecommendationPlan` 在项目故事资产已包含 `targetEvidence` 且 `targetFit.missingEvidence` / `proofGaps` 为空时，生成 `story-validate-*` 面试处方。
+- 新处方指向 `/bootcamp/interview`，CTA 为“进入模拟追问”，理由引用已入账目标证据和目标简报。
+- 保留原有缺口分支：只要仍有 `targetFit.missingEvidence` 或 `proofGaps`，继续生成“补项目证据”处方。
+- Dashboard 训练处方说明同步更新：项目故事包入账后先补证据，证据齐了推进到模拟追问验证。
+
+### 验证记录
+- TDD 红灯：推荐测试先失败于 `story-gap-*`，说明已入账目标证据仍被当作补证据缺口；Dashboard 页面源测试先失败于缺少“模拟追问验证”文案。
+- GREEN：`node --test src/lib/profile/recommendation.test.mjs` 通过 5 项；`node --test 'src/app/(app)/dashboard/page.test.mjs'` 通过 11 项。
+- 回归：`node --test src/lib/profile/recommendation.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/app/api/profile/recommendation/route.test.mjs src/app/api/profile/summary/route.test.mjs src/lib/profile/growth-profile.test.mjs feature_list.test.mjs` 通过 36 项。
+- `npx tsc --noEmit`、针对性 ESLint、`feature_list.json` 解析、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-09] Feature: Dashboard 一键入账目标证据
 
 ### 背景判断

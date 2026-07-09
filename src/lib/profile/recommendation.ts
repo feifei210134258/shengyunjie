@@ -77,6 +77,12 @@ function withGoalBriefTitle(title: string, goalBrief?: GoalBrief) {
   return targetRole ? `围绕 ${targetRole}，${title}` : title;
 }
 
+function compactText(value: unknown, maxLength = 120) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength)}…`;
+}
+
 function buildInterviewRecommendation(
   profile: GrowthProfile,
   targetDimension: string,
@@ -97,6 +103,26 @@ function buildInterviewRecommendation(
       (latestStoryAsset.readinessScore == null
         ? "项目故事包已入账"
         : `项目故事包 ${latestStoryAsset.readinessScore}/10`);
+
+    if (!firstGap && latestStoryAsset.targetEvidence) {
+      return {
+        id: `story-validate-${latestStoryAsset.snapshotId}`,
+        type: "interview",
+        title: withGoalBriefTitle(
+          `验证 ${latestStoryAsset.projectName} 的高压追问`,
+          goalBrief
+        ),
+        reason: withGoalBriefReason(
+          `目标证据已入账：${compactText(latestStoryAsset.targetEvidence)}。下一步不要再补同一条证据，直接用模拟追问验证它是否经得起深挖。`,
+          goalBrief
+        ),
+        href: "/bootcamp/interview",
+        cta: "进入模拟追问",
+        priority: 2,
+        targetDimension,
+        evidence: readinessLabel,
+      };
+    }
 
     return {
       id: `story-gap-${latestStoryAsset.snapshotId}`,

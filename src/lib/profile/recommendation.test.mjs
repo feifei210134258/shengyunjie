@@ -151,6 +151,88 @@ test("turns saved story asset proof gaps into project-specific interview prescri
   assert.equal(interviewPrescription.evidence, "优先讲 · 目标匹配 9/10");
 });
 
+test("turns ledgered target evidence into a high-pressure interview validation prescription", () => {
+  const plan = buildRecommendationPlan(
+    {
+      summary: {
+        overallScore: 82,
+        overallGrade: "B",
+        evidenceCount: 14,
+        snapshotCount: 5,
+        lastEvidenceAt: "2026-07-09T10:00:00.000Z",
+      },
+      dimensions: [
+        {
+          id: "commercial_thinking",
+          label: "商业思维",
+          shortLabel: "商业",
+          score: 78,
+          grade: "B",
+          diagnosisScore: 76,
+          trainingAverage: 80,
+          evidenceCount: 6,
+          lastEvidenceAt: "2026-07-09T09:00:00.000Z",
+          insight: "续费增长证据已经形成，下一步需要高压追问验证。",
+        },
+      ],
+      weakestDimensions: [],
+      strongestDimensions: [],
+      careerReadiness: {
+        label: "可进入高压追问",
+        score: 8,
+        evaluatedInterviewCount: 4,
+        answeredInterviewCount: 5,
+        nextAction: "用模拟追问检查项目故事是否经得起深挖。",
+      },
+      focusPlan: {
+        title: "优先补强 商业思维",
+        reason: "商业思维需要继续验证续费归因。",
+        href: "/training/session",
+        targetDimension: "commercial_thinking",
+      },
+      storyAssets: [
+        {
+          snapshotId: "snap-story-ledgered",
+          savedAt: "2026-07-09",
+          projectName: "客户健康度评分系统",
+          company: "云杉科技",
+          role: "产品负责人",
+          readinessScore: 9,
+          targetEvidence:
+            "我用客户健康度模型提前识别续费风险，推动 CS 分层跟进，续费率提升 8.6%。",
+          proofGaps: [],
+          targetFit: {
+            score: 9,
+            priorityLabel: "优先讲",
+            reason: "目标证据已修好，可支撑 SaaS 续费增长负责人面试。",
+            missingEvidence: [],
+          },
+          scriptPreview: "我负责客户健康度评分系统。",
+          href: "/bootcamp/story-bank",
+        },
+      ],
+      thinkingAssets: [],
+    },
+    {
+      targetRole: "B 端高级产品经理",
+      targetScenario: "SaaS 续费增长负责人面试",
+      targetDeadline: "两周内",
+    }
+  );
+
+  const interviewPrescription = plan.recommendations.find(
+    (item) => item.type === "interview"
+  );
+
+  assert.equal(interviewPrescription.id, "story-validate-snap-story-ledgered");
+  assert.match(interviewPrescription.title, /验证 客户健康度评分系统 的高压追问/);
+  assert.match(interviewPrescription.reason, /目标证据已入账/);
+  assert.match(interviewPrescription.reason, /续费率提升 8\.6%/);
+  assert.equal(interviewPrescription.href, "/bootcamp/interview");
+  assert.equal(interviewPrescription.cta, "进入模拟追问");
+  assert.equal(interviewPrescription.evidence, "优先讲 · 目标匹配 9/10");
+});
+
 test("turns saved thinking upgrade cards into the next training prescription", () => {
   const plan = buildRecommendationPlan({
     summary: {
