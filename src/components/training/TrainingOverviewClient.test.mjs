@@ -41,6 +41,19 @@ test("training overview merges review and evidence into one asset workflow", () 
   assert.doesNotMatch(source, /lg:grid-cols-5/);
 });
 
+test("training overview demotes rhythm and archive into one compact support panel", () => {
+  assert.match(source, /TrainingRhythmPanel/);
+  assert.match(source, /训练节奏与归因/);
+  assert.match(source, /维度偏移/);
+  assert.match(source, /本月节奏/);
+  assert.match(source, /最近归档/);
+  assert.match(source, /辅助信息，不抢主动作/);
+  assert.doesNotMatch(source, /维度训练分布/);
+  assert.doesNotMatch(source, /本月训练概览/);
+  assert.doesNotMatch(source, /复盘归档/);
+  assert.doesNotMatch(source, /lg:grid-cols-3/);
+});
+
 test("training overview adapts the primary training frame to the persisted goal focus", () => {
   assert.match(source, /latestGoalFocus/);
   assert.match(source, /goalFocusFrame/);

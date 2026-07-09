@@ -1,5 +1,27 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练首页节奏归因面板
+
+### 背景判断
+- 训练首页首屏、行动证据带和训练资产流水线已经收束为行动链，但页面底部仍保留“维度训练分布 / 本月训练概览 / 复盘归档”三张并列卡片。
+- 从第一性原理看，这些信息只是节奏校准和归因辅助，不应该像功能模块一样并列出现，更不该让用户从主动作和流水线中分心。
+
+### 完成内容
+- `/training` 新增 `TrainingRhythmPanel`。
+- 将维度覆盖、月历和最近记录合并为“训练节奏与归因”辅助面板。
+- 维度统计改名为“维度偏移”，月历改名为“本月节奏”，最近记录改名为“最近归档”。
+- 明确文案“辅助信息，不抢主动作”，把底部区块降级为主动作后的校准信息。
+- 删除原 `lg:grid-cols-3` 三卡结构，以及“维度训练分布 / 本月训练概览 / 复盘归档”旧文案。
+- 继续复用既有 `/api/training/stats` 和 `/api/training/sessions` 数据，不新增 schema 或 API。
+
+### 验证记录
+- TDD 红灯：`TrainingOverviewClient` 源测试先失败于缺少 `TrainingRhythmPanel / 训练节奏与归因 / 维度偏移 / 本月节奏 / 最近归档 / 辅助信息，不抢主动作`，并捕获旧三卡文案和 `lg:grid-cols-3`。
+- GREEN：`node --test src/components/training/TrainingOverviewClient.test.mjs` 通过 10 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingOverviewClient.tsx src/components/training/TrainingOverviewClient.test.mjs --max-warnings 0` 通过。
+- `npm run build` 通过。
+- `./init.sh` 单独复跑通过，环境健康检查 10/10。
+
 ## [2026-07-09] Feature: 历史复盘页处理台
 
 ### 背景判断

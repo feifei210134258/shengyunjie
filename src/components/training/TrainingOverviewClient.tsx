@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   DIMENSION_COLORS,
@@ -416,6 +415,213 @@ function TrainingAssetWorkflow({
   );
 }
 
+function TrainingRhythmPanel({
+  stats,
+  year,
+  month,
+  monthCount,
+  trainedDays,
+  daysInMonth,
+  firstDayOfWeek,
+  todayStr,
+  onPrevMonth,
+  onNextMonth,
+}: {
+  stats: TrainingStats | null;
+  year: number;
+  month: number;
+  monthCount: number;
+  trainedDays: number[];
+  daysInMonth: number;
+  firstDayOfWeek: number;
+  todayStr: string;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
+}) {
+  const dimensionItems = Object.entries(DIM_LABELS).map(([key, label]) => {
+    const count = stats?.dimStats?.[key] ?? 0;
+    const total = stats?.totalCount ?? 1;
+    const pct = Math.min(Math.round((count / Math.max(total, 1)) * 100), 100);
+    const color = DIMENSION_COLORS[key] || "#4338CA";
+    return { key, label, count, pct, color };
+  });
+
+  return (
+    <section className="mt-5 rounded-xl border border-line bg-white p-4 shadow-xs">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div>
+          <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-label font-bold text-primary">
+                训练节奏与归因
+              </p>
+              <h3 className="mt-1 text-heading-md font-bold text-ink">
+                辅助信息，不抢主动作
+              </h3>
+              <p className="mt-1 max-w-2xl text-body-sm leading-relaxed text-ink-muted">
+                这里只帮助判断训练有没有偏科、节奏是否断档，以及最近归档是否需要回看。
+              </p>
+            </div>
+            <Link
+              href="/training/cases"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-4 py-2.5 text-body-sm font-semibold text-ink transition hover:bg-surface active:scale-[0.98]"
+            >
+              做推演
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+            <div className="rounded-lg bg-surface px-4 py-3">
+              <p className="text-label font-bold text-primary">维度偏移</p>
+              <div className="mt-4 space-y-2.5">
+                {dimensionItems.map((item) => (
+                  <div key={item.key} className="grid grid-cols-[4rem_1fr_2rem] items-center gap-2">
+                    <span className="truncate text-body-sm text-ink-muted">
+                      {item.label}
+                    </span>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-line">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${item.pct}%`,
+                          backgroundColor: item.color,
+                        }}
+                      />
+                    </div>
+                    <span className="text-right font-mono text-body-sm text-ink-muted">
+                      {item.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-surface px-4 py-3">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-label font-bold text-primary">本月节奏</p>
+                  <p className="mt-1 text-body-sm text-ink-muted">
+                    {year}年{month}月 / 已训练 {monthCount} 天
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={onPrevMonth}
+                    className="rounded-lg p-1.5 transition-colors hover:bg-white"
+                    aria-label="上个月"
+                  >
+                    <ChevronLeft className="h-4 w-4 text-ink-muted" />
+                  </button>
+                  <span className="px-2 text-label font-bold text-ink">
+                    {month}月
+                  </span>
+                  <button
+                    onClick={onNextMonth}
+                    className="rounded-lg p-1.5 transition-colors hover:bg-white"
+                    aria-label="下个月"
+                  >
+                    <ChevronRight className="h-4 w-4 text-ink-muted" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-7 text-center text-label font-semibold text-ink-faint">
+                {WEEKDAYS.map((day) => (
+                  <div key={day} className="py-1">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-0.5">
+                {Array.from({ length: firstDayOfWeek }, (_, index) => (
+                  <div key={`pad-${index}`} className="h-8" />
+                ))}
+                {Array.from({ length: daysInMonth }, (_, index) => {
+                  const day = index + 1;
+                  const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const isToday = dateStr === todayStr;
+                  const isTrained = trainedDays.includes(day);
+                  const isFuture = dateStr > todayStr;
+                  return (
+                    <div
+                      key={day}
+                      className={`flex h-8 items-center justify-center rounded-lg text-body-sm transition-colors ${
+                        isToday
+                          ? "bg-primary font-bold text-white ring-4 ring-primary/15"
+                          : isTrained
+                            ? "bg-secondary-soft font-bold text-secondary"
+                            : isFuture
+                              ? "text-ink-faint"
+                              : "text-ink-muted"
+                      }`}
+                    >
+                      {day}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside className="rounded-lg bg-surface px-4 py-3">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-label font-bold text-primary">最近归档</p>
+              <p className="mt-1 text-body-sm text-ink-muted">
+                只保留最近 4 条，更多从流水线进入。
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            {stats?.recent && stats.recent.length > 0 ? (
+              stats.recent.slice(0, 4).map((record) => {
+                const isCase = record.ai_feedback?.source === "case_simulation";
+                const score10 = formatScore10(record.score);
+                return (
+                  <Link
+                    key={record.id}
+                    href={`/training/history/${record.id}`}
+                    className="group block rounded-lg border border-line bg-white p-3 transition hover:border-line-strong hover:bg-surface-raised"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent transition-transform group-hover:scale-105">
+                        <BookOpen className="h-4 w-4" strokeWidth={1.5} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
+                            {isCase ? "案例推演" : record.dimension}
+                          </span>
+                          {score10 != null && (
+                            <span className="rounded-md bg-primary-soft px-2 py-0.5 text-label font-semibold text-primary">
+                              {score10}/10
+                            </span>
+                          )}
+                        </div>
+                        <p className="line-clamp-2 text-body-sm font-semibold text-ink">
+                          {record.question_scenario.replace(/\n/g, " ").slice(0, 72)}
+                          {record.question_scenario.length > 72 ? "..." : ""}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              <p className="rounded-lg border border-dashed border-line bg-white px-4 py-6 text-center text-body-sm text-ink-muted">
+                还没有训练记录，完成第一题后会出现归档。
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
 export default function TrainingPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -653,179 +859,18 @@ export default function TrainingPage() {
           evidenceAssets={evidenceAssets}
         />
 
-        {/* Dimension coverage + Calendar + History */}
-        <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Card size="md">
-            <h3 className="text-heading-sm font-semibold text-ink">维度训练分布</h3>
-            <p className="mt-0.5 text-body-sm text-ink-muted">
-              查看训练是否过度集中在某一类题目。
-            </p>
-            <div className="mt-5 space-y-2.5">
-              {Object.entries(DIM_LABELS).map(([key, label]) => {
-                const count = stats?.dimStats?.[key] ?? 0;
-                const total = stats?.totalCount ?? 1;
-                const pct = Math.min(
-                  Math.round((count / Math.max(total, 1)) * 100),
-                  100
-                );
-                const color = DIMENSION_COLORS[key] || "#4338CA";
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="w-16 truncate text-body-sm text-ink-muted">
-                      {label}
-                    </span>
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor: color,
-                        }}
-                      />
-                    </div>
-                    <span className="w-8 text-right font-mono text-body-sm text-ink-muted">
-                      {count}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-
-          {/* Calendar */}
-          <Card size="md">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-heading-md font-semibold text-ink">本月训练概览</h3>
-                <p className="text-body-sm text-ink-muted mt-0.5">
-                  {year}年{month}月 / 本月已训练 {monthCount} 天
-                </p>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={prevMonth}
-                  className="p-1.5 hover:bg-surface rounded-lg transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4 text-ink-muted" />
-                </button>
-                <span className="text-label font-bold px-3 text-ink">
-                  {month}月
-                </span>
-                <button
-                  onClick={nextMonth}
-                  className="p-1.5 hover:bg-surface rounded-lg transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4 text-ink-muted" />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-7 text-center text-label font-semibold text-ink-faint mb-2">
-              {WEEKDAYS.map((d) => (
-                <div key={d} className="py-1">
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7">
-              {Array.from({ length: firstDayOfWeek }, (_, i) => (
-                <div key={`pad-${i}`} className="h-10" />
-              ))}
-              {Array.from({ length: daysInMonth }, (_, i) => {
-                const day = i + 1;
-                const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                const isToday = dateStr === todayStr;
-                const isTrained = trainedDays.includes(day);
-                const isFuture = dateStr > todayStr;
-                return (
-                  <div
-                    key={day}
-                    className={`h-10 flex items-center justify-center text-body-sm rounded-xl transition-colors ${
-                      isToday
-                        ? "bg-primary text-white font-bold ring-4 ring-primary/15"
-                        : isTrained
-                          ? "bg-secondary-soft text-secondary font-bold"
-                          : isFuture
-                            ? "text-ink-faint"
-                            : "text-ink-muted"
-                    }`}
-                  >
-                    {day}
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-
-          {/* Review archive */}
-          <Card size="md">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h4 className="text-heading-sm font-semibold text-ink">
-                  复盘归档
-                </h4>
-                <p className="mt-0.5 text-body-sm text-ink-muted">
-                  训练和案例推演会自动沉淀到这里。
-                </p>
-              </div>
-              <Link
-                href="/training/cases"
-                className="text-label font-bold text-primary hover:text-primary-hover"
-              >
-                做推演
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {stats?.recent && stats.recent.length > 0 ? (
-                stats.recent.slice(0, 6).map((r) => {
-                  const isCase = r.ai_feedback?.source === "case_simulation";
-                  const score10 =
-                    typeof r.score === "number"
-                      ? Math.round((r.score / 10) * 10) / 10
-                      : null;
-                  return (
-                  <Link
-                    key={r.id}
-                    href={`/training/history/${r.id}`}
-                    className="block rounded-xl border border-line bg-surface-raised p-3 transition-all hover:border-line-strong hover:bg-surface group"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent transition-transform group-hover:scale-105">
-                        <BookOpen className="w-4 h-4" strokeWidth={1.5} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
-                            {isCase ? "案例推演" : r.dimension}
-                          </span>
-                          {score10 != null && (
-                            <span className="rounded-md bg-primary-soft px-2 py-0.5 text-label font-semibold text-primary">
-                              {score10}/10
-                            </span>
-                          )}
-                        </div>
-                        <p className="line-clamp-2 text-body-sm font-semibold text-ink">
-                          {r.question_scenario.replace(/\n/g, " ").slice(0, 68)}
-                          {r.question_scenario.length > 68 ? "..." : ""}
-                        </p>
-                        <p className="mt-1 text-body-sm text-ink-muted">
-                          {r.ai_feedback?.next_practice ||
-                            new Date(r.created_at).toLocaleDateString("zh-CN")}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                );
-                })
-              ) : (
-                <p className="text-body-sm text-ink-muted text-center py-8">
-                  还没有训练记录，去完成第一题吧
-                </p>
-              )}
-            </div>
-          </Card>
-        </section>
+        <TrainingRhythmPanel
+          stats={stats}
+          year={year}
+          month={month}
+          monthCount={monthCount}
+          trainedDays={trainedDays}
+          daysInMonth={daysInMonth}
+          firstDayOfWeek={firstDayOfWeek}
+          todayStr={todayStr}
+          onPrevMonth={prevMonth}
+          onNextMonth={nextMonth}
+        />
       </div>
     </>
   );
