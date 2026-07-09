@@ -12,6 +12,7 @@ type TargetEvidenceFocus = {
   company: string;
   role: string;
   targetEvidence: string;
+  finalInterviewAnswer?: string;
   targetFit?: {
     score: number | null;
     priorityLabel: string;
@@ -79,13 +80,15 @@ function readProjectStoryFromSnapshot(snapshot: any) {
   if (!projectStory || typeof projectStory !== "object") return null;
   const projectName = compactText(projectStory.projectName, 120);
   const targetEvidence = compactText(projectStory.targetEvidence, 600);
-  if (!projectName || !targetEvidence) return null;
+  const finalInterviewAnswer = compactText(projectStory.finalInterviewAnswer, 900);
+  if (!projectName || (!targetEvidence && !finalInterviewAnswer)) return null;
 
   return {
     projectName,
     company: compactText(projectStory.company, 120),
     role: compactText(projectStory.role, 160),
     targetEvidence,
+    finalInterviewAnswer,
     targetFit:
       projectStory.targetFit && typeof projectStory.targetFit === "object"
         ? {
@@ -186,10 +189,14 @@ function getTargetEvidenceQuestions(
   const difficulty = Math.min(Math.max(dayNumber + 2, 2), 5);
   const projectName = targetEvidenceFocus.projectName;
   const targetEvidence = targetEvidenceFocus.targetEvidence;
+  const finalInterviewAnswer = targetEvidenceFocus.finalInterviewAnswer;
+  const openingQuestion = finalInterviewAnswer
+    ? `终版表达复述：请先用 90 秒复述「${projectName}」这段终版面试表达：${finalInterviewAnswer}。复述后说明你最怕被追问的一个点，以及你准备用哪条证据守住它。`
+    : `目标证据追问：你说「${projectName}」里 ${targetEvidence}。这个结果为什么能归因到你的产品判断，而不是客户结构、销售动作或运营跟进带来的？`;
 
   return [
     {
-      question_text: `目标证据追问：你说「${projectName}」里 ${targetEvidence}。这个结果为什么能归因到你的产品判断，而不是客户结构、销售动作或运营跟进带来的？`,
+      question_text: openingQuestion,
       question_type: "data_driven",
       difficulty,
     },
@@ -250,8 +257,10 @@ export async function POST(req: NextRequest) {
 公司：${targetEvidenceFocus.company || "未标注"}
 角色：${targetEvidenceFocus.role || "未标注"}
 目标证据：${targetEvidenceFocus.targetEvidence}
+终版面试表达：${targetEvidenceFocus.finalInterviewAnswer || "尚未入账"}
 目标匹配：${targetEvidenceFocus.targetFit?.priorityLabel || "已入账"} ${targetEvidenceFocus.targetFit?.score ?? "-"} / 10
-请把 5 道题都围绕这段已入账目标证据做高压追问，重点检查归因、取舍、角色价值、可复用机制和反证。`
+如果存在终版面试表达，请把第一题设计成“模拟复述”，要求候选人先复述这段表达，再检查临场稳定度。
+请把 5 道题都围绕这段已入账目标证据和终版面试表达做高压追问，重点检查归因、取舍、角色价值、可复用机制和反证。`
       : "";
 
     // 获取前一日表现（用于 Day 2/3）
@@ -293,7 +302,7 @@ export async function POST(req: NextRequest) {
 3. 问法要接地气，像面试官会追问的原话：当时怎么判断、怎么证明、怎么处理冲突、如果重来怎么改。
 4. 不要出“CEO 要你找第二增长曲线”“制定 12/18 个月战略路线图”“泛泛评估市场机会/GTM/ROI”这类假大空题，除非简历明确有对应项目且题目仍然落在具体经历上。
 5. 严禁把 A 公司经历里的项目写成 B 公司做的项目；项目归属只能依据“项目归属锚点”，不允许自行推断。
-6. 如果用户要求“目标证据追问”，必须围绕已入账目标证据连续追问，不要退回泛泛简历题。
+6. 如果用户要求“目标证据追问”，必须围绕已入账目标证据连续追问；如果提供了“终版面试表达”，第一题必须做模拟复述并检查临场稳定度，不要退回泛泛简历题。
 7. 必须返回恰好 5 道题，难度随 day 递增。
 JSON 结构必须为：
 {

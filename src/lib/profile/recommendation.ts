@@ -97,6 +97,22 @@ function hasValidationGap(validation: NonNullable<GrowthProfile["targetEvidenceV
   );
 }
 
+function formatRehearsalEvidence(score: number | null) {
+  return score == null ? "复述稳定度已验证" : `复述稳定度 ${score}/10`;
+}
+
+function hasRehearsalGap(
+  rehearsal: NonNullable<GrowthProfile["finalAnswerRehearsals"]>[number]
+) {
+  const status = String(rehearsal.status || "").trim();
+  return (
+    status === "shaky" ||
+    status === "unclear" ||
+    (rehearsal.score != null && rehearsal.score < 8) ||
+    rehearsal.unstablePoints.length > 0
+  );
+}
+
 function buildTargetValidationRecommendation({
   validation,
   storyHref,
@@ -159,6 +175,44 @@ function buildTargetValidationRecommendation({
   };
 }
 
+function buildFinalAnswerRehearsalRepairRecommendation({
+  rehearsal,
+  targetDimension,
+  goalBrief,
+}: {
+  rehearsal: NonNullable<GrowthProfile["finalAnswerRehearsals"]>[number];
+  targetDimension: string;
+  goalBrief?: GoalBrief;
+}): ProfileRecommendation {
+  const firstUnstablePoint = rehearsal.unstablePoints[0];
+
+  return {
+    id: `final-answer-rehearsal-repair-${rehearsal.snapshotId}`,
+    type: "interview",
+    title: withGoalBriefTitle(
+      `继续复述 ${rehearsal.projectName} 的终版表达`,
+      goalBrief
+    ),
+    reason: withGoalBriefReason(
+      [
+        rehearsal.verdict ? `复述稳定度评估：${rehearsal.verdict}。` : "",
+        firstUnstablePoint ? `不稳定点：${firstUnstablePoint}。` : "",
+        rehearsal.nextDrill
+          ? `下一步：${rehearsal.nextDrill}`
+          : "下一轮先练 90 秒稳定复述，再接受归因、角色价值和取舍追问。",
+      ]
+        .filter(Boolean)
+        .join(" "),
+      goalBrief
+    ),
+    href: rehearsal.href || "/bootcamp/interview?focus=target_evidence",
+    cta: "再练复述",
+    priority: 2,
+    targetDimension,
+    evidence: formatRehearsalEvidence(rehearsal.score),
+  };
+}
+
 function buildFinalAnswerRehearsalRecommendation({
   storyAsset,
   targetDimension,
@@ -194,6 +248,20 @@ function buildInterviewRecommendation(
 ): ProfileRecommendation {
   const latestStoryAsset = profile.storyAssets[0];
   const latestTargetValidation = profile.targetEvidenceValidations?.[0];
+  const latestFinalAnswerRehearsal = profile.finalAnswerRehearsals?.[0];
+
+  if (
+    latestStoryAsset?.finalInterviewAnswer &&
+    latestFinalAnswerRehearsal &&
+    latestFinalAnswerRehearsal.projectName === latestStoryAsset.projectName &&
+    hasRehearsalGap(latestFinalAnswerRehearsal)
+  ) {
+    return buildFinalAnswerRehearsalRepairRecommendation({
+      rehearsal: latestFinalAnswerRehearsal,
+      targetDimension,
+      goalBrief,
+    });
+  }
 
   if (
     latestStoryAsset?.finalInterviewAnswer &&

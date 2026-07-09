@@ -53,6 +53,16 @@ export interface AIEvaluation {
     project_name?: string;
     target_evidence?: string;
   };
+  final_answer_rehearsal?: {
+    score: number;
+    status: "stable" | "shaky" | "unclear";
+    verdict: string;
+    stable_points: string[];
+    unstable_points: string[];
+    next_drill: string;
+    project_name?: string;
+    final_interview_answer?: string;
+  };
 }
 
 export interface InterviewQuestion {

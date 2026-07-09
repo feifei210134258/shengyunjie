@@ -21,6 +21,7 @@ interface TargetEvidenceFocus {
   company: string;
   role: string;
   targetEvidence: string;
+  finalInterviewAnswer?: string;
   targetFit?: {
     score: number | null;
     priorityLabel: string;
@@ -213,11 +214,24 @@ function BootcampInterviewContent() {
           {targetEvidenceFocus && (
             <section className="rounded-xl border border-primary/20 bg-primary-soft p-4">
               <p className="text-label font-bold text-primary">
-                目标证据追问
+                {targetEvidenceFocus.finalInterviewAnswer
+                  ? "终版表达复述"
+                  : "目标证据追问"}
               </p>
               <h2 className="mt-2 text-heading-sm font-bold text-ink">
-                高压追问：{targetEvidenceFocus.projectName}
+                {targetEvidenceFocus.finalInterviewAnswer ? "模拟复述" : "高压追问"}：
+                {targetEvidenceFocus.projectName}
               </h2>
+              {targetEvidenceFocus.finalInterviewAnswer && (
+                <div className="mt-3 rounded-lg bg-surface-raised px-3 py-3">
+                  <p className="text-label font-bold text-primary">
+                    终版面试表达
+                  </p>
+                  <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                    {targetEvidenceFocus.finalInterviewAnswer}
+                  </p>
+                </div>
+              )}
               <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
                 {targetEvidenceFocus.targetEvidence}
               </p>
@@ -234,6 +248,11 @@ function BootcampInterviewContent() {
               {validationSnapshot && (
                 <p className="mt-3 rounded-md bg-surface-raised px-3 py-2 text-label font-bold text-success">
                   验证结果已入账
+                </p>
+              )}
+              {targetEvidenceFocus.finalInterviewAnswer && (
+                <p className="mt-3 text-label font-semibold text-ink-muted">
+                  先练 90 秒复述，再用追问检查临场稳定度。
                 </p>
               )}
             </section>

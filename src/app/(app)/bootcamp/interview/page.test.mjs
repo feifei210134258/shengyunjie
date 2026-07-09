@@ -20,6 +20,13 @@ test("bootcamp interview page shows the ledgered target evidence being challenge
   assert.match(source, /targetEvidence/);
 });
 
+test("bootcamp interview page shows final interview answer rehearsal context", () => {
+  assert.match(source, /finalInterviewAnswer/);
+  assert.match(source, /终版表达复述/);
+  assert.match(source, /模拟复述/);
+  assert.match(source, /临场稳定度/);
+});
+
 test("bootcamp interview page passes target evidence focus into question generation", () => {
   assert.match(source, /body:\s*JSON\.stringify\(\{\s*day_number:\s*nextDay,\s*interviewFocus/s);
 });

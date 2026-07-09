@@ -24,3 +24,10 @@ test("bootcamp interview API returns the target evidence focus for page readback
   assert.match(source, /targetEvidenceFocus/);
   assert.match(source, /return NextResponse\.json\(\{\s*questions,\s*current_day:\s*session\.current_day,\s*targetEvidenceFocus/s);
 });
+
+test("bootcamp interview API carries final interview answers into rehearsal focus", () => {
+  assert.match(source, /finalInterviewAnswer/);
+  assert.match(source, /终版面试表达/);
+  assert.match(source, /模拟复述/);
+  assert.match(source, /临场稳定度/);
+});

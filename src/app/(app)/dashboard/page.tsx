@@ -260,6 +260,21 @@ interface GrowthProfileTargetEvidenceValidation {
   href: string;
 }
 
+interface GrowthProfileFinalAnswerRehearsal {
+  snapshotId: string;
+  savedAt: string | null;
+  interviewId: string;
+  projectName: string;
+  finalInterviewAnswer: string;
+  score: number | null;
+  status: string;
+  verdict: string;
+  stablePoints: string[];
+  unstablePoints: string[];
+  nextDrill: string;
+  href: string;
+}
+
 interface GrowthProfile {
   summary: {
     overallScore: number | null;
@@ -287,6 +302,7 @@ interface GrowthProfile {
   storyAssets: GrowthProfileStoryAsset[];
   thinkingAssets: GrowthProfileThinkingAsset[];
   targetEvidenceValidations: GrowthProfileTargetEvidenceValidation[];
+  finalAnswerRehearsals: GrowthProfileFinalAnswerRehearsal[];
 }
 
 interface RecommendationItem {
@@ -1000,9 +1016,11 @@ function GrowthProfileLedger({
   const thinkingAssets = growthProfile?.thinkingAssets ?? [];
   const targetEvidenceValidations =
     growthProfile?.targetEvidenceValidations ?? [];
+  const finalAnswerRehearsals = growthProfile?.finalAnswerRehearsals ?? [];
   const latestStoryAsset = storyAssets[0];
   const latestThinkingAsset = thinkingAssets[0];
   const latestTargetEvidenceValidation = targetEvidenceValidations[0];
+  const latestFinalAnswerRehearsal = finalAnswerRehearsals[0];
 
   return (
     <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
@@ -1194,6 +1212,54 @@ function GrowthProfileLedger({
             ) : (
               <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
                 项目目标证据完成高压追问后，会在这里读回抗追问结果。
+              </p>
+            )}
+          </div>
+          <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-label font-bold text-ink-muted">
+                终版表达复述
+              </p>
+              <span className="font-mono text-label font-bold text-ink-faint">
+                {finalAnswerRehearsals.length}
+              </span>
+            </div>
+            {latestFinalAnswerRehearsal ? (
+              <div className="mt-3">
+                <p className="text-body-sm font-bold text-ink">
+                  {latestFinalAnswerRehearsal.projectName}
+                </p>
+                <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
+                  {latestFinalAnswerRehearsal.verdict ||
+                    latestFinalAnswerRehearsal.finalInterviewAnswer}
+                </p>
+                {latestFinalAnswerRehearsal.unstablePoints.length > 0 && (
+                  <p className="mt-2 text-label font-semibold text-warning">
+                    不稳定点：{latestFinalAnswerRehearsal.unstablePoints[0]}
+                  </p>
+                )}
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="rounded-md bg-success-soft px-2.5 py-1 text-label font-bold text-success">
+                    复述稳定度
+                    {latestFinalAnswerRehearsal.score != null
+                      ? ` ${latestFinalAnswerRehearsal.score}/10`
+                      : ""}
+                  </span>
+                  <Link
+                    href={
+                      latestFinalAnswerRehearsal.href ||
+                      "/bootcamp/interview?focus=target_evidence"
+                    }
+                    className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
+                  >
+                    再练复述
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
+                终版表达完成模拟复述后，会在这里读回复述稳定度。
               </p>
             )}
           </div>

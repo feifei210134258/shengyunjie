@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 终版表达复述稳定度入账
+
+### 背景判断
+- 终版面试表达已经能进入模拟复述，但评分结果仍复用普通“目标证据验证”，Dashboard 和推荐引擎无法区分“证据是否抗追问”和“终版表达能否临场稳定复述”。
+- 从面试跳槽路径看，终版表达不是完成点；它必须经过复述稳定度验证，才能变成真正可上场的面试弹药。
+
+### 完成内容
+- `/api/bootcamp/interview/answer` 在终版表达复述模式下要求 AI 额外返回 `final_answer_rehearsal`，包含复述稳定度、稳定点、不稳定点和下一轮再练动作。
+- 复述结果随 `target_evidence_validated` 快照写入 `growth_snapshots.dimension_scores.__trigger.finalAnswerRehearsal`，不新增 schema。
+- `buildGrowthProfile` 新增 `finalAnswerRehearsals`，从成长快照读回复述稳定度，Dashboard 能力证据账本展示“终版表达复述 / 复述稳定度 / 不稳定点 / 再练复述”。
+- `AnswerEvaluation` 新增“终版表达复述”反馈卡，把复述稳定度和不稳定点直接展示在评分结果里。
+- 推荐引擎读取最近 `finalAnswerRehearsals`：如果状态为 shaky/unclear、分数低于 8 或存在不稳定点，优先生成“继续复述终版表达”的面试处方。
+
+### 验证记录
+- TDD 红灯：growth-profile 先失败于 `finalAnswerRehearsals` 缺失；recommendation 先仍返回 `final-answer-rehearse-*`；Dashboard、AnswerEvaluation 和 answer API 源测试先失败于缺少 `final_answer_rehearsal` / “复述稳定度”。
+- GREEN：`node --test src/lib/profile/growth-profile.test.mjs` 通过 5 项；`node --test src/lib/profile/recommendation.test.mjs` 通过 9 项；`node --test src/components/bootcamp/AnswerEvaluation.test.mjs src/app/api/bootcamp/interview/answer/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 通过 20 项。
+- 相关回归：`node --test src/app/api/bootcamp/interview/route.test.mjs src/app/api/bootcamp/interview/answer/route.test.mjs 'src/app/(app)/bootcamp/interview/page.test.mjs' src/lib/profile/growth-profile.test.mjs src/lib/profile/recommendation.test.mjs src/components/bootcamp/AnswerEvaluation.test.mjs 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs` 通过 45 项；`npx tsc --noEmit` 通过。
+
 ## [2026-07-09] Feature: 终版表达驱动模拟复述处方
 
 ### 背景判断

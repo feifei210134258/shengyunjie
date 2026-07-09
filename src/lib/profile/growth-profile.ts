@@ -91,6 +91,21 @@ export type GrowthProfileTargetEvidenceValidation = {
   href: string;
 };
 
+export type GrowthProfileFinalAnswerRehearsal = {
+  snapshotId: string;
+  savedAt: string | null;
+  interviewId: string;
+  projectName: string;
+  finalInterviewAnswer: string;
+  score: number | null;
+  status: string;
+  verdict: string;
+  stablePoints: string[];
+  unstablePoints: string[];
+  nextDrill: string;
+  href: string;
+};
+
 export type GrowthProfileDimension = {
   id: string;
   label: string;
@@ -131,6 +146,7 @@ export type GrowthProfile = {
   storyAssets: GrowthProfileStoryAsset[];
   thinkingAssets: GrowthProfileThinkingAsset[];
   targetEvidenceValidations: GrowthProfileTargetEvidenceValidation[];
+  finalAnswerRehearsals: GrowthProfileFinalAnswerRehearsal[];
 };
 
 const canonicalDimensions = [
@@ -354,6 +370,49 @@ export function buildTargetEvidenceValidations(
     .sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
 }
 
+export function buildFinalAnswerRehearsals(
+  growthSnapshots: GrowthSnapshot[]
+): GrowthProfileFinalAnswerRehearsal[] {
+  return growthSnapshots
+    .map((snapshot) => {
+      const dimensionScores = asRecord(snapshot.dimension_scores);
+      const trigger = asRecord(dimensionScores?.__trigger);
+      if (trigger?.trigger !== "target_evidence_validated") return null;
+
+      const projectStory = asRecord(trigger.projectStory);
+      const rehearsal = asRecord(trigger.finalAnswerRehearsal);
+      const projectName = compactText(projectStory?.projectName);
+      const finalInterviewAnswer = compactText(
+        projectStory?.finalInterviewAnswer
+      );
+      const interviewId = compactText(trigger.interviewId);
+      if (!projectName || !finalInterviewAnswer || !rehearsal) return null;
+
+      return {
+        snapshotId:
+          compactText(snapshot.id) ||
+          `${interviewId || projectName}-${snapshot.snapshot_date || ""}`,
+        savedAt: snapshot.snapshot_date || null,
+        interviewId,
+        projectName,
+        finalInterviewAnswer: finalInterviewAnswer.slice(0, 1200),
+        score: Number.isFinite(Number(rehearsal.score))
+          ? Math.round(Number(rehearsal.score) * 10) / 10
+          : null,
+        status: compactText(rehearsal.status),
+        verdict: compactText(rehearsal.verdict),
+        stablePoints: normalizeProofGaps(rehearsal.stable_points),
+        unstablePoints: normalizeProofGaps(rehearsal.unstable_points),
+        nextDrill: compactText(rehearsal.next_drill),
+        href: "/bootcamp/interview?focus=target_evidence",
+      };
+    })
+    .filter(
+      (asset): asset is GrowthProfileFinalAnswerRehearsal => asset != null
+    )
+    .sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
+}
+
 function normalizeInterviewDimension(type: string | null | undefined) {
   const key = compactText(type);
   return interviewTypeToDimension[key] || null;
@@ -480,6 +539,7 @@ export function buildGrowthProfile({
   const thinkingAssets = buildThinkingAssets(growthSnapshots);
   const targetEvidenceValidations =
     buildTargetEvidenceValidations(growthSnapshots);
+  const finalAnswerRehearsals = buildFinalAnswerRehearsals(growthSnapshots);
 
   return {
     summary: {
@@ -516,5 +576,6 @@ export function buildGrowthProfile({
     storyAssets,
     thinkingAssets,
     targetEvidenceValidations,
+    finalAnswerRehearsals,
   };
 }

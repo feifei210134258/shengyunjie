@@ -122,3 +122,11 @@ test("dashboard surfaces target evidence validation results in the profile ledge
   assert.match(source, /unresolvedRisks/);
   assert.match(source, /\/bootcamp\/interview\?focus=target_evidence/);
 });
+
+test("dashboard surfaces final answer rehearsal stability in the profile ledger", () => {
+  assert.match(source, /finalAnswerRehearsals/);
+  assert.match(source, /终版表达复述/);
+  assert.match(source, /复述稳定度/);
+  assert.match(source, /unstablePoints/);
+  assert.match(source, /再练复述/);
+});

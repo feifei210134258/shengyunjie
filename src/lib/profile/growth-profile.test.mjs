@@ -242,3 +242,57 @@ test("surfaces target evidence validation snapshots in the profile ledger", () =
     "/bootcamp/interview?focus=target_evidence"
   );
 });
+
+test("surfaces final answer rehearsal snapshots separately from target evidence validation", () => {
+  const profile = buildGrowthProfile({
+    growthSnapshots: [
+      {
+        id: "snap-rehearsal-1",
+        snapshot_date: "2026-07-09",
+        overall_score: 84,
+        dimension_scores: {
+          __trigger: {
+            trigger: "target_evidence_validated",
+            interviewId: "interview-rehearsal-1",
+            projectStory: {
+              projectName: "客户健康度评分系统",
+              targetEvidence: "续费率提升 8.6%，且排除了销售跟进节奏影响。",
+              finalInterviewAnswer:
+                "我负责客户健康度评分系统时，先把续费风险拆成三类信号，再推动 CS 分层跟进，最终续费率提升 8.6%。",
+            },
+            targetEvidenceValidation: {
+              score: 6.5,
+              status: "weak",
+              verdict: "目标证据基本能讲，但终版表达复述不够稳定。",
+              unresolved_risks: ["复述时漏掉归因反证"],
+              next_drill: "下一轮先练 90 秒复述，再补销售动作反证。",
+            },
+            finalAnswerRehearsal: {
+              score: 6.5,
+              status: "shaky",
+              verdict: "能复述主线，但证据顺序不稳定。",
+              unstable_points: ["漏掉销售动作反证", "个人角色价值讲得偏泛"],
+              next_drill: "先练 90 秒稳定复述，再接受归因追问。",
+            },
+          },
+        },
+      },
+    ],
+  });
+
+  assert.equal(profile.finalAnswerRehearsals.length, 1);
+  assert.equal(profile.finalAnswerRehearsals[0].snapshotId, "snap-rehearsal-1");
+  assert.equal(profile.finalAnswerRehearsals[0].interviewId, "interview-rehearsal-1");
+  assert.equal(profile.finalAnswerRehearsals[0].projectName, "客户健康度评分系统");
+  assert.match(profile.finalAnswerRehearsals[0].finalInterviewAnswer, /续费风险拆成三类信号/);
+  assert.equal(profile.finalAnswerRehearsals[0].score, 6.5);
+  assert.equal(profile.finalAnswerRehearsals[0].status, "shaky");
+  assert.deepEqual(profile.finalAnswerRehearsals[0].unstablePoints, [
+    "漏掉销售动作反证",
+    "个人角色价值讲得偏泛",
+  ]);
+  assert.equal(
+    profile.finalAnswerRehearsals[0].href,
+    "/bootcamp/interview?focus=target_evidence"
+  );
+});

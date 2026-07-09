@@ -10,6 +10,7 @@ type TargetEvidenceFocus = {
   company: string;
   role: string;
   targetEvidence: string;
+  finalInterviewAnswer?: string;
   targetFit?: {
     score: number | null;
     priorityLabel: string;
@@ -58,13 +59,15 @@ function readProjectStoryFromSnapshot(snapshot: any) {
   if (!projectStory || typeof projectStory !== "object") return null;
   const projectName = compactText(projectStory.projectName, 120);
   const targetEvidence = compactText(projectStory.targetEvidence, 600);
-  if (!projectName || !targetEvidence) return null;
+  const finalInterviewAnswer = compactText(projectStory.finalInterviewAnswer, 900);
+  if (!projectName || (!targetEvidence && !finalInterviewAnswer)) return null;
 
   return {
     projectName,
     company: compactText(projectStory.company, 120),
     role: compactText(projectStory.role, 160),
     targetEvidence,
+    finalInterviewAnswer,
     targetFit:
       projectStory.targetFit && typeof projectStory.targetFit === "object"
         ? {
@@ -144,7 +147,55 @@ function normalizeTargetEvidenceValidation(
       compactText(raw?.next_drill, 220) ||
       "下一轮先用一句话讲清结果归因，再补一个反证或取舍细节。",
     project_name: targetEvidenceFocus.projectName,
-    target_evidence: targetEvidenceFocus.targetEvidence,
+    target_evidence:
+      targetEvidenceFocus.targetEvidence ||
+      targetEvidenceFocus.finalInterviewAnswer ||
+      "",
+  };
+}
+
+function normalizeFinalAnswerRehearsal(
+  parsed: any,
+  targetEvidenceFocus: NonNullable<TargetEvidenceFocus>
+): NonNullable<AIEvaluation["final_answer_rehearsal"]> {
+  const raw =
+    parsed?.final_answer_rehearsal || parsed?.finalAnswerRehearsal || {};
+  const fallbackValidation =
+    parsed?.target_evidence_validation || parsed?.targetEvidenceValidation || {};
+  const score = normalizeScore(
+    raw?.score ?? raw?.stability_score ?? fallbackValidation?.score,
+    5
+  );
+  const status = String(raw?.status || "").trim();
+  const normalizedStatus: "stable" | "shaky" | "unclear" =
+    status === "stable" || status === "shaky" || status === "unclear"
+      ? status
+      : score >= 8
+        ? "stable"
+        : score >= 5
+          ? "shaky"
+          : "unclear";
+
+  return {
+    score,
+    status: normalizedStatus,
+    verdict:
+      compactText(raw?.verdict, 360) ||
+      compactText(fallbackValidation?.verdict, 360) ||
+      "这次已经完成终版表达复述评估，但还需要继续检查临场稳定度、证据顺序和追问承接。",
+    stable_points: normalizeList(raw?.stable_points, [
+      "已围绕终版面试表达完成复述。",
+    ]).slice(0, 4),
+    unstable_points: normalizeList(
+      raw?.unstable_points || fallbackValidation?.unresolved_risks,
+      ["仍需补强复述顺序、关键证据或追问承接。"]
+    ).slice(0, 4),
+    next_drill:
+      compactText(raw?.next_drill, 220) ||
+      compactText(fallbackValidation?.next_drill, 220) ||
+      "下一轮先练 90 秒稳定复述，再接受归因、角色价值和取舍追问。",
+    project_name: targetEvidenceFocus.projectName,
+    final_interview_answer: targetEvidenceFocus.finalInterviewAnswer || "",
   };
 }
 
@@ -219,6 +270,12 @@ function normalizeEvaluation(
       parsed,
       targetEvidenceFocus
     );
+    if (targetEvidenceFocus.finalInterviewAnswer) {
+      evaluation.final_answer_rehearsal = normalizeFinalAnswerRehearsal(
+        parsed,
+        targetEvidenceFocus
+      );
+    }
   }
 
   return evaluation;
@@ -239,6 +296,7 @@ async function persistTargetEvidenceValidation({
 }) {
   const targetEvidenceValidation = evaluation.target_evidence_validation;
   if (!targetEvidenceValidation) return null;
+  const finalAnswerRehearsal = evaluation.final_answer_rehearsal;
 
   const { data: snapshot, error } = await supabase
     .from("growth_snapshots")
@@ -253,9 +311,11 @@ async function persistTargetEvidenceValidation({
             company: targetEvidenceFocus.company,
             role: targetEvidenceFocus.role,
             targetEvidence: targetEvidenceFocus.targetEvidence,
+            finalInterviewAnswer: targetEvidenceFocus.finalInterviewAnswer,
             targetFit: targetEvidenceFocus.targetFit || null,
           },
           targetEvidenceValidation,
+          finalAnswerRehearsal,
         },
       },
       overall_score: Math.round(evaluation.overall_score * 10),
@@ -335,7 +395,9 @@ export async function POST(req: NextRequest) {
 公司：${targetEvidenceFocus.company || "未标注"}
 角色：${targetEvidenceFocus.role || "未标注"}
 入账目标证据：${targetEvidenceFocus.targetEvidence}
-请判断候选人的回答是否扛住了这段目标证据的高压追问，尤其检查结果归因、个人角色价值、关键取舍、协同过程和可复用机制。
+终版面试表达：${targetEvidenceFocus.finalInterviewAnswer || "尚未入账"}
+如果题目要求模拟复述，请判断候选人是否稳定复述了终版面试表达，并检查临场稳定度。
+请判断候选人的回答是否扛住了这段目标证据和终版面试表达的高压追问，尤其检查结果归因、个人角色价值、关键取舍、协同过程和可复用机制。
 必须额外返回 target_evidence_validation 字段：
 {
   "score": 0-10,
@@ -344,6 +406,15 @@ export async function POST(req: NextRequest) {
   "evidence_matched": ["回答中已经证明住的点"],
   "unresolved_risks": ["面试官继续追问会击穿的风险"],
   "next_drill": "下一轮最该补的一件事"
+}
+如果存在终版面试表达，还必须额外返回 final_answer_rehearsal 字段，用于把复述稳定度入账：
+{
+  "score": 0-10,
+  "status": "stable | shaky | unclear",
+  "verdict": "一句话判断终版表达复述是否稳定",
+  "stable_points": ["复述中已经稳定保住的点"],
+  "unstable_points": ["复述时遗漏、顺序混乱或容易被追问击穿的点"],
+  "next_drill": "下一轮再练复述最该补的一件事"
 }`
       : "";
 
@@ -379,6 +450,14 @@ JSON 结构必须为：
     "evidence_matched": ["已经证明住的点"],
     "unresolved_risks": ["继续追问会击穿的风险"],
     "next_drill": "下一轮最该补的一件事"
+  },
+  "final_answer_rehearsal": {
+    "score": 0-10,
+    "status": "stable | shaky | unclear",
+    "verdict": "仅当输入包含终版面试表达时返回：一句话判断复述稳定度",
+    "stable_points": ["复述中已经稳定保住的点"],
+    "unstable_points": ["复述时遗漏、顺序混乱或容易被追问击穿的点"],
+    "next_drill": "下一轮再练复述最该补的一件事"
   }
 }
 硬性要求：
@@ -386,6 +465,7 @@ JSON 结构必须为：
 2. 如果用户回答偏离当前题目，要明确指出“偏离当前题目”，但仍然用当前题目的项目背景给出可改写方向。
 3. 生成前先核对题目关键词，反馈里必须出现当前题目或用户回答中的核心对象、动作或指标。
 4. 如果输入包含“目标证据验证”，必须返回 target_evidence_validation，并明确判断这段证据是否抗追问。
+5. 如果输入包含“终版面试表达”，必须返回 final_answer_rehearsal，并明确给出复述稳定度、稳定点、不稳定点和再练复述动作。
 评分标准：
 1. 结构化：是否讲清背景、目标、过程、结果、复盘。
 2. 逻辑性：是否有判断依据、取舍标准、因果链和反证意识。

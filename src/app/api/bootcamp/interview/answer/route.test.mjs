@@ -19,3 +19,17 @@ test("bootcamp interview answer API persists target evidence validation to profi
   assert.match(source, /validationSnapshot/);
   assert.match(source, /dimension_scores/);
 });
+
+test("bootcamp interview answer API scores final answer rehearsal against ledgered expression", () => {
+  assert.match(source, /finalInterviewAnswer/);
+  assert.match(source, /终版面试表达/);
+  assert.match(source, /模拟复述/);
+  assert.match(source, /临场稳定度/);
+});
+
+test("bootcamp interview answer API persists final answer rehearsal stability", () => {
+  assert.match(source, /final_answer_rehearsal/);
+  assert.match(source, /finalAnswerRehearsal/);
+  assert.match(source, /复述稳定度/);
+  assert.match(source, /unstable_points/);
+});
