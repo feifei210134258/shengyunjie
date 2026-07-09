@@ -147,6 +147,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 直接进入 `/training/session` 时，`GET /api/training/sessions?date=...` 会读回最近 `growth_snapshots.dimension_scores.__goalFocus` 并返回 `latestGoalFocus`；训练实战页用它恢复主线任务计划和顶部训练框架，避免用户绕过首页后退回默认刷题。
 - 训练页作答区会把用户草稿保存到当天 `training_sessions.questions[missionId].draftAnswer`，刷新或重新进入当天训练时恢复答案；提交前展示“判断、依据、取舍、验证”四项作答质检，并在输入区提供可插入的高级 PM 作答骨架（判断、依据、取舍、验证），插入内容仍进入同一份草稿自动保存链路。质检区会把第一个未满足项转成“下一步补齐”动作，用户可一键插入对应起手句，帮助回答从直觉表达拉回结构化表达。
 - AI 反馈页提供“二次修正”输入，用户可基于反馈当场重写关键答案；`PATCH /api/training/record` 会把修正内容写入 `training_records.ai_feedback.__revision`，历史复盘页会读回原回答、AI 反馈和用户修正版。
+- AI 反馈页会从本次 `evaluation.suggestions` 或 `evaluation.gaps` 提炼“本轮修正指令”，放在二次修正输入上方；用户可一键“带入修正”，把最关键缺口写进修正草稿，再通过既有 `PATCH /api/training/record` 落库，避免反馈只停留在阅读状态。
 - 训练首页通过 `/api/training/stats` 读取最近训练记录，生成“复盘队列”：优先展示还没有二次修正的记录，引导用户先把反馈改成能复述的版本，再继续开新题。
 - 用户保存二次修正后，前端会再次调用 `POST /api/profile/summary` 创建画像快照，`dimension_scores.__trigger` 标记为 `revision_saved`，把复盘行为纳入能力证据账本。
 - 训练页完成 AI 反馈并写入 `training_records` 后，会自动调用 `POST /api/profile/summary` 创建 `growth_snapshots` 快照；快照的 `dimension_scores.__trigger` 标记来源为 `training_feedback`，让下一轮 Dashboard 推荐能读取最新训练证据。

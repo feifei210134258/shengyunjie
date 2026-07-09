@@ -1,5 +1,28 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练反馈页本轮修正指令
+
+### 背景判断
+- 训练反馈页已经能展示 AI 评分、二次修正输入和下一轮处方，但用户仍然需要自己从多块反馈里判断“我现在先改哪一句”。
+- 从第一性原理看，训练的价值不是读反馈，而是把反馈立刻转成下一版答案。反馈页应该先给一个可执行修正指令，再让用户保存修正版。
+
+### 完成内容
+- `/training/session` 提交后的反馈页会从 `evaluation.suggestions`、`evaluation.gaps` 或普通建议文本中抽取第一条有效内容，生成 `primaryRevisionCue`。
+- 二次修正区上方新增“本轮修正指令”，直接展示“先按这条改：...”。
+- 新增“带入修正”按钮，把该指令写入二次修正草稿，用户可继续编辑并通过既有 `PATCH /api/training/record` 保存。
+- 没有新增 schema 或 API；继续复用现有训练记录和画像同步链路。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：`TrainingSessionClient` 源测试先失败于缺少 `primaryRevisionCue`、`handleApplyRevisionCue`、“本轮修正指令 / 带入修正 / 先按这条改”。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 14 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-09] Feature: 训练实战页缺口补齐动作
 
 ### 背景判断

@@ -1165,6 +1165,22 @@ function A1AfterSubmit({
   const nextPrescription = analysis?.nextPrescription;
   const recommendation = nextPrescription?.recommendation;
   const revision = analysis?.revision || { text: "", status: "idle" as const };
+  const primaryRevisionCue = (
+    evaluation?.suggestions?.find((item) => item.trim()) ||
+    evaluation?.gaps?.find((item) => item.trim()) ||
+    sections.suggestion ||
+    ""
+  )
+    .replace(/^\d+[.、]\s*/, "")
+    .trim();
+  const handleApplyRevisionCue = () => {
+    if (!primaryRevisionCue) return;
+    const cueText = `我会先按这条改：${primaryRevisionCue}`;
+    const nextText = revision.text.trim()
+      ? `${revision.text.trim()}\n\n${cueText}`
+      : cueText;
+    onRevisionChange(nextText);
+  };
 
   return (
     <Frame
@@ -1294,6 +1310,27 @@ function A1AfterSubmit({
                         : "待修正"}
                 </span>
               </div>
+              {primaryRevisionCue && (
+                <div className="mt-4 flex flex-col gap-3 rounded-lg border border-primary/15 bg-primary-soft/45 px-3 py-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-label font-bold text-primary">
+                      本轮修正指令
+                    </p>
+                    <p className="mt-1 text-body-sm font-semibold leading-relaxed text-ink-muted">
+                      先按这条改：{primaryRevisionCue}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleApplyRevisionCue}
+                    disabled={revision.status === "saving"}
+                    className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-2 text-label font-bold text-primary transition hover:border-primary/40 hover:bg-primary-soft active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    带入修正
+                  </button>
+                </div>
+              )}
               <textarea
                 value={revision.text}
                 onChange={(event) => onRevisionChange(event.target.value)}

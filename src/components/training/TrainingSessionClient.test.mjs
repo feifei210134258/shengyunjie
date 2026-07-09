@@ -90,6 +90,14 @@ test("training session turns readiness gaps into the next answer action", () => 
   assert.match(source, /四步齐了/);
 });
 
+test("training feedback turns the top gap into a revision instruction", () => {
+  assert.match(source, /primaryRevisionCue/);
+  assert.match(source, /handleApplyRevisionCue/);
+  assert.match(source, /本轮修正指令/);
+  assert.match(source, /带入修正/);
+  assert.match(source, /先按这条改/);
+});
+
 test("training feedback panel exposes goal-aware assets to the user", () => {
   const panelSource = readFileSync(
     new URL("./TrainingEvaluationPanel.tsx", import.meta.url),
