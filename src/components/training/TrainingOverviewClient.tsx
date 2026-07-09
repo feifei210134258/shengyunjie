@@ -228,6 +228,194 @@ function ActionStep({
   );
 }
 
+function formatScore10(score: number | null) {
+  if (typeof score !== "number") return null;
+  return Math.round((score / 10) * 10) / 10;
+}
+
+function TrainingAssetWorkflow({
+  reviewQueue,
+  evidenceAssets,
+}: {
+  reviewQueue: NonNullable<TrainingStats["reviewQueue"]>;
+  evidenceAssets: NonNullable<TrainingStats["evidenceAssets"]>;
+}) {
+  const pendingReviewCount = reviewQueue.filter((item) => item.needsRevision).length;
+  const readyAssetCount = evidenceAssets.filter(
+    (asset) => asset.readiness === "面试可用"
+  ).length;
+  const assetWorkflowItems = [
+    {
+      label: "待修正",
+      count: pendingReviewCount,
+      description: "先把 AI 反馈改成可复述答案",
+    },
+    {
+      label: "已可用资产",
+      count: readyAssetCount,
+      description: "可进入故事库或历史复盘复用",
+    },
+  ];
+  const hasWorkflowItems = reviewQueue.length > 0 || evidenceAssets.length > 0;
+
+  return (
+    <section className="mt-5 rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+      <div className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-label font-bold text-primary">训练资产流水线</p>
+          <h3 className="mt-1 text-heading-md font-bold text-ink">
+            先修正，再入账，再开下一题
+          </h3>
+          <p className="mt-1 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
+            开新题只在流水线清空后才是高杠杆动作。系统把待修正回答和已可用资产放在同一个工作区，避免训练变成刷题列表。
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/bootcamp/story-bank"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-4 py-2.5 text-body-sm font-semibold text-ink transition hover:bg-surface active:scale-[0.98]"
+          >
+            去项目故事库
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href={TRAINING_SESSION_ROUTE}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98]"
+          >
+            开新题
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]">
+        <aside className="space-y-3">
+          {assetWorkflowItems.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-lg border border-line bg-white px-4 py-3"
+            >
+              <p className="text-label font-bold text-ink-muted">{item.label}</p>
+              <div className="mt-2 flex items-end justify-between gap-3">
+                <p className="font-mono text-heading-lg font-bold text-ink">
+                  {item.count}
+                </p>
+                <p className="text-right text-body-sm leading-snug text-ink-muted">
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </aside>
+
+        <div className="space-y-3">
+          {hasWorkflowItems ? (
+            <>
+              {reviewQueue.map((item) => {
+                const score10 = formatScore10(item.score);
+                return (
+                  <Link
+                    key={`review-${item.id}`}
+                    href={
+                      item.needsRevision
+                        ? `/training/history/${item.id}?revise=1`
+                        : `/training/history/${item.id}`
+                    }
+                    className="group grid gap-3 rounded-lg border border-line bg-white p-4 transition hover:border-line-strong hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-label font-bold ${
+                            item.needsRevision
+                              ? "bg-warning-soft text-warning"
+                              : "bg-primary-soft text-primary"
+                          }`}
+                        >
+                          {item.needsRevision ? "待修正" : "修正版已沉淀"}
+                        </span>
+                        {score10 != null && (
+                          <span className="rounded-md bg-surface px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
+                            {score10}/10
+                          </span>
+                        )}
+                        <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
+                          {item.dimension}
+                        </span>
+                      </div>
+                      <p className="mt-3 line-clamp-2 text-body-sm font-semibold leading-relaxed text-ink">
+                        {item.question_scenario.replace(/\n/g, " ").slice(0, 120)}
+                        {item.question_scenario.length > 120 ? "..." : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-start text-label font-bold text-primary md:justify-end">
+                      <span className="inline-flex items-center gap-1 group-hover:text-primary-hover">
+                        <PenLine className="h-3.5 w-3.5" />
+                        {item.needsRevision ? "继续修正" : "查看修正版"}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+
+              {evidenceAssets.map((asset) => {
+                const score10 = formatScore10(asset.score);
+                const isReady = asset.readiness === "面试可用";
+
+                return (
+                  <Link
+                    key={`asset-${asset.id}`}
+                    href={asset.href}
+                    className="group grid gap-3 rounded-lg border border-line bg-white p-4 transition hover:border-line-strong hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-label font-bold ${
+                            isReady
+                              ? "bg-primary-soft text-primary"
+                              : "bg-warning-soft text-warning"
+                          }`}
+                        >
+                          {isReady ? "已可用资产" : asset.readiness}
+                        </span>
+                        <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
+                          {asset.sourceLabel}
+                        </span>
+                        {score10 != null && (
+                          <span className="rounded-md bg-surface px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
+                            {score10}/10
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-3 text-body-sm font-semibold leading-relaxed text-ink">
+                        {asset.title}
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-body-sm leading-relaxed text-ink-muted">
+                        {asset.proofPoint}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-start text-label font-bold text-primary md:justify-end">
+                      <span className="inline-flex items-center gap-1 group-hover:text-primary-hover">
+                        <PenLine className="h-3.5 w-3.5" />
+                        {isReady ? "查看证据" : "继续修正"}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </>
+          ) : (
+            <div className="rounded-lg border border-dashed border-line bg-white px-4 py-8 text-center text-body-sm text-ink-muted">
+              完成训练并保存二次修正后，这里会生成可用于面试和升阶复盘的证据资产。
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function TrainingPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -460,164 +648,10 @@ export default function TrainingPage() {
 
         <ActionEvidenceStrip items={actionEvidenceItems} />
 
-        <section className="mt-5 rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
-          <div className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-label font-bold text-primary">复盘队列</p>
-              <h3 className="mt-1 text-heading-md font-bold text-ink">
-                先把最近回答改成能复述的版本
-              </h3>
-              <p className="mt-1 max-w-2xl text-body-sm text-ink-muted">
-                训练不是多刷题，而是把反馈转成下一版表达。优先处理待二次修正的记录，再继续开新题。
-              </p>
-            </div>
-            <Link
-              href={TRAINING_SESSION_ROUTE}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98]"
-            >
-              开新题
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="mt-4 grid gap-3 lg:grid-cols-4">
-            {reviewQueue.length > 0 ? (
-              reviewQueue.map((item) => {
-                const score10 =
-                  typeof item.score === "number"
-                    ? Math.round((item.score / 10) * 10) / 10
-                    : null;
-                return (
-                  <Link
-                    key={item.id}
-                    href={
-                      item.needsRevision
-                        ? `/training/history/${item.id}?revise=1`
-                        : `/training/history/${item.id}`
-                    }
-                    className="group flex min-h-[156px] flex-col justify-between rounded-lg border border-line bg-white p-4 transition hover:border-line-strong hover:bg-surface"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-label font-bold ${
-                            item.needsRevision
-                              ? "bg-warning-soft text-warning"
-                              : "bg-primary-soft text-primary"
-                          }`}
-                        >
-                          {item.needsRevision ? "待二次修正" : "修正版已沉淀"}
-                        </span>
-                        {score10 != null && (
-                          <span className="rounded-md bg-surface px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
-                            {score10}/10
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-3 line-clamp-3 text-body-sm font-semibold leading-relaxed text-ink">
-                        {item.question_scenario.replace(/\n/g, " ").slice(0, 96)}
-                        {item.question_scenario.length > 96 ? "..." : ""}
-                      </p>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between gap-3 text-label font-bold">
-                      <span className="text-ink-muted">{item.dimension}</span>
-                      <span className="inline-flex items-center gap-1 text-primary group-hover:text-primary-hover">
-                        <PenLine className="h-3.5 w-3.5" />
-                        {item.needsRevision ? "继续修正" : "查看修正版"}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })
-            ) : (
-              <div className="col-span-full rounded-lg border border-dashed border-line bg-white px-4 py-6 text-center text-body-sm text-ink-muted">
-                完成一次训练后，这里会出现需要修正的复盘队列。
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="mt-5 rounded-xl border border-line bg-white p-4 shadow-xs">
-          <div className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-label font-bold text-primary">能力证据资产</p>
-              <h3 className="mt-1 text-heading-md font-bold text-ink">
-                最近训练沉淀成可讲述材料
-              </h3>
-              <p className="mt-1 max-w-2xl text-body-sm text-ink-muted">
-                每条记录都来自 Supabase 里的训练作答、AI 反馈和二次修正。先修到“面试可用”，再让画像处方决定下一题。
-              </p>
-            </div>
-            <Link
-              href="/bootcamp/story-bank"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-4 py-2.5 text-body-sm font-semibold text-ink transition hover:bg-surface active:scale-[0.98]"
-            >
-              去项目故事库
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="mt-4 grid gap-3 lg:grid-cols-5">
-            {evidenceAssets.length > 0 ? (
-              evidenceAssets.map((asset) => {
-                const score10 =
-                  typeof asset.score === "number"
-                    ? Math.round((asset.score / 10) * 10) / 10
-                    : null;
-                const isReady = asset.readiness === "面试可用";
-
-                return (
-                  <Link
-                    key={asset.id}
-                    href={asset.href}
-                    className="group flex min-h-[176px] flex-col justify-between rounded-lg border border-line bg-surface-raised p-4 transition hover:border-line-strong hover:bg-surface"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-label font-bold ${
-                            isReady
-                              ? "bg-primary-soft text-primary"
-                              : "bg-warning-soft text-warning"
-                          }`}
-                        >
-                          {asset.readiness}
-                        </span>
-                        <span className="rounded-md bg-white px-2 py-0.5 text-label font-semibold text-ink-muted">
-                          {asset.sourceLabel}
-                        </span>
-                        {score10 != null && (
-                          <span className="rounded-md bg-white px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
-                            {score10}/10
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-3 line-clamp-2 text-body-sm font-semibold leading-relaxed text-ink">
-                        {asset.title}
-                      </p>
-                      <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
-                        {asset.proofPoint}
-                      </p>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between gap-3 text-label font-bold">
-                      <span className="truncate text-ink-muted">
-                        {asset.dimension}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-primary group-hover:text-primary-hover">
-                        <PenLine className="h-3.5 w-3.5" />
-                        {isReady ? "查看证据" : "继续修正"}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })
-            ) : (
-              <div className="col-span-full rounded-lg border border-dashed border-line bg-surface-raised px-4 py-6 text-center text-body-sm text-ink-muted">
-                完成训练并保存二次修正后，这里会生成可用于面试和升阶复盘的证据资产。
-              </div>
-            )}
-          </div>
-        </section>
+        <TrainingAssetWorkflow
+          reviewQueue={reviewQueue}
+          evidenceAssets={evidenceAssets}
+        />
 
         {/* Dimension coverage + Calendar + History */}
         <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">

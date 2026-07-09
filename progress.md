@@ -1,5 +1,30 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练首页资产流水线
+
+### 背景判断
+- 训练首页已经有“今日最高杠杆动作”和“行动证据带”，但下方仍把复盘队列与能力证据资产拆成两个独立卡片区。
+- 从第一性原理看，用户不是来浏览训练记录，而是把一次训练推过“反馈 → 修正 → 可用资产 → 下一题处方”的生产线。因此复盘和证据应该是同一个工作区，而不是两个模块入口。
+
+### 完成内容
+- `/training` 新增 `TrainingAssetWorkflow`，把待修正回答和已可用训练资产合并成“训练资产流水线”。
+- 流水线左侧显示“待修正 / 已可用资产”两个状态计数，右侧按顺序先列待修正记录，再列面试可用或待修正后可用的资产。
+- 删除原先 `lg:grid-cols-4` 复盘卡片区和 `lg:grid-cols-5` 证据资产卡片区，避免页面下半段重新变成卡片墙。
+- 继续复用既有 `/api/training/stats` 的 `reviewQueue` 和 `evidenceAssets`，不新增 schema 或 API。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：`TrainingOverviewClient` 源测试先失败于缺少 `TrainingAssetWorkflow / assetWorkflowItems / 训练资产流水线 / 待修正 / 已可用资产`，并捕获旧 `lg:grid-cols-4 / lg:grid-cols-5` 卡片网格仍存在。
+- GREEN：`node --test src/components/training/TrainingOverviewClient.test.mjs` 通过 9 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingOverviewClient.tsx src/components/training/TrainingOverviewClient.test.mjs --max-warnings 0` 通过。
+- 回归：`node --test src/components/training/TrainingOverviewClient.test.mjs feature_list.test.mjs` 通过 11 项。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 单独复跑通过，环境健康检查 10/10。
+
 ## [2026-07-09] Feature: 训练首页行动证据带
 
 ### 背景判断

@@ -6,7 +6,8 @@ const source = readFileSync(new URL("./TrainingOverviewClient.tsx", import.meta.
 
 test("training overview turns recent records into a second-pass review queue", () => {
   assert.match(source, /reviewQueue/);
-  assert.match(source, /待二次修正/);
+  assert.match(source, /训练资产流水线/);
+  assert.match(source, /待修正/);
   assert.match(source, /修正版已沉淀/);
   assert.match(source, /继续修正/);
   assert.match(source, /revise=1/);
@@ -23,10 +24,21 @@ test("training overview uses the profile recommendation as the primary start act
 
 test("training overview surfaces recent training as ability evidence assets", () => {
   assert.match(source, /evidenceAssets/);
-  assert.match(source, /能力证据资产/);
+  assert.match(source, /已可用资产/);
   assert.match(source, /面试可用/);
   assert.match(source, /proofPoint/);
   assert.match(source, /待修正后可用/);
+});
+
+test("training overview merges review and evidence into one asset workflow", () => {
+  assert.match(source, /TrainingAssetWorkflow/);
+  assert.match(source, /assetWorkflowItems/);
+  assert.match(source, /训练资产流水线/);
+  assert.match(source, /待修正/);
+  assert.match(source, /已可用资产/);
+  assert.match(source, /开新题只在流水线清空后/);
+  assert.doesNotMatch(source, /lg:grid-cols-4/);
+  assert.doesNotMatch(source, /lg:grid-cols-5/);
 });
 
 test("training overview adapts the primary training frame to the persisted goal focus", () => {
