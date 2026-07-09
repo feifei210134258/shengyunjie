@@ -64,12 +64,14 @@ test("dashboard renders and persists a personalized training prescription", () =
   assert.match(source, /模拟复述/);
 });
 
-test("dashboard surfaces a first-screen action dossier for evidence assets", () => {
+test("dashboard embeds the action dossier into the command deck instead of rendering a second card wall", () => {
   assert.match(source, /actionDossier/);
-  assert.match(source, /今日行动档案/);
-  assert.match(source, /最新面试资产/);
-  assert.match(source, /待修正材料/);
-  assert.match(source, /下一题处方/);
+  assert.match(source, /主动作证据/);
+  assert.match(source, /复制终版表达/);
+  assert.match(source, /现在入账/);
+  assert.match(source, /模拟复述/);
+  assert.doesNotMatch(source, /<ActionDossierPanel/);
+  assert.doesNotMatch(source, /今日行动档案/);
 });
 
 test("dashboard action dossier shows the highest-priority target evidence action", () => {

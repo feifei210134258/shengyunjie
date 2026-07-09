@@ -420,8 +420,12 @@ function PathFirstHero({
   goalBrief,
   goalBriefDraft,
   savingGoalBrief,
+  depositedProjectName,
+  depositStatus,
+  savingDepositProject,
   onGoalBriefChange,
   onSaveGoalBrief,
+  onDepositTargetEvidence,
   savingGoalFocus,
   onSelectGoalFocus,
 }: {
@@ -432,8 +436,12 @@ function PathFirstHero({
   goalBrief: GoalBrief | null | undefined;
   goalBriefDraft: GoalBrief;
   savingGoalBrief: boolean;
+  depositedProjectName: string;
+  depositStatus: "idle" | "saved" | "failed";
+  savingDepositProject: string;
   onGoalBriefChange: (field: keyof GoalBrief, value: string) => void;
   onSaveGoalBrief: () => Promise<void>;
+  onDepositTargetEvidence: (action: TargetEvidenceDepositAction) => Promise<void>;
   savingGoalFocus: string;
   onSelectGoalFocus: (goalFocus: ProductPath["id"]) => Promise<void>;
 }) {
@@ -494,6 +502,54 @@ function PathFirstHero({
       icon: <ListChecks className="h-4 w-4" strokeWidth={1.5} />,
     },
   ];
+  const [copiedAmmoProject, setCopiedAmmoProject] = useState("");
+  const featuredAsset = dossier?.featuredAsset;
+  const targetEvidenceAction = dossier?.targetEvidenceAction;
+  const targetEvidenceDepositAction = dossier?.targetEvidenceDepositAction;
+  const interviewAmmoPack = dossier?.interviewAmmoPack;
+  const showDepositSuccess =
+    depositStatus === "saved" && !targetEvidenceDepositAction && depositedProjectName;
+  const evidenceTitle =
+    interviewAmmoPack?.projectName ||
+    depositedProjectName ||
+    targetEvidenceDepositAction?.projectName ||
+    targetEvidenceAction?.projectName ||
+    featuredAsset?.title ||
+    "等待下一份证据";
+  const evidenceLabel = interviewAmmoPack
+    ? "面试弹药包"
+    : showDepositSuccess
+      ? "入账成功"
+      : targetEvidenceDepositAction
+        ? "目标证据已修好"
+        : targetEvidenceAction
+          ? "目标证据行动"
+          : "最新面试资产";
+  const evidenceBody =
+    interviewAmmoPack?.finalInterviewAnswer ||
+    targetEvidenceDepositAction?.targetEvidence ||
+    targetEvidenceAction?.missingEvidence?.[0] ||
+    featuredAsset?.proofPoint ||
+    "完成今日主动作后，这里会变成可入账、可复述、可验证的成长证据。";
+  const evidenceMeta = interviewAmmoPack
+    ? `成熟度 ${
+        interviewAmmoPack.readinessScore != null
+          ? `${interviewAmmoPack.readinessScore}/10`
+          : "待判断"
+      }`
+    : targetEvidenceDepositAction || targetEvidenceAction
+      ? `目标匹配 ${
+          (targetEvidenceDepositAction?.targetFitScore ??
+            targetEvidenceAction?.targetFitScore) != null
+            ? `${targetEvidenceDepositAction?.targetFitScore ?? targetEvidenceAction?.targetFitScore}/10`
+            : "待计算"
+        }`
+      : featuredAsset?.readiness || "未入账";
+  const handleCopyInterviewAmmoPack = async () => {
+    if (!interviewAmmoPack?.finalInterviewAnswer) return;
+    await navigator.clipboard.writeText(interviewAmmoPack.finalInterviewAnswer);
+    setCopiedAmmoProject(interviewAmmoPack.projectName);
+  };
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-line bg-surface-raised shadow-xs">
@@ -685,6 +741,74 @@ function PathFirstHero({
           <div className="mt-5 rounded-lg border border-white/12 bg-white/8 px-4 py-4">
             <p className="text-label font-bold text-white/55">当前资产</p>
             <p className="mt-1 text-heading-sm font-bold">{pipelineEvidence}</p>
+          </div>
+          <div className="mt-4 rounded-lg border border-white/12 bg-white/10 px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-label font-bold text-white/58">主动作证据</p>
+                <h3 className="mt-1 text-heading-sm font-bold">{evidenceTitle}</h3>
+              </div>
+              <span className="shrink-0 rounded-md bg-white px-2.5 py-1 text-label font-bold text-ink">
+                {evidenceLabel}
+              </span>
+            </div>
+            <p className="mt-3 line-clamp-5 text-body-sm leading-relaxed text-white/82">
+              {evidenceBody}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2 text-label font-bold">
+              <span className="rounded-md bg-white/12 px-2.5 py-1 text-white/78">
+                {evidenceMeta}
+              </span>
+              <span className="rounded-md bg-white/12 px-2.5 py-1 text-white/78">
+                可用 {dossier?.readyCount ?? 0} / 待修正 {dossier?.revisionCount ?? 0}
+              </span>
+            </div>
+            {interviewAmmoPack ? (
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <button
+                  onClick={handleCopyInterviewAmmoPack}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-body-sm font-bold text-ink transition-all hover:bg-white/90 active:scale-[0.98]"
+                >
+                  {copiedAmmoProject === interviewAmmoPack.projectName
+                    ? "已复制"
+                    : "复制终版表达"}
+                  <ClipboardCheck className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+                <Link
+                  href={interviewAmmoPack.rehearsalHref}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white/18 bg-white/10 px-3 py-2 text-body-sm font-bold text-white transition-all hover:bg-white/15 active:scale-[0.98]"
+                >
+                  模拟复述
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+                </Link>
+              </div>
+            ) : targetEvidenceDepositAction ? (
+              <button
+                onClick={() => onDepositTargetEvidence(targetEvidenceDepositAction)}
+                disabled={Boolean(savingDepositProject)}
+                className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-body-sm font-bold text-ink transition-all hover:bg-white/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              >
+                {savingDepositProject === targetEvidenceDepositAction.projectName
+                  ? "入账中"
+                  : depositStatus === "saved"
+                    ? "入账成功"
+                    : "现在入账"}
+                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            ) : (
+              <Link
+                href={targetEvidenceAction?.href || featuredAsset?.href || TRAINING_SESSION_ROUTE}
+                className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-body-sm font-bold text-ink transition-all hover:bg-white/90 active:scale-[0.98]"
+              >
+                {targetEvidenceAction ? "补这条证据" : featuredAsset ? "查看表达卡" : "开始生成证据"}
+                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+              </Link>
+            )}
+            {depositStatus === "failed" && (
+              <p className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-label font-bold text-danger">
+                入账失败，请稍后重试。
+              </p>
+            )}
           </div>
           <div className="mt-5 space-y-3">
             {pipelineSteps.map((step, index) => (
@@ -934,7 +1058,7 @@ function ActionDossierPanel({
       </div>
 
       <div className="rounded-lg bg-ink px-5 py-5 text-white">
-        <p className="text-label font-bold text-white/65">今日行动档案</p>
+        <p className="text-label font-bold text-white/65">已归档行动模块</p>
         <h2 className="mt-2 text-heading-md font-bold">最新面试资产</h2>
         <p className="mt-3 max-w-xl text-body-sm leading-relaxed text-white/72">
           {featuredAsset
@@ -1770,24 +1894,20 @@ export default function DashboardPage() {
         <div className="space-y-5">
           <PathFirstHero
             commandCenter={data?.commandCenter}
+            depositedProjectName={depositedProjectName}
+            depositStatus={depositStatus}
             fallbackFocus={focusLabel}
             goalBrief={data?.latestGoalBrief}
             goalBriefDraft={goalBriefDraft}
+            onDepositTargetEvidence={handleDepositTargetEvidence}
             onSelectGoalFocus={handleSelectGoalFocus}
             onGoalBriefChange={handleGoalBriefChange}
             onSaveGoalBrief={handleSaveGoalBrief}
             latestReport={latestReport}
+            savingDepositProject={savingDepositProject}
             savingGoalBrief={savingGoalBrief}
             savingGoalFocus={savingGoalFocus}
             stats={stats}
-          />
-
-          <ActionDossierPanel
-            actionDossier={data?.commandCenter?.actionDossier}
-            depositedProjectName={depositedProjectName}
-            depositStatus={depositStatus}
-            onDepositTargetEvidence={handleDepositTargetEvidence}
-            savingDepositProject={savingDepositProject}
           />
 
           <GrowthProfileLedger growthProfile={data?.growthProfile} />

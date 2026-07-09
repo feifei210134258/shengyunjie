@@ -1,5 +1,24 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: Dashboard 资产动作并入指挥舱
+
+### 背景判断
+- 上一轮已经把首屏改成“今日主动作 + 资产流水线”，但首屏下方仍然紧跟一组独立行动档案卡片，用户会再次面对“目标证据 / 最新资产 / 待修正 / 下一题”的并列选择。
+- 从第一性原理看，首页第一屏应该只承载一个动作决策。资产动作可以存在，但必须服务这个主动作，而不是在主动作之后再生成第二个行动中心。
+
+### 完成内容
+- `PathFirstHero` 右侧流水线新增“主动作证据”，直接读取 `commandCenter.actionDossier`。
+- 终版表达入账时，可在指挥舱内复制终版表达或进入模拟复述。
+- 已修补但未入账的目标证据，可在指挥舱内直接调用 `handleDepositTargetEvidence` 入账。
+- 目标证据缺口或最新表达资产，会在同一区域提供补证据/查看表达卡入口。
+- Dashboard 主渲染移除独立 `<ActionDossierPanel />`，避免首屏后立刻出现第二个行动卡片墙。
+
+### 验证记录
+- TDD 红灯：Dashboard 页面测试先失败于缺少“主动作证据”，并断言不再渲染 `<ActionDossierPanel />`。
+- GREEN：`node --test 'src/app/(app)/dashboard/page.test.mjs'` 通过 15 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' --max-warnings 0` 通过。
+
 ## [2026-07-09] Feature: Dashboard 今日主动作指挥舱
 
 ### 背景判断

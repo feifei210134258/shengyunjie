@@ -161,6 +161,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 历史复盘页的思维升级卡支持“沉淀思维升级”：前端调用 `POST /api/profile/summary`，`trigger=thinking_upgrade_saved`，把判断质量、取舍质量、归因深度和落地严谨度写入 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 并读回 snapshot，让高级产品思维训练也进入画像证据账本。
 - Dashboard 首屏新增“今日行动档案”：`buildCommandCenter` 从最近训练记录派生 `actionDossier`，把最新面试资产、待修正材料和下一题处方直接放到两条结果路径之后，避免表达资产只埋在训练详情页。
 - Dashboard 首屏进一步从双路径大卡片改为“今日主动作 + 资产流水线”指挥舱：首屏只突出一个最高杠杆动作，展示行动理由、完成后入账说明和主 CTA；面试跳槽/高级产品思维保留为紧凑主线切换；右侧用“目标简报 → 今日动作 → 证据入账 → 下一步处方”串起资产流转，避免用户先在模块或路径卡片中选择。
+- Dashboard 的 `actionDossier` 不再作为首屏下方的独立卡片墙渲染，而是嵌入右侧“主动作证据”区：有终版表达时直接复制或模拟复述，有已修补目标证据时直接入账，没有资产时进入训练或故事库生成证据。
 - 今日行动档案会继续读取 `growthProfile.storyAssets` 和 `latestGoalBrief`，当已入账项目故事包含目标匹配缺口时，首屏生成“目标证据行动”：明确今天先修哪个项目、目标匹配分、优先级标签和第一条待补证据，入口指向 `/bootcamp/story-bank`。
 - 今日行动档案也会读取 `bootcamp_sessions.parsed_profile.projects[].targetEvidence`，识别“目标证据已补但还没入画像账本”的项目，并优先提示“现在入账这份证据”；用户可在 Dashboard 直接点击入账，前端调用 `POST /api/profile/summary`，`trigger=project_story_saved`，把目标证据写入画像账本后刷新 `/api/dashboard` 读回成功态。故事库保存项目故事包时也会把 `targetEvidence` 一并写入 `growth_snapshots.dimension_scores.__trigger.projectStory`，Dashboard 证据账本刷新后可读回这段目标证据。
 - 当 `growthProfile.storyAssets` 已包含 `finalInterviewAnswer`，今日行动档案会把它提升为“面试弹药包”：首屏展示项目、成熟度和终版表达，支持复制终版表达，并提供进入 `/bootcamp/interview?focus=target_evidence` 的模拟复述入口，避免终版表达只停在账本展示。
