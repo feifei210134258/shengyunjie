@@ -64,6 +64,13 @@ test("dashboard action dossier shows the highest-priority target evidence action
   assert.match(source, /补这条证据/);
 });
 
+test("dashboard action dossier shows repaired target evidence that needs ledger deposit", () => {
+  assert.match(source, /targetEvidenceDepositAction/);
+  assert.match(source, /目标证据已修好/);
+  assert.match(source, /现在入账/);
+  assert.match(source, /入账这份证据/);
+});
+
 test("dashboard surfaces saved project story packs in the profile ledger", () => {
   assert.match(source, /storyAssets/);
   assert.match(source, /已入账项目资产/);

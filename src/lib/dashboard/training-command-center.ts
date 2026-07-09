@@ -21,6 +21,7 @@ type CommandCenterInput = {
   profileWeaknesses: string[];
   latestReport: { id: string } | null;
   storyAssets?: DashboardStoryAsset[];
+  repairedTargetEvidence?: DashboardRepairedTargetEvidence[];
   latestGoalBrief?: GoalBrief | null;
   hasCaseSimulation?: boolean;
   bootcampSession?: {
@@ -119,6 +120,7 @@ export type DashboardStoryAsset = {
   projectName: string;
   company?: string;
   role?: string;
+  targetEvidence?: string;
   readinessScore?: number | null;
   proofGaps?: string[];
   targetFit?: {
@@ -127,6 +129,16 @@ export type DashboardStoryAsset = {
     reason?: string | null;
     missingEvidence?: string[];
   };
+  href?: string;
+};
+
+export type DashboardRepairedTargetEvidence = {
+  projectName: string;
+  company?: string;
+  role?: string;
+  targetEvidence: string;
+  priorityLabel?: string | null;
+  targetFitScore?: number | null;
   href?: string;
 };
 
@@ -139,12 +151,24 @@ export type TargetEvidenceAction = {
   href: string;
 };
 
+export type TargetEvidenceDepositAction = {
+  projectName: string;
+  company: string;
+  role: string;
+  priorityLabel: string;
+  targetFitScore: number | null;
+  targetEvidence: string;
+  reason: string;
+  href: string;
+};
+
 export type ActionDossier = {
   readyCount: number;
   revisionCount: number;
   featuredAsset: DossierAsset | null;
   revisionAction: DossierAsset | null;
   targetEvidenceAction: TargetEvidenceAction | null;
+  targetEvidenceDepositAction: TargetEvidenceDepositAction | null;
   nextTraining: {
     title: string;
     href: string;
@@ -478,13 +502,55 @@ function buildTargetEvidenceAction(
   };
 }
 
+function buildTargetEvidenceDepositAction(
+  repairedTargetEvidence: DashboardRepairedTargetEvidence[] | undefined,
+  storyAssets: DashboardStoryAsset[] | undefined,
+  goalBrief: GoalBrief | null | undefined
+): TargetEvidenceDepositAction | null {
+  const ledgeredProjectNames = new Set(
+    (storyAssets || [])
+      .filter(
+        (asset) =>
+          asset.targetEvidence &&
+          asset.targetFit &&
+          !asset.targetFit.missingEvidence?.length
+      )
+      .map((asset) => asset.projectName)
+  );
+  const candidate = [...(repairedTargetEvidence || [])]
+    .filter((item) => item.projectName && item.targetEvidence)
+    .filter((item) => !ledgeredProjectNames.has(item.projectName))
+    .sort(
+      (a, b) =>
+        Number(b.targetFitScore ?? -1) - Number(a.targetFitScore ?? -1)
+    )[0];
+
+  if (!candidate) return null;
+
+  const targetContext = formatGoalBriefForEvidence(goalBrief);
+  return {
+    projectName: candidate.projectName,
+    company: candidate.company || "未标注公司",
+    role: candidate.role || "未标注角色",
+    priorityLabel: candidate.priorityLabel || "优先讲",
+    targetFitScore:
+      typeof candidate.targetFitScore === "number"
+        ? candidate.targetFitScore
+        : null,
+    targetEvidence: truncateText(candidate.targetEvidence, 120),
+    reason: `目标证据已修好，但还没进入画像账本。为了 ${targetContext}，现在入账「${candidate.projectName}」，让首页和推荐继续读取这份证据。`,
+    href: candidate.href || "/bootcamp/story-bank",
+  };
+}
+
 function buildActionDossier(
   records: DashboardRecord[],
   priorityMission: TrainingMission,
   actionLabel: string,
   goalFocus: GoalFocus | null,
   storyAssets?: DashboardStoryAsset[],
-  latestGoalBrief?: GoalBrief | null
+  latestGoalBrief?: GoalBrief | null,
+  repairedTargetEvidence?: DashboardRepairedTargetEvidence[]
 ): ActionDossier {
   const assets = records
     .map(buildDossierAsset)
@@ -500,6 +566,11 @@ function buildActionDossier(
     featuredAsset: readyAssets[0] || assets[0] || null,
     revisionAction: revisionAssets[0] || null,
     targetEvidenceAction: buildTargetEvidenceAction(storyAssets, latestGoalBrief),
+    targetEvidenceDepositAction: buildTargetEvidenceDepositAction(
+      repairedTargetEvidence,
+      storyAssets,
+      latestGoalBrief
+    ),
     nextTraining: {
       title: `${priorityMission.displayLabel} / ${actionLabel}`,
       href: "/training/session",
@@ -686,7 +757,8 @@ export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCe
       actionLabel,
       goalFocus,
       input.storyAssets,
-      input.latestGoalBrief
+      input.latestGoalBrief,
+      input.repairedTargetEvidence
     ),
     missionMap: buildMissionMap(priorityMission, input.dimAverages),
     blindSpots,

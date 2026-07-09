@@ -1,5 +1,24 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: Dashboard 目标证据入账行动
+
+### 背景判断
+- 目标证据修补完成后，如果用户没有立刻点击“沉淀项目故事包”，Dashboard 仍可能看不到这份新证据，下一次打开首页会失去“现在该入账”的连续性。
+- 从第一性原理看，面试跳槽路径的关键不是多一个输入框，而是让“补证据 → 入账 → 推荐继续读”成为不可中断的证据生产链。
+
+### 完成内容
+- `/api/dashboard` 从 `bootcamp_sessions.parsed_profile.projects[].targetEvidence` 读回已修补目标证据，并排除已经以项目故事包形式入账的项目。
+- `buildCommandCenter` 新增 `targetEvidenceDepositAction`，当发现“已修补但未入账”的项目时，今日行动档案优先提示“目标证据已修好 / 现在入账”。
+- Dashboard 目标证据卡在该状态下展示已修补证据摘要、目标匹配和“现在入账”入口，而不是继续提示补同一条证据。
+- `/bootcamp/story-bank` 保存项目故事包时把 `targetEvidence` 一并 POST 到 `/api/profile/summary`；`profile summary` 写入 growth snapshot 后，`buildGrowthProfile` 可从 `storyAssets[].targetEvidence` 读回并在 Dashboard 证据账本展示。
+- 产品设计文档已同步记录“修补目标证据 → Dashboard 入账行动 → 画像账本读回”的闭环。
+
+### 验证记录
+- TDD 红灯：新增 command center、Dashboard API、Dashboard 页面、story-bank 页面、profile summary 和 growth-profile 测试，先失败于缺少 `targetEvidenceDepositAction`、缺少 Dashboard API 读回 `targetEvidence`、故事包入账未携带 `targetEvidence`。
+- GREEN：`node --test src/lib/dashboard/training-command-center.test.mjs` 通过 9 项；`node --test src/lib/profile/growth-profile.test.mjs` 通过 3 项；`node --test src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs' 'src/app/(app)/bootcamp/story-bank/page.test.mjs' src/app/api/profile/summary/route.test.mjs` 通过 36 项。
+- 回归：`node --test src/lib/dashboard/training-command-center.test.mjs src/lib/profile/growth-profile.test.mjs src/app/api/dashboard/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs' 'src/app/(app)/bootcamp/story-bank/page.test.mjs' src/app/api/profile/summary/route.test.mjs feature_list.test.mjs` 通过 50 项。
+- `npx tsc --noEmit`、针对性 ESLint、`feature_list.json` 解析、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-09] Feature: 目标证据修补完成态
 
 ### 背景判断

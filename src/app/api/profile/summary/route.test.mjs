@@ -43,6 +43,7 @@ test("profile summary API can tag snapshots created from saved project story pac
   assert.match(source, /readinessScore/);
   assert.match(source, /interviewScript/);
   assert.match(source, /targetFit/);
+  assert.match(source, /targetEvidence/);
   assert.match(source, /priorityLabel/);
   assert.match(source, /missingEvidence/);
 });

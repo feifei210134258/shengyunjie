@@ -48,6 +48,9 @@ async function readSnapshotTrigger(req?: Request) {
             ),
             company: String(body.projectStory.company || "").slice(0, 120),
             role: String(body.projectStory.role || "").slice(0, 240),
+            targetEvidence: String(
+              body.projectStory.targetEvidence || ""
+            ).slice(0, 600),
             readinessScore: Number.isFinite(
               Number(body.projectStory.readinessScore)
             )

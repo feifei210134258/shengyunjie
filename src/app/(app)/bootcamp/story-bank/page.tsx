@@ -119,6 +119,7 @@ export default function StoryBankPage() {
             projectName: story.projectName,
             company: story.company,
             role: story.role,
+            targetEvidence: story.targetEvidenceRepair.savedEvidence,
             readinessScore: story.readinessScore,
             proofGaps: story.proofGaps,
             targetFit: story.targetFit,

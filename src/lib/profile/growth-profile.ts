@@ -49,6 +49,7 @@ export type GrowthProfileStoryAsset = {
   projectName: string;
   company: string;
   role: string;
+  targetEvidence: string;
   readinessScore: number | null;
   proofGaps: string[];
   targetFit?: {
@@ -229,6 +230,7 @@ function buildStoryAssets(
         projectName,
         company: compactText(projectStory?.company),
         role: compactText(projectStory?.role),
+        targetEvidence: compactText(projectStory?.targetEvidence).slice(0, 600),
         readinessScore:
           readinessScore == null ? null : Math.round(readinessScore / 10),
         proofGaps: normalizeProofGaps(projectStory?.proofGaps),

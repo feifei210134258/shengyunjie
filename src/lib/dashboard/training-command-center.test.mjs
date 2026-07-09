@@ -248,3 +248,63 @@ test("turns saved story target gaps into the next target evidence action", () =>
     /B 端高级产品经理|SaaS 商业化负责人面试|补齐续费率提升数据/
   );
 });
+
+test("prioritizes repaired target evidence that still needs ledger deposit", () => {
+  const result = buildCommandCenter({
+    todayCount: 0,
+    recentRecords: [],
+    dimAverages: { commercial_thinking: 7.4 },
+    profileWeaknesses: ["commercial_thinking"],
+    latestReport: { id: "report-1" },
+    selectedGoalFocus: "interview_sprint",
+    latestGoalBrief: {
+      targetRole: "B 端高级产品经理",
+      targetScenario: "SaaS 续费增长负责人面试",
+      targetDeadline: "两周内",
+    },
+    storyAssets: [
+      {
+        projectName: "客户健康度评分系统",
+        readinessScore: 80,
+        targetFit: {
+          score: 8,
+          priorityLabel: "优先讲",
+          reason: "旧故事包还缺续费归因证据。",
+          missingEvidence: ["补齐目标场景里的续费归因反证"],
+        },
+        href: "/bootcamp/story-bank",
+      },
+    ],
+    repairedTargetEvidence: [
+      {
+        projectName: "客户健康度评分系统",
+        company: "云阶科技",
+        role: "产品负责人",
+        targetEvidence:
+          "我用客户健康度模型提前识别续费风险，推动 CS 分层跟进，续费率提升 8.6%，并用对照客户排除季节波动。",
+        priorityLabel: "优先讲",
+        targetFitScore: 9,
+        href: "/bootcamp/story-bank",
+      },
+    ],
+    date: new Date("2026-07-09T10:00:00+08:00"),
+  });
+
+  assert.equal(
+    result.actionDossier.targetEvidenceDepositAction?.projectName,
+    "客户健康度评分系统"
+  );
+  assert.equal(
+    result.actionDossier.targetEvidenceDepositAction?.priorityLabel,
+    "优先讲"
+  );
+  assert.equal(result.actionDossier.targetEvidenceDepositAction?.targetFitScore, 9);
+  assert.match(
+    result.actionDossier.targetEvidenceDepositAction?.targetEvidence || "",
+    /续费率提升 8\.6%/
+  );
+  assert.match(
+    result.actionDossier.targetEvidenceDepositAction?.reason || "",
+    /目标证据已修好|入账|SaaS 续费增长负责人面试/
+  );
+});

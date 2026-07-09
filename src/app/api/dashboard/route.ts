@@ -49,6 +49,58 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
   return streak;
 }
 
+function compactText(value: unknown) {
+  return String(value || "").trim();
+}
+
+function buildTargetEvidenceRepairs(
+  bootcampSession: any,
+  storyAssets: Array<{
+    projectName?: string;
+    targetEvidence?: string;
+    targetFit?: { score?: number | null; priorityLabel?: string | null; missingEvidence?: string[] };
+    href?: string;
+  }>
+) {
+  const ledgeredProjects = new Set(
+    storyAssets
+      .filter(
+        (asset) =>
+          asset.projectName &&
+          asset.targetEvidence &&
+          asset.targetFit &&
+          !asset.targetFit.missingEvidence?.length
+      )
+      .map((asset) => asset.projectName)
+  );
+  const projects = Array.isArray(bootcampSession?.parsed_profile?.projects)
+    ? bootcampSession.parsed_profile.projects
+    : [];
+
+  return projects
+    .map((project: any) => {
+      const projectName = compactText(project?.name);
+      const targetEvidence = compactText(project?.targetEvidence);
+      if (!projectName || !targetEvidence || ledgeredProjects.has(projectName)) {
+        return null;
+      }
+      const savedAsset = storyAssets.find((asset) => asset.projectName === projectName);
+      return {
+        projectName,
+        company: compactText(project?.company),
+        role: compactText(project?.role),
+        targetEvidence,
+        priorityLabel: savedAsset?.targetFit?.priorityLabel || "优先讲",
+        targetFitScore:
+          typeof savedAsset?.targetFit?.score === "number"
+            ? savedAsset.targetFit.score
+            : null,
+        href: savedAsset?.href || "/bootcamp/story-bank",
+      };
+    })
+    .filter(Boolean);
+}
+
 /* ------------------------------------------------------------------ */
 /*  Route handler                                                      */
 /* ------------------------------------------------------------------ */
@@ -183,6 +235,10 @@ export async function GET() {
       bootcampInterviews,
       growthSnapshots: growthSnapshots || [],
     });
+    const targetEvidenceRepairs = buildTargetEvidenceRepairs(
+      bootcampSession,
+      growthProfile.storyAssets
+    );
     const recommendationPlan = buildRecommendationPlan(growthProfile);
     const latestRecommendation =
       (growthSnapshots || []).find(
@@ -286,6 +342,7 @@ export async function GET() {
       profileWeaknesses: profile?.weaknesses || [],
       latestReport: latestReport ? { id: latestReport.id } : null,
       storyAssets: growthProfile.storyAssets,
+      repairedTargetEvidence: targetEvidenceRepairs,
       latestGoalBrief,
       hasCaseSimulation,
       selectedGoalFocus: latestGoalFocus,

@@ -91,6 +91,8 @@ test("surfaces saved project story packs from growth snapshots", () => {
               projectName: "客户健康度评分系统",
               company: "云杉科技",
               role: "产品负责人",
+              targetEvidence:
+                "续费率提升 8.6%，并通过对照客户和跟进记录排除偶然波动。",
               readinessScore: 8,
               proofGaps: ["归因证据还需补强"],
               targetFit: {
@@ -125,6 +127,7 @@ test("surfaces saved project story packs from growth snapshots", () => {
   assert.equal(profile.storyAssets[0].projectName, "客户健康度评分系统");
   assert.equal(profile.storyAssets[0].company, "云杉科技");
   assert.equal(profile.storyAssets[0].role, "产品负责人");
+  assert.match(profile.storyAssets[0].targetEvidence, /续费率提升 8\.6%/);
   assert.equal(profile.storyAssets[0].readinessScore, 8);
   assert.deepEqual(profile.storyAssets[0].proofGaps, ["归因证据还需补强"]);
   assert.equal(profile.storyAssets[0].targetFit.score, 9);

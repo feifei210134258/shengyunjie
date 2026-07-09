@@ -33,3 +33,10 @@ test("dashboard API passes target story assets and goal brief into the command c
   assert.match(source, /storyAssets:\s*growthProfile\.storyAssets/);
   assert.match(source, /latestGoalBrief/);
 });
+
+test("dashboard API derives repaired target evidence from the bootcamp session", () => {
+  assert.match(source, /targetEvidenceRepairs/);
+  assert.match(source, /parsed_profile\?\.projects/);
+  assert.match(source, /targetEvidence/);
+  assert.match(source, /repairedTargetEvidence:\s*targetEvidenceRepairs/);
+});

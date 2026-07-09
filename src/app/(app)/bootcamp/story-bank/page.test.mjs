@@ -69,3 +69,7 @@ test("story bank page shows when target evidence has already been repaired", () 
   assert.match(source, /目标证据已补/);
   assert.match(source, /下一步沉淀到画像账本/);
 });
+
+test("story bank page persists repaired target evidence into the profile ledger", () => {
+  assert.match(source, /targetEvidence:\s*story\.targetEvidenceRepair\.savedEvidence/);
+});
