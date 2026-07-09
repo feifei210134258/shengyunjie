@@ -1,5 +1,25 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: Dashboard 一键入账目标证据
+
+### 背景判断
+- 上一轮 Dashboard 已经能识别“目标证据已修好但未入账”，但仍把用户送回故事库再点一次，证据生产链多了一次跳转。
+- 面试跳槽冲刺需要的是最短动作链：看到该入账 → 点击入账 → 写入画像账本 → 本屏读回成功。
+
+### 完成内容
+- `targetEvidenceDepositAction` 增加可提交的 `targetFit`，用于 Dashboard 直接构造项目故事包快照。
+- Dashboard 今日行动档案的“现在入账”从链接改为按钮，直接 `POST /api/profile/summary`，`trigger=project_story_saved`。
+- 入账 payload 包含 `projectName/company/role/targetEvidence/readinessScore/targetFit/interviewScript`，继续写入既有 `growth_snapshots.dimension_scores.__trigger.projectStory`，不新增 schema。
+- 入账成功后 Dashboard 重新拉取 `/api/dashboard`，并在本屏显示“入账成功 / 已入账：项目名”的完成态。
+- 失败时在卡片内展示内联错误，不使用 `alert`。
+
+### 验证记录
+- TDD 红灯：command center 测试先失败于 `targetEvidenceDepositAction.targetFit` 缺失；Dashboard 页面源测试先失败于缺少 `handleDepositTargetEvidence`、`project_story_saved`、`targetEvidence` 和 `targetFit` 入账 payload。
+- 补充红灯：长目标证据先失败于 `targetEvidenceDepositAction.targetEvidence` 被 120 字截断；修复为领域层保留完整证据，避免入账资产丢失信息。
+- GREEN：`node --test src/lib/dashboard/training-command-center.test.mjs` 通过 9 项；`node --test 'src/app/(app)/dashboard/page.test.mjs'` 通过 11 项。
+- 回归：`node --test src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/app/api/profile/summary/route.test.mjs src/lib/profile/growth-profile.test.mjs feature_list.test.mjs` 通过 35 项。
+- `npx tsc --noEmit`、针对性 ESLint、`feature_list.json` 解析、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-09] Feature: Dashboard 目标证据入账行动
 
 ### 背景判断

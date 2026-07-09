@@ -165,6 +165,12 @@ interface TargetEvidenceDepositAction {
   priorityLabel: string;
   targetFitScore: number | null;
   targetEvidence: string;
+  targetFit: {
+    score: number | null;
+    priorityLabel: string;
+    reason: string;
+    missingEvidence: string[];
+  };
   reason: string;
   href: string;
 }
@@ -671,14 +677,24 @@ function BlindSpotPanel({
 
 function ActionDossierPanel({
   actionDossier,
+  depositedProjectName,
+  depositStatus,
+  savingDepositProject,
+  onDepositTargetEvidence,
 }: {
   actionDossier: ActionDossier | undefined;
+  depositedProjectName: string;
+  depositStatus: "idle" | "saved" | "failed";
+  savingDepositProject: string;
+  onDepositTargetEvidence: (action: TargetEvidenceDepositAction) => Promise<void>;
 }) {
   const featuredAsset = actionDossier?.featuredAsset;
   const revisionAction = actionDossier?.revisionAction;
   const targetEvidenceAction = actionDossier?.targetEvidenceAction;
   const targetEvidenceDepositAction =
     actionDossier?.targetEvidenceDepositAction;
+  const showDepositSuccess =
+    depositStatus === "saved" && !targetEvidenceDepositAction && depositedProjectName;
   const nextTraining = actionDossier?.nextTraining || {
     title: "先完成一次训练",
     href: TRAINING_SESSION_ROUTE,
@@ -689,20 +705,29 @@ function ActionDossierPanel({
     <section className="grid gap-4 rounded-xl border border-line bg-surface-raised p-4 shadow-xs lg:grid-cols-2 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1.05fr)_minmax(260px,0.8fr)_minmax(260px,0.8fr)]">
       <div className="rounded-lg border border-primary/20 bg-primary-soft px-5 py-5">
         <p className="text-label font-bold text-primary">
-          {targetEvidenceDepositAction ? "目标证据已修好" : "目标证据行动"}
+          {showDepositSuccess
+            ? "入账成功"
+            : targetEvidenceDepositAction
+              ? "目标证据已修好"
+              : "目标证据行动"}
         </p>
         <h2 className="mt-2 text-heading-sm font-bold text-ink">
-          {targetEvidenceDepositAction
-            ? "现在入账："
-            : "先修项目："}
-          {targetEvidenceDepositAction?.projectName ||
+          {showDepositSuccess
+            ? "已入账："
+            : targetEvidenceDepositAction
+              ? "现在入账："
+              : "先修项目："}
+          {depositedProjectName ||
+            targetEvidenceDepositAction?.projectName ||
             targetEvidenceAction?.projectName ||
             "选择最能支撑目标岗位的项目"}
         </h2>
         <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
-          {targetEvidenceDepositAction?.reason ||
+          {showDepositSuccess
+            ? "这份目标证据已经进入画像账本，Dashboard 和后续推荐可以继续读取它。"
+            : targetEvidenceDepositAction?.reason ||
             targetEvidenceAction?.reason ||
-            "保存目标简报并沉淀项目故事包后，这里会直接指出今天先补哪条目标证据。"}
+              "保存目标简报并沉淀项目故事包后，这里会直接指出今天先补哪条目标证据。"}
         </p>
         <div className="mt-5 flex flex-wrap gap-2 text-label font-bold">
           <span className="rounded-md bg-surface-raised px-3 py-1.5 text-primary">
@@ -726,17 +751,33 @@ function ActionDossierPanel({
             targetEvidenceAction?.missingEvidence?.[0] ||
             "先补项目结果、取舍依据或追问风险中最缺的一条。"}
         </p>
-        <Link
-          href={
-            targetEvidenceDepositAction?.href ||
-            targetEvidenceAction?.href ||
-            "/bootcamp/story-bank"
-          }
-          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-primary/90 active:scale-[0.98]"
-        >
-          {targetEvidenceDepositAction ? "现在入账" : "补这条证据"}
-          <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-        </Link>
+        {targetEvidenceDepositAction ? (
+          <button
+            onClick={() => onDepositTargetEvidence(targetEvidenceDepositAction)}
+            disabled={Boolean(savingDepositProject)}
+            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-primary/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+          >
+            {savingDepositProject === targetEvidenceDepositAction.projectName
+              ? "入账中"
+              : depositStatus === "saved"
+                ? "入账成功"
+                : "现在入账"}
+            <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+          </button>
+        ) : (
+          <Link
+            href={targetEvidenceAction?.href || "/bootcamp/story-bank"}
+            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-primary/90 active:scale-[0.98]"
+          >
+            补这条证据
+            <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+          </Link>
+        )}
+        {depositStatus === "failed" && (
+          <p className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-label font-bold text-danger">
+            入账失败，请稍后重试。
+          </p>
+        )}
       </div>
 
       <div className="rounded-lg bg-ink px-5 py-5 text-white">
@@ -1273,6 +1314,9 @@ export default function DashboardPage() {
   const [selectedRecommendationId, setSelectedRecommendationId] = useState("");
   const [savingGoalFocus, setSavingGoalFocus] = useState("");
   const [savingGoalBrief, setSavingGoalBrief] = useState(false);
+  const [savingDepositProject, setSavingDepositProject] = useState("");
+  const [depositedProjectName, setDepositedProjectName] = useState("");
+  const [depositStatus, setDepositStatus] = useState<"idle" | "saved" | "failed">("idle");
   const [goalBriefDraft, setGoalBriefDraft] = useState<GoalBrief>({
     targetRole: "",
     targetScenario: "",
@@ -1406,6 +1450,45 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleDepositTargetEvidence(action: TargetEvidenceDepositAction) {
+    setSavingDepositProject(action.projectName);
+    setDepositedProjectName(action.projectName);
+    setDepositStatus("idle");
+    try {
+      const response = await fetch("/api/profile/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trigger: "project_story_saved",
+          projectStory: {
+            projectName: action.projectName,
+            company: action.company,
+            role: action.role,
+            targetEvidence: action.targetEvidence,
+            readinessScore: action.targetFitScore,
+            proofGaps: [],
+            targetFit: action.targetFit,
+            interviewScript: {
+              fullScript: action.targetEvidence,
+            },
+          },
+        }),
+      });
+      if (!response.ok) throw new Error("目标证据入账失败");
+      const result = await response.json();
+      if (!result.snapshot?.id) throw new Error("目标证据未读回快照");
+      const refreshed = await fetch("/api/dashboard");
+      if (refreshed.ok) {
+        setData(await refreshed.json());
+      }
+      setDepositStatus("saved");
+    } catch {
+      setDepositStatus("failed");
+    } finally {
+      setSavingDepositProject("");
+    }
+  }
+
   return (
     <main className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
       {loading ? (
@@ -1436,6 +1519,10 @@ export default function DashboardPage() {
 
           <ActionDossierPanel
             actionDossier={data?.commandCenter?.actionDossier}
+            depositedProjectName={depositedProjectName}
+            depositStatus={depositStatus}
+            onDepositTargetEvidence={handleDepositTargetEvidence}
+            savingDepositProject={savingDepositProject}
           />
 
           <GrowthProfileLedger growthProfile={data?.growthProfile} />

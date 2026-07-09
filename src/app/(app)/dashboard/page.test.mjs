@@ -71,6 +71,16 @@ test("dashboard action dossier shows repaired target evidence that needs ledger 
   assert.match(source, /入账这份证据/);
 });
 
+test("dashboard can deposit repaired target evidence without leaving the page", () => {
+  assert.match(source, /handleDepositTargetEvidence/);
+  assert.match(source, /project_story_saved/);
+  assert.match(source, /targetEvidence:\s*action\.targetEvidence/);
+  assert.match(source, /targetFit:\s*action\.targetFit/);
+  assert.match(source, /fetch\("\/api\/profile\/summary"/);
+  assert.match(source, /const refreshed = await fetch\("\/api\/dashboard"\)/);
+  assert.match(source, /入账成功/);
+});
+
 test("dashboard surfaces saved project story packs in the profile ledger", () => {
   assert.match(source, /storyAssets/);
   assert.match(source, /已入账项目资产/);

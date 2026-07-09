@@ -158,6 +158,12 @@ export type TargetEvidenceDepositAction = {
   priorityLabel: string;
   targetFitScore: number | null;
   targetEvidence: string;
+  targetFit: {
+    score: number | null;
+    priorityLabel: string;
+    reason: string;
+    missingEvidence: string[];
+  };
   reason: string;
   href: string;
 };
@@ -528,16 +534,25 @@ function buildTargetEvidenceDepositAction(
   if (!candidate) return null;
 
   const targetContext = formatGoalBriefForEvidence(goalBrief);
+  const targetFitReason = `目标证据已修好，可用于支撑 ${targetContext}。`;
+  const targetFitScore =
+    typeof candidate.targetFitScore === "number"
+      ? candidate.targetFitScore
+      : null;
+  const priorityLabel = candidate.priorityLabel || "优先讲";
   return {
     projectName: candidate.projectName,
     company: candidate.company || "未标注公司",
     role: candidate.role || "未标注角色",
-    priorityLabel: candidate.priorityLabel || "优先讲",
-    targetFitScore:
-      typeof candidate.targetFitScore === "number"
-        ? candidate.targetFitScore
-        : null,
-    targetEvidence: truncateText(candidate.targetEvidence, 120),
+    priorityLabel,
+    targetFitScore,
+    targetEvidence: candidate.targetEvidence,
+    targetFit: {
+      score: targetFitScore,
+      priorityLabel,
+      reason: targetFitReason,
+      missingEvidence: [],
+    },
     reason: `目标证据已修好，但还没进入画像账本。为了 ${targetContext}，现在入账「${candidate.projectName}」，让首页和推荐继续读取这份证据。`,
     href: candidate.href || "/bootcamp/story-bank",
   };

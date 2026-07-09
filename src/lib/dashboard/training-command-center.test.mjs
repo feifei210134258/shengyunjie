@@ -250,6 +250,8 @@ test("turns saved story target gaps into the next target evidence action", () =>
 });
 
 test("prioritizes repaired target evidence that still needs ledger deposit", () => {
+  const targetEvidence =
+    "我用客户健康度模型提前识别续费风险，推动 CS 分层跟进，续费率提升 8.6%，并用对照客户排除季节波动；同时把续费风险拆成使用深度、关键人变化和服务响应三组信号，让销售与客服每周按风险等级复盘动作。这个证据还能说明我不是单纯做功能，而是把续费目标、组织协同、指标归因和持续运营节奏连成闭环。";
   const result = buildCommandCenter({
     todayCount: 0,
     recentRecords: [],
@@ -280,8 +282,7 @@ test("prioritizes repaired target evidence that still needs ledger deposit", () 
         projectName: "客户健康度评分系统",
         company: "云阶科技",
         role: "产品负责人",
-        targetEvidence:
-          "我用客户健康度模型提前识别续费风险，推动 CS 分层跟进，续费率提升 8.6%，并用对照客户排除季节波动。",
+        targetEvidence,
         priorityLabel: "优先讲",
         targetFitScore: 9,
         href: "/bootcamp/story-bank",
@@ -303,8 +304,19 @@ test("prioritizes repaired target evidence that still needs ledger deposit", () 
     result.actionDossier.targetEvidenceDepositAction?.targetEvidence || "",
     /续费率提升 8\.6%/
   );
+  assert.equal(
+    result.actionDossier.targetEvidenceDepositAction?.targetEvidence,
+    targetEvidence
+  );
   assert.match(
     result.actionDossier.targetEvidenceDepositAction?.reason || "",
     /目标证据已修好|入账|SaaS 续费增长负责人面试/
   );
+  assert.deepEqual(result.actionDossier.targetEvidenceDepositAction?.targetFit, {
+    score: 9,
+    priorityLabel: "优先讲",
+    reason:
+      "目标证据已修好，可用于支撑 B 端高级产品经理 / SaaS 续费增长负责人面试 / 两周内。",
+    missingEvidence: [],
+  });
 });
