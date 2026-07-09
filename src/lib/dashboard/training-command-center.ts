@@ -121,6 +121,7 @@ export type DashboardStoryAsset = {
   company?: string;
   role?: string;
   targetEvidence?: string;
+  finalInterviewAnswer?: string;
   readinessScore?: number | null;
   proofGaps?: string[];
   targetFit?: {
@@ -168,6 +169,16 @@ export type TargetEvidenceDepositAction = {
   href: string;
 };
 
+export type InterviewAmmoPack = {
+  projectName: string;
+  company: string;
+  role: string;
+  finalInterviewAnswer: string;
+  readinessScore: number | null;
+  href: string;
+  rehearsalHref: string;
+};
+
 export type ActionDossier = {
   readyCount: number;
   revisionCount: number;
@@ -175,6 +186,7 @@ export type ActionDossier = {
   revisionAction: DossierAsset | null;
   targetEvidenceAction: TargetEvidenceAction | null;
   targetEvidenceDepositAction: TargetEvidenceDepositAction | null;
+  interviewAmmoPack: InterviewAmmoPack | null;
   nextTraining: {
     title: string;
     href: string;
@@ -558,6 +570,32 @@ function buildTargetEvidenceDepositAction(
   };
 }
 
+function buildInterviewAmmoPack(
+  storyAssets: DashboardStoryAsset[] | undefined
+): InterviewAmmoPack | null {
+  const candidate = [...(storyAssets || [])]
+    .filter((asset) => asset.projectName && asset.finalInterviewAnswer?.trim())
+    .sort(
+      (a, b) =>
+        Number(b.readinessScore ?? -1) - Number(a.readinessScore ?? -1)
+    )[0];
+
+  if (!candidate?.finalInterviewAnswer?.trim()) return null;
+
+  return {
+    projectName: candidate.projectName,
+    company: candidate.company || "未标注公司",
+    role: candidate.role || "未标注角色",
+    finalInterviewAnswer: candidate.finalInterviewAnswer.trim(),
+    readinessScore:
+      typeof candidate.readinessScore === "number"
+        ? candidate.readinessScore
+        : null,
+    href: candidate.href || "/bootcamp/story-bank",
+    rehearsalHref: "/bootcamp/interview?focus=target_evidence",
+  };
+}
+
 function buildActionDossier(
   records: DashboardRecord[],
   priorityMission: TrainingMission,
@@ -586,6 +624,7 @@ function buildActionDossier(
       storyAssets,
       latestGoalBrief
     ),
+    interviewAmmoPack: buildInterviewAmmoPack(storyAssets),
     nextTraining: {
       title: `${priorityMission.displayLabel} / ${actionLabel}`,
       href: "/training/session",

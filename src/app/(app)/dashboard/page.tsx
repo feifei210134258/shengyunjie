@@ -175,6 +175,16 @@ interface TargetEvidenceDepositAction {
   href: string;
 }
 
+interface InterviewAmmoPack {
+  projectName: string;
+  company: string;
+  role: string;
+  finalInterviewAnswer: string;
+  readinessScore: number | null;
+  href: string;
+  rehearsalHref: string;
+}
+
 interface ActionDossier {
   readyCount: number;
   revisionCount: number;
@@ -182,6 +192,7 @@ interface ActionDossier {
   revisionAction: DossierAsset | null;
   targetEvidenceAction: TargetEvidenceAction | null;
   targetEvidenceDepositAction: TargetEvidenceDepositAction | null;
+  interviewAmmoPack: InterviewAmmoPack | null;
   nextTraining: {
     title: string;
     href: string;
@@ -709,6 +720,8 @@ function ActionDossierPanel({
   const targetEvidenceAction = actionDossier?.targetEvidenceAction;
   const targetEvidenceDepositAction =
     actionDossier?.targetEvidenceDepositAction;
+  const interviewAmmoPack = actionDossier?.interviewAmmoPack;
+  const [copiedAmmoProject, setCopiedAmmoProject] = useState("");
   const showDepositSuccess =
     depositStatus === "saved" && !targetEvidenceDepositAction && depositedProjectName;
   const nextTraining = actionDossier?.nextTraining || {
@@ -716,58 +729,109 @@ function ActionDossierPanel({
     href: TRAINING_SESSION_ROUTE,
     reason: "训练、反馈和二次修正会在这里形成可复用的面试表达资产。",
   };
+  const handleCopyInterviewAmmoPack = async () => {
+    if (!interviewAmmoPack?.finalInterviewAnswer) return;
+    await navigator.clipboard.writeText(interviewAmmoPack.finalInterviewAnswer);
+    setCopiedAmmoProject(interviewAmmoPack.projectName);
+  };
 
   return (
     <section className="grid gap-4 rounded-xl border border-line bg-surface-raised p-4 shadow-xs lg:grid-cols-2 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1.05fr)_minmax(260px,0.8fr)_minmax(260px,0.8fr)]">
-      <div className="rounded-lg border border-primary/20 bg-primary-soft px-5 py-5">
+      <div
+        className={cn(
+          "rounded-lg border px-5 py-5",
+          interviewAmmoPack
+            ? "border-success/25 bg-success-soft"
+            : "border-primary/20 bg-primary-soft"
+        )}
+      >
         <p className="text-label font-bold text-primary">
-          {showDepositSuccess
-            ? "入账成功"
-            : targetEvidenceDepositAction
-              ? "目标证据已修好"
-              : "目标证据行动"}
+          {interviewAmmoPack
+            ? "面试弹药包"
+            : showDepositSuccess
+              ? "入账成功"
+              : targetEvidenceDepositAction
+                ? "目标证据已修好"
+                : "目标证据行动"}
         </p>
         <h2 className="mt-2 text-heading-sm font-bold text-ink">
-          {showDepositSuccess
-            ? "已入账："
-            : targetEvidenceDepositAction
-              ? "现在入账："
-              : "先修项目："}
-          {depositedProjectName ||
+          {interviewAmmoPack
+            ? ""
+            : showDepositSuccess
+              ? "已入账："
+              : targetEvidenceDepositAction
+                ? "现在入账："
+                : "先修项目："}
+          {interviewAmmoPack?.projectName ||
+            depositedProjectName ||
             targetEvidenceDepositAction?.projectName ||
             targetEvidenceAction?.projectName ||
             "选择最能支撑目标岗位的项目"}
         </h2>
         <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
-          {showDepositSuccess
-            ? "这份目标证据已经进入画像账本，Dashboard 和后续推荐可以继续读取它。"
-            : targetEvidenceDepositAction?.reason ||
-            targetEvidenceAction?.reason ||
-              "保存目标简报并沉淀项目故事包后，这里会直接指出今天先补哪条目标证据。"}
+          {interviewAmmoPack
+            ? "终版表达已经入账。下一步不是再补材料，而是复制、复述，并在模拟追问里验证临场稳定度。"
+            : showDepositSuccess
+              ? "这份目标证据已经进入画像账本，Dashboard 和后续推荐可以继续读取它。"
+              : targetEvidenceDepositAction?.reason ||
+                targetEvidenceAction?.reason ||
+                "保存目标简报并沉淀项目故事包后，这里会直接指出今天先补哪条目标证据。"}
         </p>
         <div className="mt-5 flex flex-wrap gap-2 text-label font-bold">
           <span className="rounded-md bg-surface-raised px-3 py-1.5 text-primary">
-            {targetEvidenceDepositAction?.priorityLabel ||
+            {interviewAmmoPack?.company ||
+              targetEvidenceDepositAction?.priorityLabel ||
               targetEvidenceAction?.priorityLabel ||
               "等待目标匹配"}
           </span>
           <span className="rounded-md bg-surface-raised px-3 py-1.5 text-ink">
-            目标匹配{" "}
-            {(targetEvidenceDepositAction?.targetFitScore ??
-              targetEvidenceAction?.targetFitScore) != null
-              ? `${targetEvidenceDepositAction?.targetFitScore ?? targetEvidenceAction?.targetFitScore}/10`
-              : "待计算"}
+            {interviewAmmoPack
+              ? `成熟度 ${
+                  interviewAmmoPack.readinessScore != null
+                    ? `${interviewAmmoPack.readinessScore}/10`
+                    : "待判断"
+                }`
+              : `目标匹配 ${
+                  (targetEvidenceDepositAction?.targetFitScore ??
+                    targetEvidenceAction?.targetFitScore) != null
+                    ? `${targetEvidenceDepositAction?.targetFitScore ?? targetEvidenceAction?.targetFitScore}/10`
+                    : "待计算"
+                }`}
           </span>
         </div>
         <p className="mt-4 text-label font-bold text-ink">
-          {targetEvidenceDepositAction ? "入账这份证据" : "补这条证据"}
+          {interviewAmmoPack
+            ? "终版表达"
+            : targetEvidenceDepositAction
+              ? "入账这份证据"
+              : "补这条证据"}
         </p>
         <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-          {targetEvidenceDepositAction?.targetEvidence ||
+          {interviewAmmoPack?.finalInterviewAnswer ||
+            targetEvidenceDepositAction?.targetEvidence ||
             targetEvidenceAction?.missingEvidence?.[0] ||
             "先补项目结果、取舍依据或追问风险中最缺的一条。"}
         </p>
-        {targetEvidenceDepositAction ? (
+        {interviewAmmoPack ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button
+              onClick={handleCopyInterviewAmmoPack}
+              className="inline-flex items-center gap-2 rounded-lg bg-success px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-success/90 active:scale-[0.98]"
+            >
+              {copiedAmmoProject === interviewAmmoPack.projectName
+                ? "已复制"
+                : "复制终版表达"}
+              <ClipboardCheck className="h-4 w-4" strokeWidth={1.5} />
+            </button>
+            <Link
+              href={interviewAmmoPack.rehearsalHref}
+              className="inline-flex items-center gap-2 rounded-lg border border-line-strong bg-surface-raised px-4 py-2.5 text-body-sm font-bold text-ink transition-all hover:bg-surface-hover active:scale-[0.98]"
+            >
+              模拟复述
+              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+            </Link>
+          </div>
+        ) : targetEvidenceDepositAction ? (
           <button
             onClick={() => onDepositTargetEvidence(targetEvidenceDepositAction)}
             disabled={Boolean(savingDepositProject)}

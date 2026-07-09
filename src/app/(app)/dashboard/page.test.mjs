@@ -74,6 +74,15 @@ test("dashboard action dossier shows repaired target evidence that needs ledger 
   assert.match(source, /入账这份证据/);
 });
 
+test("dashboard turns a ledgered final interview answer into an actionable ammo pack", () => {
+  assert.match(source, /interviewAmmoPack/);
+  assert.match(source, /面试弹药包/);
+  assert.match(source, /复制终版表达/);
+  assert.match(source, /模拟复述/);
+  assert.match(source, /finalInterviewAnswer/);
+  assert.match(source, /navigator\.clipboard\.writeText/);
+});
+
 test("dashboard can deposit repaired target evidence without leaving the page", () => {
   assert.match(source, /handleDepositTargetEvidence/);
   assert.match(source, /project_story_saved/);

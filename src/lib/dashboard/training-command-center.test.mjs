@@ -320,3 +320,42 @@ test("prioritizes repaired target evidence that still needs ledger deposit", () 
     missingEvidence: [],
   });
 });
+
+test("turns a ledgered final interview answer into the dashboard interview ammo pack", () => {
+  const result = buildCommandCenter({
+    todayCount: 0,
+    recentRecords: [],
+    dimAverages: { commercial_thinking: 7.8 },
+    profileWeaknesses: ["commercial_thinking"],
+    latestReport: { id: "report-1" },
+    selectedGoalFocus: "interview_sprint",
+    storyAssets: [
+      {
+        projectName: "客户健康度评分系统",
+        company: "云阶科技",
+        role: "产品负责人",
+        readinessScore: 91,
+        targetEvidence: "续费率提升 8.6%，并能说明归因反证。",
+        finalInterviewAnswer:
+          "我负责客户健康度评分系统时，先把续费风险拆成使用深度、关键人变化和服务响应三类信号，再推动 CS 按风险等级跟进，最终续费率提升 8.6%。",
+        targetFit: {
+          score: 9,
+          priorityLabel: "优先讲",
+          reason: "最能支撑商业化负责人面试。",
+          missingEvidence: [],
+        },
+        href: "/bootcamp/story-bank",
+      },
+    ],
+    date: new Date("2026-07-09T10:00:00+08:00"),
+  });
+
+  assert.equal(result.actionDossier.interviewAmmoPack?.projectName, "客户健康度评分系统");
+  assert.equal(result.actionDossier.interviewAmmoPack?.company, "云阶科技");
+  assert.equal(result.actionDossier.interviewAmmoPack?.readinessScore, 91);
+  assert.equal(result.actionDossier.interviewAmmoPack?.href, "/bootcamp/story-bank");
+  assert.match(
+    result.actionDossier.interviewAmmoPack?.finalInterviewAnswer || "",
+    /续费率提升 8\.6%/
+  );
+});

@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: Dashboard 面试弹药包
+
+### 背景判断
+- 终版面试表达已经能保存并入账，但 Dashboard 只在能力证据账本里展示，用户还需要自己判断下一步怎么使用。
+- 从第一性原理看，已验证、已打包、已入账的表达应该直接变成可执行资产：复制、复述、再进模拟追问验证临场稳定度。
+
+### 完成内容
+- `buildCommandCenter` 从 `growthProfile.storyAssets[].finalInterviewAnswer` 派生 `actionDossier.interviewAmmoPack`。
+- Dashboard 今日行动档案在有终版表达时优先展示“面试弹药包”，包含项目、公司、成熟度和终版表达。
+- 面试弹药包支持一键复制终版表达，并提供“模拟复述”入口，指向 `/bootcamp/interview?focus=target_evidence`。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：command center 测试先失败于缺少 `interviewAmmoPack`；Dashboard 页面源测试先失败于缺少“面试弹药包 / 复制终版表达 / 模拟复述”。
+- GREEN：`node --test src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 通过 23 项。
+- `npx tsc --noEmit` 通过。
+- 针对性 ESLint 通过：Dashboard 页面、command center 领域及相关测试。
+
 ## [2026-07-09] Feature: 终版面试表达入账
 
 ### 背景判断
