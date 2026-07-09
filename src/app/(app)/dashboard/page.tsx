@@ -234,6 +234,20 @@ interface GrowthProfileThinkingAsset {
   href: string;
 }
 
+interface GrowthProfileTargetEvidenceValidation {
+  snapshotId: string;
+  savedAt: string | null;
+  interviewId: string;
+  projectName: string;
+  targetEvidence: string;
+  score: number | null;
+  status: string;
+  verdict: string;
+  unresolvedRisks: string[];
+  nextDrill: string;
+  href: string;
+}
+
 interface GrowthProfile {
   summary: {
     overallScore: number | null;
@@ -260,6 +274,7 @@ interface GrowthProfile {
   };
   storyAssets: GrowthProfileStoryAsset[];
   thinkingAssets: GrowthProfileThinkingAsset[];
+  targetEvidenceValidations: GrowthProfileTargetEvidenceValidation[];
 }
 
 interface RecommendationItem {
@@ -918,8 +933,11 @@ function GrowthProfileLedger({
   const readiness = growthProfile?.careerReadiness;
   const storyAssets = growthProfile?.storyAssets ?? [];
   const thinkingAssets = growthProfile?.thinkingAssets ?? [];
+  const targetEvidenceValidations =
+    growthProfile?.targetEvidenceValidations ?? [];
   const latestStoryAsset = storyAssets[0];
   const latestThinkingAsset = thinkingAssets[0];
+  const latestTargetEvidenceValidation = targetEvidenceValidations[0];
 
   return (
     <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
@@ -1062,6 +1080,55 @@ function GrowthProfileLedger({
             ) : (
               <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
                 训练复盘页保存思维升级卡后，会在这里读回长期升阶证据。
+              </p>
+            )}
+          </div>
+          <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-label font-bold text-ink-muted">
+                目标证据验证
+              </p>
+              <span className="font-mono text-label font-bold text-ink-faint">
+                {targetEvidenceValidations.length}
+              </span>
+            </div>
+            {latestTargetEvidenceValidation ? (
+              <div className="mt-3">
+                <p className="text-body-sm font-bold text-ink">
+                  {latestTargetEvidenceValidation.projectName}
+                </p>
+                <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
+                  {latestTargetEvidenceValidation.verdict ||
+                    latestTargetEvidenceValidation.targetEvidence}
+                </p>
+                {latestTargetEvidenceValidation.unresolvedRisks.length > 0 && (
+                  <p className="mt-2 text-label font-semibold text-warning">
+                    击穿点：
+                    {latestTargetEvidenceValidation.unresolvedRisks[0]}
+                  </p>
+                )}
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="rounded-md bg-primary-soft px-2.5 py-1 text-label font-bold text-primary">
+                    抗追问
+                    {latestTargetEvidenceValidation.score != null
+                      ? ` ${latestTargetEvidenceValidation.score}/10`
+                      : ""}
+                  </span>
+                  <Link
+                    href={
+                      latestTargetEvidenceValidation.href ||
+                      "/bootcamp/interview?focus=target_evidence"
+                    }
+                    className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
+                  >
+                    继续追问
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
+                项目目标证据完成高压追问后，会在这里读回抗追问结果。
               </p>
             )}
           </div>

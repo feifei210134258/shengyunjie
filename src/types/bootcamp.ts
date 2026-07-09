@@ -43,6 +43,16 @@ export interface AIEvaluation {
   example_answer?: string;
   improved_answer?: string;
   next_practice?: string;
+  target_evidence_validation?: {
+    score: number;
+    status: "defended" | "weak" | "unclear";
+    verdict: string;
+    evidence_matched: string[];
+    unresolved_risks: string[];
+    next_drill: string;
+    project_name?: string;
+    target_evidence?: string;
+  };
 }
 
 export interface InterviewQuestion {

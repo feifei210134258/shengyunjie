@@ -46,6 +46,7 @@ function BootcampInterviewContent() {
   const [currentDay, setCurrentDay] = useState(1);
   const [targetEvidenceFocus, setTargetEvidenceFocus] =
     useState<TargetEvidenceFocus | null>(null);
+  const [validationSnapshot, setValidationSnapshot] = useState<any>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isRegeneratingEvaluation, setIsRegeneratingEvaluation] =
     useState(false);
@@ -77,7 +78,7 @@ function BootcampInterviewContent() {
       const res = await fetch("/api/bootcamp/interview/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interview_id: question.id, answer }),
+        body: JSON.stringify({ interview_id: question.id, answer, interviewFocus }),
       });
 
       const data = await res.json();
@@ -90,6 +91,7 @@ function BootcampInterviewContent() {
           status: "evaluated",
         };
         setQuestions(updated);
+        setValidationSnapshot(data.validationSnapshot || null);
         return;
       }
 
@@ -109,7 +111,7 @@ function BootcampInterviewContent() {
       const res = await fetch("/api/bootcamp/interview/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interview_id: question.id }),
+        body: JSON.stringify({ interview_id: question.id, interviewFocus }),
       });
 
       const data = await res.json();
@@ -121,6 +123,7 @@ function BootcampInterviewContent() {
           status: "evaluated",
         };
         setQuestions(updated);
+        setValidationSnapshot(data.validationSnapshot || null);
         return;
       }
 
@@ -228,6 +231,11 @@ function BootcampInterviewContent() {
                   </span>
                 )}
               </div>
+              {validationSnapshot && (
+                <p className="mt-3 rounded-md bg-surface-raised px-3 py-2 text-label font-bold text-success">
+                  验证结果已入账
+                </p>
+              )}
             </section>
           )}
 

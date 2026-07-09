@@ -23,3 +23,9 @@ test("bootcamp interview page shows the ledgered target evidence being challenge
 test("bootcamp interview page passes target evidence focus into question generation", () => {
   assert.match(source, /body:\s*JSON\.stringify\(\{\s*day_number:\s*nextDay,\s*interviewFocus/s);
 });
+
+test("bootcamp interview page passes target evidence focus into answer evaluation", () => {
+  assert.match(source, /\/api\/bootcamp\/interview\/answer/);
+  assert.match(source, /body:\s*JSON\.stringify\(\{\s*interview_id:\s*question\.id,\s*answer,\s*interviewFocus/s);
+  assert.match(source, /validationSnapshot/);
+});

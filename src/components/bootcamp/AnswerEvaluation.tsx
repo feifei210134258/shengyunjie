@@ -52,6 +52,7 @@ export default function AnswerEvaluation({
     !evaluation.feedback ||
     !evaluation.thinking_framework?.length ||
     !evaluation.example_answer;
+  const targetEvidenceValidation = evaluation.target_evidence_validation;
 
   return (
     <Card variant="subtle" size="md" className="space-y-6">
@@ -133,6 +134,70 @@ export default function AnswerEvaluation({
           </div>
         ))}
       </div>
+
+      {targetEvidenceValidation && (
+        <section className="rounded-xl border border-primary/20 bg-primary-soft p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-label font-bold text-primary">
+                目标证据验证
+              </p>
+              <h4 className="mt-1 text-heading-sm font-bold text-ink">
+                抗追问评分：{formatScore(targetEvidenceValidation.score)} / 10
+              </h4>
+              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                {targetEvidenceValidation.verdict}
+              </p>
+            </div>
+            <span className="rounded-md bg-surface-raised px-3 py-1.5 text-label font-bold text-primary">
+              {targetEvidenceValidation.status === "defended"
+                ? "证据站得住"
+                : targetEvidenceValidation.status === "weak"
+                  ? "仍有击穿点"
+                  : "证据不清晰"}
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div className="rounded-lg bg-surface-raised p-3">
+              <p className="text-label font-bold text-success">已证明住</p>
+              <ul className="mt-2 space-y-1">
+                {targetEvidenceValidation.evidence_matched.map((item, idx) => (
+                  <li
+                    key={idx}
+                    className="flex items-start gap-2 text-body-sm text-ink-muted"
+                  >
+                    <Check
+                      className="mt-0.5 h-4 w-4 shrink-0 text-success"
+                      strokeWidth={1.8}
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-lg bg-surface-raised p-3">
+              <p className="text-label font-bold text-danger">未解除风险</p>
+              <ul className="mt-2 space-y-1">
+                {targetEvidenceValidation.unresolved_risks.map((item, idx) => (
+                  <li
+                    key={idx}
+                    className="flex items-start gap-2 text-body-sm text-ink-muted"
+                  >
+                    <X
+                      className="mt-0.5 h-4 w-4 shrink-0 text-danger"
+                      strokeWidth={1.8}
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <p className="mt-3 rounded-lg bg-surface-raised px-3 py-2 text-body-sm leading-relaxed text-ink-muted">
+            下一轮：{targetEvidenceValidation.next_drill}
+          </p>
+        </section>
+      )}
 
       {evaluation.thinking_framework?.length ? (
         <section className="rounded-xl border border-primary/15 bg-primary-soft p-4">

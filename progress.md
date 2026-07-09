@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 目标证据追问评分入账
+
+### 背景判断
+- 目标证据已经能进入模拟追问，但用户答完后评分仍是普通面试反馈，画像账本不知道这段证据是否真的抗追问。
+- 面试跳槽路径的闭环应当是：证据入账 → 高压追问 → 判断是否扛住 → 验证结果入账 → Dashboard 读回下一步风险。
+
+### 完成内容
+- `/bootcamp/interview` 提交和重新生成评分时会继续传递 `interviewFocus=target_evidence`，并在评分入账后显示“验证结果已入账”。
+- `POST /api/bootcamp/interview/answer` 在目标证据模式下读回最近入账的 `targetEvidenceFocus`，要求 AI 额外输出 `target_evidence_validation`，评估归因、角色价值、取舍、协同和可复用机制是否抗追问。
+- 评分结果写回 `bootcamp_interviews.ai_evaluation`，并同步插入 `growth_snapshots.dimension_scores.__trigger.targetEvidenceValidation`，trigger=`target_evidence_validated`，不新增 schema。
+- `buildGrowthProfile` 读回 `targetEvidenceValidations`；Dashboard 能力证据账本新增“目标证据验证”，展示抗追问评分、击穿点和继续追问入口。
+- `AnswerEvaluation` 新增“目标证据验证”反馈卡，直接展示抗追问评分、已证明住的点、未解除风险和下一轮补强动作。
+
+### 验证记录
+- TDD 红灯：新增 answer API、AnswerEvaluation、interview page、growth-profile、Dashboard 测试，先失败于缺少 `target_evidence_validation`、`target_evidence_validated` 快照、页面传参和账本读回。
+- GREEN：`node --test src/app/api/bootcamp/interview/answer/route.test.mjs src/components/bootcamp/AnswerEvaluation.test.mjs 'src/app/(app)/bootcamp/interview/page.test.mjs' src/lib/profile/growth-profile.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 通过 23 项。
+- `npx tsc --noEmit` 通过。
+
 ## [2026-07-09] Feature: 入账目标证据进入模拟追问
 
 ### 背景判断

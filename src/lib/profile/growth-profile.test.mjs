@@ -187,3 +187,54 @@ test("surfaces saved thinking upgrade cards from growth snapshots", () => {
   assert.match(profile.thinkingAssets[0].migrationCheck, /迁移上一轮/);
   assert.equal(profile.thinkingAssets[0].href, "/training/history/record-1");
 });
+
+test("surfaces target evidence validation snapshots in the profile ledger", () => {
+  const profile = buildGrowthProfile({
+    growthSnapshots: [
+      {
+        id: "snap-validation-1",
+        snapshot_date: "2026-07-09",
+        overall_score: 81,
+        dimension_scores: {
+          __trigger: {
+            trigger: "target_evidence_validated",
+            interviewId: "interview-1",
+            projectStory: {
+              projectName: "客户健康度评分系统",
+              targetEvidence: "续费率提升 8.6%，且排除了销售跟进节奏影响。",
+            },
+            targetEvidenceValidation: {
+              score: 7.5,
+              status: "weak",
+              verdict: "能讲结果，但归因反证还不够稳。",
+              unresolved_risks: ["销售动作和运营跟进的贡献没有拆开"],
+              next_drill: "下一轮先补归因反证，再讲角色价值。",
+            },
+          },
+        },
+      },
+    ],
+  });
+
+  assert.equal(profile.targetEvidenceValidations.length, 1);
+  assert.equal(
+    profile.targetEvidenceValidations[0].snapshotId,
+    "snap-validation-1"
+  );
+  assert.equal(profile.targetEvidenceValidations[0].interviewId, "interview-1");
+  assert.equal(
+    profile.targetEvidenceValidations[0].projectName,
+    "客户健康度评分系统"
+  );
+  assert.match(profile.targetEvidenceValidations[0].targetEvidence, /续费率提升/);
+  assert.equal(profile.targetEvidenceValidations[0].score, 7.5);
+  assert.equal(profile.targetEvidenceValidations[0].status, "weak");
+  assert.match(profile.targetEvidenceValidations[0].verdict, /归因反证/);
+  assert.deepEqual(profile.targetEvidenceValidations[0].unresolvedRisks, [
+    "销售动作和运营跟进的贡献没有拆开",
+  ]);
+  assert.equal(
+    profile.targetEvidenceValidations[0].href,
+    "/bootcamp/interview?focus=target_evidence"
+  );
+});

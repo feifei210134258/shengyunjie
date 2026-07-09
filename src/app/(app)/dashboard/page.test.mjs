@@ -99,3 +99,11 @@ test("dashboard surfaces saved thinking upgrade cards in the profile ledger", ()
   assert.match(source, /judgmentQuality/);
   assert.match(source, /\/training\/history\//);
 });
+
+test("dashboard surfaces target evidence validation results in the profile ledger", () => {
+  assert.match(source, /targetEvidenceValidations/);
+  assert.match(source, /目标证据验证/);
+  assert.match(source, /抗追问/);
+  assert.match(source, /unresolvedRisks/);
+  assert.match(source, /\/bootcamp\/interview\?focus=target_evidence/);
+});
