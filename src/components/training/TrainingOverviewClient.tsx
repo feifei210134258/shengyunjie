@@ -254,10 +254,38 @@ export default function TrainingPage() {
   ).length;
   const reviewQueue = stats?.reviewQueue ?? [];
   const evidenceAssets = stats?.evidenceAssets ?? [];
-  const needsReview = reviewQueue.some((item) => item.needsRevision);
+  const firstPendingReview =
+    reviewQueue.find((item) => item.needsRevision) || null;
+  const needsReview = Boolean(firstPendingReview);
   const readyAssetCount = evidenceAssets.filter(
     (asset) => asset.readiness === "面试可用"
   ).length;
+  const primaryOverviewAction = firstPendingReview
+    ? {
+        badge: "复盘优先",
+        title: "先把上一题改成能复述的版本",
+        description:
+          "这条回答已经有 AI 反馈，但还没有二次修正。先补修正版，比继续开新题更能让能力进入画像账本。",
+        href: `/training/history/${firstPendingReview.id}?revise=1`,
+        cta: "先完成二次修正",
+        evidence: `${reviewQueue.filter((item) => item.needsRevision).length} 条回答等待修正`,
+      }
+    : {
+        badge: primaryRecommendation ? "画像处方" : "今日训练",
+        title:
+          primaryRecommendation?.title ||
+          `用一题校准 ${recommendedDimension.label} 的判断链路`,
+        description:
+          goalFocusFrame?.description ||
+          primaryRecommendation?.reason ||
+          "先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。",
+        href: primaryRecommendation?.href || TRAINING_SESSION_ROUTE,
+        cta:
+          goalFocusFrame?.cta || primaryRecommendation?.cta || "开始今日训练",
+        evidence:
+          primaryRecommendation?.evidence ||
+          `当前优先补强 ${recommendedDimension.label}`,
+      };
 
   useEffect(() => {
     fetch("/api/training/stats")
@@ -309,43 +337,33 @@ export default function TrainingPage() {
             <div className="border-b border-line p-5 sm:p-6 lg:border-b-0 lg:border-r">
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <Badge>今日作战台</Badge>
+                <Badge>今日最高杠杆动作</Badge>
                 {goalFocusFrame && <Badge>{goalFocusFrame.badge}</Badge>}
-                <Badge variant="neutral">{primaryTrainingLabel}</Badge>
+                <Badge variant="neutral">
+                  {needsReview ? primaryOverviewAction.badge : primaryTrainingLabel}
+                </Badge>
               </div>
               <h1 className="max-w-4xl text-[30px] font-bold leading-[1.12] text-ink sm:text-[42px]">
-                {primaryRecommendation?.title ||
-                  `用一题校准 ${recommendedDimension.label} 的判断链路`}
+                {primaryOverviewAction.title}
               </h1>
               <p className="mt-3 max-w-3xl text-body-md leading-relaxed text-ink-muted">
-                {goalFocusFrame?.description ||
-                  primaryRecommendation?.reason ||
-                  "先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。"}
+                {primaryOverviewAction.description}
               </p>
               <p className="mt-3 text-body-sm font-semibold text-primary">
-                把训练变成可复用资产：答题、复盘、二次修正和画像处方会连成同一条证据链。
+                系统只推一个动作：把训练变成可复用资产，答题、复盘、二次修正和画像处方会连成同一条证据链。
               </p>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Link
-                  href={
-                    primaryRecommendation
-                      ? primaryRecommendation.href
-                      : TRAINING_SESSION_ROUTE
-                  }
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
+                  href={primaryOverviewAction.href}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-ink/90 active:scale-[0.97]"
                 >
-                  {goalFocusFrame?.cta || primaryRecommendation?.cta || "开始今日训练"}
+                  {primaryOverviewAction.cta}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                {needsReview && reviewQueue[0] && (
-                  <Link
-                    href={`/training/history/${reviewQueue[0].id}?revise=1`}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-5 py-2.5 text-body-md font-semibold text-ink transition-all hover:bg-surface active:scale-[0.97]"
-                  >
-                    先复盘上一题
-                    <PenLine className="h-4 w-4" strokeWidth={1.5} />
-                  </Link>
-                )}
+                <p className="max-w-md text-body-sm font-semibold leading-relaxed text-ink-muted">
+                  当前依据：{primaryOverviewAction.evidence}
+                </p>
               </div>
             </div>
 

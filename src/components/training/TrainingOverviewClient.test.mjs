@@ -17,7 +17,8 @@ test("training overview uses the profile recommendation as the primary start act
   assert.match(source, /recommendationPlan/);
   assert.match(source, /primaryRecommendation/);
   assert.match(source, /画像处方/);
-  assert.match(source, /primaryRecommendation\.href/);
+  assert.match(source, /primaryRecommendation\?\.href/);
+  assert.match(source, /primaryOverviewAction/);
 });
 
 test("training overview surfaces recent training as ability evidence assets", () => {
@@ -52,4 +53,14 @@ test("training overview presents one ordered action chain instead of unrelated c
   assert.match(source, /再开题/);
   assert.match(source, /沉淀证据/);
   assert.match(source, /把训练变成可复用资产/);
+});
+
+test("training overview promotes one highest-leverage action above all modules", () => {
+  assert.match(source, /primaryOverviewAction/);
+  assert.match(source, /firstPendingReview/);
+  assert.match(source, /今日最高杠杆动作/);
+  assert.match(source, /系统只推一个动作/);
+  assert.match(source, /primaryOverviewAction\.href/);
+  assert.match(source, /primaryOverviewAction\.cta/);
+  assert.doesNotMatch(source, /先复盘上一题/);
 });

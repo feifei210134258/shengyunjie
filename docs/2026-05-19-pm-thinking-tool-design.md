@@ -158,6 +158,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 训练首页的主行动也读取 `GET /api/profile/recommendation`，优先使用画像处方中的训练建议作为开始训练入口，确保二次修正和画像快照能影响下一次打开训练页时练什么。
 - `GET /api/profile/recommendation` 会同时返回最近 `growth_snapshots.dimension_scores.__goalFocus`；训练首页据此把主行动框定为“面试跳槽主线”或“高级产品思维主线”，让同一题训练明确服务面试表达资产或高级判断训练。
 - 训练首页进一步改为“今日作战台”：首屏把画像处方、目标作战令、作战顺序、复盘队列和能力证据资产串成一条行动链。用户进入后先看到目标岗位/场景/期限，再决定“先复盘、再开题、沉淀证据”，避免训练页退回统计看板或模块入口。
+- 训练首页首屏会把“今日最高杠杆动作”提升为唯一主 CTA：如果存在待二次修正记录，优先进入复盘修正；否则使用画像训练处方；没有处方时才兜底开新题。目标作战令和作战顺序继续保留为决策背景，但不再与主动作抢入口。
 - `/api/training/stats` 会把最近训练记录、AI 反馈和二次修正整理为 `evidenceAssets`；训练首页展示“能力证据资产”，区分“面试可用”和“待修正后可用”，并链接到历史复盘或项目故事库，让日常训练能沉淀为跳槽面试可复用材料。
 - `/api/training/history/[id]` 在读回训练记录时派生 `interviewExpressionCard`，历史复盘页展示“面试表达卡”：开场判断、证据抓手、追问风险和可复制表达版本。该卡片优先使用二次修正内容，也会优先读回 `ai_feedback.interview_expression`；历史复盘页还会把 `interview_expression` 与 `thinking_upgrade` 抬到“主线资产复盘”，不新增 schema，让每次复盘都能转成面试表达材料或思维升级材料。
 - 历史复盘页的面试表达卡支持“沉淀到画像账本”：前端调用 `POST /api/profile/summary`，`trigger=expression_card_saved`，把表达卡摘要写入 `growth_snapshots.dimension_scores.__trigger.expressionCard` 并读回 snapshot，让表达资产进入后续画像推荐闭环。

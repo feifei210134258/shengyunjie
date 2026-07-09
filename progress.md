@@ -1,5 +1,24 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练首页今日最高杠杆动作
+
+### 背景判断
+- 训练首页已经有今日作战台、目标作战令、作战顺序、复盘队列和能力证据资产，但首屏仍同时给“开始训练”和“先复盘”两个强入口。
+- 从第一性原理看，学习强化产品不应该让用户在模块间选择，而应该根据当前证据链只推一个最高杠杆动作：待修正优先，否则执行画像处方，再兜底开题。
+
+### 完成内容
+- `/training` 首屏新增 `primaryOverviewAction`，统一决定标题、说明、CTA、href 和推荐依据。
+- 当 `reviewQueue` 存在待二次修正记录时，主行动切换为“先完成二次修正”，直接进入 `/training/history/[id]?revise=1`。
+- 没有待修正记录时，主行动使用画像处方 `primaryRecommendation.href`；没有处方时兜底进入 `/training/session`。
+- 首屏文案新增“今日最高杠杆动作 / 系统只推一个动作”，移除原先并列的“先复盘上一题”次按钮，减少选择负担。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：`TrainingOverviewClient` 源测试先失败于缺少 `primaryOverviewAction`、“今日最高杠杆动作 / 系统只推一个动作”，并捕获旧“先复盘上一题”并列入口。
+- GREEN：`node --test src/components/training/TrainingOverviewClient.test.mjs feature_list.test.mjs` 通过 9 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingOverviewClient.tsx src/components/training/TrainingOverviewClient.test.mjs --max-warnings 0` 通过。
+
 ## [2026-07-09] Feature: 训练反馈页本轮下一步主行动
 
 ### 背景判断
