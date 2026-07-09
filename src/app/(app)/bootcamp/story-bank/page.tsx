@@ -643,6 +643,11 @@ function StoryDetail({
                   className="mt-2 min-h-28 w-full resize-y rounded-lg border border-line bg-surface px-3 py-2 text-body-sm text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
                   placeholder="例如：这个项目能证明我适合目标岗位，因为我做过关键取舍、拿到可验证结果，并能说明归因方式。"
                 />
+                {story.targetEvidenceRepair.savedEvidence && (
+                  <p className="mt-2 rounded-lg bg-success-soft px-3 py-2 text-label font-bold text-success">
+                    目标证据已补，下一步沉淀到画像账本。
+                  </p>
+                )}
               </label>
               <label className="block">
                 <span className="text-label font-bold text-ink-muted">

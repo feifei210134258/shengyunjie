@@ -64,3 +64,8 @@ test("story bank page lets users repair the exact target evidence gap", () => {
   assert.match(source, /补这条目标证据/);
   assert.match(source, /savedEvidence/);
 });
+
+test("story bank page shows when target evidence has already been repaired", () => {
+  assert.match(source, /目标证据已补/);
+  assert.match(source, /下一步沉淀到画像账本/);
+});

@@ -212,10 +212,44 @@ test("builds a target evidence repair workspace from saved project evidence", ()
   });
 
   const story = result.projectStories[0];
-  assert.match(story.targetEvidenceRepair.focusGap, /目标岗位|目标场景|目标期限/);
+  assert.match(story.targetEvidenceRepair.focusGap, /目标证据已补/);
   assert.match(story.targetEvidenceRepair.savedEvidence, /续费率提升 8\.6%/);
   assert.match(story.targetEvidenceRepair.prompt, /高级 B 端产品经理|SaaS 平台负责人面试/);
   assert.match(story.interviewScript.fullScript, /续费率提升 8\.6%/);
+});
+
+test("marks target evidence as satisfied after the user repairs it", () => {
+  const result = buildStoryBank({
+    session: {
+      id: "session-target-satisfied",
+      current_day: 1,
+      status: "in_progress",
+      parsed_profile: {
+        ...parsedProfile,
+        projects: [
+          {
+            ...parsedProfile.projects[0],
+            targetEvidence:
+              "这段项目证明我能面向续费增长做高级判断：先用健康度模型提前识别风险，再用 CS 跟进转化和续费率提升排除偶然波动。",
+          },
+        ],
+      },
+      weakness_prediction: null,
+    },
+    interviews: [],
+    latestGoalBrief: {
+      targetRole: "高级 B 端产品经理",
+      targetScenario: "SaaS 平台负责人面试，重点考续费增长",
+      targetDeadline: "两周内",
+    },
+  });
+
+  const story = result.projectStories[0];
+  assert.deepEqual(story.targetFit.missingEvidence, []);
+  assert.match(story.targetFit.reason, /已补目标证据|续费增长/);
+  assert.match(story.targetEvidenceRepair.focusGap, /目标证据已补/);
+  assert.equal(result.recommendedNextAction.label, "沉淀项目故事包");
+  assert.match(result.recommendedNextAction.reason, /目标证据已补|画像账本/);
 });
 
 test("updates one resume project evidence without changing other projects", () => {

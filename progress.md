@@ -1,5 +1,24 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 目标证据修补完成态
+
+### 背景判断
+- 上一轮故事库已经能保存 `targetEvidence`，但如果系统仍继续把目标岗位/目标场景/目标期限当成未补证据，用户会感觉“补了也没用”。
+- 这一轮让修补动作真正改变产品判断：补过目标证据后，同一条目标缺口不再重复出现，下一步从“继续补证据”切到“沉淀到账本 / 进入追问验证”。
+
+### 完成内容
+- `getProjectTargetFit` 会把 `project.targetEvidence` 计入目标匹配分，并在已补目标证据时清空 `targetFit.missingEvidence`。
+- `targetFit.reason` 会引用已补的目标证据，说明该项目如何支撑当前目标。
+- `targetEvidenceRepair.focusGap` 在已保存目标证据后显示“目标证据已补”，避免继续提示同一条缺口。
+- `recommendedNextAction` 在目标证据已补时切换为“沉淀项目故事包”，引导用户把新证据写入画像账本。
+- `/bootcamp/story-bank` 的目标证据输入区显示“目标证据已补，下一步沉淀到画像账本”。
+
+### 验证记录
+- TDD 红灯：新增 story-bank 领域测试和页面源测试，先失败于 `missingEvidence` 仍然包含目标岗位/场景/期限缺口、页面缺少“目标证据已补”文案。
+- GREEN：`node --test src/lib/bootcamp/story-bank.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs'` 通过 16 项。
+- 回归：`node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' feature_list.test.mjs` 通过 23 项。
+- `npx tsc --noEmit`、针对性 ESLint、`feature_list.json` 解析、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-09] Feature: 目标证据修补台
 
 ### 背景判断

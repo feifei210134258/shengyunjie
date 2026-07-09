@@ -482,31 +482,40 @@ function getProjectTargetFit({
   );
   const evidenceBonus = Math.min(evidence.length, 2);
   const outcomeBonus = normalizeList(project.outcomes).length ? 1 : 0;
+  const targetEvidence = compactText(project.targetEvidence);
+  const targetEvidenceBonus = targetEvidence ? 2 : 0;
   const score = targetContext
-    ? Math.min(10, matchedSignals.length * 2 + evidenceBonus + outcomeBonus)
+    ? Math.min(
+        10,
+        matchedSignals.length * 2 + evidenceBonus + outcomeBonus + targetEvidenceBonus
+      )
     : 0;
   const priorityLabel =
     score >= 5 ? "优先讲" : score >= 2 ? "备选讲" : "暂缓讲";
   const projectName = compactText(project.name) || "这个项目";
   const reason = targetContext
-    ? matchedSignals.length
+    ? targetEvidence
+      ? `「${projectName}」已补目标证据，可用于支撑 ${targetContext}：${targetEvidence}`
+      : matchedSignals.length
       ? `「${projectName}」已命中 ${matchedSignals.join("、")}，更适合服务 ${targetContext}。`
       : `「${projectName}」和 ${targetContext} 的直接证据还弱，先不要作为主讲项目。`
     : "先保存目标岗位、目标场景和目标期限，系统会判断哪个项目最该优先打磨。";
-  const missingEvidence = [
-    latestGoalBrief?.targetRole
-      ? `补齐目标岗位证据：说明你在「${projectName}」里承担的高级判断、取舍和结果责任。`
-      : "",
-    latestGoalBrief?.targetScenario
-      ? `补齐目标场景证据：把项目结果改写成「${latestGoalBrief.targetScenario}」会追问的业务影响。`
-      : "",
-    latestGoalBrief?.targetDeadline
-      ? `按目标期限 ${latestGoalBrief.targetDeadline} 前，先补最能被面试官追问的数字、归因和反证。`
-      : "",
-    !matchedSignals.length && targetContext
-      ? "补齐目标证据：明确这个项目为什么能证明你适合当前目标，而不是只描述做过什么。"
-      : "",
-  ].filter(Boolean);
+  const missingEvidence = targetEvidence
+    ? []
+    : [
+        latestGoalBrief?.targetRole
+          ? `补齐目标岗位证据：说明你在「${projectName}」里承担的高级判断、取舍和结果责任。`
+          : "",
+        latestGoalBrief?.targetScenario
+          ? `补齐目标场景证据：把项目结果改写成「${latestGoalBrief.targetScenario}」会追问的业务影响。`
+          : "",
+        latestGoalBrief?.targetDeadline
+          ? `按目标期限 ${latestGoalBrief.targetDeadline} 前，先补最能被面试官追问的数字、归因和反证。`
+          : "",
+        !matchedSignals.length && targetContext
+          ? "补齐目标证据：明确这个项目为什么能证明你适合当前目标，而不是只描述做过什么。"
+          : "",
+      ].filter(Boolean);
 
   return {
     score,
@@ -523,13 +532,16 @@ function buildTargetEvidenceRepair(
 ): ProjectStory["targetEvidenceRepair"] {
   const targetContext = goalBriefText(latestGoalBrief) || "当前目标岗位";
   const projectName = compactText(project.name) || "这个项目";
+  const savedEvidence = compactText(project.targetEvidence);
   const focusGap =
-    targetFit.missingEvidence[0] ||
-    `补齐「${projectName}」和${targetContext}之间最关键的业务证据。`;
+    savedEvidence
+      ? "目标证据已补，下一步沉淀到画像账本或进入模拟追问验证。"
+      : targetFit.missingEvidence[0] ||
+        `补齐「${projectName}」和${targetContext}之间最关键的业务证据。`;
 
   return {
     focusGap,
-    savedEvidence: compactText(project.targetEvidence),
+    savedEvidence,
     prompt: `为了 ${targetContext}，把「${projectName}」补成一句能被追问的证据：你做了什么高级判断、产生了什么结果、如何排除偶然因素？`,
   };
 }
@@ -619,6 +631,12 @@ export function buildStoryBank({
     [...projectStories].sort(
       (a, b) => b.targetFit.score - a.targetFit.score || b.readinessScore - a.readinessScore
     )[0]?.projectName || strongestProject;
+  const targetPriorityStory =
+    projectStories.find((story) => story.projectName === targetPriorityProject) ||
+    projectStories[0];
+  const hasRepairedTargetEvidence = Boolean(
+    latestGoalBrief && targetPriorityStory?.targetEvidenceRepair.savedEvidence
+  );
 
   const recommendedNextAction =
     projects.length === 0
@@ -627,6 +645,12 @@ export function buildStoryBank({
           href: "/bootcamp/resume",
           reason: "先解析简历项目，故事库才能沉淀面试证据。",
         }
+      : hasRepairedTargetEvidence
+        ? {
+            label: "沉淀项目故事包",
+            href: "/bootcamp/story-bank",
+            reason: `「${targetPriorityProject}」目标证据已补，下一步沉淀到画像账本，让 Dashboard 和推荐读取这份面试证据。`,
+          }
       : evaluatedQuestions === 0
         ? {
             label: "开始模拟面试",
