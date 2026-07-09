@@ -1,5 +1,28 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练反馈页升级闭环轨道
+
+### 背景判断
+- 训练反馈页已经能给出修正指令，但用户仍可能把“看完评分”当作结束点，而不是继续完成修正版和下一题处方。
+- 从第一性原理看，训练闭环应该被明确可视化：反馈入账只是第一步，修正版和下一题处方才让能力真正进入迭代。
+
+### 完成内容
+- `/training/session` 提交后的反馈页顶部新增“本轮升级闭环”轨道。
+- 轨道把“反馈入账 / 修正版 / 下一题处方”三个状态放在同一行展示。
+- `loopStepStates` 复用现有 `profileSync`、`revision` 和 `nextPrescription` 状态，不新增 schema 或 API。
+- 轨道会区分已完成、进行中和等待状态，让用户一眼知道本轮训练还差哪一步。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：`TrainingSessionClient` 源测试先失败于缺少 `loopStepStates`、“本轮升级闭环 / 反馈入账 / 修正版 / 下一题处方”。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 15 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-09] Feature: 训练反馈页本轮修正指令
 
 ### 背景判断

@@ -1181,6 +1181,49 @@ function A1AfterSubmit({
       : cueText;
     onRevisionChange(nextText);
   };
+  const loopStepStates = [
+    {
+      id: "feedback",
+      label: "反馈入账",
+      description:
+        profileSync?.status === "saved"
+          ? "本题反馈已进入画像"
+          : profileSync?.status === "failed"
+            ? "反馈已生成，画像待补"
+            : "AI 反馈已生成",
+      done: profileSync?.status === "saved",
+      active: profileSync?.status === "syncing" || !profileSync,
+    },
+    {
+      id: "revision",
+      label: "修正版",
+      description:
+        revision.status === "saved"
+          ? "修正版已保存"
+          : revision.text.trim()
+            ? "修正版待保存"
+            : "先补一版能复述的答案",
+      done: revision.status === "saved",
+      active: revision.status === "saving" || Boolean(revision.text.trim()),
+    },
+    {
+      id: "prescription",
+      label: "下一题处方",
+      description:
+        nextPrescription?.status === "saved"
+          ? "已设为本周处方"
+          : recommendation
+            ? "下一题已生成"
+            : nextPrescription?.status === "loading"
+              ? "正在生成下一题"
+              : "等待画像刷新处方",
+      done: nextPrescription?.status === "saved",
+      active:
+        nextPrescription?.status === "loading" ||
+        nextPrescription?.status === "ready" ||
+        Boolean(recommendation),
+    },
+  ];
 
   return (
     <Frame
@@ -1193,6 +1236,44 @@ function A1AfterSubmit({
         <CompactReference question={question?.text} answer={answer?.text} />
 
         <section className="space-y-4">
+          <section className="rounded-2xl border border-line bg-[#F8FAFC] p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-label font-bold text-primary">
+                  本轮升级闭环
+                </p>
+                <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                  先把反馈变成修正版，再让画像生成下一题处方。
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[620px]">
+                {loopStepStates.map((step, index) => (
+                  <div
+                    key={step.id}
+                    className={cn(
+                      "rounded-lg border px-3 py-2.5",
+                      step.done
+                        ? "border-primary/20 bg-white text-primary"
+                        : step.active
+                          ? "border-warning/25 bg-white text-warning"
+                          : "border-line bg-white/70 text-ink-muted"
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-label font-bold">{step.label}</p>
+                      <span className="font-mono text-label font-bold">
+                        0{index + 1}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-label font-semibold leading-relaxed text-ink-muted">
+                      {step.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
           <div className="rounded-2xl border border-primary/20 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
             <div className="flex flex-col gap-4 border-b border-line pb-5 lg:flex-row lg:items-start lg:justify-between">
               <div>

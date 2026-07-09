@@ -98,6 +98,14 @@ test("training feedback turns the top gap into a revision instruction", () => {
   assert.match(source, /先按这条改/);
 });
 
+test("training feedback frames revision and prescription as an upgrade loop", () => {
+  assert.match(source, /loopStepStates/);
+  assert.match(source, /本轮升级闭环/);
+  assert.match(source, /反馈入账/);
+  assert.match(source, /修正版/);
+  assert.match(source, /下一题处方/);
+});
+
 test("training feedback panel exposes goal-aware assets to the user", () => {
   const panelSource = readFileSync(
     new URL("./TrainingEvaluationPanel.tsx", import.meta.url),
