@@ -116,7 +116,7 @@ function buildInterviewRecommendation(
           `目标证据已入账：${compactText(latestStoryAsset.targetEvidence)}。下一步不要再补同一条证据，直接用模拟追问验证它是否经得起深挖。`,
           goalBrief
         ),
-        href: "/bootcamp/interview",
+        href: "/bootcamp/interview?focus=target_evidence",
         cta: "进入模拟追问",
         priority: 2,
         targetDimension,

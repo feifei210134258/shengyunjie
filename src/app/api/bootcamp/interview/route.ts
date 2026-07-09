@@ -7,6 +7,24 @@ import {
   questionUsesInvalidProjectCompanyPair,
 } from "@/lib/bootcamp/grounding";
 
+type TargetEvidenceFocus = {
+  projectName: string;
+  company: string;
+  role: string;
+  targetEvidence: string;
+  targetFit?: {
+    score: number | null;
+    priorityLabel: string;
+    reason: string;
+  } | null;
+} | null;
+
+function compactText(value: unknown, maxLength = 600) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength)}…`;
+}
+
 function parseJsonFromAiText<T>(text: string): T | null {
   const trimmed = text.trim();
   const candidates = [
@@ -54,6 +72,49 @@ function getResumeAnchors(parsedProfile: any) {
     secondProject: projects[1] || projects[0] || "另一个关键项目",
     firstCompany: companies[0] || "最近一段经历",
   };
+}
+
+function readProjectStoryFromSnapshot(snapshot: any) {
+  const projectStory = snapshot?.dimension_scores?.__trigger?.projectStory;
+  if (!projectStory || typeof projectStory !== "object") return null;
+  const projectName = compactText(projectStory.projectName, 120);
+  const targetEvidence = compactText(projectStory.targetEvidence, 600);
+  if (!projectName || !targetEvidence) return null;
+
+  return {
+    projectName,
+    company: compactText(projectStory.company, 120),
+    role: compactText(projectStory.role, 160),
+    targetEvidence,
+    targetFit:
+      projectStory.targetFit && typeof projectStory.targetFit === "object"
+        ? {
+            score: Number.isFinite(Number(projectStory.targetFit.score))
+              ? Number(projectStory.targetFit.score)
+              : null,
+            priorityLabel: compactText(projectStory.targetFit.priorityLabel, 40),
+            reason: compactText(projectStory.targetFit.reason, 240),
+          }
+        : null,
+  };
+}
+
+async function loadTargetEvidenceFocus(supabase: any, userId: string) {
+  const { data: snapshots, error } = await supabase
+    .from("growth_snapshots")
+    .select("id, snapshot_date, dimension_scores")
+    .eq("user_id", userId)
+    .order("snapshot_date", { ascending: false })
+    .limit(12);
+
+  if (error) throw error;
+
+  for (const snapshot of snapshots || []) {
+    const projectStory = readProjectStoryFromSnapshot(snapshot);
+    if (projectStory?.targetEvidence) return projectStory;
+  }
+
+  return null;
 }
 
 function isGroundedInterviewQuestion(question: any) {
@@ -118,6 +179,43 @@ function getFallbackQuestions(dayNumber: number, parsedProfile: any) {
   ];
 }
 
+function getTargetEvidenceQuestions(
+  dayNumber: number,
+  targetEvidenceFocus: NonNullable<TargetEvidenceFocus>
+) {
+  const difficulty = Math.min(Math.max(dayNumber + 2, 2), 5);
+  const projectName = targetEvidenceFocus.projectName;
+  const targetEvidence = targetEvidenceFocus.targetEvidence;
+
+  return [
+    {
+      question_text: `目标证据追问：你说「${projectName}」里 ${targetEvidence}。这个结果为什么能归因到你的产品判断，而不是客户结构、销售动作或运营跟进带来的？`,
+      question_type: "data_driven",
+      difficulty,
+    },
+    {
+      question_text: `高压追问「${projectName}」：如果面试官认为这只是执行项目，不是高级产品判断，你会用哪三个关键取舍证明你的角色价值？`,
+      question_type: "strategy",
+      difficulty,
+    },
+    {
+      question_text: `围绕「${projectName}」的目标证据，请复盘当时最难协调的角色冲突是什么，你怎么让销售、客户成功、研发或交付接受同一套判断？`,
+      question_type: "business_thinking",
+      difficulty,
+    },
+    {
+      question_text: `如果让你重做「${projectName}」，你会保留哪一个判断、推翻哪一个做法，并用什么指标证明新版方案更好？`,
+      question_type: "user_insight",
+      difficulty,
+    },
+    {
+      question_text: `请把「${projectName}」的目标证据抽象成可复用机制：哪些模块、数据口径或流程边界可以沉淀，哪些不能泛化？`,
+      question_type: "system_design",
+      difficulty,
+    },
+  ];
+}
+
 // POST: 生成每日面试题
 export async function POST(req: NextRequest) {
   try {
@@ -125,7 +223,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
-    const { day_number } = await req.json();
+    const { day_number, interviewFocus } = await req.json();
     if (!day_number || day_number < 1 || day_number > 3) {
       return NextResponse.json({ error: "无效的 Day 参数" }, { status: 400 });
     }
@@ -142,6 +240,19 @@ export async function POST(req: NextRequest) {
         { error: "未找到特训会话" },
         { status: 404 }
       );
+
+    const targetEvidenceFocus = await loadTargetEvidenceFocus(supabase, user.id);
+    const shouldUseTargetEvidenceFocus =
+      interviewFocus === "target_evidence" && targetEvidenceFocus;
+    const targetEvidencePrompt = shouldUseTargetEvidenceFocus
+      ? `目标证据追问：
+项目：${targetEvidenceFocus.projectName}
+公司：${targetEvidenceFocus.company || "未标注"}
+角色：${targetEvidenceFocus.role || "未标注"}
+目标证据：${targetEvidenceFocus.targetEvidence}
+目标匹配：${targetEvidenceFocus.targetFit?.priorityLabel || "已入账"} ${targetEvidenceFocus.targetFit?.score ?? "-"} / 10
+请把 5 道题都围绕这段已入账目标证据做高压追问，重点检查归因、取舍、角色价值、可复用机制和反证。`
+      : "";
 
     // 获取前一日表现（用于 Day 2/3）
     let previousPerformance = "";
@@ -182,7 +293,8 @@ export async function POST(req: NextRequest) {
 3. 问法要接地气，像面试官会追问的原话：当时怎么判断、怎么证明、怎么处理冲突、如果重来怎么改。
 4. 不要出“CEO 要你找第二增长曲线”“制定 12/18 个月战略路线图”“泛泛评估市场机会/GTM/ROI”这类假大空题，除非简历明确有对应项目且题目仍然落在具体经历上。
 5. 严禁把 A 公司经历里的项目写成 B 公司做的项目；项目归属只能依据“项目归属锚点”，不允许自行推断。
-6. 必须返回恰好 5 道题，难度随 day 递增。
+6. 如果用户要求“目标证据追问”，必须围绕已入账目标证据连续追问，不要退回泛泛简历题。
+7. 必须返回恰好 5 道题，难度随 day 递增。
 JSON 结构必须为：
 {
   "questions": [
@@ -202,6 +314,7 @@ JSON 结构必须为：
 项目归属锚点：
 ${formatResumeGroundingContext(session.parsed_profile)}
 当前第 ${day_number} 天
+${targetEvidencePrompt}
 ${previousPerformance}`,
         },
       ],
@@ -219,6 +332,9 @@ ${previousPerformance}`,
       );
     });
     const questions = [
+      ...(shouldUseTargetEvidenceFocus
+        ? getTargetEvidenceQuestions(day_number, targetEvidenceFocus)
+        : []),
       ...generatedQuestions,
       ...getFallbackQuestions(day_number, session.parsed_profile),
     ].slice(0, 5);
@@ -267,7 +383,7 @@ ${previousPerformance}`,
       .update({ current_day: day_number, status: "in_progress" })
       .eq("id", session.id);
 
-    return NextResponse.json({ questions: inserts });
+    return NextResponse.json({ questions: inserts, targetEvidenceFocus });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "服务器错误" },
@@ -285,6 +401,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const day = parseInt(searchParams.get("day") || "1");
+    const interviewFocus = searchParams.get("focus") || "";
 
     const { data: session } = await supabase
       .from("bootcamp_sessions")
@@ -305,9 +422,15 @@ export async function GET(req: NextRequest) {
       .eq("day_number", day)
       .order("question_index");
 
+    const targetEvidenceFocus =
+      interviewFocus === "target_evidence"
+        ? await loadTargetEvidenceFocus(supabase, user.id)
+        : null;
+
     return NextResponse.json({
       questions,
       current_day: session.current_day,
+      targetEvidenceFocus,
     });
   } catch (error: any) {
     return NextResponse.json(

@@ -141,7 +141,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - `GET /api/profile/recommendation` 从 Supabase 画像证据实时生成处方；`POST /api/profile/recommendation` 把用户选择的处方写入 `growth_snapshots.dimension_scores.__recommendation`，不新增 schema。
 - Dashboard 在能力证据账本下方展示“训练处方”，用户可以直接开始训练、进入模拟面试或把某条建议设为本周处方。
 - Dashboard 会从最近的 `growth_snapshots.dimension_scores.__recommendation` 读回用户已选的本周处方，刷新后继续高亮对应推荐，并展示“本周处方”执行入口。
-- 当画像中已有 `storyAssets` 时，`buildRecommendationPlan` 会优先把最近一个项目故事包的 `targetFit.missingEvidence` 或 `proofGaps` 转成“项目证据处方”，指向 `/bootcamp/story-bank`，让推荐不再泛泛要求整理项目，而是明确补齐某个已入账项目的证据缺口；如果该项目已经有 `targetEvidence` 且缺口为空，推荐会转为“模拟追问验证”，指向 `/bootcamp/interview`，避免证据入账后继续补同一条材料。
+- 当画像中已有 `storyAssets` 时，`buildRecommendationPlan` 会优先把最近一个项目故事包的 `targetFit.missingEvidence` 或 `proofGaps` 转成“项目证据处方”，指向 `/bootcamp/story-bank`，让推荐不再泛泛要求整理项目，而是明确补齐某个已入账项目的证据缺口；如果该项目已经有 `targetEvidence` 且缺口为空，推荐会转为“模拟追问验证”，指向 `/bootcamp/interview?focus=target_evidence`，避免证据入账后继续补同一条材料。`GET/POST /api/bootcamp/interview` 会从 `growth_snapshots.dimension_scores.__trigger.projectStory` 读回最近入账目标证据，把它作为 `targetEvidenceFocus` 返回页面，并在出题 prompt 与兜底题里围绕这段证据做归因、取舍、角色价值、协同和可复用机制的高压追问。
 - 今日训练处方链接会携带 `focus` 进入 `/training/session`，训练页把画像维度映射为具体高阶 PM 任务（如资源排期、平台抽象、增长诊断），并把 `profileFocus/prescriptionId` 与题目一起写入 `training_sessions.questions`，刷新后可读回。
 - 直接进入 `/training/session` 时，`GET /api/training/sessions?date=...` 会读回最近 `growth_snapshots.dimension_scores.__goalFocus` 并返回 `latestGoalFocus`；训练实战页用它恢复主线任务计划和顶部训练框架，避免用户绕过首页后退回默认刷题。
 - 训练页作答区会把用户草稿保存到当天 `training_sessions.questions[missionId].draftAnswer`，刷新或重新进入当天训练时恢复答案；提交前展示“判断、依据、取舍、验证”四项作答质检，帮助用户把回答从直觉表达拉回高级 PM 的结构化表达。

@@ -1,5 +1,22 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 入账目标证据进入模拟追问
+
+### 背景判断
+- 上一轮推荐已经能在目标证据齐全后指向模拟追问，但 `/bootcamp/interview` 仍只按简历和弱点泛化出题。
+- 对面试跳槽冲刺来说，证据资产必须进入追问现场：面试官应该围绕刚入账的结果证据追问归因、取舍和角色价值。
+
+### 完成内容
+- `story-validate-*` 推荐链接改为 `/bootcamp/interview?focus=target_evidence`。
+- `GET /api/bootcamp/interview` 从 `growth_snapshots.dimension_scores.__trigger.projectStory` 读回最近入账的 `targetEvidenceFocus` 并返回给页面。
+- `POST /api/bootcamp/interview` 接收 `interviewFocus=target_evidence`，把目标证据写入 AI 出题 prompt，并优先生成 5 道围绕该证据的高压追问题。
+- `/bootcamp/interview` 页面读取 URL focus，展示“目标证据追问”卡片，并在生成下一天题目时继续传递 `interviewFocus`。
+
+### 验证记录
+- TDD 红灯：推荐测试先失败于 href 仍为 `/bootcamp/interview`；新增 API 源测试先失败于没有读取 `growth_snapshots` / `targetEvidenceFocus`；新增页面源测试先失败于没有 `useSearchParams`、目标证据追问卡和 POST focus 传递。
+- 构建红灯：`npm run build` 先失败于 `/bootcamp/interview` 使用 `useSearchParams` 但缺少 Suspense 边界；已改为外层 `Suspense` + 内层 `BootcampInterviewContent`，并补页面源测试防回归。
+- GREEN：`node --test src/lib/profile/recommendation.test.mjs`、`node --test src/app/api/bootcamp/interview/route.test.mjs`、`node --test 'src/app/(app)/bootcamp/interview/page.test.mjs'` 均通过；`npx tsc --noEmit` 通过；`npm run build` 通过。
+
 ## [2026-07-09] Feature: 入账目标证据驱动模拟追问
 
 ### 背景判断

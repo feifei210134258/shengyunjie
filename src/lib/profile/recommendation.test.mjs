@@ -228,7 +228,7 @@ test("turns ledgered target evidence into a high-pressure interview validation p
   assert.match(interviewPrescription.title, /验证 客户健康度评分系统 的高压追问/);
   assert.match(interviewPrescription.reason, /目标证据已入账/);
   assert.match(interviewPrescription.reason, /续费率提升 8\.6%/);
-  assert.equal(interviewPrescription.href, "/bootcamp/interview");
+  assert.equal(interviewPrescription.href, "/bootcamp/interview?focus=target_evidence");
   assert.equal(interviewPrescription.cta, "进入模拟追问");
   assert.equal(interviewPrescription.evidence, "优先讲 · 目标匹配 9/10");
 });

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import InterviewQuestion from "@/components/bootcamp/InterviewQuestion";
 import AnswerEvaluation from "@/components/bootcamp/AnswerEvaluation";
 import DailySummary from "@/components/bootcamp/DailySummary";
@@ -16,11 +16,36 @@ import { Button } from "@/components/ui/button";
 import { PageSpinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
+interface TargetEvidenceFocus {
+  projectName: string;
+  company: string;
+  role: string;
+  targetEvidence: string;
+  targetFit?: {
+    score: number | null;
+    priorityLabel: string;
+    reason: string;
+  } | null;
+}
+
 export default function BootcampInterviewPage() {
+  return (
+    <Suspense fallback={<PageSpinner />}>
+      <BootcampInterviewContent />
+    </Suspense>
+  );
+}
+
+function BootcampInterviewContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const interviewFocus =
+    searchParams.get("focus") === "target_evidence" ? "target_evidence" : "";
   const [questions, setQuestions] = useState<InterviewQuestionType[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentDay, setCurrentDay] = useState(1);
+  const [targetEvidenceFocus, setTargetEvidenceFocus] =
+    useState<TargetEvidenceFocus | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isRegeneratingEvaluation, setIsRegeneratingEvaluation] =
     useState(false);
@@ -30,15 +55,17 @@ export default function BootcampInterviewPage() {
 
   useEffect(() => {
     async function fetchQuestions() {
-      const res = await fetch(`/api/bootcamp/interview?day=${currentDay}`);
+      const focusQuery = interviewFocus ? `&focus=${interviewFocus}` : "";
+      const res = await fetch(`/api/bootcamp/interview?day=${currentDay}${focusQuery}`);
       const data = await res.json();
       if (data.questions) {
         setQuestions(data.questions);
       }
+      setTargetEvidenceFocus(data.targetEvidenceFocus || null);
       setLoading(false);
     }
     fetchQuestions();
-  }, [currentDay]);
+  }, [currentDay, interviewFocus]);
 
   const handleSubmitAnswer = async (answer: string) => {
     const question = questions[currentIndex];
@@ -124,7 +151,7 @@ export default function BootcampInterviewPage() {
     await fetch("/api/bootcamp/interview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ day_number: nextDay }),
+      body: JSON.stringify({ day_number: nextDay, interviewFocus }),
     });
 
     setCurrentDay(nextDay);
@@ -132,11 +159,13 @@ export default function BootcampInterviewPage() {
     setShowSummary(false);
     setLoading(true);
 
-    const res = await fetch(`/api/bootcamp/interview?day=${nextDay}`);
+    const focusQuery = interviewFocus ? `&focus=${interviewFocus}` : "";
+    const res = await fetch(`/api/bootcamp/interview?day=${nextDay}${focusQuery}`);
     const data = await res.json();
     if (data.questions) {
       setQuestions(data.questions);
     }
+    setTargetEvidenceFocus(data.targetEvidenceFocus || null);
     setLoading(false);
   };
 
@@ -178,6 +207,30 @@ export default function BootcampInterviewPage() {
 
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(360px,0.82fr)_minmax(560px,1.18fr)] lg:px-8">
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+          {targetEvidenceFocus && (
+            <section className="rounded-xl border border-primary/20 bg-primary-soft p-4">
+              <p className="text-label font-bold text-primary">
+                目标证据追问
+              </p>
+              <h2 className="mt-2 text-heading-sm font-bold text-ink">
+                高压追问：{targetEvidenceFocus.projectName}
+              </h2>
+              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                {targetEvidenceFocus.targetEvidence}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2 text-label font-bold">
+                <span className="rounded-md bg-surface-raised px-2.5 py-1 text-primary">
+                  {targetEvidenceFocus.targetFit?.priorityLabel || "已入账"}
+                </span>
+                {targetEvidenceFocus.targetFit?.score != null && (
+                  <span className="rounded-md bg-surface-raised px-2.5 py-1 text-ink">
+                    目标匹配 {targetEvidenceFocus.targetFit.score}/10
+                  </span>
+                )}
+              </div>
+            </section>
+          )}
+
           <div className="rounded-xl border border-line bg-surface p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-label font-semibold text-ink-muted">
