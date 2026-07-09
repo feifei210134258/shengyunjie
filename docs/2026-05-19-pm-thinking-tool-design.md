@@ -103,7 +103,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 按项目聚合面试证据，输出可讲版本、结果证据、证据缺口、可能追问和下一步建议。
 - 用户可在故事库内直接补充“我的角色、项目描述、结果指标”，通过 `PATCH /api/bootcamp/story-bank` 写回 `bootcamp_sessions.parsed_profile`。
 - 系统基于项目描述、个人角色、结果指标和高质量面试改写，派生“2 分钟讲述稿”，包含开场定位、我的角色、关键判断、结果证据和复盘升级，并支持一键复制。
-- 当目标证据已修补并通过追问后，项目故事库会生成“终版面试表达”工作台：基于目标证据、讲述稿和目标简报生成 90 秒表达底稿，用户可编辑后通过 `PATCH /api/bootcamp/story-bank` 写回 `bootcamp_sessions.parsed_profile.projects[].finalInterviewAnswer`，刷新后读回并支持复制。
+- 当目标证据已修补并通过追问后，项目故事库会生成“终版面试表达”工作台：基于目标证据、讲述稿和目标简报生成 90 秒表达底稿，用户可编辑后通过 `PATCH /api/bootcamp/story-bank` 写回 `bootcamp_sessions.parsed_profile.projects[].finalInterviewAnswer`，刷新后读回并支持复制；故事包入账时会把 `finalInterviewAnswer` 写入 `growth_snapshots.dimension_scores.__trigger.projectStory`，`buildGrowthProfile` 与 Dashboard 再读回为项目资产里的“终版面试表达”。
 - 不新增 schema；第一版使用已落库的简历解析和面试记录派生，确保每次打开页面都能从数据库读回。
 
 ### 面试证据库

@@ -120,6 +120,7 @@ export default function StoryBankPage() {
             company: story.company,
             role: story.role,
             targetEvidence: story.targetEvidenceRepair.savedEvidence,
+            finalInterviewAnswer: story.finalInterviewPackage.savedAnswer,
             readinessScore: story.readinessScore,
             proofGaps: story.proofGaps,
             targetFit: story.targetFit,

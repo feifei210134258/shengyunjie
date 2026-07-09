@@ -93,6 +93,8 @@ test("surfaces saved project story packs from growth snapshots", () => {
               role: "产品负责人",
               targetEvidence:
                 "续费率提升 8.6%，并通过对照客户和跟进记录排除偶然波动。",
+              finalInterviewAnswer:
+                "我主讲客户健康度评分系统：先判断续费风险识别滞后不是单点提醒问题，而是客户分层和跟进优先级问题；我负责定义健康度模型和 CS 跟进机制，最终让续费风险提前 14 天识别。",
               readinessScore: 8,
               proofGaps: ["归因证据还需补强"],
               targetFit: {
@@ -128,6 +130,8 @@ test("surfaces saved project story packs from growth snapshots", () => {
   assert.equal(profile.storyAssets[0].company, "云杉科技");
   assert.equal(profile.storyAssets[0].role, "产品负责人");
   assert.match(profile.storyAssets[0].targetEvidence, /续费率提升 8\.6%/);
+  assert.match(profile.storyAssets[0].finalInterviewAnswer, /续费风险识别滞后/);
+  assert.match(profile.storyAssets[0].finalInterviewAnswer, /续费风险提前 14 天/);
   assert.equal(profile.storyAssets[0].readinessScore, 8);
   assert.deepEqual(profile.storyAssets[0].proofGaps, ["归因证据还需补强"]);
   assert.equal(profile.storyAssets[0].targetFit.score, 9);

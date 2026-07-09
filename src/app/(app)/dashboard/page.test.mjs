@@ -92,6 +92,8 @@ test("dashboard surfaces saved project story packs in the profile ledger", () =>
   assert.match(source, /目标匹配/);
   assert.match(source, /priorityLabel/);
   assert.match(source, /missingEvidence/);
+  assert.match(source, /终版面试表达/);
+  assert.match(source, /finalInterviewAnswer/);
 });
 
 test("dashboard surfaces saved thinking upgrade cards in the profile ledger", () => {

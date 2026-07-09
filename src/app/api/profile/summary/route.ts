@@ -51,6 +51,9 @@ async function readSnapshotTrigger(req?: Request) {
             targetEvidence: String(
               body.projectStory.targetEvidence || ""
             ).slice(0, 600),
+            finalInterviewAnswer: String(
+              body.projectStory.finalInterviewAnswer || ""
+            ).slice(0, 1200),
             readinessScore: Number.isFinite(
               Number(body.projectStory.readinessScore)
             )

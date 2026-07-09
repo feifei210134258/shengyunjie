@@ -81,3 +81,7 @@ test("story bank page lets users package and persist a final interview answer", 
   assert.match(source, /复制终版表达/);
   assert.match(source, /保存终版表达/);
 });
+
+test("story bank page deposits the final interview answer with the project story pack", () => {
+  assert.match(source, /finalInterviewAnswer:\s*story\.finalInterviewPackage\.savedAnswer/);
+});

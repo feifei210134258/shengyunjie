@@ -1,5 +1,22 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 终版面试表达入账
+
+### 背景判断
+- 项目故事库已经能保存 `finalInterviewAnswer`，但故事包入账仍只带目标证据和讲述稿；Dashboard 画像账本读不到终版表达。
+- 第一性原理上，终版面试表达是“可直接拿去面试”的最终资产，必须进入画像账本，否则推荐与首页调度无法知道用户已经完成打包。
+
+### 完成内容
+- 故事库“沉淀到画像账本”会把 `story.finalInterviewPackage.savedAnswer` 作为 `projectStory.finalInterviewAnswer` 提交到 `/api/profile/summary`。
+- `POST /api/profile/summary` 保留 `finalInterviewAnswer` 并写入 `growth_snapshots.dimension_scores.__trigger.projectStory`。
+- `buildGrowthProfile` 从项目故事快照读回 `storyAssets[].finalInterviewAnswer`。
+- Dashboard 能力证据账本在已入账项目资产中展示“终版面试表达”。
+
+### 验证记录
+- TDD 红灯：story-bank 页面源测试先失败于故事包入账未提交 `finalInterviewAnswer`；profile summary 源测试先失败于未保留 `finalInterviewAnswer`；growth-profile 测试先失败于 `storyAssets[].finalInterviewAnswer` 为 `undefined`；Dashboard 页面源测试先失败于缺少“终版面试表达”。
+- GREEN：`node --test src/lib/profile/growth-profile.test.mjs src/app/api/profile/summary/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs' 'src/app/(app)/bootcamp/story-bank/page.test.mjs'` 通过 38 项。
+- 回归与完整验证：`node --test src/lib/profile/growth-profile.test.mjs src/app/api/profile/summary/route.test.mjs 'src/app/(app)/dashboard/page.test.mjs' 'src/app/(app)/bootcamp/story-bank/page.test.mjs' feature_list.test.mjs` 通过 40 项；`npx tsc --noEmit`、`ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0`、`node -e "JSON.parse(...feature_list.json...)"`、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-09] Feature: 终版面试表达打包
 
 ### 背景判断

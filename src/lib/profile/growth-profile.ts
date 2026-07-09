@@ -50,6 +50,7 @@ export type GrowthProfileStoryAsset = {
   company: string;
   role: string;
   targetEvidence: string;
+  finalInterviewAnswer: string;
   readinessScore: number | null;
   proofGaps: string[];
   targetFit?: {
@@ -246,6 +247,9 @@ function buildStoryAssets(
         company: compactText(projectStory?.company),
         role: compactText(projectStory?.role),
         targetEvidence: compactText(projectStory?.targetEvidence).slice(0, 600),
+        finalInterviewAnswer: compactText(
+          projectStory?.finalInterviewAnswer
+        ).slice(0, 1200),
         readinessScore:
           readinessScore == null ? null : Math.round(readinessScore / 10),
         proofGaps: normalizeProofGaps(projectStory?.proofGaps),

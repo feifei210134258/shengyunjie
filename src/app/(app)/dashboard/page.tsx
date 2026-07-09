@@ -210,6 +210,7 @@ interface GrowthProfileStoryAsset {
   role: string;
   readinessScore: number | null;
   targetEvidence?: string;
+  finalInterviewAnswer?: string;
   proofGaps: string[];
   targetFit?: {
     score: number | null;
@@ -1154,6 +1155,16 @@ function GrowthProfileLedger({
                   {latestStoryAsset.targetEvidence ||
                     latestStoryAsset.scriptPreview}
                 </p>
+                {latestStoryAsset.finalInterviewAnswer && (
+                  <div className="mt-2 rounded-md bg-success-soft px-3 py-2">
+                    <p className="text-label font-bold text-success">
+                      终版面试表达
+                    </p>
+                    <p className="mt-1 line-clamp-3 text-label leading-relaxed text-ink-muted">
+                      {latestStoryAsset.finalInterviewAnswer}
+                    </p>
+                  </div>
+                )}
                 {latestStoryAsset.targetFit && (
                   <div className="mt-2 rounded-md bg-primary-soft px-3 py-2">
                     <p className="text-label font-bold text-primary">
