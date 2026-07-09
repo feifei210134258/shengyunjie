@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
@@ -10,7 +11,119 @@ import { Badge } from "@/components/ui/badge";
 import { PageSpinner } from "@/components/ui/spinner";
 import TrainingEvaluationPanel from "@/components/training/TrainingEvaluationPanel";
 import { normalizeTrainingEvaluation } from "@/lib/training/personalization";
-import { Sparkles, Activity, Lightbulb, BookOpen, FileCheck2, Target, PenLine } from "lucide-react";
+import {
+  Activity,
+  ArrowRight,
+  BookOpen,
+  FileCheck2,
+  Lightbulb,
+  PenLine,
+  Sparkles,
+  Target,
+} from "lucide-react";
+
+function ReviewProcessingDesk({
+  historyPrimaryAction,
+  steps,
+  metaItems,
+  title,
+  onPrimaryAction,
+}: {
+  historyPrimaryAction: {
+    label: string;
+    description: string;
+    kind: "revision" | "expression" | "thinking" | "link";
+    href?: string;
+    disabled?: boolean;
+  };
+  steps: { label: string; text: string; active: boolean }[];
+  metaItems: { label: string; value: string }[];
+  title: string;
+  onPrimaryAction: () => void;
+}) {
+  return (
+    <section className="mb-6 rounded-xl border border-line bg-ink p-5 text-white shadow-xs">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_360px]">
+        <div>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Badge>复盘处理台</Badge>
+            <Badge variant="neutral">入账动作台</Badge>
+          </div>
+          <h1 className="line-clamp-2 text-[28px] font-bold leading-tight sm:text-[36px]">
+            {title}
+          </h1>
+          <p className="mt-3 max-w-3xl text-body-sm leading-relaxed text-white/70">
+            这页只处理一个闭环：先对照原答补修正版，再把面试表达或思维升级入账，最后回到训练流水线继续下一题迁移。
+          </p>
+
+          <div className="mt-5 grid gap-2 sm:grid-cols-3">
+            {metaItems.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2"
+              >
+                <p className="text-label font-bold text-white/55">{item.label}</p>
+                <p className="mt-1 text-body-sm font-semibold text-white">
+                  {item.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside className="rounded-xl border border-white/10 bg-white/[0.07] p-4">
+          <p className="text-label font-bold text-white/65">本轮处理顺序</p>
+          <div className="mt-3 space-y-3">
+            {steps.map((step, index) => (
+              <div key={step.label} className="grid grid-cols-[2rem_1fr] gap-3">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg font-mono text-label font-bold ${
+                    step.active
+                      ? "bg-white text-ink"
+                      : "bg-white/10 text-white/45"
+                  }`}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+                <div>
+                  <p className="text-body-sm font-bold text-white">{step.label}</p>
+                  <p className="mt-0.5 text-body-sm leading-relaxed text-white/60">
+                    {step.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-lg bg-white px-4 py-3 text-ink">
+            <p className="text-label font-bold text-ink-muted">当前主动作</p>
+            <p className="mt-1 text-body-sm font-semibold leading-relaxed text-ink">
+              {historyPrimaryAction.description}
+            </p>
+            {historyPrimaryAction.kind === "link" ? (
+              <Link
+                href={historyPrimaryAction.href || "/training"}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98]"
+              >
+                {historyPrimaryAction.label}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <button
+                onClick={onPrimaryAction}
+                disabled={historyPrimaryAction.disabled}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              >
+                {historyPrimaryAction.label}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
 
 export default function HistoryDetailPage() {
   const params = useParams();
@@ -85,7 +198,6 @@ export default function HistoryDetailPage() {
   const score = record.score ? Math.round((record.score / 10) * 10) / 10 : 0;
   const isCaseSimulation = record.ai_feedback?.source === "case_simulation";
   const sourceLabel = isCaseSimulation ? "案例推演" : "日常训练";
-  const productName = record.ai_feedback?.product;
   const revision = record.ai_feedback?.__revision;
   const revisedAnswer =
     revision && typeof revision.revisedAnswer === "string"
@@ -93,7 +205,7 @@ export default function HistoryDetailPage() {
       : "";
   const revisionSavedAt =
     revision && typeof revision.savedAt === "string" ? revision.savedAt : "";
-  const showRevisionWorkbench = shouldOpenRevision || Boolean(revisedAnswer);
+  const showRevisionWorkbench = true;
   const interviewExpressionCard = record.interviewExpressionCard;
 
   const handleSaveRevision = async () => {
@@ -234,58 +346,113 @@ export default function HistoryDetailPage() {
     typeof record.ai_feedback.thinking_upgrade === "object"
       ? record.ai_feedback.thinking_upgrade
       : null;
+  const title =
+    record.ai_feedback?.scenario_title ||
+    record.question_scenario.replace(/\n/g, " ").slice(0, 82);
+  const hasSavedRevision = Boolean(revisedAnswer) || revisionStatus === "saved";
+  const historyPrimaryAction = !hasSavedRevision
+    ? {
+        label: "先保存修正版",
+        description:
+          "复盘队列过来的记录先补一版可复述答案，再把它沉淀成表达卡或思维升级证据。",
+        kind: "revision" as const,
+        disabled: !revisionText.trim() || revisionStatus === "saving",
+      }
+    : interviewExpressionCard && expressionCardStatus !== "saved"
+      ? {
+          label: "沉淀表达卡",
+          description:
+            "修正版已经就位，下一步把面试表达卡写入画像账本，让后续处方能引用这条证据。",
+          kind: "expression" as const,
+          disabled: expressionCardStatus === "saving",
+        }
+      : thinkingUpgradeAsset && thinkingUpgradeStatus !== "saved"
+        ? {
+            label: "沉淀思维升级",
+            description:
+              "把判断、取舍、归因和落地要求入账，下一题会围绕这张升级卡继续迁移。",
+            kind: "thinking" as const,
+            disabled: thinkingUpgradeStatus === "saving",
+          }
+        : {
+            label: "回到训练流水线",
+            description:
+              "本条记录已经完成主要处理，回到训练资产流水线继续下一题或下一条复盘。",
+            kind: "link" as const,
+            href: "/training",
+          };
+  const handlePrimaryHistoryAction = () => {
+    if (historyPrimaryAction.kind === "revision") {
+      void handleSaveRevision();
+      return;
+    }
+    if (historyPrimaryAction.kind === "expression") {
+      void handleSaveExpressionCard();
+      return;
+    }
+    if (historyPrimaryAction.kind === "thinking") {
+      void handleSaveThinkingUpgrade();
+    }
+  };
+  const reviewSteps = [
+    {
+      label: "原答与修正版",
+      text: hasSavedRevision ? "修正版已保存，可继续入账资产" : "先把原回答改成可复述版本",
+      active: true,
+    },
+    {
+      label: "入账动作台",
+      text:
+        interviewExpressionCard || thinkingUpgradeAsset
+          ? "选择表达卡或思维升级卡沉淀到账本"
+          : "等待 AI 反馈生成可入账资产",
+      active: hasSavedRevision,
+    },
+    {
+      label: "回到训练流水线",
+      text: "处理完成后再开下一题，避免只读反馈不迁移",
+      active: historyPrimaryAction.kind === "link",
+    },
+  ];
+  const metaItems = [
+    { label: "来源", value: sourceLabel },
+    { label: "难度", value: `${record.difficulty || 3}/5` },
+    { label: "评分", value: score ? `${score}/10` : "-" },
+  ];
 
   return (
     <>
       <PageHeader
-        title="复盘归档"
-        subtitle="把一次作答沉淀成可复用的判断框架"
+        title="训练复盘工作台"
+        subtitle="把一次作答处理成下一题能迁移的证据"
         backHref="/training"
       />
 
       <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
-        <section className="mb-6 rounded-xl border border-line bg-surface-raised px-5 py-4 shadow-xs">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge>{sourceLabel}</Badge>
-                <Badge variant="neutral">{record.dimension}</Badge>
-                {productName && <Badge variant="outline">{productName}</Badge>}
-                {score > 0 && <Badge variant="success">评分：{score}/10</Badge>}
-              </div>
-              <h1 className="line-clamp-2 text-heading-lg font-bold text-ink">
-                {record.ai_feedback?.scenario_title ||
-                  record.question_scenario.replace(/\n/g, " ").slice(0, 82)}
-              </h1>
-              <p className="mt-2 text-body-sm text-ink-muted">
-                {new Date(record.created_at).toLocaleString("zh-CN")}
-              </p>
-            </div>
-            <div className="grid min-w-[280px] grid-cols-3 gap-2">
-              <div className="rounded-lg bg-surface px-3 py-2">
-                <p className="text-label font-bold text-ink-muted">来源</p>
-                <p className="mt-1 text-body-sm font-semibold text-ink">
-                  {sourceLabel}
-                </p>
-              </div>
-              <div className="rounded-lg bg-surface px-3 py-2">
-                <p className="text-label font-bold text-ink-muted">难度</p>
-                <p className="mt-1 font-mono text-body-sm font-bold text-ink">
-                  {record.difficulty || 3}/5
-                </p>
-              </div>
-              <div className="rounded-lg bg-surface px-3 py-2">
-                <p className="text-label font-bold text-ink-muted">评分</p>
-                <p className="mt-1 font-mono text-body-sm font-bold text-ink">
-                  {score || "-"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <ReviewProcessingDesk
+          historyPrimaryAction={historyPrimaryAction}
+          steps={reviewSteps}
+          metaItems={metaItems}
+          title={title}
+          onPrimaryAction={handlePrimaryHistoryAction}
+        />
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <div className="space-y-6">
+          <section>
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-label font-bold text-primary">
+                  原答与修正版
+                </p>
+                <h2 className="mt-1 text-heading-sm font-bold text-ink">
+                  先对照题目，把回答改成可复述版本
+                </h2>
+              </div>
+              <p className="text-label font-semibold text-ink-muted">
+                {new Date(record.created_at).toLocaleString("zh-CN")}
+              </p>
+            </div>
           {/* Question */}
           <Card size="md">
             <div className="mb-3 flex items-center gap-2 text-label font-bold text-ink-muted">
@@ -365,10 +532,18 @@ export default function HistoryDetailPage() {
               </div>
             </Card>
           )}
+          </section>
           </div>
 
           {/* AI analysis */}
           <div className="space-y-6">
+          <section>
+          <div className="mb-3">
+            <p className="text-label font-bold text-primary">入账动作台</p>
+            <h2 className="mt-1 text-heading-sm font-bold text-ink">
+              把修正版转成画像可用证据
+            </h2>
+          </div>
           {(interviewExpressionAsset || thinkingUpgradeAsset) && (
             <Card size="md" className="border-primary-muted bg-primary-soft/35">
               <div className="mb-4">
@@ -566,27 +741,30 @@ export default function HistoryDetailPage() {
           )}
 
           {evaluation && (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Card size="sm" className="bg-primary-soft">
-                <p className="text-label font-bold text-primary">下一步</p>
-                <p className="mt-2 line-clamp-3 text-body-sm text-ink">
-                  {evaluation.next_practice}
-                </p>
-              </Card>
-              <Card size="sm">
-                <p className="text-label font-bold text-ink-muted">最该补</p>
-                <p className="mt-2 line-clamp-3 text-body-sm text-ink">
-                  {evaluation.gaps[0]}
-                </p>
-              </Card>
-              <Card size="sm">
-                <p className="text-label font-bold text-ink-muted">可复用框架</p>
-                <p className="mt-2 line-clamp-3 text-body-sm text-ink">
-                  {evaluation.thinking_framework[0]}
-                </p>
-              </Card>
+            <div className="rounded-xl border border-line bg-white p-4">
+              <p className="text-label font-bold text-primary">下一步处方摘要</p>
+              <div className="mt-3 space-y-3">
+                {[
+                  ["下一步", evaluation.next_practice],
+                  ["最该补", evaluation.gaps[0]],
+                  ["可复用框架", evaluation.thinking_framework[0]],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="grid gap-2 rounded-lg bg-surface px-3 py-2 sm:grid-cols-[6rem_1fr]"
+                  >
+                    <p className="text-label font-bold text-ink-muted">
+                      {label}
+                    </p>
+                    <p className="line-clamp-2 text-body-sm font-semibold leading-relaxed text-ink">
+                      {value}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+          </section>
 
           {(analysis || evaluation) && (
             <Card size="md" className="relative overflow-hidden">

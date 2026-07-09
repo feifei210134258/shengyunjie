@@ -1,5 +1,34 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 历史复盘页处理台
+
+### 背景判断
+- 训练首页已经把复盘入口收束为“训练资产流水线”，但历史复盘页本身仍偏报告阅读页：题目、原答、AI 解析、表达卡和思维升级卡分散在多个卡片中。
+- 从第一性原理看，复盘页不是归档页，而是把一次作答处理成可迁移证据的工作台。用户进入后应该只看到一个当前主动作，并按“原答与修正版 → 入账动作台 → 回到训练流水线”的顺序推进。
+
+### 完成内容
+- `/training/history/[id]` 新增 `ReviewProcessingDesk`，顶部展示“复盘处理台 / 入账动作台”。
+- 新增 `historyPrimaryAction`，按状态自动切换：
+  - 未保存修正版：先保存修正版。
+  - 已有修正版且有表达卡：沉淀表达卡。
+  - 已有思维升级卡：沉淀思维升级。
+  - 主要处理完成：回到训练流水线。
+- 二次修正工作区改为常驻，不再只在 `?revise=1` 或已有修正版时出现。
+- 左栏新增“原答与修正版”，右栏新增“入账动作台”，并把原先三个小摘要卡收束为“下一步处方摘要”列表，减少报告卡片墙感。
+- 继续复用既有 `GET /api/training/history/[id]`、`PATCH /api/training/record` 和 `POST /api/profile/summary`，不新增 schema 或 API。
+
+### 验证记录
+- TDD 红灯：历史页源测试先失败于缺少 `ReviewProcessingDesk / historyPrimaryAction / 复盘处理台 / 本轮处理顺序 / 原答与修正版 / 入账动作台 / 回到训练流水线 / 先保存修正版`，并捕获旧 `grid gap-3 sm:grid-cols-3` 摘要卡布局。
+- GREEN：`node 'src/app/(app)/training/history/[id]/page.test.mjs'` 通过 8 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/training/history/[id]/page.tsx' 'src/app/(app)/training/history/[id]/page.test.mjs' --max-warnings 0` 通过。
+- 回归：`node 'src/app/(app)/training/history/[id]/page.test.mjs' && node --test feature_list.test.mjs` 通过 10 项。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 单独复跑通过，环境健康检查 10/10。
+
 ## [2026-07-09] Feature: 训练首页资产流水线
 
 ### 背景判断

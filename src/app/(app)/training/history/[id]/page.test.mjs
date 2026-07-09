@@ -22,6 +22,18 @@ test("training history can save a second-pass revision from the review queue", (
   assert.match(source, /保存二次修正/);
 });
 
+test("training history presents a single review processing workspace", () => {
+  assert.match(source, /ReviewProcessingDesk/);
+  assert.match(source, /historyPrimaryAction/);
+  assert.match(source, /复盘处理台/);
+  assert.match(source, /本轮处理顺序/);
+  assert.match(source, /原答与修正版/);
+  assert.match(source, /入账动作台/);
+  assert.match(source, /回到训练流水线/);
+  assert.match(source, /先保存修正版/);
+  assert.doesNotMatch(source, /grid gap-3 sm:grid-cols-3/);
+});
+
 test("training history saves a profile snapshot after revision", () => {
   assert.match(source, /\/api\/profile\/summary/);
   assert.match(source, /revision_saved/);

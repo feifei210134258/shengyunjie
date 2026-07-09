@@ -163,6 +163,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 训练首页把“复盘队列”和“能力证据资产”合并为“训练资产流水线”：同一工作区左侧显示待修正与已可用资产数量，右侧先列待修正回答，再列可用证据资产；开新题被明确放在流水线处理之后，避免用户在两个卡片区之间重新选择模块。
 - `/api/training/stats` 会把最近训练记录、AI 反馈和二次修正整理为 `evidenceAssets`；训练首页展示“能力证据资产”，区分“面试可用”和“待修正后可用”，并链接到历史复盘或项目故事库，让日常训练能沉淀为跳槽面试可复用材料。
 - `/api/training/history/[id]` 在读回训练记录时派生 `interviewExpressionCard`，历史复盘页展示“面试表达卡”：开场判断、证据抓手、追问风险和可复制表达版本。该卡片优先使用二次修正内容，也会优先读回 `ai_feedback.interview_expression`；历史复盘页还会把 `interview_expression` 与 `thinking_upgrade` 抬到“主线资产复盘”，不新增 schema，让每次复盘都能转成面试表达材料或思维升级材料。
+- 历史复盘页进一步改为“训练复盘工作台”：顶部“复盘处理台”根据当前状态只突出一个主动作（先保存修正版、沉淀表达卡、沉淀思维升级、回到训练流水线），并把“原答与修正版 / 入账动作台 / 回到训练流水线”展示为本轮处理顺序；二次修正入口常驻，避免用户从普通历史记录进入时只能阅读反馈。
 - 历史复盘页的面试表达卡支持“沉淀到画像账本”：前端调用 `POST /api/profile/summary`，`trigger=expression_card_saved`，把表达卡摘要写入 `growth_snapshots.dimension_scores.__trigger.expressionCard` 并读回 snapshot，让表达资产进入后续画像推荐闭环。
 - 历史复盘页的思维升级卡支持“沉淀思维升级”：前端调用 `POST /api/profile/summary`，`trigger=thinking_upgrade_saved`，把判断质量、取舍质量、归因深度和落地严谨度写入 `growth_snapshots.dimension_scores.__trigger.thinkingUpgrade` 并读回 snapshot，让高级产品思维训练也进入画像证据账本。
 - Dashboard 首屏新增“今日行动档案”：`buildCommandCenter` 从最近训练记录派生 `actionDossier`，把最新面试资产、待修正材料和下一题处方直接放到两条结果路径之后，避免表达资产只埋在训练详情页。
