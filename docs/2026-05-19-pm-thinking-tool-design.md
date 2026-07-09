@@ -149,6 +149,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - AI 反馈页提供“二次修正”输入，用户可基于反馈当场重写关键答案；`PATCH /api/training/record` 会把修正内容写入 `training_records.ai_feedback.__revision`，历史复盘页会读回原回答、AI 反馈和用户修正版。
 - AI 反馈页会从本次 `evaluation.suggestions` 或 `evaluation.gaps` 提炼“本轮修正指令”，放在二次修正输入上方；用户可一键“带入修正”，把最关键缺口写进修正草稿，再通过既有 `PATCH /api/training/record` 落库，避免反馈只停留在阅读状态。
 - AI 反馈页顶部会展示“本轮升级闭环”，把反馈入账、修正版、下一题处方三个状态放在同一轨道里，帮助用户明确本题不是拿到评分就结束，而是要完成修正保存和下一题处方承接。
+- AI 反馈页会把闭环里第一个未完成步骤提升为“本轮下一步”主行动：没有修正版时先带入修正指令或保存修正版，修正版已保存后设为本周处方，处方也完成后直接进入下一题；这些动作继续复用既有训练记录、画像处方和下一题流程，不新增 schema。
 - 训练首页通过 `/api/training/stats` 读取最近训练记录，生成“复盘队列”：优先展示还没有二次修正的记录，引导用户先把反馈改成能复述的版本，再继续开新题。
 - 用户保存二次修正后，前端会再次调用 `POST /api/profile/summary` 创建画像快照，`dimension_scores.__trigger` 标记为 `revision_saved`，把复盘行为纳入能力证据账本。
 - 训练页完成 AI 反馈并写入 `training_records` 后，会自动调用 `POST /api/profile/summary` 创建 `growth_snapshots` 快照；快照的 `dimension_scores.__trigger` 标记来源为 `training_feedback`，让下一轮 Dashboard 推荐能读取最新训练证据。

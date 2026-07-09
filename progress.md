@@ -1,5 +1,27 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练反馈页本轮下一步主行动
+
+### 背景判断
+- 反馈页已经有“本轮升级闭环”，但用户仍可能看完轨道后继续自己判断下一步点哪里。
+- 从第一性原理看，训练强化系统应该在每个反馈后只突出一个最高杠杆动作：先修正、再入账处方、再进入下一题迁移。
+
+### 完成内容
+- `/training/session` 提交后的反馈页新增吸顶“本轮下一步”行动条。
+- `nextLoopAction` 会按当前闭环状态自动切换：
+  - 没有修正草稿且有修正指令：显示“带入修正指令”。
+  - 有修正草稿但未保存：显示“保存修正版”。
+  - 修正版已保存且下一题处方可用：显示“设为本周处方”。
+  - 修正和处方都完成：显示“进入下一题”或“再来一轮”。
+- 主行动复用既有 `PATCH /api/training/record`、`POST /api/profile/recommendation` 和 `onNext` 流程，不新增 schema 或 API。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：`TrainingSessionClient` 源测试先失败于缺少 `nextLoopAction`、“本轮下一步 / 带入修正指令 / 保存修正版 / 设为本周处方 / 进入下一题”。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 16 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs --max-warnings 0` 通过。
+
 ## [2026-07-09] Feature: 训练反馈页升级闭环轨道
 
 ### 背景判断

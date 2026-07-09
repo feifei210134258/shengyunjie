@@ -106,6 +106,16 @@ test("training feedback frames revision and prescription as an upgrade loop", ()
   assert.match(source, /下一题处方/);
 });
 
+test("training feedback promotes the next incomplete loop step as the primary action", () => {
+  assert.match(source, /nextLoopAction/);
+  assert.match(source, /本轮下一步/);
+  assert.match(source, /带入修正指令/);
+  assert.match(source, /保存修正版/);
+  assert.match(source, /设为本周处方/);
+  assert.match(source, /进入下一题/);
+  assert.match(source, /onClick=\{nextLoopAction\.onClick\}/);
+});
+
 test("training feedback panel exposes goal-aware assets to the user", () => {
   const panelSource = readFileSync(
     new URL("./TrainingEvaluationPanel.tsx", import.meta.url),

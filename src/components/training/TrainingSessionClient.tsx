@@ -1224,6 +1224,40 @@ function A1AfterSubmit({
         Boolean(recommendation),
     },
   ];
+  const hasRevisionText = Boolean(revision.text.trim());
+  const revisionIsSaved = revision.status === "saved";
+  const prescriptionIsSaved = nextPrescription?.status === "saved";
+  const nextLoopAction = !revisionIsSaved
+    ? !hasRevisionText && primaryRevisionCue
+      ? {
+          label: "带入修正指令",
+          description: "先把最关键缺口放进修正版，再保存入账。",
+          onClick: handleApplyRevisionCue,
+          disabled: revision.status === "saving",
+        }
+      : {
+          label: "保存修正版",
+          description: "让这版答案写回训练记录，并进入能力证据账本。",
+          onClick: onSaveRevision,
+          disabled:
+            !analysis?.recordId ||
+            !hasRevisionText ||
+            revision.status === "saving",
+        }
+    : recommendation && !prescriptionIsSaved
+      ? {
+          label:
+            nextPrescription?.status === "saving" ? "保存中" : "设为本周处方",
+          description: "把最新画像生成的下一题固定下来，下一轮直接迁移。",
+          onClick: onSelectNextPrescription,
+          disabled: nextPrescription?.status === "saving",
+        }
+      : {
+          label: currentIndex === totalCount - 1 ? "再来一轮" : "进入下一题",
+          description: "本轮闭环已完成，继续用下一题验证迁移效果。",
+          onClick: onNext,
+          disabled: false,
+        };
 
   return (
     <Frame
@@ -1271,6 +1305,31 @@ function A1AfterSubmit({
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
+
+          <section className="sticky top-4 z-10 rounded-2xl border border-ink/10 bg-ink px-4 py-3 text-white shadow-[0_22px_60px_rgba(15,23,42,0.22)]">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-label font-bold text-white/70">
+                  本轮下一步
+                </p>
+                <h3 className="mt-1 text-heading-sm font-bold text-white">
+                  {nextLoopAction.label}
+                </h3>
+                <p className="mt-1 text-body-sm leading-relaxed text-white/70">
+                  {nextLoopAction.description}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={nextLoopAction.onClick}
+                disabled={nextLoopAction.disabled}
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-4 text-body-sm font-bold text-ink transition hover:bg-white/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              >
+                {nextLoopAction.label}
+                <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
+              </button>
             </div>
           </section>
 
