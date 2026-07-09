@@ -414,6 +414,99 @@ test("turns defended target evidence validation into final interview answer pack
   assert.equal(interviewPrescription.evidence, "抗追问 8.6/10");
 });
 
+test("turns a ledgered final interview answer into rehearsal instead of packaging again", () => {
+  const plan = buildRecommendationPlan({
+    summary: {
+      overallScore: 88,
+      overallGrade: "A",
+      evidenceCount: 17,
+      snapshotCount: 8,
+      lastEvidenceAt: "2026-07-09T14:00:00.000Z",
+    },
+    dimensions: [
+      {
+        id: "commercial_thinking",
+        label: "商业思维",
+        shortLabel: "商业",
+        score: 86,
+        grade: "A",
+        diagnosisScore: 84,
+        trainingAverage: 88,
+        evidenceCount: 8,
+        lastEvidenceAt: "2026-07-09T13:00:00.000Z",
+        insight: "终版面试表达已经形成，需要转入临场复述。",
+      },
+    ],
+    weakestDimensions: [],
+    strongestDimensions: [],
+    careerReadiness: {
+      label: "面试弹药已就绪",
+      score: 9,
+      evaluatedInterviewCount: 6,
+      answeredInterviewCount: 7,
+      nextAction: "复述终版表达并继续模拟追问。",
+    },
+    focusPlan: {
+      title: "优先补强 商业思维",
+      reason: "商业思维证据已验证并打包。",
+      href: "/training/session",
+      targetDimension: "commercial_thinking",
+    },
+    storyAssets: [
+      {
+        snapshotId: "snap-story-final",
+        savedAt: "2026-07-09",
+        projectName: "客户健康度评分系统",
+        company: "云杉科技",
+        role: "产品负责人",
+        readinessScore: 9,
+        targetEvidence:
+          "续费率提升 8.6%，并通过客户健康度模型提前识别风险。",
+        finalInterviewAnswer:
+          "我负责客户健康度评分系统时，先把续费风险拆成三类信号，再推动 CS 分层跟进，最终续费率提升 8.6%。",
+        proofGaps: [],
+        targetFit: {
+          score: 9,
+          priorityLabel: "优先讲",
+          reason: "目标证据已修好，可支撑 SaaS 续费增长负责人面试。",
+          missingEvidence: [],
+        },
+        scriptPreview: "我负责客户健康度评分系统。",
+        href: "/bootcamp/story-bank",
+      },
+    ],
+    thinkingAssets: [],
+    targetEvidenceValidations: [
+      {
+        snapshotId: "snap-validation-strong",
+        savedAt: "2026-07-09",
+        interviewId: "interview-1",
+        projectName: "客户健康度评分系统",
+        targetEvidence:
+          "续费率提升 8.6%，并通过客户健康度模型提前识别风险。",
+        score: 8.6,
+        status: "defended",
+        verdict: "归因、角色价值和可复用机制都能解释清楚。",
+        unresolvedRisks: [],
+        nextDrill: "把这段证据压缩成 90 秒终版表达。",
+        href: "/bootcamp/interview?focus=target_evidence",
+      },
+    ],
+  });
+
+  const interviewPrescription = plan.recommendations.find(
+    (item) => item.type === "interview"
+  );
+
+  assert.equal(interviewPrescription.id, "final-answer-rehearse-snap-story-final");
+  assert.match(interviewPrescription.title, /复述 客户健康度评分系统 的终版面试表达/);
+  assert.match(interviewPrescription.reason, /终版面试表达已入账/);
+  assert.match(interviewPrescription.reason, /续费率提升 8\.6%/);
+  assert.equal(interviewPrescription.href, "/bootcamp/interview?focus=target_evidence");
+  assert.equal(interviewPrescription.cta, "模拟复述");
+  assert.equal(interviewPrescription.evidence, "终版表达已入账");
+});
+
 test("turns saved thinking upgrade cards into the next training prescription", () => {
   const plan = buildRecommendationPlan({
     summary: {

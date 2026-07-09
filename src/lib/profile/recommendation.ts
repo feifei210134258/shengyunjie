@@ -159,6 +159,34 @@ function buildTargetValidationRecommendation({
   };
 }
 
+function buildFinalAnswerRehearsalRecommendation({
+  storyAsset,
+  targetDimension,
+  goalBrief,
+}: {
+  storyAsset: NonNullable<GrowthProfile["storyAssets"]>[number];
+  targetDimension: string;
+  goalBrief?: GoalBrief;
+}): ProfileRecommendation {
+  return {
+    id: `final-answer-rehearse-${storyAsset.snapshotId}`,
+    type: "interview",
+    title: withGoalBriefTitle(
+      `复述 ${storyAsset.projectName} 的终版面试表达`,
+      goalBrief
+    ),
+    reason: withGoalBriefReason(
+      `终版面试表达已入账：${compactText(storyAsset.finalInterviewAnswer)}。下一步不是继续打包，而是模拟复述并用追问检查临场稳定度。`,
+      goalBrief
+    ),
+    href: "/bootcamp/interview?focus=target_evidence",
+    cta: "模拟复述",
+    priority: 2,
+    targetDimension,
+    evidence: "终版表达已入账",
+  };
+}
+
 function buildInterviewRecommendation(
   profile: GrowthProfile,
   targetDimension: string,
@@ -166,6 +194,17 @@ function buildInterviewRecommendation(
 ): ProfileRecommendation {
   const latestStoryAsset = profile.storyAssets[0];
   const latestTargetValidation = profile.targetEvidenceValidations?.[0];
+
+  if (
+    latestStoryAsset?.finalInterviewAnswer &&
+    (!latestTargetValidation || !hasValidationGap(latestTargetValidation))
+  ) {
+    return buildFinalAnswerRehearsalRecommendation({
+      storyAsset: latestStoryAsset,
+      targetDimension,
+      goalBrief,
+    });
+  }
 
   if (latestTargetValidation) {
     return buildTargetValidationRecommendation({

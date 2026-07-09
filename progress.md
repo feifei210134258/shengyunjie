@@ -1,5 +1,21 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 终版表达驱动模拟复述处方
+
+### 背景判断
+- Dashboard 已经把已入账终版表达展示为“面试弹药包”，但推荐引擎仍可能在强验证后继续给“打包表达”处方。
+- 这会让用户在“已打包”的资产上重复打包；更合理的下一步是复述和追问验证临场稳定度。
+
+### 完成内容
+- `buildRecommendationPlan` 识别 `storyAssets[].finalInterviewAnswer`，在没有弱验证缺口时生成 `final-answer-rehearse-*` 面试处方。
+- 新处方标题为“复述某项目的终版面试表达”，CTA 为“模拟复述”，入口指向 `/bootcamp/interview?focus=target_evidence`。
+- Dashboard 训练处方说明补充“终版表达入账后，处方会转向模拟复述”。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：recommendation 测试先失败于仍返回 `target-validation-package-*`；Dashboard 页面源测试先失败于缺少“终版表达入账后 / 模拟复述”。
+- GREEN：`node --test src/lib/profile/recommendation.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 通过 21 项。
+
 ## [2026-07-09] Feature: Dashboard 面试弹药包
 
 ### 背景判断
