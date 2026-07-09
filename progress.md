@@ -12,12 +12,20 @@
 - 已修补但未入账的目标证据，可在指挥舱内直接调用 `handleDepositTargetEvidence` 入账。
 - 目标证据缺口或最新表达资产，会在同一区域提供补证据/查看表达卡入口。
 - Dashboard 主渲染移除独立 `<ActionDossierPanel />`，避免首屏后立刻出现第二个行动卡片墙。
+- 删除未使用的 `ActionDossierPanel` 组件实现，并把页面测试同步为右侧“主动作证据”语义，防止旧“已归档行动模块”卡片墙回流。
+- 产品设计文档和 `feature_list.json` 已同步记录旧组件删除。
 
 ### 验证记录
 - TDD 红灯：Dashboard 页面测试先失败于缺少“主动作证据”，并断言不再渲染 `<ActionDossierPanel />`。
+- 补充红灯：删除旧组件后，Dashboard 页面测试先失败于仍期待旧卡片里的“先修项目 / 入账这份证据”文案；测试已改为验证当前指挥舱里的“当前资产 / 目标证据会写入画像账本 / 目标证据已修好，等待入账”。
 - GREEN：`node --test 'src/app/(app)/dashboard/page.test.mjs'` 通过 15 项。
+- 相关回归：`node --test src/lib/dashboard/training-command-center.test.mjs 'src/app/(app)/dashboard/page.test.mjs' feature_list.test.mjs` 通过 27 项。
 - `npx tsc --noEmit` 通过。
-- `ESLINT_USE_FLAT_CONFIG=false npx eslint 'src/app/(app)/dashboard/page.tsx' 'src/app/(app)/dashboard/page.test.mjs' --max-warnings 0` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
 
 ## [2026-07-09] Feature: Dashboard 今日主动作指挥舱
 

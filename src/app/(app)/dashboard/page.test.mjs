@@ -71,22 +71,26 @@ test("dashboard embeds the action dossier into the command deck instead of rende
   assert.match(source, /现在入账/);
   assert.match(source, /模拟复述/);
   assert.doesNotMatch(source, /<ActionDossierPanel/);
+  assert.doesNotMatch(source, /function ActionDossierPanel/);
+  assert.doesNotMatch(source, /已归档行动模块/);
   assert.doesNotMatch(source, /今日行动档案/);
 });
 
 test("dashboard action dossier shows the highest-priority target evidence action", () => {
   assert.match(source, /targetEvidenceAction/);
   assert.match(source, /目标证据行动/);
-  assert.match(source, /先修项目/);
+  assert.match(source, /当前资产/);
   assert.match(source, /目标匹配/);
   assert.match(source, /补这条证据/);
+  assert.match(source, /主动作证据/);
 });
 
 test("dashboard action dossier shows repaired target evidence that needs ledger deposit", () => {
   assert.match(source, /targetEvidenceDepositAction/);
   assert.match(source, /目标证据已修好/);
   assert.match(source, /现在入账/);
-  assert.match(source, /入账这份证据/);
+  assert.match(source, /目标证据会写入画像账本/);
+  assert.match(source, /目标证据已修好，等待入账/);
 });
 
 test("dashboard turns a ledgered final interview answer into an actionable ammo pack", () => {
