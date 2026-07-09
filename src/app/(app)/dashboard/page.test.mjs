@@ -47,6 +47,8 @@ test("dashboard renders and persists a personalized training prescription", () =
   assert.match(source, /\/api\/profile\/recommendation/);
   assert.match(source, /项目证据处方/);
   assert.match(source, /模拟追问验证/);
+  assert.match(source, /抗追问结果/);
+  assert.match(source, /打包面试表达/);
 });
 
 test("dashboard surfaces a first-screen action dossier for evidence assets", () => {

@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 抗追问结果驱动下一步处方
+
+### 背景判断
+- 目标证据追问结果已经入账，但推荐引擎仍只看项目故事包是否有缺口；用户可能在“已被追问验证”之后继续看到同一条模拟追问入口。
+- 第一性原理上，追问结果必须改变下一步：弱验证回到故事库补击穿点，强验证进入终版面试表达打包。
+
+### 完成内容
+- `buildRecommendationPlan` 读取 `growthProfile.targetEvidenceValidations[0]`，优先于普通 story asset 生成面试处方。
+- 当验证状态为 `weak/unclear`、分数低于 8 或存在 `unresolvedRisks` 时，生成 `target-validation-repair-*` 处方，指向 `/bootcamp/story-bank`，CTA 为“补击穿点”，理由引用第一条击穿风险和 `nextDrill`。
+- 当验证结果已扛住追问时，生成 `target-validation-package-*` 处方，指向 `/bootcamp/story-bank`，CTA 为“打包表达”，把已验证证据推进到终版面试表达资产。
+- Dashboard 训练处方说明补充“根据抗追问结果决定补击穿点或打包面试表达”。
+
+### 验证记录
+- TDD 红灯：recommendation 测试先失败于仍返回 `story-validate-*`；Dashboard 页面源测试先失败于缺少“打包面试表达”说明。
+- GREEN：`node --test src/lib/profile/recommendation.test.mjs 'src/app/(app)/dashboard/page.test.mjs'` 通过 19 项。
+- 回归：`node --test src/lib/profile/recommendation.test.mjs 'src/app/(app)/dashboard/page.test.mjs' src/app/api/profile/recommendation/route.test.mjs src/lib/profile/growth-profile.test.mjs feature_list.test.mjs` 通过 30 项。
+- 完整验证：`npx tsc --noEmit`、`ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0`、`node -e "JSON.parse(...feature_list.json...)"`、`git diff --check`、`npm run build`、`./init.sh` 均通过。原始 `npx eslint src/ --max-warnings 0` 因项目仍使用 `.eslintrc.json` 与 ESLint 9 flat config 默认行为不兼容而退出，按 `init.sh` 的既有命令补跑通过。
+
 ## [2026-07-09] Feature: 目标证据追问评分入账
 
 ### 背景判断

@@ -233,6 +233,187 @@ test("turns ledgered target evidence into a high-pressure interview validation p
   assert.equal(interviewPrescription.evidence, "优先讲 · 目标匹配 9/10");
 });
 
+test("turns weak target evidence validation into a specific evidence repair prescription", () => {
+  const plan = buildRecommendationPlan({
+    summary: {
+      overallScore: 82,
+      overallGrade: "B",
+      evidenceCount: 15,
+      snapshotCount: 6,
+      lastEvidenceAt: "2026-07-09T12:00:00.000Z",
+    },
+    dimensions: [
+      {
+        id: "commercial_thinking",
+        label: "商业思维",
+        shortLabel: "商业",
+        score: 78,
+        grade: "B",
+        diagnosisScore: 76,
+        trainingAverage: 80,
+        evidenceCount: 6,
+        lastEvidenceAt: "2026-07-09T09:00:00.000Z",
+        insight: "续费增长证据已经形成，需要补归因反证。",
+      },
+    ],
+    weakestDimensions: [],
+    strongestDimensions: [],
+    careerReadiness: {
+      label: "可进入高压追问",
+      score: 8,
+      evaluatedInterviewCount: 5,
+      answeredInterviewCount: 6,
+      nextAction: "补齐高压追问暴露的击穿点。",
+    },
+    focusPlan: {
+      title: "优先补强 商业思维",
+      reason: "商业思维需要继续验证续费归因。",
+      href: "/training/session",
+      targetDimension: "commercial_thinking",
+    },
+    storyAssets: [
+      {
+        snapshotId: "snap-story-ledgered",
+        savedAt: "2026-07-09",
+        projectName: "客户健康度评分系统",
+        company: "云杉科技",
+        role: "产品负责人",
+        readinessScore: 9,
+        targetEvidence:
+          "续费率提升 8.6%，并通过客户健康度模型提前识别风险。",
+        proofGaps: [],
+        targetFit: {
+          score: 9,
+          priorityLabel: "优先讲",
+          reason: "目标证据已修好，可支撑 SaaS 续费增长负责人面试。",
+          missingEvidence: [],
+        },
+        scriptPreview: "我负责客户健康度评分系统。",
+        href: "/bootcamp/story-bank",
+      },
+    ],
+    thinkingAssets: [],
+    targetEvidenceValidations: [
+      {
+        snapshotId: "snap-validation-weak",
+        savedAt: "2026-07-09",
+        interviewId: "interview-1",
+        projectName: "客户健康度评分系统",
+        targetEvidence:
+          "续费率提升 8.6%，并通过客户健康度模型提前识别风险。",
+        score: 5.5,
+        status: "weak",
+        verdict: "能讲结果，但归因反证还不够稳。",
+        unresolvedRisks: ["销售动作和运营跟进的贡献没有拆开"],
+        nextDrill: "下一轮先补归因反证，再讲角色价值。",
+        href: "/bootcamp/interview?focus=target_evidence",
+      },
+    ],
+  });
+
+  const interviewPrescription = plan.recommendations.find(
+    (item) => item.type === "interview"
+  );
+
+  assert.equal(interviewPrescription.id, "target-validation-repair-snap-validation-weak");
+  assert.match(interviewPrescription.title, /修补 客户健康度评分系统 的抗追问击穿点/);
+  assert.match(interviewPrescription.reason, /销售动作和运营跟进的贡献没有拆开/);
+  assert.match(interviewPrescription.reason, /下一轮先补归因反证/);
+  assert.equal(interviewPrescription.href, "/bootcamp/story-bank");
+  assert.equal(interviewPrescription.cta, "补击穿点");
+  assert.equal(interviewPrescription.evidence, "抗追问 5.5/10");
+});
+
+test("turns defended target evidence validation into final interview answer packaging", () => {
+  const plan = buildRecommendationPlan({
+    summary: {
+      overallScore: 86,
+      overallGrade: "A",
+      evidenceCount: 16,
+      snapshotCount: 7,
+      lastEvidenceAt: "2026-07-09T12:00:00.000Z",
+    },
+    dimensions: [
+      {
+        id: "commercial_thinking",
+        label: "商业思维",
+        shortLabel: "商业",
+        score: 84,
+        grade: "A",
+        diagnosisScore: 82,
+        trainingAverage: 86,
+        evidenceCount: 7,
+        lastEvidenceAt: "2026-07-09T09:00:00.000Z",
+        insight: "目标证据已经抗住追问，可以打包表达。",
+      },
+    ],
+    weakestDimensions: [],
+    strongestDimensions: [],
+    careerReadiness: {
+      label: "可进入高压追问",
+      score: 9,
+      evaluatedInterviewCount: 5,
+      answeredInterviewCount: 6,
+      nextAction: "把已验证证据打包成面试表达。",
+    },
+    focusPlan: {
+      title: "优先补强 商业思维",
+      reason: "商业思维证据已验证。",
+      href: "/training/session",
+      targetDimension: "commercial_thinking",
+    },
+    storyAssets: [
+      {
+        snapshotId: "snap-story-ledgered",
+        savedAt: "2026-07-09",
+        projectName: "客户健康度评分系统",
+        company: "云杉科技",
+        role: "产品负责人",
+        readinessScore: 9,
+        targetEvidence:
+          "续费率提升 8.6%，并通过客户健康度模型提前识别风险。",
+        proofGaps: [],
+        targetFit: {
+          score: 9,
+          priorityLabel: "优先讲",
+          reason: "目标证据已修好，可支撑 SaaS 续费增长负责人面试。",
+          missingEvidence: [],
+        },
+        scriptPreview: "我负责客户健康度评分系统。",
+        href: "/bootcamp/story-bank",
+      },
+    ],
+    thinkingAssets: [],
+    targetEvidenceValidations: [
+      {
+        snapshotId: "snap-validation-strong",
+        savedAt: "2026-07-09",
+        interviewId: "interview-1",
+        projectName: "客户健康度评分系统",
+        targetEvidence:
+          "续费率提升 8.6%，并通过客户健康度模型提前识别风险。",
+        score: 8.6,
+        status: "defended",
+        verdict: "归因、角色价值和可复用机制都能解释清楚。",
+        unresolvedRisks: [],
+        nextDrill: "把这段证据压缩成 90 秒终版表达。",
+        href: "/bootcamp/interview?focus=target_evidence",
+      },
+    ],
+  });
+
+  const interviewPrescription = plan.recommendations.find(
+    (item) => item.type === "interview"
+  );
+
+  assert.equal(interviewPrescription.id, "target-validation-package-snap-validation-strong");
+  assert.match(interviewPrescription.title, /打包 客户健康度评分系统 的终版面试表达/);
+  assert.match(interviewPrescription.reason, /归因、角色价值和可复用机制都能解释清楚/);
+  assert.equal(interviewPrescription.href, "/bootcamp/story-bank");
+  assert.equal(interviewPrescription.cta, "打包表达");
+  assert.equal(interviewPrescription.evidence, "抗追问 8.6/10");
+});
+
 test("turns saved thinking upgrade cards into the next training prescription", () => {
   const plan = buildRecommendationPlan({
     summary: {

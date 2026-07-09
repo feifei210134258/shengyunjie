@@ -83,12 +83,99 @@ function compactText(value: unknown, maxLength = 120) {
   return `${text.slice(0, maxLength)}…`;
 }
 
+function formatValidationEvidence(score: number | null) {
+  return score == null ? "抗追问已验证" : `抗追问 ${score}/10`;
+}
+
+function hasValidationGap(validation: NonNullable<GrowthProfile["targetEvidenceValidations"]>[number]) {
+  const status = String(validation.status || "").trim();
+  return (
+    status === "weak" ||
+    status === "unclear" ||
+    (validation.score != null && validation.score < 8) ||
+    validation.unresolvedRisks.length > 0
+  );
+}
+
+function buildTargetValidationRecommendation({
+  validation,
+  storyHref,
+  targetDimension,
+  goalBrief,
+}: {
+  validation: NonNullable<GrowthProfile["targetEvidenceValidations"]>[number];
+  storyHref: string;
+  targetDimension: string;
+  goalBrief?: GoalBrief;
+}): ProfileRecommendation {
+  const evidence = formatValidationEvidence(validation.score);
+  const firstRisk = validation.unresolvedRisks[0];
+
+  if (hasValidationGap(validation)) {
+    return {
+      id: `target-validation-repair-${validation.snapshotId}`,
+      type: "interview",
+      title: withGoalBriefTitle(
+        `修补 ${validation.projectName} 的抗追问击穿点`,
+        goalBrief
+      ),
+      reason: withGoalBriefReason(
+        [
+          firstRisk ? `高压追问暴露击穿点：${firstRisk}。` : "",
+          validation.nextDrill
+            ? `下一步：${validation.nextDrill}`
+            : "先补归因反证、个人角色价值和可复用机制，再进入下一轮追问。",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        goalBrief
+      ),
+      href: storyHref,
+      cta: "补击穿点",
+      priority: 2,
+      targetDimension,
+      evidence,
+    };
+  }
+
+  return {
+    id: `target-validation-package-${validation.snapshotId}`,
+    type: "interview",
+    title: withGoalBriefTitle(
+      `打包 ${validation.projectName} 的终版面试表达`,
+      goalBrief
+    ),
+    reason: withGoalBriefReason(
+      validation.verdict
+        ? `抗追问结果已通过：${validation.verdict}。下一步把这段证据压成可复述的 90 秒面试表达。`
+        : "目标证据已经扛住追问。下一步把它打包成可复述的面试表达。",
+      goalBrief
+    ),
+    href: storyHref,
+    cta: "打包表达",
+    priority: 2,
+    targetDimension,
+    evidence,
+  };
+}
+
 function buildInterviewRecommendation(
   profile: GrowthProfile,
   targetDimension: string,
   goalBrief?: GoalBrief
 ): ProfileRecommendation {
   const latestStoryAsset = profile.storyAssets[0];
+  const latestTargetValidation = profile.targetEvidenceValidations?.[0];
+
+  if (latestTargetValidation) {
+    return buildTargetValidationRecommendation({
+      validation: latestTargetValidation,
+      storyHref: latestStoryAsset?.href || "/bootcamp/story-bank",
+      targetDimension,
+      goalBrief,
+    });
+  }
+
   if (latestStoryAsset) {
     const firstGap =
       latestStoryAsset.targetFit?.missingEvidence?.[0] ||
