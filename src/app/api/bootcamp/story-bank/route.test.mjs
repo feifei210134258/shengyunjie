@@ -34,3 +34,8 @@ test("story bank API persists project evidence edits into parsed profile", () =>
   assert.match(source, /\.update\(\{[\s\S]*parsed_profile/);
   assert.match(source, /projectName/);
 });
+
+test("story bank API accepts target evidence repair text in project patches", () => {
+  assert.match(source, /targetEvidenceText/);
+  assert.match(source, /updateParsedProfileProject\(\s*session\.parsed_profile,\s*\{[\s\S]*targetEvidenceText/);
+});

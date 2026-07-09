@@ -56,3 +56,11 @@ test("story bank page saves target fit with the project story pack", () => {
   assert.match(source, /missingEvidence/);
   assert.match(source, /targetFit:\s*story\.targetFit/);
 });
+
+test("story bank page lets users repair the exact target evidence gap", () => {
+  assert.match(source, /目标证据修补台/);
+  assert.match(source, /targetEvidenceText/);
+  assert.match(source, /targetEvidenceRepair/);
+  assert.match(source, /补这条目标证据/);
+  assert.match(source, /savedEvidence/);
+});

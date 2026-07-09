@@ -185,12 +185,47 @@ test("prioritizes projects against the persisted interview target brief", () => 
   assert.match(result.projectStories[0].targetFit.missingEvidence.join(" "), /目标岗位|目标场景/);
 });
 
+test("builds a target evidence repair workspace from saved project evidence", () => {
+  const result = buildStoryBank({
+    session: {
+      id: "session-target-repair",
+      current_day: 1,
+      status: "in_progress",
+      parsed_profile: {
+        ...parsedProfile,
+        projects: [
+          {
+            ...parsedProfile.projects[0],
+            targetEvidence:
+              "面向 SaaS 平台负责人面试，我会补充：客户健康度模型上线后续费风险提前 14 天识别，CS 跟进动作使高风险客户续费率提升 8.6%。",
+          },
+        ],
+      },
+      weakness_prediction: null,
+    },
+    interviews: [],
+    latestGoalBrief: {
+      targetRole: "高级 B 端产品经理",
+      targetScenario: "SaaS 平台负责人面试，重点考续费增长",
+      targetDeadline: "两周内",
+    },
+  });
+
+  const story = result.projectStories[0];
+  assert.match(story.targetEvidenceRepair.focusGap, /目标岗位|目标场景|目标期限/);
+  assert.match(story.targetEvidenceRepair.savedEvidence, /续费率提升 8\.6%/);
+  assert.match(story.targetEvidenceRepair.prompt, /高级 B 端产品经理|SaaS 平台负责人面试/);
+  assert.match(story.interviewScript.fullScript, /续费率提升 8\.6%/);
+});
+
 test("updates one resume project evidence without changing other projects", () => {
   const updated = updateParsedProfileProject(parsedProfile, {
     projectName: "权限审批流重构",
     role: "从 0 到 1 负责权限模型、审批链路和灰度上线",
     description: "解决大客户多角色权限配置混乱、审批链路不可追踪的问题。",
     outcomesText: "审批配置时长下降 31%\n权限相关工单下降 18%",
+    targetEvidenceText:
+      "这段项目能证明我处理复杂 B 端权限治理：先定义角色边界，再用工单下降验证效果。",
   });
 
   assert.equal(updated.projects[0].role, "产品负责人");
@@ -206,4 +241,8 @@ test("updates one resume project evidence without changing other projects", () =
     "审批配置时长下降 31%",
     "权限相关工单下降 18%",
   ]);
+  assert.equal(
+    updated.projects[1].targetEvidence,
+    "这段项目能证明我处理复杂 B 端权限治理：先定义角色边界，再用工单下降验证效果。"
+  );
 });

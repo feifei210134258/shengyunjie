@@ -9,6 +9,7 @@ type ResumeProject = {
   description?: string;
   role?: string;
   outcomes?: string[];
+  targetEvidence?: string;
 };
 
 type StoryBankSession = {
@@ -121,6 +122,11 @@ export type ProjectStory = {
     reason: string;
     missingEvidence: string[];
   };
+  targetEvidenceRepair: {
+    focusGap: string;
+    savedEvidence: string;
+    prompt: string;
+  };
 };
 
 export type StoryBank = {
@@ -149,6 +155,7 @@ export type ProjectEvidencePatch = {
   role?: string;
   description?: string;
   outcomesText?: string;
+  targetEvidenceText?: string;
 };
 
 function compactText(value: unknown) {
@@ -200,6 +207,10 @@ export function updateParsedProfileProject<T extends { projects?: ResumeProject[
         patch.outcomesText == null
           ? project.outcomes || []
           : splitLines(patch.outcomesText),
+      targetEvidence:
+        patch.targetEvidenceText == null
+          ? project.targetEvidence
+          : compactText(patch.targetEvidenceText),
     };
   });
 
@@ -342,7 +353,10 @@ function buildInterviewReadyAnswer(project: ResumeProject, evidence: StoryEviden
   return `我会先讲清「${name}」的业务背景和目标，再说明自己负责的角色、关键判断和取舍依据，最后用「${outcome}」这类结果证据证明项目价值，并补充一次复盘改进。`;
 }
 
-function buildInterviewScript(project: ResumeProject, evidence: StoryEvidenceItem[]) {
+function buildInterviewScript(
+  project: ResumeProject,
+  evidence: StoryEvidenceItem[]
+) {
   const name = compactText(project.name) || "这个项目";
   const description =
     compactText(project.description) ||
@@ -351,6 +365,7 @@ function buildInterviewScript(project: ResumeProject, evidence: StoryEvidenceIte
     compactText(project.role) ||
     "我负责把业务问题拆成可落地的产品方案，并推动相关团队达成共识。";
   const outcomes = normalizeList(project.outcomes);
+  const targetEvidence = compactText(project.targetEvidence);
   const resultText = outcomes.length
     ? outcomes.join("；")
     : "目前还需要补充更明确的结果指标，所以我会在面试里主动说明当时如何验证成效。";
@@ -376,7 +391,7 @@ function buildInterviewScript(project: ResumeProject, evidence: StoryEvidenceIte
     },
     {
       label: "结果证据",
-      content: resultText,
+      content: targetEvidence ? `${resultText}。${targetEvidence}` : resultText,
     },
     {
       label: "复盘升级",
@@ -449,6 +464,7 @@ function getProjectTargetFit({
     project.company,
     project.description,
     project.role,
+    project.targetEvidence,
     ...(project.outcomes || []),
     ...evidence.flatMap((item) => [
       item.questionText,
@@ -500,6 +516,24 @@ function getProjectTargetFit({
   };
 }
 
+function buildTargetEvidenceRepair(
+  project: ResumeProject,
+  targetFit: ProjectStory["targetFit"],
+  latestGoalBrief: GoalBrief
+): ProjectStory["targetEvidenceRepair"] {
+  const targetContext = goalBriefText(latestGoalBrief) || "当前目标岗位";
+  const projectName = compactText(project.name) || "这个项目";
+  const focusGap =
+    targetFit.missingEvidence[0] ||
+    `补齐「${projectName}」和${targetContext}之间最关键的业务证据。`;
+
+  return {
+    focusGap,
+    savedEvidence: compactText(project.targetEvidence),
+    prompt: `为了 ${targetContext}，把「${projectName}」补成一句能被追问的证据：你做了什么高级判断、产生了什么结果、如何排除偶然因素？`,
+  };
+}
+
 function getWeaknessFocus(session: StoryBankSession) {
   const weakDimensions =
     session.weakness_prediction?.weak_dimensions
@@ -537,6 +571,11 @@ export function buildStoryBank({
       evidence: evidenceItems,
       latestGoalBrief,
     });
+    const targetEvidenceRepair = buildTargetEvidenceRepair(
+      project,
+      targetFit,
+      latestGoalBrief
+    );
     return {
       projectName: compactText(project.name) || "未命名项目",
       company: compactText(project.company),
@@ -550,6 +589,7 @@ export function buildStoryBank({
       interviewScript: buildInterviewScript(project, evidenceItems),
       readinessScore,
       targetFit,
+      targetEvidenceRepair,
     };
   }).sort((a, b) => {
     if (!latestGoalBrief) return 0;

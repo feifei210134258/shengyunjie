@@ -1,5 +1,29 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 目标证据修补台
+
+### 背景判断
+- Dashboard 已经能指出“为了目标岗位先修哪个项目、补哪条证据”，但用户点进故事库后，项目详情仍主要是通用的角色、描述和结果指标编辑。
+- 从第一性原理看，面试跳槽强化的最小闭环应该是：系统指出目标证据缺口 → 用户直接补这条证据 → 证据落库 → 刷新后讲述稿和后续入账都能读回。
+
+### 完成内容
+- `ProjectStory` 新增 `targetEvidenceRepair`，包含当前目标缺口、已保存目标证据和修补提示。
+- `PATCH /api/bootcamp/story-bank` 接收 `targetEvidenceText`，写回 `bootcamp_sessions.parsed_profile.projects[].targetEvidence`，不新增 schema。
+- `buildStoryBank` 读回 `project.targetEvidence`，并把它合入 2 分钟讲述稿的“结果证据”段，让修补后的目标证据可以直接用于面试表达。
+- `/bootcamp/story-bank` 项目详情新增“目标证据修补台”和“补这条目标证据”输入区，保存时与角色、描述、结果指标一起落库。
+- 产品设计文档已同步记录目标证据修补台链路。
+
+### 验证记录
+- TDD 红灯：`node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs'` 先失败于缺少 `targetEvidenceRepair`、`targetEvidenceText` 和页面“目标证据修补台”。
+- GREEN：同一 focused node 测试通过 19 项。
+- `node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' feature_list.test.mjs` 通过 21 项。
+- `npx tsc --noEmit` 通过。
+- 针对性 ESLint 通过：story-bank 领域、API、页面及相关测试。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过，`/bootcamp/story-bank` 构建体积更新为 6.97 kB。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-08] Feature: Dashboard 目标证据行动
 
 ### 背景判断

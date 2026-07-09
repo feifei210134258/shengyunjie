@@ -409,12 +409,16 @@ function StoryDetail({
   const [role, setRole] = useState(story.role);
   const [description, setDescription] = useState(story.description);
   const [outcomesText, setOutcomesText] = useState(story.outcomes.join("\n"));
+  const [targetEvidenceText, setTargetEvidenceText] = useState(
+    story.targetEvidenceRepair.savedEvidence
+  );
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
 
   useEffect(() => {
     setRole(story.role);
     setDescription(story.description);
     setOutcomesText(story.outcomes.join("\n"));
+    setTargetEvidenceText(story.targetEvidenceRepair.savedEvidence);
     setCopyState("idle");
   }, [story]);
 
@@ -479,6 +483,15 @@ function StoryDetail({
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <EvidenceBox
+            title="目标证据修补台"
+            icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
+            items={[
+              story.targetEvidenceRepair.focusGap,
+              story.targetEvidenceRepair.savedEvidence ||
+                "还没有保存目标证据。先补一句能支撑目标岗位的结果、归因或取舍证据。",
+            ]}
+          />
           <EvidenceBox
             title="目标匹配度"
             icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
@@ -619,6 +632,20 @@ function StoryDetail({
               </label>
               <label className="block">
                 <span className="text-label font-bold text-ink-muted">
+                  补这条目标证据
+                </span>
+                <p className="mt-1 text-label leading-relaxed text-primary">
+                  {story.targetEvidenceRepair.prompt}
+                </p>
+                <textarea
+                  value={targetEvidenceText}
+                  onChange={(event) => setTargetEvidenceText(event.target.value)}
+                  className="mt-2 min-h-28 w-full resize-y rounded-lg border border-line bg-surface px-3 py-2 text-body-sm text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                  placeholder="例如：这个项目能证明我适合目标岗位，因为我做过关键取舍、拿到可验证结果，并能说明归因方式。"
+                />
+              </label>
+              <label className="block">
+                <span className="text-label font-bold text-ink-muted">
                   结果指标
                 </span>
                 <textarea
@@ -641,6 +668,7 @@ function StoryDetail({
                   role,
                   description,
                   outcomesText,
+                  targetEvidenceText,
                 })
               }
               disabled={saving}

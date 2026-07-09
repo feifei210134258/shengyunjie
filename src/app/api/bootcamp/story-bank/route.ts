@@ -129,7 +129,13 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "未登录" }, { status: 401 });
     }
 
-    const { projectName, role, description, outcomesText } = await req.json();
+    const {
+      projectName,
+      role,
+      description,
+      outcomesText,
+      targetEvidenceText,
+    } = await req.json();
     if (!projectName) {
       return NextResponse.json({ error: "缺少项目名称" }, { status: 400 });
     }
@@ -155,6 +161,7 @@ export async function PATCH(req: NextRequest) {
       role,
       description,
       outcomesText,
+      targetEvidenceText,
     });
 
     const { data: updatedSession, error: updateError } = await supabase
