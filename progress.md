@@ -1,5 +1,28 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练实战页缺口补齐动作
+
+### 背景判断
+- 上一轮已经让用户能插入高级 PM 作答骨架，但提交前的“作答质检 2/4”仍偏被动，只告诉用户缺什么，没有把缺口直接变成下一步动作。
+- 从第一性原理看，训练页应该像教练一样推动用户补齐一个最关键缺口，而不是让用户在红绿标签里自己判断怎么改。
+
+### 完成内容
+- `/training/session` 作答质检区新增“下一步补齐”行动条。
+- 系统会根据“判断、依据、取舍、验证”四项质检，定位第一个未满足项，并匹配对应作答骨架。
+- 用户点击“补齐缺口”会把对应起手句插入当前答案，并继续触发既有草稿自动保存。
+- 当四项都满足后，行动条切换为“四步齐了”，提示可以提交给 AI 教练验证是否能转成面试表达或思维升级资产。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：新增 `TrainingSessionClient` 源测试，先失败于缺少 `nextMissingReadiness`、`nextSkeletonItem`、“下一步补齐 / 补齐缺口 / 四步齐了”。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 13 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingSessionClient.tsx src/components/training/TrainingSessionClient.test.mjs --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 通过，环境健康检查 10/10。
+
 ## [2026-07-09] Feature: 训练实战页高级 PM 作答骨架
 
 ### 背景判断

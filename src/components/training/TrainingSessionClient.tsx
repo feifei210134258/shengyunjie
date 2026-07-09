@@ -774,6 +774,10 @@ function A1BeforeSubmit({
   const answerHint = getQuestionHint(question);
   const readiness = getAnswerReadiness(answerText);
   const readinessCount = readiness.filter((item) => item.matched).length;
+  const nextMissingReadiness = readiness.find((item) => !item.matched);
+  const nextSkeletonItem = ANSWER_SKELETON_ITEMS.find(
+    (item) => item.id === nextMissingReadiness?.id
+  );
   const draftStatus = answer?.draftStatus || "idle";
 
   return (
@@ -1039,6 +1043,29 @@ function A1BeforeSubmit({
                     </span>
                   ))}
                 </div>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-[#FAFBFC] px-3 py-2.5">
+                <div>
+                  <p className="text-label font-bold text-ink">
+                    {nextSkeletonItem ? "下一步补齐" : "四步齐了"}
+                  </p>
+                  <p className="mt-1 text-label font-semibold leading-relaxed text-ink-muted">
+                    {nextSkeletonItem
+                      ? `还差“${nextMissingReadiness?.label}”，先插入${nextSkeletonItem.label}起手句，再补你的真实判断。`
+                      : "现在可以提交给 AI 教练，检查这套判断能不能转成面试表达或思维升级资产。"}
+                  </p>
+                </div>
+                {nextSkeletonItem && (
+                  <button
+                    type="button"
+                    onClick={() => onInsertAnswerSkeleton(nextSkeletonItem.template)}
+                    disabled={answer?.submitting}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-2 text-label font-bold text-primary transition hover:border-primary/40 hover:bg-primary-soft active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    补齐缺口
+                  </button>
+                )}
               </div>
             </div>
             <div className="mt-3 flex justify-end">

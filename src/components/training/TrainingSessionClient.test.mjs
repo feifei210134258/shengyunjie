@@ -82,6 +82,14 @@ test("training session scaffolds answers around senior PM judgment moves", () =>
   assert.match(source, /onInsertAnswerSkeleton/);
 });
 
+test("training session turns readiness gaps into the next answer action", () => {
+  assert.match(source, /nextMissingReadiness/);
+  assert.match(source, /nextSkeletonItem/);
+  assert.match(source, /下一步补齐/);
+  assert.match(source, /补齐缺口/);
+  assert.match(source, /四步齐了/);
+});
+
 test("training feedback panel exposes goal-aware assets to the user", () => {
   const panelSource = readFileSync(
     new URL("./TrainingEvaluationPanel.tsx", import.meta.url),
