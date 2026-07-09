@@ -1,5 +1,21 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 终版面试表达打包
+
+### 背景判断
+- 推荐引擎已经能在目标证据抗住追问后生成“打包表达”处方，但 `/bootcamp/story-bank` 还没有对应的终版表达工作台。
+- 第一性原理上，强验证后的下一步不是再补证据，而是把已验证证据压成可复述、可复制、可保存的 90 秒面试表达。
+
+### 完成内容
+- `ProjectStory` 新增 `finalInterviewPackage`，从目标证据、2 分钟讲述稿、目标简报和已保存终版表达中派生终版表达底稿。
+- `PATCH /api/bootcamp/story-bank` 支持 `finalInterviewAnswerText`，写回 `bootcamp_sessions.parsed_profile.projects[].finalInterviewAnswer`，刷新后从同一 API 读回。
+- 项目故事库页面新增“终版面试表达”工作台，支持编辑、保存和复制终版表达。
+
+### 验证记录
+- TDD 红灯：故事库领域测试先失败于缺少 `finalInterviewPackage`，API 源测试先失败于缺少 `finalInterviewAnswerText`，页面源测试先失败于缺少“终版面试表达”。
+- GREEN：`node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs'` 通过 25 项。
+- 回归与完整验证：`node --test src/lib/bootcamp/story-bank.test.mjs src/app/api/bootcamp/story-bank/route.test.mjs 'src/app/(app)/bootcamp/story-bank/page.test.mjs' feature_list.test.mjs` 通过 27 项；`npx tsc --noEmit`、`ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0`、`node -e "JSON.parse(...feature_list.json...)"`、`git diff --check`、`npm run build`、`./init.sh` 均通过。
+
 ## [2026-07-09] Feature: 抗追问结果驱动下一步处方
 
 ### 背景判断

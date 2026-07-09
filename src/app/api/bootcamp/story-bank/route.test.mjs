@@ -39,3 +39,8 @@ test("story bank API accepts target evidence repair text in project patches", ()
   assert.match(source, /targetEvidenceText/);
   assert.match(source, /updateParsedProfileProject\(\s*session\.parsed_profile,\s*\{[\s\S]*targetEvidenceText/);
 });
+
+test("story bank API accepts final interview answer text in project patches", () => {
+  assert.match(source, /finalInterviewAnswerText/);
+  assert.match(source, /updateParsedProfileProject\(\s*session\.parsed_profile,\s*\{[\s\S]*finalInterviewAnswerText/);
+});

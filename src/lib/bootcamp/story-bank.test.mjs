@@ -252,6 +252,42 @@ test("marks target evidence as satisfied after the user repairs it", () => {
   assert.match(result.recommendedNextAction.reason, /目标证据已补|画像账本/);
 });
 
+test("builds a final interview answer package from defended target evidence", () => {
+  const result = buildStoryBank({
+    session: {
+      id: "session-final-package",
+      current_day: 1,
+      status: "in_progress",
+      parsed_profile: {
+        ...parsedProfile,
+        projects: [
+          {
+            ...parsedProfile.projects[0],
+            targetEvidence:
+              "客户健康度模型上线后续费风险提前 14 天识别，并通过 CS 跟进转化排除单纯运营动作影响。",
+            finalInterviewAnswer:
+              "我主讲客户健康度评分系统：先判断续费风险识别滞后不是单点提醒问题，而是客户分层和跟进优先级问题；我负责定义健康度模型、风险分层和 CS 跟进机制，最终让续费风险提前 14 天识别，并用高风险客户续费率变化验证效果。",
+          },
+        ],
+      },
+      weakness_prediction: null,
+    },
+    interviews: [],
+    latestGoalBrief: {
+      targetRole: "高级 B 端产品经理",
+      targetScenario: "SaaS 平台负责人面试，重点考续费增长",
+      targetDeadline: "两周内",
+    },
+  });
+
+  const story = result.projectStories[0];
+  assert.match(story.finalInterviewPackage.prompt, /90 秒|终版表达/);
+  assert.match(story.finalInterviewPackage.suggestedAnswer, /客户健康度评分系统/);
+  assert.match(story.finalInterviewPackage.suggestedAnswer, /续费风险提前 14 天/);
+  assert.match(story.finalInterviewPackage.savedAnswer, /续费风险识别滞后/);
+  assert.equal(story.finalInterviewPackage.isSaved, true);
+});
+
 test("updates one resume project evidence without changing other projects", () => {
   const updated = updateParsedProfileProject(parsedProfile, {
     projectName: "权限审批流重构",
@@ -260,6 +296,8 @@ test("updates one resume project evidence without changing other projects", () =
     outcomesText: "审批配置时长下降 31%\n权限相关工单下降 18%",
     targetEvidenceText:
       "这段项目能证明我处理复杂 B 端权限治理：先定义角色边界，再用工单下降验证效果。",
+    finalInterviewAnswerText:
+      "我会把权限审批流重构打包成 90 秒表达：先讲权限治理的客户价值，再讲角色边界、审批链路和灰度上线，最后用配置时长下降 31% 证明结果。",
   });
 
   assert.equal(updated.projects[0].role, "产品负责人");
@@ -278,5 +316,9 @@ test("updates one resume project evidence without changing other projects", () =
   assert.equal(
     updated.projects[1].targetEvidence,
     "这段项目能证明我处理复杂 B 端权限治理：先定义角色边界，再用工单下降验证效果。"
+  );
+  assert.equal(
+    updated.projects[1].finalInterviewAnswer,
+    "我会把权限审批流重构打包成 90 秒表达：先讲权限治理的客户价值，再讲角色边界、审批链路和灰度上线，最后用配置时长下降 31% 证明结果。"
   );
 });

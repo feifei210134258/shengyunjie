@@ -10,6 +10,7 @@ type ResumeProject = {
   role?: string;
   outcomes?: string[];
   targetEvidence?: string;
+  finalInterviewAnswer?: string;
 };
 
 type StoryBankSession = {
@@ -127,6 +128,13 @@ export type ProjectStory = {
     savedEvidence: string;
     prompt: string;
   };
+  finalInterviewPackage: {
+    prompt: string;
+    sourceEvidence: string;
+    suggestedAnswer: string;
+    savedAnswer: string;
+    isSaved: boolean;
+  };
 };
 
 export type StoryBank = {
@@ -156,6 +164,7 @@ export type ProjectEvidencePatch = {
   description?: string;
   outcomesText?: string;
   targetEvidenceText?: string;
+  finalInterviewAnswerText?: string;
 };
 
 function compactText(value: unknown) {
@@ -211,6 +220,10 @@ export function updateParsedProfileProject<T extends { projects?: ResumeProject[
         patch.targetEvidenceText == null
           ? project.targetEvidence
           : compactText(patch.targetEvidenceText),
+      finalInterviewAnswer:
+        patch.finalInterviewAnswerText == null
+          ? project.finalInterviewAnswer
+          : compactText(patch.finalInterviewAnswerText),
     };
   });
 
@@ -546,6 +559,50 @@ function buildTargetEvidenceRepair(
   };
 }
 
+function buildFinalInterviewPackage({
+  project,
+  interviewScript,
+  targetFit,
+  latestGoalBrief,
+}: {
+  project: ResumeProject;
+  interviewScript: ProjectStory["interviewScript"];
+  targetFit: ProjectStory["targetFit"];
+  latestGoalBrief: GoalBrief;
+}): ProjectStory["finalInterviewPackage"] {
+  const projectName = compactText(project.name) || "这个项目";
+  const targetContext = goalBriefText(latestGoalBrief) || "目标岗位";
+  const targetEvidence = compactText(project.targetEvidence);
+  const savedAnswer = compactText(project.finalInterviewAnswer);
+  const sourceEvidence =
+    targetEvidence ||
+    normalizeList(project.outcomes).join("；") ||
+    interviewScript.sections.find((section) => section.label === "结果证据")
+      ?.content ||
+    "";
+  const suggestedAnswer = [
+    `我会主讲「${projectName}」。`,
+    interviewScript.sections.find((section) => section.label === "开场定位")
+      ?.content,
+    interviewScript.sections.find((section) => section.label === "我的角色")
+      ?.content,
+    interviewScript.sections.find((section) => section.label === "关键判断")
+      ?.content,
+    sourceEvidence ? `结果上，${sourceEvidence}` : "",
+  ]
+    .map(compactText)
+    .filter(Boolean)
+    .join(" ");
+
+  return {
+    prompt: `把「${projectName}」压成服务 ${targetContext} 的 90 秒终版表达：先给结论，再讲你的判断、取舍、结果证据和可复用方法。当前项目优先级：${targetFit.priorityLabel}。`,
+    sourceEvidence,
+    suggestedAnswer,
+    savedAnswer,
+    isSaved: Boolean(savedAnswer),
+  };
+}
+
 function getWeaknessFocus(session: StoryBankSession) {
   const weakDimensions =
     session.weakness_prediction?.weak_dimensions
@@ -588,6 +645,13 @@ export function buildStoryBank({
       targetFit,
       latestGoalBrief
     );
+    const interviewScript = buildInterviewScript(project, evidenceItems);
+    const finalInterviewPackage = buildFinalInterviewPackage({
+      project,
+      interviewScript,
+      targetFit,
+      latestGoalBrief,
+    });
     return {
       projectName: compactText(project.name) || "未命名项目",
       company: compactText(project.company),
@@ -598,10 +662,11 @@ export function buildStoryBank({
       likelyQuestions: getLikelyQuestions(project, weaknessFocus),
       proofGaps: getProofGaps(project, evidenceItems),
       interviewReadyAnswer: buildInterviewReadyAnswer(project, evidenceItems),
-      interviewScript: buildInterviewScript(project, evidenceItems),
+      interviewScript,
       readinessScore,
       targetFit,
       targetEvidenceRepair,
+      finalInterviewPackage,
     };
   }).sort((a, b) => {
     if (!latestGoalBrief) return 0;

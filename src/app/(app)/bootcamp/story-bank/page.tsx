@@ -413,19 +413,36 @@ function StoryDetail({
   const [targetEvidenceText, setTargetEvidenceText] = useState(
     story.targetEvidenceRepair.savedEvidence
   );
+  const [finalInterviewAnswerText, setFinalInterviewAnswerText] = useState(
+    story.finalInterviewPackage.savedAnswer ||
+      story.finalInterviewPackage.suggestedAnswer
+  );
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  const [finalCopyState, setFinalCopyState] = useState<"idle" | "copied">(
+    "idle"
+  );
 
   useEffect(() => {
     setRole(story.role);
     setDescription(story.description);
     setOutcomesText(story.outcomes.join("\n"));
     setTargetEvidenceText(story.targetEvidenceRepair.savedEvidence);
+    setFinalInterviewAnswerText(
+      story.finalInterviewPackage.savedAnswer ||
+        story.finalInterviewPackage.suggestedAnswer
+    );
     setCopyState("idle");
+    setFinalCopyState("idle");
   }, [story]);
 
   async function copyInterviewScript() {
     await navigator.clipboard.writeText(story.interviewScript.fullScript);
     setCopyState("copied");
+  }
+
+  async function copyFinalInterviewAnswer() {
+    await navigator.clipboard.writeText(finalInterviewAnswerText);
+    setFinalCopyState("copied");
   }
 
   return (
@@ -570,6 +587,69 @@ function StoryDetail({
                   </p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-primary/20 bg-primary-soft/40 p-4">
+            <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-start">
+              <div>
+                <div className="flex items-center gap-2">
+                  <MessageSquareQuote
+                    className="h-4 w-4 text-primary"
+                    strokeWidth={1.5}
+                  />
+                  <h3 className="text-heading-sm font-semibold text-ink">
+                    终版面试表达
+                  </h3>
+                </div>
+                <p className="mt-2 max-w-2xl text-body-sm leading-relaxed text-ink-muted">
+                  {story.finalInterviewPackage.prompt}
+                </p>
+                {story.finalInterviewPackage.sourceEvidence && (
+                  <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-label font-bold text-primary">
+                    证据底稿：{story.finalInterviewPackage.sourceEvidence}
+                  </p>
+                )}
+              </div>
+              {story.finalInterviewPackage.isSaved && (
+                <span className="inline-flex shrink-0 items-center rounded-md bg-success-soft px-3 py-1.5 text-label font-bold text-success">
+                  终版已保存
+                </span>
+              )}
+            </div>
+            <textarea
+              value={finalInterviewAnswerText}
+              onChange={(event) =>
+                setFinalInterviewAnswerText(event.target.value)
+              }
+              className="min-h-44 w-full resize-y rounded-lg border border-line bg-white px-3 py-3 text-body-sm leading-relaxed text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+              placeholder="把这段项目压成 90 秒面试表达：结论、你的角色、关键判断、结果证据、复盘升级。"
+            />
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <button
+                onClick={copyFinalInterviewAnswer}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-line-strong bg-white px-4 py-2.5 text-body-sm font-bold text-ink transition-all hover:bg-surface active:scale-[0.98]"
+              >
+                <FileText className="h-4 w-4" strokeWidth={1.5} />
+                {finalCopyState === "copied" ? "已复制" : "复制终版表达"}
+              </button>
+              <button
+                onClick={() =>
+                  onSaveProjectEvidence({
+                    projectName: story.projectName,
+                    role,
+                    description,
+                    outcomesText,
+                    targetEvidenceText,
+                    finalInterviewAnswerText,
+                  })
+                }
+                disabled={saving}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-ink-muted active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
+              >
+                <Save className="h-4 w-4" strokeWidth={1.5} />
+                {saving ? "保存中" : "保存终版表达"}
+              </button>
             </div>
           </div>
 

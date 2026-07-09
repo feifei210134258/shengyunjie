@@ -135,6 +135,7 @@ export async function PATCH(req: NextRequest) {
       description,
       outcomesText,
       targetEvidenceText,
+      finalInterviewAnswerText,
     } = await req.json();
     if (!projectName) {
       return NextResponse.json({ error: "缺少项目名称" }, { status: 400 });
@@ -162,6 +163,7 @@ export async function PATCH(req: NextRequest) {
       description,
       outcomesText,
       targetEvidenceText,
+      finalInterviewAnswerText,
     });
 
     const { data: updatedSession, error: updateError } = await supabase
