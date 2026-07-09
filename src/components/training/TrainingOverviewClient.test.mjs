@@ -64,3 +64,14 @@ test("training overview promotes one highest-leverage action above all modules",
   assert.match(source, /primaryOverviewAction\.cta/);
   assert.doesNotMatch(source, /先复盘上一题/);
 });
+
+test("training overview turns stats cards into an action evidence strip", () => {
+  assert.match(source, /ActionEvidenceStrip/);
+  assert.match(source, /actionEvidenceItems/);
+  assert.match(source, /行动证据带/);
+  assert.match(source, /主动作证据/);
+  assert.match(source, /今日已答/);
+  assert.match(source, /维度覆盖/);
+  assert.doesNotMatch(source, /function StatTile/);
+  assert.doesNotMatch(source, /Compact stats strip/);
+});

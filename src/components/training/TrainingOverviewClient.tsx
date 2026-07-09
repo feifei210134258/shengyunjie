@@ -12,13 +12,9 @@ import {
 import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
 import {
   ArrowRight,
-  CalendarCheck,
-  CheckCircle,
   BookOpen,
   ChevronLeft,
   ChevronRight,
-  Flame,
-  ListChecks,
   PenLine,
   Target,
 } from "lucide-react";
@@ -154,30 +150,40 @@ function getRecommendedDimension(stats: TrainingStats | null) {
   return averages[0] ?? { key: "商业思维", label: "商业思维" };
 }
 
-function StatTile({
-  label,
-  value,
-  meta,
-  icon,
+function ActionEvidenceStrip({
+  items,
 }: {
-  label: string;
-  value: string | number;
-  meta: string;
-  icon: React.ReactNode;
+  items: { label: string; value: string | number; meta: string }[];
 }) {
   return (
-    <Card size="sm" className="flex min-h-[112px] flex-col justify-between">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-label font-semibold text-ink-muted">{label}</p>
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-primary">
-          {icon}
+    <section className="mt-5 rounded-xl border border-line bg-ink px-4 py-3 text-white shadow-xs">
+      <div className="grid gap-3 lg:grid-cols-[180px_1fr] lg:items-center">
+        <div>
+          <p className="text-label font-bold text-white/70">行动证据带</p>
+          <p className="mt-1 text-body-sm font-semibold text-white">
+            主动作证据
+          </p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {items.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2"
+            >
+              <p className="text-label font-bold text-white/60">{item.label}</p>
+              <div className="mt-1 flex items-baseline gap-2">
+                <p className="font-mono text-heading-sm font-bold text-white">
+                  {item.value}
+                </p>
+                <p className="truncate text-label font-semibold text-white/55">
+                  {item.meta}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      <div className="mt-3 flex items-baseline gap-2">
-        <p className="font-mono text-data-md font-bold text-ink">{value}</p>
-        <p className="truncate text-body-sm text-ink-faint">{meta}</p>
-      </div>
-    </Card>
+    </section>
   );
 }
 
@@ -286,6 +292,28 @@ export default function TrainingPage() {
           primaryRecommendation?.evidence ||
           `当前优先补强 ${recommendedDimension.label}`,
       };
+  const actionEvidenceItems = [
+    {
+      label: "累计完成",
+      value: stats?.totalCount ?? "-",
+      meta: `今日已答 ${stats?.todayCount ?? 0} 题`,
+    },
+    {
+      label: "连续天数",
+      value: stats?.streak ?? 0,
+      meta: "天",
+    },
+    {
+      label: "维度覆盖",
+      value: `${practicedDimensionCount}/5`,
+      meta: "已训练维度",
+    },
+    {
+      label: "本月节奏",
+      value: monthCount,
+      meta: "训练天数",
+    },
+  ];
 
   useEffect(() => {
     fetch("/api/training/stats")
@@ -430,33 +458,7 @@ export default function TrainingPage() {
           </div>
         </section>
 
-        {/* Compact stats strip */}
-        <section className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <StatTile
-            label="累计完成"
-            value={stats?.totalCount ?? "-"}
-            meta={`今日已答 ${stats?.todayCount ?? 0} 题`}
-            icon={<CheckCircle className="h-4 w-4" strokeWidth={1.5} />}
-          />
-          <StatTile
-            label="连续天数"
-            value={stats?.streak ?? 0}
-            meta="天"
-            icon={<CalendarCheck className="h-4 w-4" strokeWidth={1.5} />}
-          />
-          <StatTile
-            label="维度覆盖"
-            value={`${practicedDimensionCount}/5`}
-            meta="已训练维度"
-            icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
-          />
-          <StatTile
-            label="本月节奏"
-            value={monthCount}
-            meta="训练天数"
-            icon={<Flame className="h-4 w-4" strokeWidth={1.5} />}
-          />
-        </section>
+        <ActionEvidenceStrip items={actionEvidenceItems} />
 
         <section className="mt-5 rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
           <div className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-end lg:justify-between">

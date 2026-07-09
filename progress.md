@@ -1,5 +1,23 @@
 # 会话进度日志
 
+## [2026-07-09] Feature: 训练首页行动证据带
+
+### 背景判断
+- 训练首页已经把首屏主 CTA 收束成“今日最高杠杆动作”，但首屏下方仍紧跟四张 KPI 卡片，容易把用户注意力拉回统计看板。
+- 从第一性原理看，统计数字应该服务行动判断，而不是成为另一组模块入口。因此本轮把 KPI 卡片区改成主动作的证据背景。
+
+### 完成内容
+- `/training` 新增 `ActionEvidenceStrip`，在首屏下方展示“行动证据带 / 主动作证据”。
+- 累计完成、今日已答、连续天数、维度覆盖、本月节奏继续从既有 `/api/training/stats` 与 `/api/training/sessions` 读回，不新增 API 或 schema。
+- 删除 `StatTile` 组件和独立四卡 KPI 区，避免首屏后立刻出现统计卡片墙。
+- 产品设计文档和 `feature_list.json` 已同步记录。
+
+### 验证记录
+- TDD 红灯：`TrainingOverviewClient` 源测试先失败于缺少 `ActionEvidenceStrip / actionEvidenceItems / 行动证据带 / 主动作证据`，并捕获仍存在 `function StatTile` 与 `Compact stats strip`。
+- GREEN：`node --test src/components/training/TrainingOverviewClient.test.mjs feature_list.test.mjs` 通过 10 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/components/training/TrainingOverviewClient.tsx src/components/training/TrainingOverviewClient.test.mjs --max-warnings 0` 通过。
+
 ## [2026-07-09] Feature: 训练首页今日最高杠杆动作
 
 ### 背景判断
