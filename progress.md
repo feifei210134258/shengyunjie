@@ -1,5 +1,27 @@
 # 会话进度日志
 
+## [2026-07-10] Feature: 训练反馈页反馈处理台
+
+### 背景判断
+- `/training/session` 提交后已经有升级闭环、吸顶主行动、画像状态、完整 AI 反馈、二次修正和下一轮处方，但这些内容仍按多个纵向区块依次展开。
+- 从第一性原理看，用户拿到反馈后的任务不是“读完一份报告”，而是先看最关键的保留项与缺口，马上完成修正版，再承接下一题处方。
+
+### 完成内容
+- 新增 `FeedbackProcessingDesk`，把本轮升级闭环、当前主行动、画像入账状态和下一轮处方合并到一个吸顶处理台。
+- AI 反馈正文默认只展示“继续保留 / 当前只修”两条关键结论；评分维度、示例回答、面试表达资产、思维升级卡和完整建议收进“展开完整反馈”。
+- 删除独立画像状态面板和独立下一轮处方面板，状态与处方仍复用原有 `profileSync`、`nextPrescription` 和 `nextLoopAction`，不新增 schema 或 API。
+- 保留二次修正工作区为默认主工作区，底部继续只提供低权重辅助操作。
+
+### 验证记录
+- TDD 红灯：`TrainingSessionClient` 源测试先失败于缺少 `FeedbackProcessingDesk / 反馈处理台 / 关键反馈 / 展开完整反馈`。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs` 通过 17 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过。
+- `npm run build` 通过，`/training/session` 构建正常。
+- `feature_list.json` JSON 解析与 `git diff --check` 通过。
+- `./init.sh` 单独复跑通过，环境健康检查 10/10。
+- 浏览器复查说明：提交前页面结构已复查；提交后真实态需要登录并产生一条训练记录，本轮未为视觉测试写入额外业务数据，后续可在现有登录态下补一次真实交互截图。
+
 ## [2026-07-10] Feature: 训练实战页任务上下文折叠
 
 ### 背景判断

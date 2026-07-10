@@ -1201,6 +1201,115 @@ function extractSections(text: string) {
   return { diagnosis: text, suggestion: "" };
 }
 
+type FeedbackLoopStep = {
+  id: string;
+  label: string;
+  description: string;
+  done: boolean;
+  active: boolean;
+};
+
+type FeedbackLoopAction = {
+  label: string;
+  description: string;
+  onClick: () => void;
+  disabled: boolean;
+};
+
+function FeedbackProcessingDesk({
+  loopStepStates,
+  nextLoopAction,
+  profileSync,
+  recommendation,
+}: {
+  loopStepStates: FeedbackLoopStep[];
+  nextLoopAction: FeedbackLoopAction;
+  profileSync?: AnalysisState["profileSync"];
+  recommendation?: NextPrescriptionState["recommendation"];
+}) {
+  const profileStatus =
+    profileSync?.status === "saved"
+      ? "反馈已入账"
+      : profileSync?.status === "failed"
+        ? "画像待补"
+        : profileSync?.status === "syncing"
+          ? "画像更新中"
+          : "反馈已生成";
+
+  return (
+    <section className="sticky top-4 z-10 rounded-2xl border border-ink/10 bg-ink px-4 py-4 text-white shadow-[0_22px_60px_rgba(15,23,42,0.22)]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-label font-bold text-white/70">反馈处理台</p>
+            <span className="text-label font-semibold text-white/45">
+              本轮升级闭环
+            </span>
+            <span className="rounded-md border border-white/15 px-2 py-1 text-label font-semibold text-white/70">
+              {profileStatus}
+            </span>
+          </div>
+          <h3 className="mt-1 text-heading-sm font-bold text-white">
+            本轮下一步：{nextLoopAction.label}
+          </h3>
+          <p className="mt-1 text-body-sm leading-relaxed text-white/70">
+            {nextLoopAction.description}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={nextLoopAction.onClick}
+          disabled={nextLoopAction.disabled}
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-4 text-body-sm font-bold text-ink transition hover:bg-white/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+        >
+          {nextLoopAction.label}
+          <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
+        </button>
+      </div>
+
+      <div className="mt-4 grid border-t border-white/10 pt-3 sm:grid-cols-3">
+        {loopStepStates.map((step, index) => (
+          <div
+            key={step.id}
+            className={cn(
+              "px-1 py-2 sm:px-3 sm:first:pl-0 sm:[&:not(:first-child)]:border-l sm:[&:not(:first-child)]:border-white/10",
+              step.done
+                ? "text-white"
+                : step.active
+                  ? "text-warning"
+                  : "text-white/55"
+            )}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-label font-bold">{step.label}</p>
+              <span className="font-mono text-label font-bold text-white/45">
+                0{index + 1}
+              </span>
+            </div>
+            <p className="mt-1 text-label font-semibold leading-relaxed text-white/60">
+              {step.description}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {recommendation && (
+        <div className="mt-3 border-t border-white/10 pt-3">
+          <p className="text-label font-bold text-white/60">下一轮处方</p>
+          <div className="mt-1 flex flex-col gap-1 lg:flex-row lg:items-baseline lg:gap-3">
+            <p className="text-body-sm font-bold text-white">
+              {recommendation.title}
+            </p>
+            <p className="text-label font-semibold leading-relaxed text-white/60">
+              {recommendation.reason}
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function A1AfterSubmit({
   currentIndex,
   totalCount,
@@ -1284,6 +1393,9 @@ function A1AfterSubmit({
   const hasRevisionText = Boolean(revision.text.trim());
   const revisionIsSaved = revision.status === "saved";
   const prescriptionIsSaved = nextPrescription?.status === "saved";
+  const primaryStrength = evaluation?.strengths?.find((item) => item.trim()) || "";
+  const primaryGap =
+    primaryRevisionCue || evaluation?.gaps?.find((item) => item.trim()) || "";
   const nextLoopAction = !revisionIsSaved
     ? !hasRevisionText && primaryRevisionCue
       ? {
@@ -1327,68 +1439,12 @@ function A1AfterSubmit({
         <CompactReference question={question?.text} answer={answer?.text} />
 
         <section className="space-y-4">
-          <section className="rounded-2xl border border-line bg-[#F8FAFC] p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-label font-bold text-primary">
-                  本轮升级闭环
-                </p>
-                <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                  先把反馈变成修正版，再让画像生成下一题处方。
-                </p>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[620px]">
-                {loopStepStates.map((step, index) => (
-                  <div
-                    key={step.id}
-                    className={cn(
-                      "rounded-lg border px-3 py-2.5",
-                      step.done
-                        ? "border-primary/20 bg-white text-primary"
-                        : step.active
-                          ? "border-warning/25 bg-white text-warning"
-                          : "border-line bg-white/70 text-ink-muted"
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-label font-bold">{step.label}</p>
-                      <span className="font-mono text-label font-bold">
-                        0{index + 1}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-label font-semibold leading-relaxed text-ink-muted">
-                      {step.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="sticky top-4 z-10 rounded-2xl border border-ink/10 bg-ink px-4 py-3 text-white shadow-[0_22px_60px_rgba(15,23,42,0.22)]">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-label font-bold text-white/70">
-                  本轮下一步
-                </p>
-                <h3 className="mt-1 text-heading-sm font-bold text-white">
-                  {nextLoopAction.label}
-                </h3>
-                <p className="mt-1 text-body-sm leading-relaxed text-white/70">
-                  {nextLoopAction.description}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={nextLoopAction.onClick}
-                disabled={nextLoopAction.disabled}
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-4 text-body-sm font-bold text-ink transition hover:bg-white/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-              >
-                {nextLoopAction.label}
-                <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
-              </button>
-            </div>
-          </section>
+          <FeedbackProcessingDesk
+            loopStepStates={loopStepStates}
+            nextLoopAction={nextLoopAction}
+            profileSync={profileSync}
+            recommendation={recommendation}
+          />
 
           <div className="rounded-2xl border border-primary/20 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
             <div className="flex flex-col gap-4 border-b border-line pb-5 lg:flex-row lg:items-start lg:justify-between">
@@ -1415,66 +1471,67 @@ function A1AfterSubmit({
               </div>
             </div>
 
-            <div className="mt-5">
-              {evaluation ? (
-                <TrainingEvaluationPanel evaluation={evaluation} hideSummary />
-              ) : (
-                <div className="space-y-4">
-                  <section className="rounded-xl border border-line bg-[#F8FAFC] p-5">
+            {evaluation ? (
+              <>
+                <section className="mt-5 border-y border-line py-4">
+                  <p className="text-label font-bold text-primary">关键反馈</p>
+                  <div className="mt-3 grid gap-4 lg:grid-cols-2">
+                    <div>
+                      <p className="text-label font-bold text-success">继续保留</p>
+                      <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                        {primaryStrength || "先保留已经成立的判断和证据链。"}
+                      </p>
+                    </div>
+                    <div className="lg:border-l lg:border-line lg:pl-4">
+                      <p className="text-label font-bold text-danger">当前只修</p>
+                      <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                        {primaryGap || "补齐本轮最关键的判断缺口。"}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <details className="group mt-4 rounded-xl border border-line bg-[#F8FAFC] px-4 py-3">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body-sm font-bold text-ink [&::-webkit-details-marker]:hidden">
+                    <span>展开完整反馈</span>
+                    <ChevronDown className="h-4 w-4 text-ink-muted transition group-open:rotate-180" />
+                  </summary>
+                  <div className="mt-4 border-t border-line pt-4">
+                    <p className="mb-3 text-label font-bold text-primary">
+                      完整反馈
+                    </p>
+                    <TrainingEvaluationPanel evaluation={evaluation} hideSummary />
+                  </div>
+                </details>
+              </>
+            ) : (
+              <div className="mt-5 space-y-4">
+                <section className="rounded-xl border border-line bg-[#F8FAFC] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <h4 className="font-semibold text-ink">诊断</h4>
+                  </div>
+                  <div className="markdown-content text-body-sm leading-7 text-ink-muted">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {sections.diagnosis || analysis?.text || ""}
+                    </ReactMarkdown>
+                  </div>
+                </section>
+
+                {sections.suggestion && (
+                  <section className="rounded-xl border border-primary-muted bg-primary-soft p-5">
                     <div className="mb-3 flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-primary" />
-                      <h4 className="font-semibold text-ink">诊断</h4>
+                      <PenLine className="h-4 w-4 text-primary" />
+                      <h4 className="font-semibold text-ink">建议</h4>
                     </div>
                     <div className="markdown-content text-body-sm leading-7 text-ink-muted">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {sections.diagnosis || analysis?.text || ""}
+                        {sections.suggestion}
                       </ReactMarkdown>
                     </div>
                   </section>
-
-                  {sections.suggestion && (
-                    <section className="rounded-xl border border-primary-muted bg-primary-soft p-5">
-                      <div className="mb-3 flex items-center gap-2">
-                        <PenLine className="h-4 w-4 text-primary" />
-                        <h4 className="font-semibold text-ink">建议</h4>
-                      </div>
-                      <div className="markdown-content text-body-sm leading-7 text-ink-muted">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {sections.suggestion}
-                        </ReactMarkdown>
-                      </div>
-                    </section>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {profileSync && (
-              <section className="mt-5 rounded-xl border border-primary/10 bg-primary-soft/45 px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-label font-bold text-primary">
-                      {profileSync.status === "saved"
-                        ? "画像已更新"
-                        : profileSync.status === "syncing"
-                          ? "画像更新中"
-                          : "画像更新失败"}
-                    </p>
-                    <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                      {profileSync.status === "saved"
-                        ? "本次训练反馈已沉淀为能力快照，下一次训练处方会读取这条新证据。"
-                        : profileSync.status === "syncing"
-                          ? "正在把本次训练记录写入能力证据账本。"
-                          : "AI 反馈已生成，但画像快照暂未写入；稍后可在工作台重新生成画像。"}
-                    </p>
-                  </div>
-                  {profileSync.status === "saved" && (
-                    <span className="rounded-md bg-white px-3 py-1.5 text-label font-semibold text-primary">
-                      证据账本 +1
-                    </span>
-                  )}
-                </div>
-              </section>
+                )}
+              </div>
             )}
 
             <section className="mt-4 rounded-xl border border-line bg-white px-4 py-4">
@@ -1556,60 +1613,6 @@ function A1AfterSubmit({
                 </button>
               </div>
             </section>
-
-            {nextPrescription && (
-              <section className="mt-4 rounded-xl border border-line bg-[#F8FAFC] px-4 py-4">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <p className="text-label font-bold text-primary">
-                      下一轮处方
-                    </p>
-                    {nextPrescription.status === "loading" ? (
-                      <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-                        正在读取最新画像，生成下一道最值得练的任务。
-                      </p>
-                    ) : nextPrescription.status === "failed" ? (
-                      <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-                        本次反馈已保存，但下一轮处方暂时生成失败；稍后可回到工作台查看。
-                      </p>
-                    ) : recommendation ? (
-                      <>
-                        <h3 className="mt-2 text-heading-sm font-bold text-ink">
-                          {recommendation.title}
-                        </h3>
-                        <p className="mt-2 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
-                          {recommendation.reason}
-                        </p>
-                        <p className="mt-2 text-label font-semibold text-ink-muted">
-                          {recommendation.evidence}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-                        暂无可用处方。完成更多诊断或训练后，系统会给出下一步。
-                      </p>
-                    )}
-                  </div>
-                  {recommendation && (
-                    <button
-                      onClick={onSelectNextPrescription}
-                      disabled={
-                        nextPrescription.status === "saving" ||
-                        nextPrescription.status === "saved"
-                      }
-                      className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-ink px-4 text-label font-bold text-white transition-all hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
-                    >
-                      <Check className="h-4 w-4" />
-                      {nextPrescription.status === "saving"
-                        ? "保存中"
-                        : nextPrescription.status === "saved"
-                          ? "已设为本周处方"
-                          : "设为本周处方"}
-                    </button>
-                  )}
-                </div>
-              </section>
-            )}
 
             <div className="mt-5 rounded-xl border border-line bg-[#F8FAFC] px-4 py-3">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

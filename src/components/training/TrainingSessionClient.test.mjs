@@ -123,6 +123,16 @@ test("training feedback frames revision and prescription as an upgrade loop", ()
   assert.match(source, /下一题处方/);
 });
 
+test("training feedback consolidates status and hides the full report by default", () => {
+  assert.match(source, /function FeedbackProcessingDesk/);
+  assert.match(source, /反馈处理台/);
+  assert.match(source, /关键反馈/);
+  assert.match(source, /展开完整反馈/);
+  assert.match(source, /完整反馈[\s\S]*<TrainingEvaluationPanel/);
+  assert.match(source, /const primaryGap =\s*primaryRevisionCue \|\|/);
+  assert.doesNotMatch(source, /完整内容\s*完整内容/);
+});
+
 test("training feedback promotes the next incomplete loop step as the primary action", () => {
   assert.match(source, /nextLoopAction/);
   assert.match(source, /本轮下一步/);
