@@ -29,14 +29,12 @@ function ReviewProcessingDesk({
   steps,
   metaItems,
   title,
-  onPrimaryAction,
 }: {
   historyPrimaryAction: {
     label: string;
     description: string;
     kind: "revision" | "expression" | "thinking" | "link";
-    href?: string;
-    disabled?: boolean;
+    href: string;
   };
   steps: {
     label: string;
@@ -45,7 +43,6 @@ function ReviewProcessingDesk({
   }[];
   metaItems: { label: string; value: string }[];
   title: string;
-  onPrimaryAction: () => void;
 }) {
   return (
     <section className="mb-8 border-b border-line pb-6">
@@ -79,24 +76,13 @@ function ReviewProcessingDesk({
           <p className="mt-1 text-body-sm font-semibold leading-6 text-ink">
             {historyPrimaryAction.description}
           </p>
-          {historyPrimaryAction.kind === "link" ? (
-            <Link
-              href={historyPrimaryAction.href || "/training"}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-            >
-              {historyPrimaryAction.label}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          ) : (
-            <button
-              onClick={onPrimaryAction}
-              disabled={historyPrimaryAction.disabled}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50"
-            >
-              {historyPrimaryAction.label}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          )}
+          <Link
+            href={historyPrimaryAction.href}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          >
+            {historyPrimaryAction.label}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
 
@@ -378,24 +364,24 @@ export default function HistoryDetailPage() {
   const hasSavedRevision = Boolean(revisedAnswer) || revisionStatus === "saved";
   const historyPrimaryAction = !hasSavedRevision
     ? {
-        label: "保存并入账",
-        description: "先完成修正版，同步写入能力证据账本。",
+        label: "前往修正版",
+        description: "先完成修正版，保存后再集中处理资产入账。",
         kind: "revision" as const,
-        disabled: !revisionText.trim() || revisionStatus === "saving",
+        href: "#revision-editor",
       }
     : interviewExpressionCard && expressionCardStatus !== "saved"
       ? {
-          label: "表达卡入账",
+          label: "前往保存并入账",
           description: "修正版已保存，现在沉淀面试表达证据。",
           kind: "expression" as const,
-          disabled: expressionCardStatus === "saving",
+          href: "#deposit-assets",
         }
       : thinkingUpgradeAsset && thinkingUpgradeStatus !== "saved"
         ? {
-            label: "思维升级入账",
+            label: "前往保存并入账",
             description: "把判断、取舍、归因、落地和迁移验证写入画像。",
             kind: "thinking" as const,
-            disabled: thinkingUpgradeStatus === "saving",
+            href: "#deposit-assets",
           }
         : {
             label: "返回训练队列",
@@ -403,19 +389,6 @@ export default function HistoryDetailPage() {
             kind: "link" as const,
             href: "/training",
           };
-  const handlePrimaryHistoryAction = () => {
-    if (historyPrimaryAction.kind === "revision") {
-      void handleSaveRevision();
-      return;
-    }
-    if (historyPrimaryAction.kind === "expression") {
-      void handleSaveExpressionCard();
-      return;
-    }
-    if (historyPrimaryAction.kind === "thinking") {
-      void handleSaveThinkingUpgrade();
-    }
-  };
   const reviewSteps = [
     {
       label: "原回答 / AI 反馈",
@@ -458,7 +431,6 @@ export default function HistoryDetailPage() {
           steps={reviewSteps}
           metaItems={metaItems}
           title={title}
-          onPrimaryAction={handlePrimaryHistoryAction}
         />
 
         <section className="mb-8">
@@ -500,7 +472,10 @@ export default function HistoryDetailPage() {
               </div>
               <div className="mt-4">
                 {evaluation ? (
-                  <TrainingEvaluationPanel evaluation={evaluation} />
+                  <TrainingEvaluationPanel
+                    evaluation={evaluation}
+                    hideReviewAssets
+                  />
                 ) : (
                   <div className="divide-y divide-line border-y border-line">
                     {sections.diagnosis && (
@@ -553,7 +528,10 @@ export default function HistoryDetailPage() {
         </section>
 
         {showRevisionWorkbench && (
-          <section className="mb-8 overflow-hidden rounded-lg border border-primary-muted bg-white">
+          <section
+            id="revision-editor"
+            className="mb-8 scroll-mt-24 overflow-hidden rounded-lg border border-primary-muted bg-white"
+          >
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-primary-muted bg-primary-soft/40 px-5 py-4">
               <div>
                 <p className="text-label font-bold text-primary">02 二次修正</p>
@@ -609,7 +587,7 @@ export default function HistoryDetailPage() {
           </section>
         )}
 
-        <section>
+        <section id="deposit-assets" className="scroll-mt-24">
           <div className="mb-3">
             <p className="text-label font-bold text-primary">03 沉淀</p>
             <h2 className="mt-1 text-[20px] font-bold leading-7 text-ink">

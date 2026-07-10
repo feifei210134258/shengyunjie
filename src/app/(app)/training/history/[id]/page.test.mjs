@@ -37,6 +37,35 @@ test("training history presents a light three-stage review workflow", () => {
   assert.doesNotMatch(source, /sm:text-\[36px\]/);
 });
 
+test("training history keeps deposit assets out of the AI feedback stage", () => {
+  assert.match(
+    source,
+    /<TrainingEvaluationPanel\s+evaluation=\{evaluation\}\s+hideReviewAssets\s*\/>/
+  );
+  assert.equal(source.match(/evaluation\.next_practice/g)?.length, 1);
+  assert.match(source, /03 沉淀/);
+  assert.match(source, /面试表达卡/);
+  assert.match(source, /思维升级卡/);
+  assert.match(source, /下一步处方摘要/);
+});
+
+test("training history concentrates asset deposit actions in stage three", () => {
+  const stageThreeStart = source.indexOf('<section id="deposit-assets"');
+
+  assert.notEqual(stageThreeStart, -1);
+  assert.doesNotMatch(source, /onPrimaryAction/);
+  assert.equal(source.match(/onClick=\{handleSaveExpressionCard\}/g)?.length, 1);
+  assert.equal(source.match(/onClick=\{handleSaveThinkingUpgrade\}/g)?.length, 1);
+  assert.match(
+    source.slice(stageThreeStart),
+    /onClick=\{handleSaveExpressionCard\}/
+  );
+  assert.match(
+    source.slice(stageThreeStart),
+    /onClick=\{handleSaveThinkingUpgrade\}/
+  );
+});
+
 test("training history saves a profile snapshot after revision", () => {
   assert.match(source, /\/api\/profile\/summary/);
   assert.match(source, /revision_saved/);
