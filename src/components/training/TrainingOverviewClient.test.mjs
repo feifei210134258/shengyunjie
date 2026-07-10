@@ -4,13 +4,15 @@ import test from "node:test";
 
 const source = readFileSync(new URL("./TrainingOverviewClient.tsx", import.meta.url), "utf8");
 
-test("training overview turns recent records into a second-pass review queue", () => {
-  assert.match(source, /reviewQueue/);
-  assert.match(source, /训练资产流水线/);
+test("training overview leads with a review-first training queue", () => {
+  assert.match(source, /待处理/);
+  assert.match(source, /训练队列/);
   assert.match(source, /待修正/);
   assert.match(source, /修正版已沉淀/);
   assert.match(source, /继续修正/);
   assert.match(source, /revise=1/);
+  assert.match(source, /reviewQueue/);
+  assert.match(source, /evidenceAssets/);
 });
 
 test("training overview uses the profile recommendation as the primary start action", () => {
@@ -31,19 +33,19 @@ test("training overview prefers the persisted weekly prescription over a regener
 
 test("training overview surfaces recent training as ability evidence assets", () => {
   assert.match(source, /evidenceAssets/);
-  assert.match(source, /已可用资产/);
+  assert.match(source, /最近资产/);
   assert.match(source, /面试可用/);
   assert.match(source, /proofPoint/);
   assert.match(source, /待修正后可用/);
 });
 
-test("training overview merges review and evidence into one asset workflow", () => {
-  assert.match(source, /TrainingAssetWorkflow/);
-  assert.match(source, /assetWorkflowItems/);
-  assert.match(source, /训练资产流水线/);
+test("training overview merges review and evidence into one queue", () => {
+  assert.match(source, /TrainingQueue/);
+  assert.match(source, /queueItems/);
+  assert.match(source, /待处理/);
   assert.match(source, /待修正/);
-  assert.match(source, /已可用资产/);
-  assert.match(source, /开新题只在流水线清空后/);
+  assert.match(source, /面试可用/);
+  assert.match(source, /开新题/);
   assert.doesNotMatch(source, /lg:grid-cols-4/);
   assert.doesNotMatch(source, /lg:grid-cols-5/);
 });
@@ -64,46 +66,35 @@ test("training overview demotes rhythm and archive into one compact support pane
 test("training overview adapts the primary training frame to the persisted goal focus", () => {
   assert.match(source, /latestGoalFocus/);
   assert.match(source, /goalFocusFrame/);
+  assert.match(source, /目标主线/);
   assert.match(source, /面试跳槽主线/);
   assert.match(source, /高级产品思维主线/);
   assert.match(source, /面试表达资产/);
 });
 
-test("training overview reads and displays the outcome goal brief as a mission order", () => {
+test("training overview reads and displays the outcome goal brief with its prescription", () => {
   assert.match(source, /latestGoalBrief/);
   assert.match(source, /setLatestGoalBrief/);
-  assert.match(source, /目标作战令/);
+  assert.match(source, /目标与处方/);
   assert.match(source, /目标岗位/);
   assert.match(source, /目标场景/);
   assert.match(source, /目标期限/);
+  assert.match(source, /primaryRecommendation/);
 });
 
-test("training overview presents one ordered action chain instead of unrelated cards", () => {
-  assert.match(source, /今日作战台/);
-  assert.match(source, /作战顺序/);
-  assert.match(source, /先复盘/);
-  assert.match(source, /再开题/);
-  assert.match(source, /沉淀证据/);
-  assert.match(source, /把训练变成可复用资产/);
-});
-
-test("training overview promotes one highest-leverage action above all modules", () => {
+test("training overview promotes revision before a new topic", () => {
   assert.match(source, /primaryOverviewAction/);
   assert.match(source, /firstPendingReview/);
-  assert.match(source, /今日最高杠杆动作/);
-  assert.match(source, /系统只推一个动作/);
   assert.match(source, /primaryOverviewAction\.href/);
   assert.match(source, /primaryOverviewAction\.cta/);
-  assert.doesNotMatch(source, /先复盘上一题/);
+  assert.match(source, /待处理/);
+  assert.match(source, /openNewTopicIsDemoted/);
 });
 
-test("training overview turns stats cards into an action evidence strip", () => {
-  assert.match(source, /ActionEvidenceStrip/);
-  assert.match(source, /actionEvidenceItems/);
-  assert.match(source, /行动证据带/);
-  assert.match(source, /主动作证据/);
-  assert.match(source, /今日已答/);
-  assert.match(source, /维度覆盖/);
-  assert.doesNotMatch(source, /function StatTile/);
-  assert.doesNotMatch(source, /Compact stats strip/);
+test("training overview removes command-deck concepts from the review workspace", () => {
+  assert.doesNotMatch(source, /今日作战台/);
+  assert.doesNotMatch(source, /作战顺序/);
+  assert.doesNotMatch(source, /行动证据带/);
+  assert.doesNotMatch(source, /训练资产流水线/);
+  assert.doesNotMatch(source, /系统只推一个动作/);
 });

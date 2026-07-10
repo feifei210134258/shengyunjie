@@ -200,80 +200,13 @@ function getRecommendedDimension(stats: TrainingStats | null) {
   return averages[0] ?? { key: "商业思维", label: "商业思维" };
 }
 
-function ActionEvidenceStrip({
-  items,
-}: {
-  items: { label: string; value: string | number; meta: string }[];
-}) {
-  return (
-    <section className="mt-5 rounded-xl border border-line bg-ink px-4 py-3 text-white shadow-xs">
-      <div className="grid gap-3 lg:grid-cols-[180px_1fr] lg:items-center">
-        <div>
-          <p className="text-label font-bold text-white/70">行动证据带</p>
-          <p className="mt-1 text-body-sm font-semibold text-white">
-            主动作证据
-          </p>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {items.map((item) => (
-            <div
-              key={item.label}
-              className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2"
-            >
-              <p className="text-label font-bold text-white/60">{item.label}</p>
-              <div className="mt-1 flex items-baseline gap-2">
-                <p className="font-mono text-heading-sm font-bold text-white">
-                  {item.value}
-                </p>
-                <p className="truncate text-label font-semibold text-white/55">
-                  {item.meta}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function GoalBriefLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-surface px-3 py-2">
+    <div className="border-b border-line py-3 last:border-b-0">
       <p className="text-label font-bold text-ink-muted">{label}</p>
       <p className="mt-1 line-clamp-2 text-body-sm font-semibold leading-relaxed text-ink">
         {value}
       </p>
-    </div>
-  );
-}
-
-function ActionStep({
-  index,
-  label,
-  text,
-  active,
-}: {
-  index: string;
-  label: string;
-  text: string;
-  active: boolean;
-}) {
-  return (
-    <div className="grid grid-cols-[2.5rem_1fr] gap-3">
-      <div
-        className={`flex h-9 w-9 items-center justify-center rounded-lg font-mono text-label font-bold ${
-          active ? "bg-primary text-white" : "bg-surface text-ink-faint"
-        }`}
-      >
-        {index}
-      </div>
-      <div>
-        <p className="text-body-sm font-bold text-ink">{label}</p>
-        <p className="mt-0.5 text-body-sm leading-relaxed text-ink-muted">
-          {text}
-        </p>
-      </div>
     </div>
   );
 }
@@ -283,54 +216,56 @@ function formatScore10(score: number | null) {
   return Math.round((score / 10) * 10) / 10;
 }
 
-function TrainingAssetWorkflow({
+function TrainingQueue({
   reviewQueue,
   evidenceAssets,
+  openNewTopicIsDemoted,
 }: {
   reviewQueue: NonNullable<TrainingStats["reviewQueue"]>;
   evidenceAssets: NonNullable<TrainingStats["evidenceAssets"]>;
+  openNewTopicIsDemoted: boolean;
 }) {
   const pendingReviewCount = reviewQueue.filter((item) => item.needsRevision).length;
-  const readyAssetCount = evidenceAssets.filter(
-    (asset) => asset.readiness === "面试可用"
-  ).length;
-  const assetWorkflowItems = [
-    {
-      label: "待修正",
-      count: pendingReviewCount,
-      description: "先把 AI 反馈改成可复述答案",
-    },
-    {
-      label: "已可用资产",
-      count: readyAssetCount,
-      description: "可进入故事库或历史复盘复用",
-    },
+  const queueItems = [
+    ...reviewQueue.map((item) => ({ kind: "review" as const, item })),
+    ...evidenceAssets.map((item) => ({ kind: "asset" as const, item })),
   ];
-  const hasWorkflowItems = reviewQueue.length > 0 || evidenceAssets.length > 0;
 
   return (
-    <section className="mt-5 rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
-      <div className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-end lg:justify-between">
+    <section className="mt-6 border-y border-line bg-surface-raised">
+      <div className="flex flex-col gap-3 border-b border-line px-1 py-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-label font-bold text-primary">训练资产流水线</p>
-          <h3 className="mt-1 text-heading-md font-bold text-ink">
-            先修正，再入账，再开下一题
-          </h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-label font-bold text-primary">训练队列</p>
+            <span className="rounded-md bg-warning-soft px-2 py-0.5 text-label font-bold text-warning">
+              待处理 {pendingReviewCount}
+            </span>
+            <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
+              最近资产 {evidenceAssets.length}
+            </span>
+          </div>
+          <h2 className="mt-1 text-heading-md font-bold text-ink">
+            先处理已有回答，再继续训练
+          </h2>
           <p className="mt-1 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
-            开新题只在流水线清空后才是高杠杆动作。系统把待修正回答和已可用资产放在同一个工作区，避免训练变成刷题列表。
+            待修正回答优先进入复盘，已经成形的表达保留在同一队列里，便于继续入账或复用。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
             href="/bootcamp/story-bank"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-4 py-2.5 text-body-sm font-semibold text-ink transition hover:bg-surface active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-line-strong px-3 py-2 text-body-sm font-semibold text-ink transition hover:bg-surface active:scale-[0.98]"
           >
-            去项目故事库
+            查看故事库
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href={TRAINING_SESSION_ROUTE}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98]"
+            className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-body-sm font-semibold transition active:scale-[0.98] ${
+              openNewTopicIsDemoted
+                ? "border border-line-strong bg-surface text-ink-muted hover:bg-surface-raised"
+                : "border border-line-strong bg-surface text-ink hover:bg-surface-raised"
+            }`}
           >
             开新题
             <ArrowRight className="h-4 w-4" />
@@ -338,30 +273,11 @@ function TrainingAssetWorkflow({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="space-y-3">
-          {assetWorkflowItems.map((item) => (
-            <div
-              key={item.label}
-              className="rounded-lg border border-line bg-white px-4 py-3"
-            >
-              <p className="text-label font-bold text-ink-muted">{item.label}</p>
-              <div className="mt-2 flex items-end justify-between gap-3">
-                <p className="font-mono text-heading-lg font-bold text-ink">
-                  {item.count}
-                </p>
-                <p className="text-right text-body-sm leading-snug text-ink-muted">
-                  {item.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </aside>
-
-        <div className="space-y-3">
-          {hasWorkflowItems ? (
-            <>
-              {reviewQueue.map((item) => {
+      <div className="divide-y divide-line">
+        {queueItems.length > 0 ? (
+          queueItems.map((queueItem) => {
+            if (queueItem.kind === "review") {
+              const item = queueItem.item;
                 const score10 = formatScore10(item.score);
                 return (
                   <Link
@@ -371,7 +287,7 @@ function TrainingAssetWorkflow({
                         ? `/training/history/${item.id}?revise=1`
                         : `/training/history/${item.id}`
                     }
-                    className="group grid gap-3 rounded-lg border border-line bg-white p-4 transition hover:border-line-strong hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
+                    className="group grid gap-3 px-1 py-4 transition hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
                   >
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -406,9 +322,9 @@ function TrainingAssetWorkflow({
                     </div>
                   </Link>
                 );
-              })}
+            }
 
-              {evidenceAssets.map((asset) => {
+            const asset = queueItem.item;
                 const score10 = formatScore10(asset.score);
                 const isReady = asset.readiness === "面试可用";
 
@@ -416,7 +332,7 @@ function TrainingAssetWorkflow({
                   <Link
                     key={`asset-${asset.id}`}
                     href={asset.href}
-                    className="group grid gap-3 rounded-lg border border-line bg-white p-4 transition hover:border-line-strong hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
+                    className="group grid gap-3 px-1 py-4 transition hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
                   >
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -427,7 +343,7 @@ function TrainingAssetWorkflow({
                               : "bg-warning-soft text-warning"
                           }`}
                         >
-                          {isReady ? "已可用资产" : asset.readiness}
+                          {isReady ? "面试可用" : asset.readiness}
                         </span>
                         <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
                           {asset.sourceLabel}
@@ -453,14 +369,12 @@ function TrainingAssetWorkflow({
                     </div>
                   </Link>
                 );
-              })}
-            </>
-          ) : (
-            <div className="rounded-lg border border-dashed border-line bg-white px-4 py-8 text-center text-body-sm text-ink-muted">
-              完成训练并保存二次修正后，这里会生成可用于面试和升阶复盘的证据资产。
-            </div>
-          )}
-        </div>
+          })
+        ) : (
+          <div className="px-1 py-8 text-center text-body-sm text-ink-muted">
+            完成第一题后，待处理回答和最近资产会出现在这里。
+          </div>
+        )}
       </div>
     </section>
   );
@@ -498,7 +412,7 @@ function TrainingRhythmPanel({
   });
 
   return (
-    <section className="mt-5 rounded-xl border border-line bg-white p-4 shadow-xs">
+    <section className="mt-5 rounded-lg border border-line bg-white p-4 shadow-xs">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div>
           <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
@@ -622,7 +536,7 @@ function TrainingRhythmPanel({
             <div>
               <p className="text-label font-bold text-primary">最近归档</p>
               <p className="mt-1 text-body-sm text-ink-muted">
-                只保留最近 4 条，更多从流水线进入。
+                只保留最近 4 条，更多从训练队列进入。
               </p>
             </div>
           </div>
@@ -703,17 +617,12 @@ export default function TrainingPage() {
     getDimensionShortLabel(primaryRecommendation?.targetDimension) ||
     recommendedDimension.label;
   const goalFocusFrame = getGoalFocusFrame(latestGoalFocus);
-  const practicedDimensionCount = Object.values(stats?.dimStats ?? {}).filter(
-    (count) => count > 0
-  ).length;
   const reviewQueue = stats?.reviewQueue ?? [];
   const evidenceAssets = stats?.evidenceAssets ?? [];
   const firstPendingReview =
     reviewQueue.find((item) => item.needsRevision) || null;
   const needsReview = Boolean(firstPendingReview);
-  const readyAssetCount = evidenceAssets.filter(
-    (asset) => asset.readiness === "面试可用"
-  ).length;
+  const openNewTopicIsDemoted = needsReview;
   const primaryOverviewAction = firstPendingReview
     ? {
         badge: "复盘优先",
@@ -750,28 +659,6 @@ export default function TrainingPage() {
           primaryRecommendation?.evidence ||
           `当前优先补强 ${recommendedDimension.label}`,
       };
-  const actionEvidenceItems = [
-    {
-      label: "累计完成",
-      value: stats?.totalCount ?? "-",
-      meta: `今日已答 ${stats?.todayCount ?? 0} 题`,
-    },
-    {
-      label: "连续天数",
-      value: stats?.streak ?? 0,
-      meta: "天",
-    },
-    {
-      label: "维度覆盖",
-      value: `${practicedDimensionCount}/5`,
-      meta: "已训练维度",
-    },
-    {
-      label: "本月节奏",
-      value: monthCount,
-      meta: "训练天数",
-    },
-  ];
 
   useEffect(() => {
     fetch("/api/training/stats")
@@ -819,31 +706,27 @@ export default function TrainingPage() {
   return (
     <>
       <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 lg:px-8">
-        <section className="rounded-xl border border-line bg-surface-raised shadow-xs">
-          <div className="grid gap-0 lg:grid-cols-[minmax(0,1.25fr)_360px_320px]">
-            <div className="border-b border-line p-5 sm:p-6 lg:border-b-0 lg:border-r">
+        <section className="border-b border-line bg-surface-raised">
+          <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="border-b border-line px-1 py-5 sm:py-6 lg:border-b-0 lg:border-r lg:pr-8">
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <Badge>今日作战台</Badge>
-                <Badge>今日最高杠杆动作</Badge>
+                <Badge>{needsReview ? "待处理" : "训练队列"}</Badge>
                 {goalFocusFrame && <Badge>{goalFocusFrame.badge}</Badge>}
                 <Badge variant="neutral">
                   {needsReview ? primaryOverviewAction.badge : primaryTrainingLabel}
                 </Badge>
               </div>
-              <h1 className="max-w-4xl text-[30px] font-bold leading-[1.12] text-ink sm:text-[42px]">
+              <h1 className="max-w-3xl text-[28px] font-bold leading-[1.2] text-ink sm:text-[34px]">
                 {primaryOverviewAction.title}
               </h1>
-              <p className="mt-3 max-w-3xl text-body-md leading-relaxed text-ink-muted">
+              <p className="mt-3 max-w-2xl text-body-md leading-relaxed text-ink-muted">
                 {primaryOverviewAction.description}
               </p>
-              <p className="mt-3 text-body-sm font-semibold text-primary">
-                系统只推一个动作：把训练变成可复用资产，答题、复盘、二次修正和画像处方会连成同一条证据链。
-              </p>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href={primaryOverviewAction.href}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-ink/90 active:scale-[0.97]"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-body-md font-semibold text-white transition-all hover:bg-primary-hover active:scale-[0.97]"
                 >
                   {primaryOverviewAction.cta}
                   <ArrowRight className="h-4 w-4" />
@@ -854,19 +737,21 @@ export default function TrainingPage() {
               </div>
             </div>
 
-            <aside className="border-b border-line p-5 sm:p-6 lg:border-b-0 lg:border-r">
-              <div className="flex items-center justify-between gap-3">
+            <aside className="px-1 py-5 sm:py-6 lg:pl-7">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-label font-bold text-primary">目标作战令</p>
+                  <p className="text-label font-bold text-primary">目标与处方</p>
                   <p className="mt-1 text-body-sm text-ink-muted">
-                    每次训练都要服务这个结果。
+                    训练始终沿着一条目标主线推进。
                   </p>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                  <Target className="h-5 w-5" strokeWidth={1.5} />
-                </div>
+                <Target className="mt-0.5 h-5 w-5 text-primary" strokeWidth={1.7} />
               </div>
-              <div className="mt-5 space-y-3">
+              <div className="mt-3 border-y border-line">
+                <GoalBriefLine
+                  label="目标主线"
+                  value={goalFocusFrame?.badge || "尚未选择目标主线"}
+                />
                 <GoalBriefLine
                   label="目标岗位"
                   value={latestGoalBrief?.targetRole || "先在工作台填写目标岗位"}
@@ -880,48 +765,30 @@ export default function TrainingPage() {
                   value={latestGoalBrief?.targetDeadline || "未设定期限"}
                 />
               </div>
-              {primaryRecommendation?.evidence && (
-                <p className="mt-4 rounded-lg bg-primary-soft/60 px-3 py-2 text-label font-semibold leading-relaxed text-primary">
-                  推荐依据：{primaryRecommendation.evidence}
-                </p>
+              {primaryRecommendation && (
+                <Link
+                  href={primaryRecommendation.href}
+                  className="mt-4 block border-l-2 border-primary bg-primary-soft/60 px-3 py-2 transition hover:bg-primary-soft"
+                >
+                  <p className="text-label font-bold text-primary">
+                    {primaryRecommendation.source === "saved" ? "本周处方" : "画像处方"}
+                  </p>
+                  <p className="mt-1 text-body-sm font-semibold leading-relaxed text-ink">
+                    {primaryRecommendation.title}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-label leading-relaxed text-ink-muted">
+                    {primaryRecommendation.reason}
+                  </p>
+                </Link>
               )}
-            </aside>
-
-            <aside className="p-5 sm:p-6">
-              <p className="text-label font-bold text-primary">作战顺序</p>
-              <div className="mt-5 space-y-3">
-                <ActionStep
-                  index="01"
-                  label="先复盘"
-                  text={
-                    needsReview
-                      ? `${reviewQueue.filter((item) => item.needsRevision).length} 条回答需要二次修正`
-                      : "暂无待修正回答"
-                  }
-                  active={needsReview}
-                />
-                <ActionStep
-                  index="02"
-                  label="再开题"
-                  text={primaryRecommendation?.cta || "完成一题定向训练"}
-                  active
-                />
-                <ActionStep
-                  index="03"
-                  label="沉淀证据"
-                  text={`${readyAssetCount} 条面试可用资产 / ${evidenceAssets.length} 条训练资产`}
-                  active={evidenceAssets.length > 0}
-                />
-              </div>
             </aside>
           </div>
         </section>
 
-        <ActionEvidenceStrip items={actionEvidenceItems} />
-
-        <TrainingAssetWorkflow
+        <TrainingQueue
           reviewQueue={reviewQueue}
           evidenceAssets={evidenceAssets}
+          openNewTopicIsDemoted={openNewTopicIsDemoted}
         />
 
         <TrainingRhythmPanel
