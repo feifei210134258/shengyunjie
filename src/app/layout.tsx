@@ -36,10 +36,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <meta name="theme-color" content="#F7F9FB" />
+        <meta name="theme-color" content="#F6F7F5" />
       </head>
       <body suppressHydrationWarning>
-        <div className="grain-overlay" />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

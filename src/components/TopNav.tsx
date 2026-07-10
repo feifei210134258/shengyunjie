@@ -1,28 +1,28 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
-  Brain,
-  Dumbbell,
-  Rocket,
-  Settings,
-  LogOut,
+  BriefcaseBusiness,
   ChevronDown,
+  Dumbbell,
+  House,
+  LogOut,
   Menu,
+  Radar,
+  Settings,
   X,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 const navItems = [
-  { href: "/dashboard", label: "工作台", icon: LayoutDashboard },
-  { href: "/training", label: "今日训练", icon: Dumbbell },
-  { href: "/bootcamp", label: "面试冲刺", icon: Rocket },
-  { href: "/diagnosis/scale?entry=nav", label: "能力诊断", icon: Brain },
+  { href: "/dashboard", label: "今日", icon: House },
+  { href: "/training", label: "训练复盘", icon: Dumbbell },
+  { href: "/bootcamp", label: "面试证据", icon: BriefcaseBusiness },
+  { href: "/diagnosis/scale?entry=nav", label: "能力画像", icon: Radar },
 ];
 
 export default function TopNav() {
@@ -39,8 +39,8 @@ export default function TopNav() {
   };
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+    function handleClick(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
     }
@@ -48,127 +48,122 @@ export default function TopNav() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  return (
-    <header className="sticky top-0 z-50 border-b border-line bg-bg/86 backdrop-blur-xl">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand */}
-          <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0">
-            <BrandMark className="h-8 w-8" iconClassName="h-[18px] w-[18px]" />
-            <span className="hidden text-xl font-bold tracking-[-0.01em] text-ink sm:block">
-              升云阶
-            </span>
+  const navigation = (mobile = false) => (
+    <nav className={cn("grid gap-1", mobile && "py-2")} aria-label="产品导航">
+      {navItems.map((item) => {
+        const active = isActive(item.href);
+        const Icon = item.icon;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={() => mobile && setMenuOpen(false)}
+            className={cn(
+              "group flex min-h-11 items-center gap-3 rounded-md px-3 text-body-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/25",
+              active
+                ? "bg-primary-soft text-primary"
+                : "text-ink-muted hover:bg-surface hover:text-ink"
+            )}
+          >
+            <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2 : 1.6} />
+            <span>{item.label}</span>
           </Link>
+        );
+      })}
+    </nav>
+  );
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg px-4 py-2 text-body-md font-medium transition-all duration-200",
-                    active
-                      ? "bg-primary-soft text-primary"
-                      : "text-ink-muted hover:text-ink hover:bg-surface"
-                  )}
-                >
-                  <Icon className="w-[18px] h-[18px]" strokeWidth={active ? 2 : 1.5} />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+  return (
+    <>
+      <aside className="sticky top-0 hidden h-[100dvh] w-[208px] shrink-0 border-r border-line bg-surface-raised md:flex md:flex-col">
+        <Link
+          href="/dashboard"
+          className="flex h-[72px] items-center gap-3 border-b border-line px-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/25"
+        >
+          <BrandMark className="h-8 w-8 rounded-md" iconClassName="h-[18px] w-[18px]" />
+          <span className="text-heading-sm font-bold text-ink">升云阶</span>
+        </Link>
 
-          {/* Right section */}
-          <div className="flex items-center gap-2">
-            {/* Profile dropdown */}
-            <div className="relative" ref={profileRef}>
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-ink-muted transition-all hover:bg-surface hover:text-ink"
-              >
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary">
-                  <span className="text-white text-label font-semibold">PM</span>
-                </div>
-                <ChevronDown
-                  className={cn(
-                    "w-3.5 h-3.5 transition-transform hidden sm:block",
-                    profileOpen && "rotate-180"
-                  )}
-                />
-              </button>
+        <div className="flex-1 px-3 py-5">{navigation()}</div>
 
-              {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 animate-slide-down rounded-xl border border-line bg-surface-raised py-1.5 shadow-lg">
-                  <Link
-                    href="/settings"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-body-md text-ink-muted hover:text-ink hover:bg-surface transition-colors"
-                  >
-                    <Settings className="w-4 h-4" strokeWidth={1.5} />
-                    设置
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      signOut();
-                    }}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-body-md text-ink-muted hover:text-danger hover:bg-danger-soft transition-colors w-full text-left"
-                  >
-                    <LogOut className="w-4 h-4" strokeWidth={1.5} />
-                    退出登录
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile menu toggle */}
+        <div className="border-t border-line p-3" ref={profileRef}>
+          <Link
+            href="/settings"
+            className="mb-1 flex min-h-10 items-center gap-3 rounded-md px-3 text-body-sm font-semibold text-ink-muted transition-colors hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+          >
+            <Settings className="h-[18px] w-[18px]" strokeWidth={1.6} />
+            设置
+          </Link>
+          <button
+            onClick={() => setProfileOpen((open) => !open)}
+            className="flex min-h-12 w-full items-center gap-3 rounded-md px-3 text-left text-body-sm font-semibold text-ink outline-none transition-colors hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary/25"
+            aria-expanded={profileOpen}
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-label font-bold text-white">
+              PM
+            </span>
+            <span className="min-w-0 flex-1 truncate">产品经理</span>
+            <ChevronDown
+              className={cn("h-4 w-4 text-ink-faint transition-transform", profileOpen && "rotate-180")}
+              strokeWidth={1.6}
+            />
+          </button>
+          {profileOpen && (
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="rounded-lg p-2 text-ink-muted transition-colors hover:bg-surface md:hidden"
-              aria-label={menuOpen ? "关闭导航" : "打开导航"}
+              onClick={() => {
+                setProfileOpen(false);
+                signOut();
+              }}
+              className="mt-1 flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-body-sm font-semibold text-ink-muted transition-colors hover:bg-danger-soft hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/20"
             >
-              {menuOpen ? (
-                <X className="h-5 w-5" strokeWidth={1.5} />
-              ) : (
-                <Menu className="h-5 w-5" strokeWidth={1.5} />
-              )}
+              <LogOut className="h-[18px] w-[18px]" strokeWidth={1.6} />
+              退出登录
             </button>
-          </div>
+          )}
         </div>
+      </aside>
 
-        {/* Mobile nav dropdown */}
+      <header className="sticky top-0 z-50 border-b border-line bg-surface-raised/95 backdrop-blur md:hidden">
+        <div className="flex h-14 items-center justify-between px-4">
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <BrandMark className="h-8 w-8 rounded-md" iconClassName="h-[18px] w-[18px]" />
+            <span className="text-heading-sm font-bold text-ink">升云阶</span>
+          </Link>
+          <button
+            onClick={() => setMenuOpen((open) => !open)}
+            className="rounded-md p-2 text-ink-muted outline-none transition-colors hover:bg-surface hover:text-ink focus-visible:ring-2 focus-visible:ring-primary/25"
+            aria-label={menuOpen ? "关闭导航" : "打开导航"}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
         {menuOpen && (
-          <nav className="md:hidden py-3 border-t border-line animate-slide-down">
-            <div className="flex flex-col gap-0.5">
-              {navItems.map((item) => {
-                const active = isActive(item.href);
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-4 py-3 text-body-md font-medium transition-all",
-                      active
-                        ? "bg-primary-soft text-primary"
-                        : "text-ink-muted hover:bg-surface"
-                    )}
-                  >
-                    <Icon className="w-5 h-5" strokeWidth={active ? 2 : 1.5} />
-                    {item.label}
-                  </Link>
-                );
-              })}
+          <div className="border-t border-line px-3 pb-3">
+            {navigation(true)}
+            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line pt-3">
+              <Link
+                href="/settings"
+                onClick={() => setMenuOpen(false)}
+                className="flex min-h-10 items-center justify-center gap-2 rounded-md bg-surface text-body-sm font-semibold text-ink-muted"
+              >
+                <Settings className="h-4 w-4" />
+                设置
+              </Link>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  signOut();
+                }}
+                className="flex min-h-10 items-center justify-center gap-2 rounded-md bg-surface text-body-sm font-semibold text-ink-muted"
+              >
+                <LogOut className="h-4 w-4" />
+                退出
+              </button>
             </div>
-          </nav>
+          </div>
         )}
-      </div>
-    </header>
+      </header>
+    </>
   );
 }

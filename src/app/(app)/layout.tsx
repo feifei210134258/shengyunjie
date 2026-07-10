@@ -18,9 +18,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, loading, router, isPublicPreview]);
 
   return (
-    <div className="min-h-[100dvh] bg-bg">
+    <div className="min-h-[100dvh] bg-bg md:flex">
       <TopNav />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="min-w-0 flex-1">
+        {children}
+      </main>
     </div>
   );
 }

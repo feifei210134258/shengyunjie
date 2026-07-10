@@ -4,11 +4,15 @@ import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("./TopNav.tsx", import.meta.url), "utf8");
 
-test("navigation names outcome paths instead of raw modules", () => {
-  assert.match(source, /今日训练/);
-  assert.match(source, /面试冲刺/);
-  assert.match(source, /能力诊断/);
-  assert.doesNotMatch(source, /label: "训练"/);
-  assert.doesNotMatch(source, /label: "特训"/);
-  assert.doesNotMatch(source, /label: "诊断"/);
+test("navigation uses a stable work-oriented sidebar on desktop", () => {
+  assert.match(source, /<aside/);
+  assert.match(source, /label: "今日"/);
+  assert.match(source, /label: "训练复盘"/);
+  assert.match(source, /label: "面试证据"/);
+  assert.match(source, /label: "能力画像"/);
+  assert.match(source, /md:hidden/);
+  assert.match(source, /aria-label={menuOpen \? "关闭导航" : "打开导航"}/);
+  assert.doesNotMatch(source, /bg-gradient-to-br/);
+  assert.doesNotMatch(source, /今日训练/);
+  assert.doesNotMatch(source, /面试冲刺/);
 });
