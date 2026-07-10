@@ -1,5 +1,28 @@
 # 会话进度日志
 
+## [2026-07-10] Feature: 训练反馈页辅助操作降权
+
+### 背景判断
+- `/training/session` 提交后已经有“本轮升级闭环”和吸顶“本轮下一步”，但页面底部仍保留“重新分析 / 下一题”的并列按钮。
+- 从第一性原理看，反馈页不应该让用户绕过修正版、处方入账或迁移验证；真正推进闭环的入口只能是“本轮下一步”，其他操作只能是辅助。
+
+### 完成内容
+- `/training/session` 提交后底部操作区改为“辅助操作”。
+- 删除底部并列的“下一题 / 再来一轮”强按钮，避免和 `nextLoopAction` 抢主路径。
+- 保留“结束训练”和“重新分析”，并用低权重样式说明“这些操作不改变本轮主路径”。
+- 继续复用既有 `onSubmit` 和 `onFinish`，不新增 schema 或 API。
+
+### 验证记录
+- TDD 红灯：`TrainingSessionClient` 源测试先失败于缺少“辅助操作 / 这些操作不改变本轮主路径”，并捕获旧底部“重新分析 → 下一题”并列入口仍存在。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs` 通过 15 项。
+- 回归：`node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 17 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 单独复跑通过，环境健康检查 10/10。
+
 ## [2026-07-10] Feature: 训练实战页答案构建台
 
 ### 背景判断

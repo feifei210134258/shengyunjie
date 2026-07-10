@@ -1576,29 +1576,30 @@ function A1AfterSubmit({
               </section>
             )}
 
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <button
-                onClick={onFinish}
-                className="rounded-lg px-4 py-2 text-body-sm font-semibold text-ink-muted hover:bg-surface"
-              >
-                结束训练
-              </button>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onSubmit}
-                  disabled={answer?.submitting}
-                  className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-body-sm font-semibold text-ink-muted hover:bg-surface disabled:opacity-40"
-                >
-                  <Zap className="h-4 w-4" />
-                  重新分析
-                </button>
-                <button
-                  onClick={onNext}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-semibold text-white"
-                >
-                  {currentIndex === totalCount - 1 ? "再来一轮" : "下一题"}
-                  <ArrowRight className="h-4 w-4" />
-                </button>
+            <div className="mt-5 rounded-xl border border-line bg-[#F8FAFC] px-4 py-3">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-label font-bold text-ink">辅助操作</p>
+                  <p className="mt-1 text-label font-semibold text-ink-muted">
+                    这些操作不改变本轮主路径；真正推进闭环请使用上方“本轮下一步”。
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={onFinish}
+                    className="rounded-lg border border-transparent px-3 py-2 text-label font-bold text-ink-muted transition hover:border-line hover:bg-white"
+                  >
+                    结束训练
+                  </button>
+                  <button
+                    onClick={onSubmit}
+                    disabled={answer?.submitting}
+                    className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-label font-bold text-ink-muted transition hover:bg-surface disabled:opacity-40"
+                  >
+                    <Zap className="h-3.5 w-3.5" />
+                    重新分析
+                  </button>
+                </div>
               </div>
             </div>
           </div>

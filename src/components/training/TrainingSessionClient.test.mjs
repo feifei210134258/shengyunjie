@@ -120,6 +120,12 @@ test("training feedback promotes the next incomplete loop step as the primary ac
   assert.match(source, /onClick=\{nextLoopAction\.onClick\}/);
 });
 
+test("training feedback demotes repeated footer actions below the primary loop action", () => {
+  assert.match(source, /辅助操作/);
+  assert.match(source, /这些操作不改变本轮主路径/);
+  assert.doesNotMatch(source, /重新分析[\s\S]{0,700}\{currentIndex === totalCount - 1 \? "再来一轮" : "下一题"\}/);
+});
+
 test("training feedback panel exposes goal-aware assets to the user", () => {
   const panelSource = readFileSync(
     new URL("./TrainingEvaluationPanel.tsx", import.meta.url),
