@@ -26,34 +26,15 @@ import {
   MessageSquare,
   PenLine,
   RefreshCw,
-  Sparkles,
-  Target,
   X,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const sample = {
-  question:
-    "某 B 端 SaaS 产品把免费试用从 30 天改成 7 天，并要求预约顾问后才能开通。你认为这个动作想优化什么业务指标？可能牺牲什么转化机会？你会看哪 2 个数据判断是否继续？",
-  answer:
-    "我会先判断它是否在提升销售线索质量，而不是单纯压缩试用成本。预约开通可能提高顾问触达率和商机转化率，但会牺牲自助试用启动率，尤其影响低意向但可能转化的长尾客户。我会重点看预约完成率、试用到付费转化率，并对比试用启动率是否明显下滑。",
-  framework: [
-    "识别产品动作：试用周期缩短、开通门槛提高、销售介入提前",
-    "反推业务意图：线索质量、销售效率、成交率或试用成本",
-    "拆出牺牲项：自助转化、低意向用户探索、试用启动率和品牌感受",
-    "选择验证指标：过程指标 + 结果指标 + 反向护栏指标",
-    "设定复盘窗口：看指标组合，而不是只看单个转化率",
-  ],
-  feedback:
-    "你的回答已经抓到线索质量和转化率，但还可以补充牺牲项：试用启动率下降、低意向用户被挡在门外，以及销售团队是否能承接更多预约。",
-  strengths: ["能从产品动作反推业务目标", "能用指标验证判断"],
-  gaps: ["牺牲项还可以拆得更细", "缺少反向护栏指标"],
-};
-
 type VariantId = "before" | "after";
 
 const MISSION_PLAN = getDailyTrainingMissionPlan();
+const SESSION_RECOVERY_ERROR = "（今日训练恢复失败，请刷新页面重试）";
 
 type PrescriptionMeta = {
   profileFocus?: string;
@@ -464,290 +445,6 @@ function Frame({
       </header>
       {children}
     </div>
-  );
-}
-
-function QuestionCard({ compact = false }: { compact?: boolean }) {
-  return (
-    <section
-      className={cn(
-        "rounded-xl border border-primary/15 bg-[#EEF2FF] p-5",
-        compact && "p-4"
-      )}
-    >
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="rounded-md bg-white px-2.5 py-1 text-label font-semibold text-primary">
-          战略思维
-        </span>
-        <span className="rounded-md bg-primary px-2.5 py-1 text-label font-semibold text-white">
-          业务意图识别
-        </span>
-        <button className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-label font-semibold text-ink-muted hover:bg-white">
-          <RefreshCw className="h-3.5 w-3.5" />
-          换一题
-        </button>
-      </div>
-      <p className="text-body-md leading-relaxed text-ink">{sample.question}</p>
-      <div className="mt-4 rounded-lg border border-primary/10 bg-white/70 px-3 py-2 text-body-sm text-primary">
-        <span className="font-semibold">为什么练这题：</span>
-        训练你在约束条件下做决策，而不是把方案平均分配。
-      </div>
-    </section>
-  );
-}
-
-function AnswerComposer({ className }: { className?: string }) {
-  return (
-    <section className={cn("rounded-xl border border-line bg-white p-4", className)}>
-      <textarea
-        className="min-h-32 w-full resize-none rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-md leading-relaxed text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-        defaultValue={sample.answer}
-      />
-      <div className="mt-3 flex justify-end">
-        <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover">
-          <Zap className="h-4 w-4" />
-          提交并获取分析
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function FrameworkCard() {
-  return (
-    <section className="rounded-xl border border-primary/15 bg-[#EEF2FF] p-5">
-      <div className="mb-4 flex items-center gap-2 text-primary">
-        <Sparkles className="h-4 w-4" />
-        <h3 className="font-semibold">这道题建议这样答</h3>
-      </div>
-      <ol className="space-y-3">
-        {sample.framework.map((item, idx) => (
-          <li
-            key={item}
-            className="grid grid-cols-[2rem_1fr] gap-3 text-body-sm leading-relaxed text-ink-muted"
-          >
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-label font-bold text-white">
-              {idx + 1}
-            </span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-function CompareCards({ tinted = false }: { tinted?: boolean }) {
-  return (
-    <div className="grid gap-4">
-      <section
-        className={cn(
-          "rounded-xl border p-5",
-          tinted
-            ? "border-sky-200 bg-sky-50"
-            : "border-line bg-white"
-        )}
-      >
-        <div className="mb-3 flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-primary" />
-          <h4 className="font-semibold text-ink">示例回答</h4>
-        </div>
-        <p className="text-body-sm leading-7 text-ink-muted">
-          我会优先投入全部 6 人做核心功能性能优化，用 2 个月完成，剩余 1 个月启动制造业最小可行版本。理由是续费链路的收益更确定，制造业定制存在需求不稳定和交付风险。
-        </p>
-      </section>
-    </div>
-  );
-}
-
-function StrengthGap({ boxed = false }: { boxed?: boolean }) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <section
-        className={cn(
-          "rounded-xl p-4",
-          boxed ? "border border-emerald-200 bg-emerald-50" : "bg-transparent"
-        )}
-      >
-        <h4 className="mb-3 flex items-center gap-2 font-semibold text-emerald-700">
-          <Check className="h-4 w-4" />
-          亮点
-        </h4>
-        <ul className="space-y-2">
-          {sample.strengths.map((item) => (
-            <li key={item} className="text-body-sm leading-relaxed text-ink-muted">
-              {item}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section
-        className={cn(
-          "rounded-xl p-4",
-          boxed ? "border border-rose-200 bg-rose-50" : "bg-transparent"
-        )}
-      >
-        <h4 className="mb-3 flex items-center gap-2 font-semibold text-rose-700">
-          <X className="h-4 w-4" />
-          盲区
-        </h4>
-        <ul className="space-y-2">
-          {sample.gaps.map((item) => (
-            <li key={item} className="text-body-sm leading-relaxed text-ink-muted">
-              {item}
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
-  );
-}
-
-function WideWorkspace() {
-  return (
-    <Frame>
-      <main className="mx-auto grid max-w-[1480px] grid-cols-[minmax(0,1fr)_420px] gap-5 px-6 py-5">
-        <div className="space-y-4">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-label font-bold uppercase text-primary">
-                每日挑战
-              </p>
-              <h2 className="mt-1 text-heading-md font-semibold text-ink">
-                第 1 / 5 题
-              </h2>
-            </div>
-            <span className="rounded-lg bg-white px-3 py-2 text-label font-semibold text-ink-muted">
-              宽屏利用率：高
-            </span>
-          </div>
-          <QuestionCard />
-          <AnswerComposer />
-          <CompareCards tinted />
-        </div>
-        <aside className="sticky top-36 h-fit space-y-4">
-          <section className="rounded-xl border border-line bg-white p-5">
-            <p className="text-label font-semibold text-primary">
-              AI 产品教练反馈
-            </p>
-            <h3 className="mt-2 text-heading-sm font-semibold text-ink">
-              先补证据链，再升级取舍表达
-            </h3>
-            <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-              {sample.feedback}
-            </p>
-            <div className="mt-4 grid grid-cols-4 gap-2">
-              {["7.5", "6", "7", "6.5"].map((score, idx) => (
-                <div key={idx} className="rounded-lg bg-[#F3F6FA] p-3 text-center">
-                  <div className="font-mono text-data-sm font-bold text-primary">
-                    {score}
-                  </div>
-                  <p className="mt-1 text-[11px] font-semibold text-ink-faint">
-                    {["理解", "框架", "方案", "逻辑"][idx]}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-          <FrameworkCard />
-          <StrengthGap boxed />
-        </aside>
-      </main>
-    </Frame>
-  );
-}
-
-function FocusedWorkspace() {
-  return (
-    <Frame>
-      <main className="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)_360px] gap-5 px-6 py-5">
-        <div className="space-y-4">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-label font-bold uppercase text-primary">
-                每日挑战
-              </p>
-              <h2 className="mt-1 text-heading-md font-semibold text-ink">
-                先完成当前判断，再看教练反馈
-              </h2>
-            </div>
-            <span className="rounded-lg border border-line bg-white px-3 py-2 text-label font-semibold text-ink-muted">
-              第 1 / 5 题
-            </span>
-          </div>
-
-          <section className="rounded-xl border border-line bg-white p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-md bg-primary-soft px-2.5 py-1 text-label font-semibold text-primary">
-                战略思维
-              </span>
-              <span className="rounded-md bg-[#F3F6FA] px-2.5 py-1 text-label font-semibold text-ink-muted">
-                业务意图识别
-              </span>
-              <button className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-label font-semibold text-ink-muted hover:bg-surface">
-                <RefreshCw className="h-3.5 w-3.5" />
-                换一题
-              </button>
-            </div>
-            <p className="text-body-md leading-relaxed text-ink">
-              {sample.question}
-            </p>
-          </section>
-
-          <section className="rounded-xl border border-primary/20 bg-white p-5 shadow-[0_12px_40px_rgba(67,56,202,0.08)]">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-heading-sm font-semibold text-ink">
-                我的判断
-              </h3>
-              <span className="text-label font-semibold text-ink-faint">
-                先写取舍，再补证据
-              </span>
-            </div>
-            <textarea
-              className="min-h-56 w-full resize-none rounded-xl border border-line bg-[#FAFBFC] p-4 text-body-md leading-8 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-              defaultValue={sample.answer}
-            />
-            <div className="mt-4 flex justify-end">
-              <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover">
-                <Zap className="h-4 w-4" />
-                提交并获取分析
-              </button>
-            </div>
-          </section>
-
-          <CompareCards tinted />
-        </div>
-
-        <aside className="sticky top-36 h-fit space-y-4">
-          <section className="rounded-xl border border-line bg-white p-4">
-            <p className="text-label font-semibold text-primary">
-              AI 产品教练反馈
-            </p>
-            <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-              {sample.feedback}
-            </p>
-            <div className="mt-4 rounded-xl bg-[#F3F6FA] p-4">
-              <div className="font-mono text-data-md font-bold text-warning">
-                7.0
-              </div>
-              <p className="mt-1 text-label font-semibold text-ink-muted">
-                综合评分 / 10
-              </p>
-            </div>
-          </section>
-          <section className="rounded-xl border border-primary/15 bg-primary-soft/70 p-4">
-            <div className="mb-3 flex items-center gap-2 text-primary">
-              <Sparkles className="h-4 w-4" />
-              <h3 className="font-semibold">优先补这一点</h3>
-            </div>
-            <p className="text-body-sm leading-relaxed text-ink-muted">
-              先判断产品动作背后的业务意图，再写牺牲项和验证指标。先不要展开所有反馈。
-            </p>
-          </section>
-          <StrengthGap boxed />
-        </aside>
-      </main>
-    </Frame>
   );
 }
 
@@ -1237,7 +934,7 @@ function FeedbackProcessingDesk({
           : "反馈已生成";
 
   return (
-    <section className="sticky top-4 z-10 rounded-2xl border border-ink/10 bg-ink px-4 py-4 text-white shadow-[0_22px_60px_rgba(15,23,42,0.22)]">
+    <section className="sticky top-36 z-10 rounded-2xl border border-ink/10 bg-ink px-4 py-4 text-white shadow-[0_22px_60px_rgba(15,23,42,0.22)]">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1331,6 +1028,10 @@ function A1AfterSubmit({
   const nextPrescription = analysis?.nextPrescription;
   const recommendation = nextPrescription?.recommendation;
   const revision = analysis?.revision || { text: "", status: "idle" as const };
+  const originalAnswerText = String(answer?.text || "").trim();
+  const revisionText = revision.text.trim();
+  const revisionHasChanges =
+    Boolean(revisionText) && revision.text.trim() !== originalAnswerText;
   const primaryRevisionCue = (
     evaluation?.suggestions?.find((item) => item.trim()) ||
     evaluation?.gaps?.find((item) => item.trim()) ||
@@ -1342,8 +1043,8 @@ function A1AfterSubmit({
   const handleApplyRevisionCue = () => {
     if (!primaryRevisionCue) return;
     const cueText = `我会先按这条改：${primaryRevisionCue}`;
-    const nextText = revision.text.trim()
-      ? `${revision.text.trim()}\n\n${cueText}`
+    const nextText = revisionText
+      ? `${revisionText}\n\n${cueText}`
       : cueText;
     onRevisionChange(nextText);
   };
@@ -1366,11 +1067,11 @@ function A1AfterSubmit({
       description:
         revision.status === "saved"
           ? "修正版已保存"
-          : revision.text.trim()
+          : revisionHasChanges
             ? "修正版待保存"
             : "先补一版能复述的答案",
       done: revision.status === "saved",
-      active: revision.status === "saving" || Boolean(revision.text.trim()),
+      active: revision.status === "saving" || revisionHasChanges,
     },
     {
       id: "prescription",
@@ -1390,14 +1091,13 @@ function A1AfterSubmit({
         Boolean(recommendation),
     },
   ];
-  const hasRevisionText = Boolean(revision.text.trim());
   const revisionIsSaved = revision.status === "saved";
   const prescriptionIsSaved = nextPrescription?.status === "saved";
   const primaryStrength = evaluation?.strengths?.find((item) => item.trim()) || "";
   const primaryGap =
     primaryRevisionCue || evaluation?.gaps?.find((item) => item.trim()) || "";
   const nextLoopAction = !revisionIsSaved
-    ? !hasRevisionText && primaryRevisionCue
+    ? !revisionHasChanges && primaryRevisionCue
       ? {
           label: "带入修正指令",
           description: "先把最关键缺口放进修正版，再保存入账。",
@@ -1410,7 +1110,7 @@ function A1AfterSubmit({
           onClick: onSaveRevision,
           disabled:
             !analysis?.recordId ||
-            !hasRevisionText ||
+            !revisionHasChanges ||
             revision.status === "saving",
         }
     : recommendation && !prescriptionIsSaved
@@ -1605,7 +1305,11 @@ function A1AfterSubmit({
                 </p>
                 <button
                   onClick={onSaveRevision}
-                  disabled={!analysis?.recordId || !revision.text.trim() || revision.status === "saving"}
+                  disabled={
+                    !analysis?.recordId ||
+                    !revisionHasChanges ||
+                    revision.status === "saving"
+                  }
                   className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
                 >
                   <PenLine className="h-4 w-4" />
@@ -1639,344 +1343,6 @@ function A1AfterSubmit({
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </Frame>
-  );
-}
-
-function A1StateCompare() {
-  return (
-    <Frame>
-      <main className="mx-auto grid max-w-[1440px] gap-5 px-6 py-5 xl:grid-cols-2">
-        <section className="rounded-2xl border border-line bg-white p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-label font-bold uppercase text-primary">
-                提交前
-              </p>
-              <h2 className="mt-1 text-heading-sm font-semibold text-ink">
-                题目 + 作答占据主屏
-              </h2>
-            </div>
-            <span className="rounded-lg bg-primary-soft px-3 py-2 text-label font-semibold text-primary">
-              写答案
-            </span>
-          </div>
-          <div className="grid gap-4">
-            <section className="rounded-xl border border-primary/15 bg-[#EEF2FF] p-4">
-              <h3 className="font-semibold text-ink">题目</h3>
-              <p className="mt-2 text-body-sm leading-7 text-ink-muted">
-                {sample.question}
-              </p>
-            </section>
-            <section className="rounded-xl border border-primary/20 bg-white p-4 shadow-sm">
-              <h3 className="font-semibold text-ink">回答区域</h3>
-              <p className="mt-2 min-h-44 rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-sm leading-7 text-ink-muted">
-                {sample.answer}
-              </p>
-            </section>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-line bg-white p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-label font-bold uppercase text-primary">
-                提交后
-              </p>
-              <h2 className="mt-1 text-heading-sm font-semibold text-ink">
-                AI 分析接管主屏
-              </h2>
-            </div>
-            <span className="rounded-lg bg-warning-soft px-3 py-2 text-label font-semibold text-warning">
-              复盘
-            </span>
-          </div>
-          <div className="grid grid-cols-[180px_minmax(0,1fr)] gap-4">
-            <div className="space-y-3">
-              <div className="rounded-xl border border-line bg-[#FAFBFC] p-3">
-                <p className="text-label font-semibold text-ink-faint">原题</p>
-                <p className="mt-2 line-clamp-5 text-body-sm leading-6 text-ink-muted">
-                  {sample.question}
-                </p>
-              </div>
-              <div className="rounded-xl border border-line bg-[#FAFBFC] p-3">
-                <p className="text-label font-semibold text-ink-faint">原回答</p>
-                <p className="mt-2 line-clamp-5 text-body-sm leading-6 text-ink-muted">
-                  {sample.answer}
-                </p>
-              </div>
-            </div>
-            <div className="rounded-xl border border-primary/20 bg-primary-soft/70 p-4">
-              <p className="text-label font-semibold text-primary">
-                AI 分析
-              </p>
-              <h3 className="mt-2 font-semibold text-ink">
-                先补证据链，再升级取舍表达
-              </h3>
-              <p className="mt-2 text-body-sm leading-7 text-ink-muted">
-                {sample.feedback}
-              </p>
-              <div className="mt-4 rounded-lg bg-white/75 p-3 text-body-sm text-ink-muted">
-                下一步：补一个反向护栏指标，避免只看转化率。
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </Frame>
-  );
-}
-
-function WritingFirstWorkspace() {
-  return (
-    <Frame>
-      <main className="mx-auto grid max-w-[1460px] grid-cols-[300px_minmax(0,1fr)_300px] gap-5 px-6 py-5">
-        <aside className="sticky top-36 h-fit space-y-4">
-          <section className="rounded-xl border border-line bg-white p-4">
-            <p className="text-label font-semibold text-primary">当前题目</p>
-            <h2 className="mt-2 text-heading-sm font-semibold text-ink">
-              业务判断题
-            </h2>
-            <p className="mt-3 text-body-sm leading-7 text-ink-muted">
-              {sample.question}
-            </p>
-          </section>
-          <section className="rounded-xl border border-line bg-[#F3F6FA] p-4">
-            <p className="text-label font-semibold text-ink-muted">
-              本题只看四件事
-            </p>
-            <ul className="mt-3 space-y-2 text-body-sm leading-relaxed text-ink-muted">
-              <li>结论是否明确</li>
-              <li>有没有说明判断依据</li>
-              <li>有没有写出暂不做什么</li>
-              <li>有没有验证闭环</li>
-            </ul>
-          </section>
-        </aside>
-
-        <section className="rounded-2xl border border-primary/20 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <p className="text-label font-bold uppercase text-primary">
-                专注作答
-              </p>
-              <h2 className="mt-1 text-heading-md font-semibold text-ink">
-                先写你的决策，不急着看标准答案
-              </h2>
-            </div>
-            <span className="rounded-lg bg-primary px-3 py-2 text-label font-semibold text-white">
-              1 / 5
-            </span>
-          </div>
-          <textarea
-            className="min-h-[420px] w-full resize-none rounded-xl border border-line bg-[#FAFBFC] p-5 text-body-md leading-8 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-            defaultValue={sample.answer}
-          />
-          <div className="mt-4 flex items-center justify-between">
-            <button className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-body-sm font-semibold text-ink-muted hover:bg-surface">
-              <RefreshCw className="h-4 w-4" />
-              换一题
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-body-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover">
-              <Zap className="h-4 w-4" />
-              提交并获取分析
-            </button>
-          </div>
-        </section>
-
-        <aside className="sticky top-36 h-fit space-y-4">
-          <section className="rounded-xl border border-line bg-white p-4">
-            <p className="text-label font-semibold text-primary">
-              教练提示
-            </p>
-            <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-              当前阶段只提示结构，不提前展示示范答案，避免用户被答案牵着走。
-            </p>
-          </section>
-          <section className="rounded-xl border border-line bg-white p-4">
-            <h3 className="font-semibold text-ink">提交后会看</h3>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {["理解", "框架", "方案", "逻辑"].map((item) => (
-                <div key={item} className="rounded-lg bg-[#F3F6FA] p-3 text-center text-label font-semibold text-ink-muted">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </section>
-        </aside>
-      </main>
-    </Frame>
-  );
-}
-
-function LightCoachWorkspace() {
-  return (
-    <Frame>
-      <main className="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)_340px] gap-5 px-6 py-5">
-        <div className="space-y-4">
-          <QuestionCard />
-          <section className="rounded-xl border border-line bg-white p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-heading-sm font-semibold text-ink">
-                我的回答
-              </h3>
-              <span className="text-label font-semibold text-ink-faint">
-                已提交
-              </span>
-            </div>
-            <p className="rounded-xl border border-line bg-[#FAFBFC] p-4 text-body-md leading-8 text-ink-muted">
-              {sample.answer}
-            </p>
-          </section>
-          <section className="rounded-xl border border-line bg-white p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <PenLine className="h-4 w-4 text-primary" />
-              <h3 className="font-semibold text-ink">改写示范</h3>
-            </div>
-            <p className="text-body-sm leading-7 text-ink-muted">
-              我会先判断这个动作是在提升线索质量还是降低试用成本，再看预约完成率、试用启动率和试用到付费转化率是否一起改善。
-            </p>
-          </section>
-          <StrengthGap boxed />
-        </div>
-
-        <aside className="sticky top-36 h-fit rounded-xl border border-line bg-white p-4">
-          <p className="text-label font-semibold text-primary">
-            下一步最重要
-          </p>
-          <h3 className="mt-2 text-heading-sm font-semibold text-ink">
-            补一组验证指标
-          </h3>
-          <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-            不需要先重写全文。先补 A/B 两个选项的业务目标、暂不做什么和验证指标。
-          </p>
-          <div className="mt-4 rounded-xl bg-[#F3F6FA] p-4">
-            <p className="text-label font-semibold text-ink-muted">评分</p>
-            <div className="mt-2 flex items-end gap-2">
-              <span className="font-mono text-data-md font-bold text-warning">
-                7.0
-              </span>
-              <span className="pb-1 text-label font-semibold text-ink-faint">
-                / 10
-              </span>
-            </div>
-          </div>
-          <div className="mt-4 space-y-2">
-            {["完整框架", "示例回答", "亮点与盲区"].map((item) => (
-              <button
-                key={item}
-                className="flex w-full items-center justify-between rounded-lg border border-line bg-white px-3 py-2 text-body-sm font-semibold text-ink-muted hover:bg-surface"
-              >
-                {item}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            ))}
-          </div>
-          <button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-semibold text-white">
-            下一题
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </aside>
-      </main>
-    </Frame>
-  );
-}
-
-function BandsFlow() {
-  return (
-    <Frame>
-      <main className="mx-auto max-w-[1280px] px-6 py-6">
-        <div className="grid grid-cols-[160px_minmax(0,1fr)] gap-6">
-          <aside className="sticky top-36 h-fit rounded-xl border border-line bg-white p-4">
-            <p className="text-label font-semibold text-ink-muted">训练路径</p>
-            <div className="mt-4 space-y-3">
-              {["题目", "作答", "示范", "复盘"].map((item, idx) => (
-                <div key={item} className="flex items-center gap-2 text-body-sm">
-                  <span
-                    className={cn(
-                      "h-2 w-2 rounded-full",
-                      idx === 0 ? "bg-primary" : "bg-line"
-                    )}
-                  />
-                  <span className={idx === 0 ? "font-semibold text-ink" : "text-ink-muted"}>
-                    {item}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </aside>
-          <div className="space-y-4">
-            <QuestionCard />
-            <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-              <h3 className="mb-3 font-semibold text-amber-900">我的回答</h3>
-              <p className="text-body-sm leading-7 text-amber-950/75">
-                {sample.answer}
-              </p>
-            </section>
-            <FrameworkCard />
-            <CompareCards tinted />
-            <StrengthGap boxed />
-          </div>
-        </div>
-      </main>
-    </Frame>
-  );
-}
-
-function ReviewBoard() {
-  return (
-    <Frame>
-      <main className="mx-auto grid max-w-[1440px] grid-cols-[380px_minmax(0,1fr)] gap-5 px-6 py-5">
-        <aside className="space-y-4">
-          <QuestionCard compact />
-          <section className="rounded-xl border border-line bg-white p-5">
-            <h3 className="mb-3 font-semibold text-ink">我的回答</h3>
-            <p className="text-body-sm leading-7 text-ink-muted">{sample.answer}</p>
-          </section>
-          <AnswerComposer className="p-3" />
-        </aside>
-        <section className="space-y-4 rounded-xl border border-line bg-white p-5">
-          <div className="flex items-start justify-between gap-4 border-b border-line pb-4">
-            <div>
-              <p className="text-label font-semibold text-primary">
-                AI 产品教练反馈
-              </p>
-              <h2 className="mt-2 text-heading-md font-semibold text-ink">
-                复盘面板
-              </h2>
-              <p className="mt-2 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
-                {sample.feedback}
-              </p>
-            </div>
-            <div className="rounded-xl bg-[#F3F6FA] px-6 py-4 text-center">
-              <div className="font-mono text-data-md font-bold text-warning">7.0</div>
-              <p className="text-label font-semibold text-ink-muted">综合评分</p>
-            </div>
-          </div>
-          <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-            <div className="space-y-4">
-              <FrameworkCard />
-              <CompareCards tinted />
-            </div>
-            <div className="space-y-4">
-              <StrengthGap boxed />
-              <section className="rounded-xl border border-line bg-[#F3F6FA] p-4">
-                <h4 className="mb-2 flex items-center gap-2 font-semibold text-ink">
-                  <Target className="h-4 w-4 text-primary" />
-                  下一轮立刻这样改
-                </h4>
-                <p className="text-body-sm leading-relaxed text-ink-muted">
-                  先写出 A/B 两个选项分别服务哪个业务目标，再补一行暂不做什么，最后给出验证指标和回滚条件。
-                </p>
-                <button className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-body-sm font-semibold text-white">
-                  下一题
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </section>
             </div>
           </div>
         </section>
@@ -2164,9 +1530,12 @@ export default function TrainingSessionClient() {
     let cancelled = false;
 
     fetch(`/api/training/sessions?date=${today}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: DailySessionResponse | null) => {
-        if (cancelled || !data) return;
+      .then((res) => {
+        if (!res.ok) throw new Error("今日训练恢复失败");
+        return res.json();
+      })
+      .then((data: DailySessionResponse) => {
+        if (cancelled) return;
         const latestGoalFocus = normalizeGoalFocus(data.latestGoalFocus);
         const latestThinkingUpgrade = normalizeMigrationTarget(
           data.latestThinkingUpgrade
@@ -2241,7 +1610,24 @@ export default function TrainingSessionClient() {
             : 0;
         setCurrentIndex(nextIndex);
       })
-      .catch((err) => console.error("恢复今日训练进度失败:", err))
+      .catch((err) => {
+        console.error("恢复今日训练进度失败:", err);
+        if (cancelled) return;
+        const fallbackMission = prescriptionMissionPlan[0] || MISSION_PLAN[0];
+        if (!fallbackMission) return;
+        setActiveMissions(prescriptionMissionPlan);
+        setCurrentIndex(0);
+        setQuestions((prev) => ({
+          ...prev,
+          [fallbackMission.id]: prev[fallbackMission.id]?.text
+            ? prev[fallbackMission.id]
+            : {
+                text: SESSION_RECOVERY_ERROR,
+                loading: false,
+                ...getDefaultTargetState(fallbackMission),
+              },
+        }));
+      })
       .finally(() => {
         if (!cancelled) setInitializing(false);
       });
@@ -2265,6 +1651,7 @@ export default function TrainingSessionClient() {
   useEffect(() => {
     if (hasAnalysis) {
       setActive("after");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [hasAnalysis]);
 
@@ -2366,7 +1753,14 @@ export default function TrainingSessionClient() {
   const handleSubmit = async () => {
     const answerText = answers[currentKey]?.text?.trim();
     const q = questions[currentKey]?.text;
-    if (!answerText || !q || q.startsWith("（出题失败")) return;
+    if (
+      !answerText ||
+      !q ||
+      q.startsWith("（出题失败") ||
+      q === SESSION_RECOVERY_ERROR
+    ) {
+      return;
+    }
 
     setAnswers((prev) => ({
       ...prev,

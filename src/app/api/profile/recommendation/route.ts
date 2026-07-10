@@ -46,9 +46,10 @@ async function loadProfileEvidence(supabase: any, userId: string) {
 
   const { data: growthSnapshots, error: snapshotError } = await supabase
     .from("growth_snapshots")
-    .select("id, snapshot_date, overall_score, dimension_scores")
+    .select("id, snapshot_date, created_at, overall_score, dimension_scores")
     .eq("user_id", userId)
     .order("snapshot_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(12);
 
   if (snapshotError) throw snapshotError;

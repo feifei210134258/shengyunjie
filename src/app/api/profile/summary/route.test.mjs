@@ -75,5 +75,5 @@ test("profile summary API can persist a concrete outcome goal brief", () => {
 });
 
 test("profile summary API reads snapshot dimension scores for saved assets", () => {
-  assert.match(source, /\.select\("id, snapshot_date, overall_score, dimension_scores"\)/);
+  assert.match(source, /\.select\("id, snapshot_date, created_at, overall_score, dimension_scores"\)/);
 });

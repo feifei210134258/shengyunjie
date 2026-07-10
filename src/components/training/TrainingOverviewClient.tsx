@@ -79,6 +79,14 @@ type RecommendationPlan = {
   recommendations?: ProfileRecommendation[];
 };
 
+type PersistedRecommendation = Partial<ProfileRecommendation> & {
+  selectedAt?: string;
+};
+
+type ResolvedRecommendation = ProfileRecommendation & {
+  source: "saved" | "generated";
+};
+
 type GoalFocus = "interview_sprint" | "thinking_training";
 
 type GoalBrief = {
@@ -124,6 +132,49 @@ function normalizeGoalBrief(value?: Partial<GoalBrief> | null): GoalBrief | null
     targetScenario,
     targetDeadline,
   };
+}
+
+function resolvePrimaryRecommendation(
+  latestRecommendation: PersistedRecommendation | null,
+  recommendationPlan: RecommendationPlan | null
+): ResolvedRecommendation | null {
+  const generatedRecommendation =
+    recommendationPlan?.recommendations?.find(
+      (item) => item.type === "training"
+    ) || null;
+
+  if (latestRecommendation?.href) {
+    const type = ["training", "interview", "review"].includes(
+      String(latestRecommendation.type)
+    )
+      ? (latestRecommendation.type as ProfileRecommendation["type"])
+      : "training";
+
+    return {
+      id: latestRecommendation.id || "saved-weekly-prescription",
+      type,
+      title:
+        latestRecommendation.title ||
+        generatedRecommendation?.title ||
+        "继续当前训练",
+      reason:
+        type === "training"
+          ? "继续执行已保存的训练处方，完成后把反馈、修正版和下一题继续写入能力证据链。"
+          : "继续执行已保存的结果处方，把当前材料推进到可验证、可复述的下一状态。",
+      href: latestRecommendation.href,
+      cta: "继续执行本周处方",
+      targetDimension:
+        latestRecommendation.targetDimension ||
+        generatedRecommendation?.targetDimension ||
+        "",
+      evidence: "本周处方已保存到画像账本",
+      source: "saved",
+    };
+  }
+
+  return generatedRecommendation
+    ? { ...generatedRecommendation, source: "generated" }
+    : null;
 }
 
 function getRecommendedDimension(stats: TrainingStats | null) {
@@ -630,6 +681,8 @@ export default function TrainingPage() {
   const [stats, setStats] = useState<TrainingStats | null>(null);
   const [recommendationPlan, setRecommendationPlan] =
     useState<RecommendationPlan | null>(null);
+  const [latestRecommendation, setLatestRecommendation] =
+    useState<PersistedRecommendation | null>(null);
   const [latestGoalFocus, setLatestGoalFocus] = useState<GoalFocus | null>(null);
   const [latestGoalBrief, setLatestGoalBrief] = useState<GoalBrief | null>(null);
 
@@ -642,9 +695,10 @@ export default function TrainingPage() {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const recommendedDimension = getRecommendedDimension(stats);
-  const primaryRecommendation =
-    recommendationPlan?.recommendations?.find((item) => item.type === "training") ||
-    null;
+  const primaryRecommendation = resolvePrimaryRecommendation(
+    latestRecommendation,
+    recommendationPlan
+  );
   const primaryTrainingLabel =
     getDimensionShortLabel(primaryRecommendation?.targetDimension) ||
     recommendedDimension.label;
@@ -671,17 +725,27 @@ export default function TrainingPage() {
         evidence: `${reviewQueue.filter((item) => item.needsRevision).length} 条回答等待修正`,
       }
     : {
-        badge: primaryRecommendation ? "画像处方" : "今日训练",
+        badge: primaryRecommendation
+          ? primaryRecommendation.source === "saved" ? "本周处方" : "画像处方"
+          : "今日训练",
         title:
-          primaryRecommendation?.title ||
+          (primaryRecommendation?.source === "saved"
+            ? `本周处方：${primaryRecommendation.title}`
+            : primaryRecommendation?.title) ||
           `用一题校准 ${recommendedDimension.label} 的判断链路`,
         description:
-          goalFocusFrame?.description ||
+          (primaryRecommendation?.source === "saved"
+            ? primaryRecommendation.reason
+            : goalFocusFrame?.description) ||
           primaryRecommendation?.reason ||
           "先完成一题高质量作答，再看 AI 教练反馈。系统会根据诊断、最近训练和特训弱点继续调整推荐方向。",
         href: primaryRecommendation?.href || TRAINING_SESSION_ROUTE,
         cta:
-          goalFocusFrame?.cta || primaryRecommendation?.cta || "开始今日训练",
+          (primaryRecommendation?.source === "saved"
+            ? primaryRecommendation.cta
+            : goalFocusFrame?.cta) ||
+          primaryRecommendation?.cta ||
+          "开始今日训练",
         evidence:
           primaryRecommendation?.evidence ||
           `当前优先补强 ${recommendedDimension.label}`,
@@ -719,6 +783,7 @@ export default function TrainingPage() {
       .then((r) => r.json())
       .then((data) => {
         setRecommendationPlan(data.recommendationPlan || null);
+        setLatestRecommendation(data.latestRecommendation || null);
         setLatestGoalFocus(data.latestGoalFocus || null);
         setLatestGoalBrief(normalizeGoalBrief(data.latestGoalBrief));
       })

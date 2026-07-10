@@ -1,5 +1,55 @@
 # 会话进度日志
 
+## [2026-07-10] Feature: 产品路径处方一致性收口
+
+### 背景判断
+- 真实闭环已完成，但跨页面验收发现 Dashboard 已读回本周处方，`/training` 却仍使用实时重算的第一条训练建议；同一天多次写入画像快照时，各 API 只按日期排序也可能让目标、处方和资产读回顺序不稳定。
+- 从第一性原理看，用户保存的处方就是当前行动承诺；工作台、训练首页和后续训练入口必须基于同一个持久化事实，而不能各自重新猜一次“现在该做什么”。
+
+### 完成内容
+- `/training` 新增 `latestRecommendation` 读回与 `resolvePrimaryRecommendation`，无待修正回答时优先使用已保存的本周处方；缺失的 reason、cta、evidence 使用稳定兜底文案，不再退回实时生成的其他维度。
+- Dashboard 与训练首页现在都显示“本周处方：先练 战略思维 的真实任务”，并指向 `/training/session?focus=strategic_thinking`。
+- Dashboard、画像摘要、画像推荐、训练会话、面试证据库、项目故事库、模拟面试及评分 API 的 `growth_snapshots` 查询统一增加 `created_at` 二级倒序，保证同日快照确定性读回。
+- `/bootcamp` 继续保持无简历用户的正确状态：主行动为上传简历，同时读回 2 条可复用训练表达资产。
+
+### 验证记录
+- TDD 红灯：训练首页测试先捕获缺少 `latestRecommendation`，共享快照排序测试先在 8 个 API 上捕获缺少 `created_at` 与二级排序。
+- GREEN：处方一致性、快照排序及关联 API 测试通过 40 项。
+- 全量 51 个 `*.test.mjs` 文件通过，共 258 项测试、0 失败。
+- `npx tsc --noEmit` 与定向 ESLint 通过；`npm run build` 通过。
+- 本地生产构建浏览器验收通过：Dashboard 和 `/training` 使用同一本周处方及同一 href，`/bootcamp` 的无简历状态、资产数量和下一步动作保持一致；三页首屏均无明显遮挡或布局错位。
+
+## [2026-07-10] Feature: training-001 真实闭环验收完成
+
+### 根因与修复
+- 真实浏览器保存二次修正持续显示失败。直接调用 `PATCH /api/training/record` 复现 500，响应为 `Cannot coerce the result to a single JSON object`。
+- 根因是 `training_records` 已开启 RLS，但远端只有 SELECT/INSERT policy，没有 UPDATE policy；更新请求被过滤为 0 行。
+- 新增 `supabase/migrations/20260710130148_add_training_records_update_policy.sql`，使用 `to authenticated`、`using ((select auth.uid()) = user_id)` 和 `with check ((select auth.uid()) = user_id)`。
+- 通过 Supabase Management API 应用远端 SQL，并查询 `pg_policies` 确认 UPDATE policy、角色和新旧行所有权约束均生效。
+- 新增 `supabase/schema.test.mjs`，防止完整 schema 再次漏掉训练记录更新权限。
+
+### 真实持久化证据
+- 训练记录：`9afd0741-bab5-448c-bff7-da4bae3d723f`。
+- 反馈画像快照：`93209ff9-cf99-44f0-9eed-aa54808f2db0`。
+- 修正版已写入 `training_records.ai_feedback.__revision`，并由历史复盘页读回；修正版画像快照：`4694975b-f098-4158-9671-d08b89b0c65d`。
+- 下一题处方已保存并读回；处方快照：`7ded58da-2245-4ec9-8965-5a780d2662bf`。
+- 浏览器闭环状态依次验证为“反馈已入账 → 修正版已保存 → 已设为本周处方 → 进入下一题”。
+
+### 浏览器与恢复安全
+- 反馈处理台使用 `sticky top-36`，真实反馈页首屏确认位于两层固定导航下方，没有遮挡标题或正文。
+- 二次修正输入仍等于原回答时，页面保持“待修正”且保存按钮禁用；用户真正修改后才进入“保存修正版”。
+- 真实测试发现：当 `/api/training/sessions` 临时失败时，旧逻辑会结束初始化并自动生成新题，可能让新题和旧草稿错配。
+- 现在非 2xx 会抛出“今日训练恢复失败”，页面展示恢复失败提示，不再自动生成或覆盖已持久化题目/草稿；用户可刷新后重新读回。
+
+### 验证记录
+- RED：`supabase/schema.test.mjs` 在缺少 UPDATE policy 时失败。
+- GREEN：`node --test supabase/schema.test.mjs src/app/api/training/record/route.test.mjs` 通过。
+- RED：会话恢复防覆盖测试在旧 `res.ok ? res.json() : null` 逻辑下失败。
+- GREEN：`node --test src/lib/training/session-progress.test.mjs src/components/training/TrainingSessionClient.test.mjs` 通过 31 项。
+- 全量 50 个 `*.test.mjs` 文件通过。
+- `npx tsc --noEmit`、全量 ESLint、`npm run build` 通过。
+- `training-001` 已在 `feature_list.json` 标记为 `completed`。
+
 ## [2026-07-10] Feature: 训练反馈页反馈处理台
 
 ### 背景判断

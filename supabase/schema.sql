@@ -145,6 +145,12 @@ create policy "用户可以创建训练记录"
   on public.training_records for insert
   with check (auth.uid() = user_id);
 
+create policy "用户可以更新自己的训练记录"
+  on public.training_records for update
+  to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
 -- 5. 特训冲刺记录表
 create table if not exists public.bootcamp_records (
   id                uuid primary key default gen_random_uuid(),

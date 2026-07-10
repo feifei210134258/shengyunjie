@@ -31,6 +31,13 @@ type CommandCenterInput = {
     weaknessCount?: number;
   } | null;
   selectedGoalFocus?: ProductPath["id"] | null;
+  latestRecommendation?: {
+    id?: string | null;
+    title?: string | null;
+    href?: string | null;
+    type?: string | null;
+    targetDimension?: string | null;
+  } | null;
   date?: Date;
 };
 
@@ -713,8 +720,24 @@ export function buildCommandCenter(input: CommandCenterInput): TrainingCommandCe
   );
   const actionLabel = getMissionActionLabel(priorityMission.id);
   const goalFocus = buildGoalFocus(input.selectedGoalFocus);
+  const hasLearningEvidence =
+    input.recentRecords.length > 0 || (input.totalCount || 0) > 0;
+  const savedPrescription = input.latestRecommendation?.href
+    ? input.latestRecommendation
+    : null;
 
-  const basePrimary: CommandAction = !input.latestReport
+  const basePrimary: CommandAction = savedPrescription
+    ? {
+        title: `本周处方：${savedPrescription.title || "继续当前训练"}`,
+        description:
+          savedPrescription.type === "training"
+            ? "继续执行已保存的训练处方，完成后把反馈、修正版和下一题继续写入能力证据链。"
+            : "继续执行已保存的结果处方，把当前材料推进到可验证、可复述的下一状态。",
+        href: savedPrescription.href || "/training/session",
+        cta: "继续执行",
+        kind: savedPrescription.type === "training" ? "training" : "review",
+      }
+    : !input.latestReport && !hasLearningEvidence
     ? {
         title: "先建立一份能力基线",
         description: "完成诊断后，系统会把训练任务、案例推演和复盘建议收拢到真实短板上。",

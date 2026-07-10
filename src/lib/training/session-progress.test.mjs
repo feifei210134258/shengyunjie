@@ -107,6 +107,17 @@ test("training session can start from dashboard prescription focus", () => {
   assert.match(source, /profileFocus/);
 });
 
+test("failed session recovery does not auto-generate over a persisted draft", () => {
+  const source = readFileSync(
+    new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /if \(!res\.ok\) throw new Error\("今日训练恢复失败"\)/);
+  assert.match(source, /今日训练恢复失败，请刷新页面重试/);
+  assert.doesNotMatch(source, /res\.ok \? res\.json\(\) : null/);
+});
+
 test("training feedback persists a growth snapshot for the profile loop", () => {
   const source = readFileSync(
     new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
@@ -118,7 +129,8 @@ test("training feedback persists a growth snapshot for the profile loop", () => 
   assert.match(submitBody, /\/api\/profile\/summary/);
   assert.match(submitBody, /training_feedback/);
   assert.match(submitBody, /trainingRecordId/);
-  assert.match(source, /画像已更新/);
+  assert.match(source, /反馈已入账/);
+  assert.match(source, /本题反馈已进入画像/);
 });
 
 test("training feedback fetches and can persist the next recommendation prescription", () => {

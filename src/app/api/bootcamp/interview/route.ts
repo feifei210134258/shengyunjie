@@ -105,9 +105,10 @@ function readProjectStoryFromSnapshot(snapshot: any) {
 async function loadTargetEvidenceFocus(supabase: any, userId: string) {
   const { data: snapshots, error } = await supabase
     .from("growth_snapshots")
-    .select("id, snapshot_date, dimension_scores")
+    .select("id, snapshot_date, created_at, dimension_scores")
     .eq("user_id", userId)
     .order("snapshot_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(12);
 
   if (error) throw error;

@@ -22,6 +22,13 @@ test("training overview uses the profile recommendation as the primary start act
   assert.match(source, /primaryOverviewAction/);
 });
 
+test("training overview prefers the persisted weekly prescription over a regenerated plan", () => {
+  assert.match(source, /latestRecommendation/);
+  assert.match(source, /setLatestRecommendation\(data\.latestRecommendation \|\| null\)/);
+  assert.match(source, /resolvePrimaryRecommendation/);
+  assert.match(source, /source === "saved" \? "本周处方" : "画像处方"/);
+});
+
 test("training overview surfaces recent training as ability evidence assets", () => {
   assert.match(source, /evidenceAssets/);
   assert.match(source, /已可用资产/);

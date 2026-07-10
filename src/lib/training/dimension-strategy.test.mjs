@@ -115,18 +115,15 @@ test("training generation prompt uses target labels instead of only broad dimens
   assert.match(routeSource, /产品类型、业务动作、冲突角色、指标组合和问题结构/);
 });
 
-test("answer status stays in the title row instead of aligning with framework guidance", () => {
+test("answer construction keeps framework guidance below the primary answer action", () => {
   const componentSource = readFileSync(
     new URL("../../components/training/TrainingSessionClient.tsx", import.meta.url),
     "utf8"
   );
 
-  assert.match(componentSource, /我的回答[\s\S]*未提交/);
-  assert.match(componentSource, /未提交[\s\S]*思考框架/);
-  assert.doesNotMatch(
-    componentSource,
-    /min-w-0 flex-1[\s\S]*思考框架[\s\S]*未提交/
-  );
+  assert.match(componentSource, /答案构建台[\s\S]*当前只补这一步/);
+  assert.match(componentSource, /primaryAnswerAction[\s\S]*思考框架/);
+  assert.doesNotMatch(componentSource, /我的回答[\s\S]*未提交/);
 });
 
 test("manual question replacement rotates mission instead of target inside one dimension", () => {

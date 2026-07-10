@@ -14,6 +14,17 @@ test("training session uses mission plan instead of rotated dimension order", ()
   assert.doesNotMatch(source, /const ALL_DIMS = getRotatedTrainingDimensions/);
 });
 
+test("training session source no longer carries abandoned visual prototypes", () => {
+  assert.doesNotMatch(source, /const sample =/);
+  assert.doesNotMatch(source, /function WideWorkspace/);
+  assert.doesNotMatch(source, /function FocusedWorkspace/);
+  assert.doesNotMatch(source, /function A1StateCompare/);
+  assert.doesNotMatch(source, /function WritingFirstWorkspace/);
+  assert.doesNotMatch(source, /function LightCoachWorkspace/);
+  assert.doesNotMatch(source, /function BandsFlow/);
+  assert.doesNotMatch(source, /function ReviewBoard/);
+});
+
 test("manual regeneration switches mission rather than only target inside the same dimension", () => {
   assert.match(source, /getNextTrainingMission/);
   assert.doesNotMatch(source, /getNextTrainingTarget/);
@@ -110,6 +121,8 @@ test("training session turns readiness gaps into the next answer action", () => 
 test("training feedback turns the top gap into a revision instruction", () => {
   assert.match(source, /primaryRevisionCue/);
   assert.match(source, /handleApplyRevisionCue/);
+  assert.match(source, /revisionHasChanges/);
+  assert.match(source, /revision\.text\.trim\(\) !== originalAnswerText/);
   assert.match(source, /本轮修正指令/);
   assert.match(source, /带入修正/);
   assert.match(source, /先按这条改/);
@@ -130,6 +143,8 @@ test("training feedback consolidates status and hides the full report by default
   assert.match(source, /展开完整反馈/);
   assert.match(source, /完整反馈[\s\S]*<TrainingEvaluationPanel/);
   assert.match(source, /const primaryGap =\s*primaryRevisionCue \|\|/);
+  assert.match(source, /function FeedbackProcessingDesk[\s\S]*sticky top-36/);
+  assert.match(source, /window\.scrollTo\(\{ top: 0/);
   assert.doesNotMatch(source, /完整内容\s*完整内容/);
 });
 

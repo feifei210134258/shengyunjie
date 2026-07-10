@@ -142,6 +142,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - `GET /api/profile/recommendation` 从 Supabase 画像证据实时生成处方；`POST /api/profile/recommendation` 把用户选择的处方写入 `growth_snapshots.dimension_scores.__recommendation`，不新增 schema。
 - Dashboard 在能力证据账本下方展示“训练处方”，用户可以直接开始训练、进入模拟面试或把某条建议设为本周处方。
 - Dashboard 会从最近的 `growth_snapshots.dimension_scores.__recommendation` 读回用户已选的本周处方，刷新后继续高亮对应推荐，并展示“本周处方”执行入口。
+- 所有读取 `growth_snapshots` 最新状态的聚合 API 都按 `snapshot_date desc, created_at desc` 排序，避免同一天保存反馈、修正版、目标简报和本周处方时出现读回顺序不确定。
 - 当画像中已有 `storyAssets` 时，`buildRecommendationPlan` 会优先把最近一个项目故事包的 `targetFit.missingEvidence` 或 `proofGaps` 转成“项目证据处方”，指向 `/bootcamp/story-bank`，让推荐不再泛泛要求整理项目，而是明确补齐某个已入账项目的证据缺口；如果该项目已经有 `targetEvidence` 且缺口为空，推荐会转为“模拟追问验证”，指向 `/bootcamp/interview?focus=target_evidence`，避免证据入账后继续补同一条材料。`GET/POST /api/bootcamp/interview` 会从 `growth_snapshots.dimension_scores.__trigger.projectStory` 读回最近入账目标证据，把它作为 `targetEvidenceFocus` 返回页面，并在出题 prompt 与兜底题里围绕这段证据做归因、取舍、角色价值、协同和可复用机制的高压追问。`POST /api/bootcamp/interview/answer` 在该模式下会要求评分返回 `target_evidence_validation`，写回 `bootcamp_interviews.ai_evaluation`，并把验证结果以 `target_evidence_validated` 快照写入 `growth_snapshots.dimension_scores.__trigger.targetEvidenceValidation`；`buildGrowthProfile` 与 Dashboard 会读回“目标证据验证”，展示抗追问评分和击穿风险。推荐引擎会继续读取 `targetEvidenceValidations`：如果验证暴露 `unresolvedRisks`、状态为弱或分数低于 8，下一步处方回到 `/bootcamp/story-bank` 补击穿点；如果证据已扛住追问，处方转为打包终版面试表达；如果 `storyAssets[].finalInterviewAnswer` 已入账，处方会停止重复打包，转为 `/bootcamp/interview?focus=target_evidence` 的模拟复述，验证临场稳定度。模拟复述评分会额外返回 `final_answer_rehearsal`，并随同一个 `target_evidence_validated` 快照写入 `growth_snapshots.dimension_scores.__trigger.finalAnswerRehearsal`；`buildGrowthProfile` 读回为 `finalAnswerRehearsals`，Dashboard 能力证据账本展示“终版表达复述 / 复述稳定度 / 不稳定点”，推荐引擎会在复述不稳定时继续安排“再练复述”，避免终版表达只被复制而没有临场验证。
 - 今日训练处方链接会携带 `focus` 进入 `/training/session`，训练页把画像维度映射为具体高阶 PM 任务（如资源排期、平台抽象、增长诊断），并把 `profileFocus/prescriptionId` 与题目一起写入 `training_sessions.questions`，刷新后可读回。
 - 直接进入 `/training/session` 时，`GET /api/training/sessions?date=...` 会读回最近 `growth_snapshots.dimension_scores.__goalFocus` 并返回 `latestGoalFocus`；训练实战页用它恢复主线任务计划和顶部训练框架，避免用户绕过首页后退回默认刷题。
@@ -149,6 +150,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 训练实战页作答区进一步收束为“答案构建台”：当前最该补的一步被提升到输入区顶部，骨架按钮降级为“写作动作”，提交按钮统一为“提交这一版”，避免用户在文本框、骨架侧栏和质检区之间来回找下一步。
 - 训练实战页顶部的目标简报和思维迁移要求收束为“任务上下文”条：默认只展示主线、训练任务和目标摘要，岗位/场景/期限以及上一张思维升级卡按需展开，避免上下文说明把题目和答案构建台推到首屏之外。
 - AI 反馈页提供“二次修正”输入，用户可基于反馈当场重写关键答案；`PATCH /api/training/record` 会把修正内容写入 `training_records.ai_feedback.__revision`，历史复盘页会读回原回答、AI 反馈和用户修正版。
+- `training_records` 的 UPDATE RLS 明确限制为 `authenticated` 用户，旧行和新行都必须满足 `auth.uid() = user_id`；对应 migration 为 `20260710130148_add_training_records_update_policy.sql`，避免修正版接口因 RLS 过滤为 0 行。
 - AI 反馈页会从本次 `evaluation.suggestions` 或 `evaluation.gaps` 提炼“本轮修正指令”，放在二次修正输入上方；用户可一键“带入修正”，把最关键缺口写进修正草稿，再通过既有 `PATCH /api/training/record` 落库，避免反馈只停留在阅读状态。
 - AI 反馈页顶部会展示“本轮升级闭环”，把反馈入账、修正版、下一题处方三个状态放在同一轨道里，帮助用户明确本题不是拿到评分就结束，而是要完成修正保存和下一题处方承接。
 - AI 反馈页会把闭环里第一个未完成步骤提升为“本轮下一步”主行动：没有修正版时先带入修正指令或保存修正版，修正版已保存后设为本周处方，处方也完成后直接进入下一题；这些动作继续复用既有训练记录、画像处方和下一题流程，不新增 schema。
@@ -156,10 +158,11 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - AI 反馈页进一步收束为“反馈处理台”：升级闭环、当前主行动、画像入账状态和下一轮处方合并到同一个吸顶工作区；反馈正文默认只展示“继续保留 / 当前只修”的关键结论，评分明细、示例回答、主线资产和完整建议改为按需展开，避免用户先读完长报告才开始二次修正。
 - 训练首页通过 `/api/training/stats` 读取最近训练记录，生成“复盘队列”：优先展示还没有二次修正的记录，引导用户先把反馈改成能复述的版本，再继续开新题。
 - 用户保存二次修正后，前端会再次调用 `POST /api/profile/summary` 创建画像快照，`dimension_scores.__trigger` 标记为 `revision_saved`，把复盘行为纳入能力证据账本。
+- 训练页只有在当天会话 API 成功返回后才允许自动生成缺失题目；会话恢复失败时展示明确失败状态，不自动生成新题或覆盖已持久化题目与草稿，避免网络抖动造成题目和答案错配。
 - 训练页完成 AI 反馈并写入 `training_records` 后，会自动调用 `POST /api/profile/summary` 创建 `growth_snapshots` 快照；快照的 `dimension_scores.__trigger` 标记来源为 `training_feedback`，让下一轮 Dashboard 推荐能读取最新训练证据。
 - `/api/train?action=analyze` 会接收训练实战页传入的 `profileFocus`：面试跳槽主线要求 AI 反馈产出 `interview_expression`（开场判断、证据抓手、追问风险、可复述版本），高级产品思维主线要求产出 `thinking_upgrade`（判断质量、取舍质量、归因深度、落地严谨度）。这些结构化字段随 `training_records.ai_feedback` 落库，并在训练反馈面板直接展示。
 - 画像快照保存成功后，训练反馈页会立即读取 `GET /api/profile/recommendation`，展示基于新证据生成的“下一轮处方”；用户可直接在反馈页调用 `POST /api/profile/recommendation` 把该处方设为本周处方，形成“反馈 → 画像 → 推荐 → 下一题”的闭环。
-- 训练首页的主行动也读取 `GET /api/profile/recommendation`，优先使用画像处方中的训练建议作为开始训练入口，确保二次修正和画像快照能影响下一次打开训练页时练什么。
+- 训练首页的主行动也读取 `GET /api/profile/recommendation`；没有待修正回答时，优先执行已持久化的 `latestRecommendation`，再回退到实时生成的训练建议，确保 Dashboard 和 `/training` 对“本周处方”的标题、入口和执行状态保持一致。
 - `GET /api/profile/recommendation` 会同时返回最近 `growth_snapshots.dimension_scores.__goalFocus`；训练首页据此把主行动框定为“面试跳槽主线”或“高级产品思维主线”，让同一题训练明确服务面试表达资产或高级判断训练。
 - 训练首页进一步改为“今日作战台”：首屏把画像处方、目标作战令、作战顺序、复盘队列和能力证据资产串成一条行动链。用户进入后先看到目标岗位/场景/期限，再决定“先复盘、再开题、沉淀证据”，避免训练页退回统计看板或模块入口。
 - 训练首页首屏会把“今日最高杠杆动作”提升为唯一主 CTA：如果存在待二次修正记录，优先进入复盘修正；否则使用画像训练处方；没有处方时才兜底开新题。目标作战令和作战顺序继续保留为决策背景，但不再与主动作抢入口。

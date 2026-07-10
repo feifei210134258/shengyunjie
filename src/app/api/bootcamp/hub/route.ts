@@ -53,9 +53,10 @@ export async function GET() {
 
     const { data: growthSnapshots, error: snapshotError } = await supabase
       .from("growth_snapshots")
-      .select("id, snapshot_date, dimension_scores")
+      .select("id, snapshot_date, created_at, dimension_scores")
       .eq("user_id", user.id)
       .order("snapshot_date", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(12);
 
     if (snapshotError) {

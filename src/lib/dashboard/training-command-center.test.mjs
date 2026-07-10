@@ -27,6 +27,61 @@ test("builds a mission-first command center without foregrounding old dimensions
   assert.ok(result.missionMap.every((item) => item.missionLabel && item.actionLabel));
 });
 
+test("keeps diagnosis optional after the user already has training evidence", () => {
+  const result = buildCommandCenter({
+    todayCount: 1,
+    totalCount: 1,
+    recentRecords: [
+      {
+        id: "record-1",
+        dimension: "strategic_thinking",
+        score: 82,
+        ai_feedback: { improvement: "继续补量化护栏。" },
+      },
+    ],
+    dimAverages: { strategic_thinking: 8.2 },
+    profileWeaknesses: [],
+    latestReport: null,
+    hasCaseSimulation: true,
+    date: new Date("2026-07-10T10:00:00+08:00"),
+  });
+
+  assert.notEqual(result.primary.kind, "diagnosis");
+  assert.notEqual(result.primary.href, "/diagnosis/scale");
+});
+
+test("promotes the saved prescription above an optional diagnosis", () => {
+  const result = buildCommandCenter({
+    todayCount: 1,
+    totalCount: 1,
+    recentRecords: [
+      {
+        id: "record-1",
+        dimension: "strategic_thinking",
+        score: 82,
+      },
+    ],
+    dimAverages: { strategic_thinking: 8.2 },
+    profileWeaknesses: [],
+    latestReport: null,
+    latestRecommendation: {
+      id: "train-strategic_thinking",
+      title: "先练 战略思维 的真实任务",
+      href: "/training/session?focus=strategic_thinking",
+      type: "training",
+      targetDimension: "strategic_thinking",
+    },
+    date: new Date("2026-07-10T10:00:00+08:00"),
+  });
+
+  assert.equal(result.primary.kind, "training");
+  assert.match(result.primary.title, /本周处方/);
+  assert.equal(
+    result.primary.href,
+    "/training/session?focus=strategic_thinking"
+  );
+});
+
 test("mission action labels stay distinct from task labels", () => {
   assert.equal(getMissionActionLabel("growth-funnel-diagnosis"), "分层归因");
   assert.equal(getMissionActionLabel("platform-abstraction"), "边界治理");
