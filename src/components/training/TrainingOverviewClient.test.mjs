@@ -50,6 +50,16 @@ test("training overview merges review and evidence into one queue", () => {
   assert.doesNotMatch(source, /lg:grid-cols-5/);
 });
 
+test("training overview deduplicates queue records by priority", () => {
+  assert.match(source, /buildTrainingQueueItems/);
+  assert.match(source, /queueItemsByRecordId/);
+  assert.match(source, /new Map<string, TrainingQueueItem>/);
+  assert.match(source, /item\.needsRevision \? 3 : 1/);
+  assert.match(source, /item\.readiness === "面试可用" \? 2 : 1/);
+  assert.match(source, /existing\.priority >= candidate\.priority/);
+  assert.match(source, /queueItemsByRecordId\.set\(candidate\.item\.id, candidate\)/);
+});
+
 test("training overview demotes rhythm and archive into one compact support panel", () => {
   assert.match(source, /TrainingRhythmPanel/);
   assert.match(source, /训练节奏与归因/);
@@ -61,6 +71,14 @@ test("training overview demotes rhythm and archive into one compact support pane
   assert.doesNotMatch(source, /本月训练概览/);
   assert.doesNotMatch(source, /复盘归档/);
   assert.doesNotMatch(source, /lg:grid-cols-3/);
+});
+
+test("training overview uses one continuous support section without nested cards", () => {
+  assert.match(source, /SupportSectionRow/);
+  assert.match(source, /divide-y divide-line/);
+  assert.doesNotMatch(source, /mt-5 rounded-lg border border-line bg-white p-4 shadow-xs/);
+  assert.doesNotMatch(source, /rounded-lg bg-surface px-4 py-3/);
+  assert.doesNotMatch(source, /group block rounded-lg border border-line bg-white p-3/);
 });
 
 test("training overview adapts the primary training frame to the persisted goal focus", () => {
@@ -97,4 +115,9 @@ test("training overview removes command-deck concepts from the review workspace"
   assert.doesNotMatch(source, /行动证据带/);
   assert.doesNotMatch(source, /训练资产流水线/);
   assert.doesNotMatch(source, /系统只推一个动作/);
+});
+
+test("training overview caps the page title at 28 pixels", () => {
+  assert.match(source, /<h1 className="max-w-3xl text-\[28px\]/);
+  assert.doesNotMatch(source, /sm:text-\[34px\]/);
 });

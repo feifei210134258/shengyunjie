@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   DIMENSION_COLORS,
@@ -216,6 +216,44 @@ function formatScore10(score: number | null) {
   return Math.round((score / 10) * 10) / 10;
 }
 
+type ReviewQueueItem = NonNullable<TrainingStats["reviewQueue"]>[number];
+type EvidenceAsset = NonNullable<TrainingStats["evidenceAssets"]>[number];
+type TrainingQueueItem =
+  | { kind: "review"; item: ReviewQueueItem; priority: number }
+  | { kind: "asset"; item: EvidenceAsset; priority: number };
+
+function buildTrainingQueueItems(
+  reviewQueue: ReviewQueueItem[],
+  evidenceAssets: EvidenceAsset[]
+) {
+  const queueItemsByRecordId = new Map<string, TrainingQueueItem>();
+
+  const addQueueItem = (candidate: TrainingQueueItem) => {
+    const existing = queueItemsByRecordId.get(candidate.item.id);
+    if (existing && existing.priority >= candidate.priority) return;
+    queueItemsByRecordId.set(candidate.item.id, candidate);
+  };
+
+  reviewQueue.forEach((item) => {
+    addQueueItem({
+      kind: "review",
+      item,
+      priority: item.needsRevision ? 3 : 1,
+    });
+  });
+  evidenceAssets.forEach((item) => {
+    addQueueItem({
+      kind: "asset",
+      item,
+      priority: item.readiness === "面试可用" ? 2 : 1,
+    });
+  });
+
+  return Array.from(queueItemsByRecordId.values()).sort(
+    (a, b) => b.priority - a.priority
+  );
+}
+
 function TrainingQueue({
   reviewQueue,
   evidenceAssets,
@@ -225,11 +263,13 @@ function TrainingQueue({
   evidenceAssets: NonNullable<TrainingStats["evidenceAssets"]>;
   openNewTopicIsDemoted: boolean;
 }) {
-  const pendingReviewCount = reviewQueue.filter((item) => item.needsRevision).length;
-  const queueItems = [
-    ...reviewQueue.map((item) => ({ kind: "review" as const, item })),
-    ...evidenceAssets.map((item) => ({ kind: "asset" as const, item })),
-  ];
+  const pendingReviewCount = reviewQueue.filter(
+    (item) => item.needsRevision
+  ).length;
+  const queueItems = buildTrainingQueueItems(reviewQueue, evidenceAssets);
+  const recentAssetCount = queueItems.filter(
+    (queueItem) => queueItem.kind === "asset"
+  ).length;
 
   return (
     <section className="mt-6 border-y border-line bg-surface-raised">
@@ -241,7 +281,7 @@ function TrainingQueue({
               待处理 {pendingReviewCount}
             </span>
             <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
-              最近资产 {evidenceAssets.length}
+              最近资产 {recentAssetCount}
             </span>
           </div>
           <h2 className="mt-1 text-heading-md font-bold text-ink">
@@ -278,97 +318,97 @@ function TrainingQueue({
           queueItems.map((queueItem) => {
             if (queueItem.kind === "review") {
               const item = queueItem.item;
-                const score10 = formatScore10(item.score);
-                return (
-                  <Link
-                    key={`review-${item.id}`}
-                    href={
-                      item.needsRevision
-                        ? `/training/history/${item.id}?revise=1`
-                        : `/training/history/${item.id}`
-                    }
-                    className="group grid gap-3 px-1 py-4 transition hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-label font-bold ${
-                            item.needsRevision
-                              ? "bg-warning-soft text-warning"
-                              : "bg-primary-soft text-primary"
-                          }`}
-                        >
-                          {item.needsRevision ? "待修正" : "修正版已沉淀"}
+              const score10 = formatScore10(item.score);
+              return (
+                <Link
+                  key={`review-${item.id}`}
+                  href={
+                    item.needsRevision
+                      ? `/training/history/${item.id}?revise=1`
+                      : `/training/history/${item.id}`
+                  }
+                  className="group grid gap-3 px-1 py-4 transition hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
+                >
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-label font-bold ${
+                          item.needsRevision
+                            ? "bg-warning-soft text-warning"
+                            : "bg-primary-soft text-primary"
+                        }`}
+                      >
+                        {item.needsRevision ? "待修正" : "修正版已沉淀"}
+                      </span>
+                      {score10 != null && (
+                        <span className="rounded-md bg-surface px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
+                          {score10}/10
                         </span>
-                        {score10 != null && (
-                          <span className="rounded-md bg-surface px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
-                            {score10}/10
-                          </span>
-                        )}
-                        <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
-                          {item.dimension}
-                        </span>
-                      </div>
-                      <p className="mt-3 line-clamp-2 text-body-sm font-semibold leading-relaxed text-ink">
-                        {item.question_scenario.replace(/\n/g, " ").slice(0, 120)}
-                        {item.question_scenario.length > 120 ? "..." : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-start text-label font-bold text-primary md:justify-end">
-                      <span className="inline-flex items-center gap-1 group-hover:text-primary-hover">
-                        <PenLine className="h-3.5 w-3.5" />
-                        {item.needsRevision ? "继续修正" : "查看修正版"}
+                      )}
+                      <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
+                        {item.dimension}
                       </span>
                     </div>
-                  </Link>
-                );
+                    <p className="mt-3 line-clamp-2 text-body-sm font-semibold leading-relaxed text-ink">
+                      {item.question_scenario.replace(/\n/g, " ").slice(0, 120)}
+                      {item.question_scenario.length > 120 ? "..." : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-start text-label font-bold text-primary md:justify-end">
+                    <span className="inline-flex items-center gap-1 group-hover:text-primary-hover">
+                      <PenLine className="h-3.5 w-3.5" />
+                      {item.needsRevision ? "继续修正" : "查看修正版"}
+                    </span>
+                  </div>
+                </Link>
+              );
             }
 
             const asset = queueItem.item;
-                const score10 = formatScore10(asset.score);
-                const isReady = asset.readiness === "面试可用";
+            const score10 = formatScore10(asset.score);
+            const isReady = asset.readiness === "面试可用";
 
-                return (
-                  <Link
-                    key={`asset-${asset.id}`}
-                    href={asset.href}
-                    className="group grid gap-3 px-1 py-4 transition hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-label font-bold ${
-                            isReady
-                              ? "bg-primary-soft text-primary"
-                              : "bg-warning-soft text-warning"
-                          }`}
-                        >
-                          {isReady ? "面试可用" : asset.readiness}
-                        </span>
-                        <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
-                          {asset.sourceLabel}
-                        </span>
-                        {score10 != null && (
-                          <span className="rounded-md bg-surface px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
-                            {score10}/10
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-3 text-body-sm font-semibold leading-relaxed text-ink">
-                        {asset.title}
-                      </p>
-                      <p className="mt-1 line-clamp-2 text-body-sm leading-relaxed text-ink-muted">
-                        {asset.proofPoint}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-start text-label font-bold text-primary md:justify-end">
-                      <span className="inline-flex items-center gap-1 group-hover:text-primary-hover">
-                        <PenLine className="h-3.5 w-3.5" />
-                        {isReady ? "查看证据" : "继续修正"}
+            return (
+              <Link
+                key={`asset-${asset.id}`}
+                href={asset.href}
+                className="group grid gap-3 px-1 py-4 transition hover:bg-surface md:grid-cols-[minmax(0,1fr)_150px]"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-label font-bold ${
+                        isReady
+                          ? "bg-primary-soft text-primary"
+                          : "bg-warning-soft text-warning"
+                      }`}
+                    >
+                      {isReady ? "面试可用" : asset.readiness}
+                    </span>
+                    <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
+                      {asset.sourceLabel}
+                    </span>
+                    {score10 != null && (
+                      <span className="rounded-md bg-surface px-2 py-0.5 font-mono text-label font-semibold text-ink-muted">
+                        {score10}/10
                       </span>
-                    </div>
-                  </Link>
-                );
+                    )}
+                  </div>
+                  <p className="mt-3 text-body-sm font-semibold leading-relaxed text-ink">
+                    {asset.title}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-body-sm leading-relaxed text-ink-muted">
+                    {asset.proofPoint}
+                  </p>
+                </div>
+                <div className="flex items-center justify-start text-label font-bold text-primary md:justify-end">
+                  <span className="inline-flex items-center gap-1 group-hover:text-primary-hover">
+                    <PenLine className="h-3.5 w-3.5" />
+                    {isReady ? "查看证据" : "继续修正"}
+                  </span>
+                </div>
+              </Link>
+            );
           })
         ) : (
           <div className="px-1 py-8 text-center text-body-sm text-ink-muted">
@@ -377,6 +417,28 @@ function TrainingQueue({
         )}
       </div>
     </section>
+  );
+}
+
+function SupportSectionRow({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid gap-4 px-1 py-5 lg:grid-cols-[180px_minmax(0,1fr)]">
+      <div>
+        <h3 className="text-body-sm font-bold text-ink">{title}</h3>
+        <p className="mt-1 text-label leading-relaxed text-ink-muted">
+          {description}
+        </p>
+      </div>
+      <div className="min-w-0">{children}</div>
+    </div>
   );
 }
 
@@ -412,135 +474,119 @@ function TrainingRhythmPanel({
   });
 
   return (
-    <section className="mt-5 rounded-lg border border-line bg-white p-4 shadow-xs">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <section className="mt-6 border-y border-line bg-surface-raised">
+      <div className="flex flex-col gap-3 border-b border-line px-1 py-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-label font-bold text-primary">
-                训练节奏与归因
-              </p>
-              <h3 className="mt-1 text-heading-md font-bold text-ink">
-                辅助信息，不抢主动作
-              </h3>
-              <p className="mt-1 max-w-2xl text-body-sm leading-relaxed text-ink-muted">
-                这里只帮助判断训练有没有偏科、节奏是否断档，以及最近归档是否需要回看。
-              </p>
-            </div>
-            <Link
-              href="/training/cases"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-4 py-2.5 text-body-sm font-semibold text-ink transition hover:bg-surface active:scale-[0.98]"
-            >
-              做推演
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-            <div className="rounded-lg bg-surface px-4 py-3">
-              <p className="text-label font-bold text-primary">维度偏移</p>
-              <div className="mt-4 space-y-2.5">
-                {dimensionItems.map((item) => (
-                  <div key={item.key} className="grid grid-cols-[4rem_1fr_2rem] items-center gap-2">
-                    <span className="truncate text-body-sm text-ink-muted">
-                      {item.label}
-                    </span>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-line">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${item.pct}%`,
-                          backgroundColor: item.color,
-                        }}
-                      />
-                    </div>
-                    <span className="text-right font-mono text-body-sm text-ink-muted">
-                      {item.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-lg bg-surface px-4 py-3">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-label font-bold text-primary">本月节奏</p>
-                  <p className="mt-1 text-body-sm text-ink-muted">
-                    {year}年{month}月 / 已训练 {monthCount} 天
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={onPrevMonth}
-                    className="rounded-lg p-1.5 transition-colors hover:bg-white"
-                    aria-label="上个月"
-                  >
-                    <ChevronLeft className="h-4 w-4 text-ink-muted" />
-                  </button>
-                  <span className="px-2 text-label font-bold text-ink">
-                    {month}月
-                  </span>
-                  <button
-                    onClick={onNextMonth}
-                    className="rounded-lg p-1.5 transition-colors hover:bg-white"
-                    aria-label="下个月"
-                  >
-                    <ChevronRight className="h-4 w-4 text-ink-muted" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-7 text-center text-label font-semibold text-ink-faint">
-                {WEEKDAYS.map((day) => (
-                  <div key={day} className="py-1">
-                    {day}
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-7 gap-0.5">
-                {Array.from({ length: firstDayOfWeek }, (_, index) => (
-                  <div key={`pad-${index}`} className="h-8" />
-                ))}
-                {Array.from({ length: daysInMonth }, (_, index) => {
-                  const day = index + 1;
-                  const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                  const isToday = dateStr === todayStr;
-                  const isTrained = trainedDays.includes(day);
-                  const isFuture = dateStr > todayStr;
-                  return (
-                    <div
-                      key={day}
-                      className={`flex h-8 items-center justify-center rounded-lg text-body-sm transition-colors ${
-                        isToday
-                          ? "bg-primary font-bold text-white ring-4 ring-primary/15"
-                          : isTrained
-                            ? "bg-secondary-soft font-bold text-secondary"
-                            : isFuture
-                              ? "text-ink-faint"
-                              : "text-ink-muted"
-                      }`}
-                    >
-                      {day}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          <p className="text-label font-bold text-primary">训练节奏与归因</p>
+          <h2 className="mt-1 text-heading-md font-bold text-ink">
+            辅助信息，不抢主动作
+          </h2>
         </div>
+        <Link
+          href="/training/cases"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-line-strong px-3 py-2 text-body-sm font-semibold text-ink transition hover:bg-surface active:scale-[0.98]"
+        >
+          做推演
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
 
-        <aside className="rounded-lg bg-surface px-4 py-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-label font-bold text-primary">最近归档</p>
-              <p className="mt-1 text-body-sm text-ink-muted">
-                只保留最近 4 条，更多从训练队列进入。
-              </p>
-            </div>
-          </div>
+      <div className="divide-y divide-line">
+        <SupportSectionRow
+          title="维度偏移"
+          description="查看训练是否集中在少数能力维度。"
+        >
           <div className="space-y-2.5">
+            {dimensionItems.map((item) => (
+              <div
+                key={item.key}
+                className="grid grid-cols-[4rem_1fr_2rem] items-center gap-2"
+              >
+                <span className="truncate text-body-sm text-ink-muted">
+                  {item.label}
+                </span>
+                <div className="h-1.5 overflow-hidden rounded-full bg-line">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${item.pct}%`,
+                      backgroundColor: item.color,
+                    }}
+                  />
+                </div>
+                <span className="text-right font-mono text-body-sm text-ink-muted">
+                  {item.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </SupportSectionRow>
+
+        <SupportSectionRow
+          title="本月节奏"
+          description={`${year}年${month}月，已训练 ${monthCount} 天。`}
+        >
+          <div className="flex items-center justify-end gap-1 pb-3">
+            <button
+              onClick={onPrevMonth}
+              className="rounded-md p-1.5 transition-colors hover:bg-surface"
+              aria-label="上个月"
+            >
+              <ChevronLeft className="h-4 w-4 text-ink-muted" />
+            </button>
+            <span className="px-2 text-label font-bold text-ink">{month}月</span>
+            <button
+              onClick={onNextMonth}
+              className="rounded-md p-1.5 transition-colors hover:bg-surface"
+              aria-label="下个月"
+            >
+              <ChevronRight className="h-4 w-4 text-ink-muted" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 text-center text-label font-semibold text-ink-faint">
+            {WEEKDAYS.map((day) => (
+              <div key={day} className="py-1">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-0.5">
+            {Array.from({ length: firstDayOfWeek }, (_, index) => (
+              <div key={`pad-${index}`} className="h-8" />
+            ))}
+            {Array.from({ length: daysInMonth }, (_, index) => {
+              const day = index + 1;
+              const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const isToday = dateStr === todayStr;
+              const isTrained = trainedDays.includes(day);
+              const isFuture = dateStr > todayStr;
+              return (
+                <div
+                  key={day}
+                  className={`flex h-8 items-center justify-center rounded-md text-body-sm transition-colors ${
+                    isToday
+                      ? "bg-primary font-bold text-white ring-2 ring-primary/15"
+                      : isTrained
+                        ? "bg-secondary-soft font-bold text-secondary"
+                        : isFuture
+                          ? "text-ink-faint"
+                          : "text-ink-muted"
+                  }`}
+                >
+                  {day}
+                </div>
+              );
+            })}
+          </div>
+        </SupportSectionRow>
+
+        <SupportSectionRow
+          title="最近归档"
+          description="保留最近 4 条训练记录。"
+        >
+          <div className="divide-y divide-line">
             {stats?.recent && stats.recent.length > 0 ? (
               stats.recent.slice(0, 4).map((record) => {
                 const isCase = record.ai_feedback?.source === "case_simulation";
@@ -549,39 +595,37 @@ function TrainingRhythmPanel({
                   <Link
                     key={record.id}
                     href={`/training/history/${record.id}`}
-                    className="group block rounded-lg border border-line bg-white p-3 transition hover:border-line-strong hover:bg-surface-raised"
+                    className="group flex items-start gap-3 py-3 first:pt-0 last:pb-0"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent transition-transform group-hover:scale-105">
-                        <BookOpen className="h-4 w-4" strokeWidth={1.5} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <span className="rounded-md bg-surface px-2 py-0.5 text-label font-semibold text-ink-muted">
-                            {isCase ? "案例推演" : record.dimension}
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent">
+                      <BookOpen className="h-4 w-4" strokeWidth={1.5} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <span className="text-label font-semibold text-ink-muted">
+                          {isCase ? "案例推演" : record.dimension}
+                        </span>
+                        {score10 != null && (
+                          <span className="font-mono text-label font-semibold text-primary">
+                            {score10}/10
                           </span>
-                          {score10 != null && (
-                            <span className="rounded-md bg-primary-soft px-2 py-0.5 text-label font-semibold text-primary">
-                              {score10}/10
-                            </span>
-                          )}
-                        </div>
-                        <p className="line-clamp-2 text-body-sm font-semibold text-ink">
-                          {record.question_scenario.replace(/\n/g, " ").slice(0, 72)}
-                          {record.question_scenario.length > 72 ? "..." : ""}
-                        </p>
+                        )}
                       </div>
+                      <p className="line-clamp-2 text-body-sm font-semibold text-ink transition-colors group-hover:text-primary">
+                        {record.question_scenario.replace(/\n/g, " ").slice(0, 96)}
+                        {record.question_scenario.length > 96 ? "..." : ""}
+                      </p>
                     </div>
                   </Link>
                 );
               })
             ) : (
-              <p className="rounded-lg border border-dashed border-line bg-white px-4 py-6 text-center text-body-sm text-ink-muted">
+              <p className="py-4 text-body-sm text-ink-muted">
                 还没有训练记录，完成第一题后会出现归档。
               </p>
             )}
           </div>
-        </aside>
+        </SupportSectionRow>
       </div>
     </section>
   );
@@ -716,7 +760,7 @@ export default function TrainingPage() {
                   {needsReview ? primaryOverviewAction.badge : primaryTrainingLabel}
                 </Badge>
               </div>
-              <h1 className="max-w-3xl text-[28px] font-bold leading-[1.2] text-ink sm:text-[34px]">
+              <h1 className="max-w-3xl text-[28px] font-bold leading-[1.2] text-ink">
                 {primaryOverviewAction.title}
               </h1>
               <p className="mt-3 max-w-2xl text-body-md leading-relaxed text-ink-muted">
