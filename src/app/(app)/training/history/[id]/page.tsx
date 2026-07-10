@@ -6,15 +6,17 @@ import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageSpinner } from "@/components/ui/spinner";
 import TrainingEvaluationPanel from "@/components/training/TrainingEvaluationPanel";
 import { normalizeTrainingEvaluation } from "@/lib/training/personalization";
 import {
   Activity,
+  ArrowLeft,
   ArrowRight,
   BookOpen,
+  Check,
+  Clipboard,
   FileCheck2,
   Lightbulb,
   PenLine,
@@ -36,91 +38,100 @@ function ReviewProcessingDesk({
     href?: string;
     disabled?: boolean;
   };
-  steps: { label: string; text: string; active: boolean }[];
+  steps: {
+    label: string;
+    text: string;
+    status: "done" | "current" | "pending";
+  }[];
   metaItems: { label: string; value: string }[];
   title: string;
   onPrimaryAction: () => void;
 }) {
   return (
-    <section className="mb-6 rounded-xl border border-line bg-ink p-5 text-white shadow-xs">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_360px]">
+    <section className="mb-8 border-b border-line pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/training"
+          className="inline-flex items-center gap-2 text-body-sm font-semibold text-ink-muted transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          返回训练队列
+        </Link>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {metaItems.map((item) => (
+            <p key={item.label} className="text-label font-semibold text-ink-muted">
+              {item.label}
+              <span className="ml-1.5 text-ink">{item.value}</span>
+            </p>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
         <div>
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge>复盘处理台</Badge>
-            <Badge variant="neutral">入账动作台</Badge>
-          </div>
-          <h1 className="line-clamp-2 text-[28px] font-bold leading-tight sm:text-[36px]">
+          <p className="text-label font-bold text-primary">训练复盘</p>
+          <h1 className="mt-2 line-clamp-2 max-w-4xl text-[24px] font-bold leading-8 text-ink sm:text-[28px]">
             {title}
           </h1>
-          <p className="mt-3 max-w-3xl text-body-sm leading-relaxed text-white/70">
-            这页只处理一个闭环：先对照原答补修正版，再把面试表达或思维升级入账，最后回到训练流水线继续下一题迁移。
+        </div>
+        <div className="rounded-lg border border-line bg-white p-4">
+          <p className="text-label font-bold text-ink-muted">当前阶段</p>
+          <p className="mt-1 text-body-sm font-semibold leading-6 text-ink">
+            {historyPrimaryAction.description}
           </p>
+          {historyPrimaryAction.kind === "link" ? (
+            <Link
+              href={historyPrimaryAction.href || "/training"}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              {historyPrimaryAction.label}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          ) : (
+            <button
+              onClick={onPrimaryAction}
+              disabled={historyPrimaryAction.disabled}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50"
+            >
+              {historyPrimaryAction.label}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
-          <div className="mt-5 grid gap-2 sm:grid-cols-3">
-            {metaItems.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2"
+      <ol className="mt-5 grid overflow-hidden rounded-lg border border-line bg-white sm:grid-cols-3">
+        {steps.map((step, index) => (
+          <li
+            key={step.label}
+            className="border-b border-line px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
+          >
+            <div className="flex items-start gap-3">
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-label font-bold ${
+                  step.status === "done"
+                    ? "bg-success-soft text-success"
+                    : step.status === "current"
+                      ? "bg-primary text-white"
+                      : "bg-surface text-ink-muted"
+                }`}
               >
-                <p className="text-label font-bold text-white/55">{item.label}</p>
-                <p className="mt-1 text-body-sm font-semibold text-white">
-                  {item.value}
+                {step.status === "done" ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  index + 1
+                )}
+              </span>
+              <div>
+                <p className="text-body-sm font-bold text-ink">{step.label}</p>
+                <p className="mt-0.5 text-label leading-5 text-ink-muted">
+                  {step.text}
                 </p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <aside className="rounded-xl border border-white/10 bg-white/[0.07] p-4">
-          <p className="text-label font-bold text-white/65">本轮处理顺序</p>
-          <div className="mt-3 space-y-3">
-            {steps.map((step, index) => (
-              <div key={step.label} className="grid grid-cols-[2rem_1fr] gap-3">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg font-mono text-label font-bold ${
-                    step.active
-                      ? "bg-white text-ink"
-                      : "bg-white/10 text-white/45"
-                  }`}
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </div>
-                <div>
-                  <p className="text-body-sm font-bold text-white">{step.label}</p>
-                  <p className="mt-0.5 text-body-sm leading-relaxed text-white/60">
-                    {step.text}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 rounded-lg bg-white px-4 py-3 text-ink">
-            <p className="text-label font-bold text-ink-muted">当前主动作</p>
-            <p className="mt-1 text-body-sm font-semibold leading-relaxed text-ink">
-              {historyPrimaryAction.description}
-            </p>
-            {historyPrimaryAction.kind === "link" ? (
-              <Link
-                href={historyPrimaryAction.href || "/training"}
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98]"
-              >
-                {historyPrimaryAction.label}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            ) : (
-              <button
-                onClick={onPrimaryAction}
-                disabled={historyPrimaryAction.disabled}
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-              >
-                {historyPrimaryAction.label}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </aside>
-      </div>
+            </div>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
@@ -145,6 +156,9 @@ export default function HistoryDetailPage() {
   >("idle");
   const [thinkingUpgradeStatus, setThinkingUpgradeStatus] = useState<
     "idle" | "saving" | "saved" | "failed"
+  >("idle");
+  const [copyStatus, setCopyStatus] = useState<
+    "idle" | "copied" | "failed"
   >("idle");
   const revisionEditorRef = useRef<HTMLTextAreaElement>(null);
 
@@ -318,6 +332,18 @@ export default function HistoryDetailPage() {
     }
   };
 
+  const handleCopyExpression = async () => {
+    const copyScript = interviewExpressionCard?.copyScript;
+    if (!copyScript) return;
+
+    try {
+      await navigator.clipboard.writeText(copyScript);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("failed");
+    }
+  };
+
   const extractSections = (text: string) => {
     const diagnosisMatch = text.match(
       /#{1,2}\s*诊断[\s\S]*?(?=#{1,2}\s*建议|$)/i
@@ -352,32 +378,28 @@ export default function HistoryDetailPage() {
   const hasSavedRevision = Boolean(revisedAnswer) || revisionStatus === "saved";
   const historyPrimaryAction = !hasSavedRevision
     ? {
-        label: "先保存修正版",
-        description:
-          "复盘队列过来的记录先补一版可复述答案，再把它沉淀成表达卡或思维升级证据。",
+        label: "保存并入账",
+        description: "先完成修正版，同步写入能力证据账本。",
         kind: "revision" as const,
         disabled: !revisionText.trim() || revisionStatus === "saving",
       }
     : interviewExpressionCard && expressionCardStatus !== "saved"
       ? {
-          label: "沉淀表达卡",
-          description:
-            "修正版已经就位，下一步把面试表达卡写入画像账本，让后续处方能引用这条证据。",
+          label: "表达卡入账",
+          description: "修正版已保存，现在沉淀面试表达证据。",
           kind: "expression" as const,
           disabled: expressionCardStatus === "saving",
         }
       : thinkingUpgradeAsset && thinkingUpgradeStatus !== "saved"
         ? {
-            label: "沉淀思维升级",
-            description:
-              "把判断、取舍、归因和落地要求入账，下一题会围绕这张升级卡继续迁移。",
+            label: "思维升级入账",
+            description: "把判断、取舍、归因、落地和迁移验证写入画像。",
             kind: "thinking" as const,
             disabled: thinkingUpgradeStatus === "saving",
           }
         : {
-            label: "回到训练流水线",
-            description:
-              "本条记录已经完成主要处理，回到训练资产流水线继续下一题或下一条复盘。",
+            label: "返回训练队列",
+            description: "本条记录已完成修正与入账。",
             kind: "link" as const,
             href: "/training",
           };
@@ -396,22 +418,24 @@ export default function HistoryDetailPage() {
   };
   const reviewSteps = [
     {
-      label: "原答与修正版",
-      text: hasSavedRevision ? "修正版已保存，可继续入账资产" : "先把原回答改成可复述版本",
-      active: true,
+      label: "原回答 / AI 反馈",
+      text: "对照原始判断与反馈缺口",
+      status: "done" as const,
     },
     {
-      label: "入账动作台",
-      text:
-        interviewExpressionCard || thinkingUpgradeAsset
-          ? "选择表达卡或思维升级卡沉淀到账本"
-          : "等待 AI 反馈生成可入账资产",
-      active: hasSavedRevision,
+      label: "修正版",
+      text: hasSavedRevision ? "已保存，仍可继续修订" : "用编辑器重写可复述答案",
+      status: hasSavedRevision ? ("done" as const) : ("current" as const),
     },
     {
-      label: "回到训练流水线",
-      text: "处理完成后再开下一题，避免只读反馈不迁移",
-      active: historyPrimaryAction.kind === "link",
+      label: "保存并入账",
+      text: "写入修正快照、表达卡或思维升级证据",
+      status:
+        historyPrimaryAction.kind === "link"
+          ? ("done" as const)
+          : hasSavedRevision
+            ? ("current" as const)
+            : ("pending" as const),
     },
   ];
   const metaItems = [
@@ -423,12 +447,12 @@ export default function HistoryDetailPage() {
   return (
     <>
       <PageHeader
-        title="训练复盘工作台"
-        subtitle="把一次作答处理成下一题能迁移的证据"
+        title="训练复盘"
+        subtitle="对照反馈修正回答，并把可复用证据写入画像"
         backHref="/training"
       />
 
-      <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1180px] px-4 py-6 sm:px-6 lg:px-8">
         <ReviewProcessingDesk
           historyPrimaryAction={historyPrimaryAction}
           steps={reviewSteps}
@@ -437,72 +461,123 @@ export default function HistoryDetailPage() {
           onPrimaryAction={handlePrimaryHistoryAction}
         />
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <div className="space-y-6">
-          <section>
-            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <section className="mb-8">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-label font-bold text-primary">01 对照</p>
+              <h2 className="mt-1 text-[20px] font-bold leading-7 text-ink">
+                原回答 / AI 反馈
+              </h2>
+            </div>
+            <p className="text-label font-semibold text-ink-muted">
+              {new Date(record.created_at).toLocaleString("zh-CN")}
+            </p>
+          </div>
+
+          <div className="grid overflow-hidden rounded-lg border border-line bg-white lg:grid-cols-2">
+            <article className="p-5 lg:border-r lg:border-line">
+              <div className="flex items-center gap-2 text-body-sm font-bold text-ink">
+                <BookOpen className="h-4 w-4 text-primary" />
+                原回答
+              </div>
+              <div className="mt-4 border-b border-line pb-4">
+                <p className="text-label font-bold text-ink-muted">题目摘要</p>
+                <div className="markdown-content mt-2 text-body-sm leading-6 text-ink">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {record.question_scenario}
+                  </ReactMarkdown>
+                </div>
+              </div>
+              <div className="mt-4 whitespace-pre-wrap text-body-md leading-7 text-ink">
+                {record.user_answer}
+              </div>
+            </article>
+
+            <article className="p-5">
+              <div className="flex items-center gap-2 text-body-sm font-bold text-ink">
+                <Sparkles className="h-4 w-4 text-primary" />
+                AI 反馈
+              </div>
+              <div className="mt-4">
+                {evaluation ? (
+                  <TrainingEvaluationPanel evaluation={evaluation} />
+                ) : (
+                  <div className="divide-y divide-line border-y border-line">
+                    {sections.diagnosis && (
+                      <section className="py-4">
+                        <div className="mb-2 flex items-center gap-2 text-body-sm font-bold text-ink">
+                          <Activity className="h-4 w-4 text-primary" />
+                          诊断
+                        </div>
+                        <div className="markdown-content text-body-sm leading-6 text-ink-muted">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {sections.diagnosis}
+                          </ReactMarkdown>
+                        </div>
+                      </section>
+                    )}
+                    {sections.suggestion && (
+                      <section className="py-4">
+                        <div className="mb-2 flex items-center gap-2 text-body-sm font-bold text-ink">
+                          <Lightbulb className="h-4 w-4 text-primary" />
+                          建议
+                        </div>
+                        <div className="markdown-content text-body-sm leading-6 text-ink-muted">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {sections.suggestion}
+                          </ReactMarkdown>
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {record.ai_feedback?.hidden_risks?.length > 0 && (
+                <div className="mt-5 border-t border-line pt-4">
+                  <div className="flex items-center gap-2 text-label font-bold text-warning">
+                    <Target className="h-4 w-4" />
+                    案例推演隐藏风险
+                  </div>
+                  <ul className="mt-2 divide-y divide-line">
+                    {record.ai_feedback.hidden_risks.map((risk: string) => (
+                      <li key={risk} className="py-2 text-body-sm leading-6 text-ink-muted">
+                        {risk}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </article>
+          </div>
+        </section>
+
+        {showRevisionWorkbench && (
+          <section className="mb-8 overflow-hidden rounded-lg border border-primary-muted bg-white">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-primary-muted bg-primary-soft/40 px-5 py-4">
               <div>
-                <p className="text-label font-bold text-primary">
-                  原答与修正版
-                </p>
-                <h2 className="mt-1 text-heading-sm font-bold text-ink">
-                  先对照题目，把回答改成可复述版本
+                <p className="text-label font-bold text-primary">02 二次修正</p>
+                <h2 className="mt-1 text-[20px] font-bold leading-7 text-ink">
+                  修正版
                 </h2>
               </div>
-              <p className="text-label font-semibold text-ink-muted">
-                {new Date(record.created_at).toLocaleString("zh-CN")}
-              </p>
+              <span className="rounded-md border border-line bg-white px-3 py-1.5 text-label font-semibold text-ink-muted">
+                {revisionStatus === "saving"
+                  ? "保存中"
+                  : revisionStatus === "saved"
+                    ? revisionProfileStatus === "saved"
+                      ? "已进证据账本"
+                      : "已保存"
+                    : revisionStatus === "failed"
+                      ? "保存失败"
+                      : revisionSavedAt
+                        ? `最近保存：${new Date(revisionSavedAt).toLocaleString("zh-CN", {
+                            hour12: false,
+                          })}`
+                        : "待修正"}
+              </span>
             </div>
-          {/* Question */}
-          <Card size="md">
-            <div className="mb-3 flex items-center gap-2 text-label font-bold text-ink-muted">
-              <BookOpen className="h-4 w-4 text-primary" />
-              题目
-            </div>
-            <div className="text-body-md text-ink leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {record.question_scenario}
-              </ReactMarkdown>
-            </div>
-          </Card>
-
-          {/* User answer */}
-          <Card size="md">
-            <div className="mb-3 flex items-center gap-2 text-label font-bold text-ink-muted">
-              <FileCheck2 className="h-4 w-4 text-secondary" />
-              你的回答
-            </div>
-            <div className="text-body-md text-ink leading-relaxed whitespace-pre-wrap">
-              {record.user_answer}
-            </div>
-          </Card>
-
-          {showRevisionWorkbench && (
-            <Card size="md" className="border-primary-muted bg-primary-soft/50">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-label font-bold text-primary">
-                  <PenLine className="h-4 w-4" />
-                  二次修正
-                </div>
-                <span className="rounded-md bg-white px-3 py-1.5 text-label font-semibold text-ink-muted">
-                  {revisionStatus === "saving"
-                    ? "保存中"
-                    : revisionStatus === "saved"
-                      ? revisionProfileStatus === "saved"
-                        ? "已进证据账本"
-                        : "已保存"
-                      : revisionStatus === "failed"
-                        ? "保存失败"
-                        : revisionSavedAt
-                          ? `最近保存：${new Date(revisionSavedAt).toLocaleString("zh-CN", {
-                              hour12: false,
-                            })}`
-                          : "待修正"}
-                </span>
-              </div>
-              <p className="mb-3 text-body-sm font-semibold text-ink-muted">
-                修正版
-              </p>
+            <div className="p-5">
               <textarea
                 ref={revisionEditorRef}
                 value={revisionText}
@@ -510,332 +585,225 @@ export default function HistoryDetailPage() {
                   setRevisionText(event.target.value);
                   setRevisionStatus("idle");
                 }}
-                className="min-h-[180px] w-full resize-none rounded-lg border border-primary-muted bg-white/80 p-4 text-body-md leading-7 text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                className="min-h-[300px] w-full resize-y rounded-md border border-line bg-white p-4 text-body-md leading-7 text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
                 placeholder="基于 AI 反馈重写：关键判断、依据、取舍、验证指标..."
               />
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-label font-semibold text-ink-muted">
                   {revisionProfileStatus === "saved"
                     ? "二次修正已进入能力证据账本"
                     : revisionProfileStatus === "failed"
                       ? "修正已保存，画像证据稍后可刷新"
-                      : "从复盘队列进入时，先补这一版，再继续开新题。"}
+                      : "保存后会同步创建 revision_saved 画像快照。"}
                 </p>
                 <button
                   onClick={handleSaveRevision}
                   disabled={!revisionText.trim() || revisionStatus === "saving"}
-                  className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-md border border-primary px-4 py-2.5 text-body-sm font-semibold text-primary transition hover:bg-primary-soft active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50"
                 >
                   <PenLine className="h-4 w-4" />
-                  保存二次修正
+                  {revisionStatus === "saving" ? "保存中" : "保存并入账"}
                 </button>
               </div>
-            </Card>
-          )}
+            </div>
           </section>
-          </div>
+        )}
 
-          {/* AI analysis */}
-          <div className="space-y-6">
-          <section>
+        <section>
           <div className="mb-3">
-            <p className="text-label font-bold text-primary">入账动作台</p>
-            <h2 className="mt-1 text-heading-sm font-bold text-ink">
-              把修正版转成画像可用证据
+            <p className="text-label font-bold text-primary">03 沉淀</p>
+            <h2 className="mt-1 text-[20px] font-bold leading-7 text-ink">
+              保存并入账
             </h2>
+            <p className="mt-1 text-body-sm text-ink-muted">
+              主线资产复盘以分组行呈现，只沉淀后续处方会复用的证据。
+            </p>
           </div>
-          {(interviewExpressionAsset || thinkingUpgradeAsset) && (
-            <Card size="md" className="border-primary-muted bg-primary-soft/35">
-              <div className="mb-4">
-                <p className="text-label font-bold text-primary">
-                  主线资产复盘
-                </p>
-                <h2 className="mt-1 text-heading-sm font-bold text-ink">
-                  这次训练已经沉淀出的可复用材料
-                </h2>
-              </div>
 
-              <div className="space-y-4">
-                {interviewExpressionAsset && (
-                  <section className="rounded-xl border border-line bg-white p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <FileCheck2 className="h-4 w-4 text-primary" />
-                      <h3 className="font-semibold text-ink">面试表达资产</h3>
+          <div className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-white">
+            {(interviewExpressionAsset || interviewExpressionCard) && (
+              <article className="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary">
+                      <FileCheck2 className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-label font-bold text-primary">面试表达资产</p>
+                      <h3 className="mt-1 text-body-md font-bold text-ink">面试表达卡</h3>
                     </div>
-                    <p className="text-body-sm font-semibold leading-6 text-ink">
-                      {interviewExpressionAsset.opening_judgment ||
+                  </div>
+                  {interviewExpressionCard && (
+                    <Badge
+                      variant={
+                        interviewExpressionCard.readiness === "面试可用"
+                          ? "success"
+                          : "neutral"
+                      }
+                    >
+                      {interviewExpressionCard.readiness}
+                    </Badge>
+                  )}
+                </div>
+
+                <dl className="mt-4 divide-y divide-line border-y border-line">
+                  <div className="grid gap-1 py-3 sm:grid-cols-[7rem_1fr] sm:gap-4">
+                    <dt className="text-label font-bold text-ink-muted">开场判断</dt>
+                    <dd className="text-body-sm leading-6 text-ink">
+                      {interviewExpressionCard?.openingClaim ||
+                        interviewExpressionAsset?.opening_judgment ||
                         "先给出清晰判断，再补证据和取舍。"}
-                    </p>
-                    <p className="mt-2 text-body-sm leading-7 text-ink-muted">
-                      {interviewExpressionAsset.answer_version ||
-                        "补充可复述版本后，这条训练记录会更适合面试调用。"}
-                    </p>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <p className="text-label font-bold text-primary">
-                          证据抓手
-                        </p>
-                        <ul className="mt-1 space-y-1">
-                          {(interviewExpressionAsset.evidence_hooks || []).map(
-                            (item: string) => (
-                              <li
-                                key={item}
-                                className="text-body-sm leading-relaxed text-ink-muted"
-                              >
-                                {item}
-                              </li>
-                            )
-                          )}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="text-label font-bold text-warning">
-                          追问风险
-                        </p>
-                        <ul className="mt-1 space-y-1">
-                          {(interviewExpressionAsset.follow_up_risks || []).map(
-                            (item: string) => (
-                              <li
-                                key={item}
-                                className="text-body-sm leading-relaxed text-ink-muted"
-                              >
-                                {item}
-                              </li>
-                            )
-                          )}
-                        </ul>
-                      </div>
+                    </dd>
+                  </div>
+                  <div className="grid gap-1 py-3 sm:grid-cols-[7rem_1fr] sm:gap-4">
+                    <dt className="text-label font-bold text-ink-muted">证据抓手</dt>
+                    <dd className="text-body-sm leading-6 text-ink">
+                      {interviewExpressionCard?.proofPoint ||
+                        (interviewExpressionAsset?.evidence_hooks || []).join("；") ||
+                        "补充可验证的用户、业务和结果证据。"}
+                    </dd>
+                  </div>
+                  <div className="grid gap-1 py-3 sm:grid-cols-[7rem_1fr] sm:gap-4">
+                    <dt className="text-label font-bold text-warning">追问风险</dt>
+                    <dd className="text-body-sm leading-6 text-ink">
+                      {interviewExpressionCard?.followupRisk ||
+                        (interviewExpressionAsset?.follow_up_risks || []).join("；") ||
+                        "继续补充角色贡献、取舍依据和结果口径。"}
+                    </dd>
+                  </div>
+                </dl>
+
+                {interviewExpressionCard && (
+                  <div className="mt-4 rounded-md bg-surface p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-label font-bold text-ink-muted">可复制表达版本</p>
+                      <button
+                        onClick={handleCopyExpression}
+                        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-label font-semibold text-ink transition hover:border-primary-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      >
+                        <Clipboard className="h-4 w-4" />
+                        {copyStatus === "copied"
+                          ? "已复制"
+                          : copyStatus === "failed"
+                            ? "复制失败"
+                            : "复制表达"}
+                      </button>
                     </div>
-                  </section>
+                    <p className="mt-2 text-body-sm leading-6 text-ink">
+                      {interviewExpressionCard.copyScript}
+                    </p>
+                  </div>
                 )}
 
-                {thinkingUpgradeAsset && (
-                  <section className="rounded-xl border border-line bg-white p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4 text-primary" />
-                      <h3 className="font-semibold text-ink">思维升级卡</h3>
+                {interviewExpressionCard && (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-label font-semibold text-ink-muted">
+                      {expressionCardStatus === "saved"
+                        ? "表达卡已入账，画像处方会参考这条材料"
+                        : expressionCardStatus === "failed"
+                          ? "入账失败，请稍后重试"
+                          : "把这张表达卡沉淀到画像账本。"}
+                    </p>
+                    <button
+                      onClick={handleSaveExpressionCard}
+                      disabled={expressionCardStatus === "saving"}
+                      className="inline-flex items-center gap-2 rounded-md border border-line px-4 py-2.5 text-body-sm font-semibold text-ink transition hover:border-primary-muted hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      <FileCheck2 className="h-4 w-4" />
+                      {expressionCardStatus === "saving"
+                        ? "入账中"
+                        : "沉淀到画像账本"}
+                    </button>
+                  </div>
+                )}
+              </article>
+            )}
+
+            {thinkingUpgradeAsset && (
+              <article className="p-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary">
+                    <Lightbulb className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-label font-bold text-primary">高级产品思维</p>
+                    <h3 className="mt-1 text-body-md font-bold text-ink">思维升级卡</h3>
+                  </div>
+                </div>
+
+                <dl className="mt-4 divide-y divide-line border-y border-line">
+                  {[
+                    ["判断质量", thinkingUpgradeAsset.judgment_quality],
+                    ["取舍质量", thinkingUpgradeAsset.tradeoff_quality],
+                    ["归因深度", thinkingUpgradeAsset.attribution_depth],
+                    ["落地严谨度", thinkingUpgradeAsset.landing_rigor],
+                    ["迁移验证", thinkingUpgradeAsset.migration_check],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="grid gap-1 py-3 sm:grid-cols-[7rem_1fr] sm:gap-4"
+                    >
+                      <dt className="text-label font-bold text-ink-muted">{label}</dt>
+                      <dd className="text-body-sm leading-6 text-ink">
+                        {value || "继续补充具体判断、证据和落地动作。"}
+                      </dd>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                  ))}
+                </dl>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-label font-semibold text-ink-muted">
+                    {thinkingUpgradeStatus === "saved"
+                      ? "思维升级已入账，后续训练会参考这次判断证据"
+                      : thinkingUpgradeStatus === "failed"
+                        ? "入账失败，请稍后重试"
+                        : "连同迁移验证沉淀到画像账本。"}
+                  </p>
+                  <button
+                    onClick={handleSaveThinkingUpgrade}
+                    disabled={thinkingUpgradeStatus === "saving"}
+                    className="inline-flex items-center gap-2 rounded-md border border-line px-4 py-2.5 text-body-sm font-semibold text-ink transition hover:border-primary-muted hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <Lightbulb className="h-4 w-4" />
+                    {thinkingUpgradeStatus === "saving"
+                      ? "入账中"
+                      : "沉淀思维升级"}
+                  </button>
+                </div>
+              </article>
+            )}
+
+            {evaluation && (
+              <article className="p-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-surface text-ink-muted">
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-label font-bold text-primary">下一步处方摘要</p>
+                    <dl className="mt-2 divide-y divide-line">
                       {[
-                        ["判断质量", thinkingUpgradeAsset.judgment_quality],
-                        ["取舍质量", thinkingUpgradeAsset.tradeoff_quality],
-                        ["归因深度", thinkingUpgradeAsset.attribution_depth],
-                        ["落地严谨度", thinkingUpgradeAsset.landing_rigor],
-                        ["迁移验证", thinkingUpgradeAsset.migration_check],
+                        ["下一步", evaluation.next_practice],
+                        ["最该补", evaluation.gaps[0]],
+                        ["可复用框架", evaluation.thinking_framework[0]],
                       ].map(([label, value]) => (
                         <div
                           key={label}
-                          className="rounded-lg border border-line bg-surface px-3 py-2"
+                          className="grid gap-1 py-2 sm:grid-cols-[7rem_1fr] sm:gap-4"
                         >
-                          <p className="text-label font-bold text-primary">
-                            {label}
-                          </p>
-                          <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                            {value || "继续补充具体判断、证据和落地动作。"}
-                          </p>
+                          <dt className="text-label font-bold text-ink-muted">{label}</dt>
+                          <dd className="text-body-sm font-semibold leading-6 text-ink">
+                            {value}
+                          </dd>
                         </div>
                       ))}
-                    </div>
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-label font-semibold text-ink-muted">
-                        {thinkingUpgradeStatus === "saved"
-                          ? "思维升级已入账，后续训练会参考这次判断证据"
-                          : thinkingUpgradeStatus === "failed"
-                            ? "入账失败，请稍后重试"
-                            : "把这张思维升级卡沉淀进画像账本，作为长期升阶证据。"}
-                      </p>
-                      <button
-                        onClick={handleSaveThinkingUpgrade}
-                        disabled={thinkingUpgradeStatus === "saving"}
-                        className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-                      >
-                        <Lightbulb className="h-4 w-4" />
-                        {thinkingUpgradeStatus === "saving"
-                          ? "入账中"
-                          : "沉淀思维升级"}
-                      </button>
-                    </div>
-                  </section>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {interviewExpressionCard && (
-            <Card size="md" className="border-primary-muted bg-white">
-              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-label font-bold text-primary">
-                    面试表达卡
-                  </p>
-                  <h2 className="mt-1 text-heading-sm font-bold text-ink">
-                    把这次训练讲成一段高级 PM 回答
-                  </h2>
-                </div>
-                <Badge
-                  variant={
-                    interviewExpressionCard.readiness === "面试可用"
-                      ? "success"
-                      : "neutral"
-                  }
-                >
-                  {interviewExpressionCard.readiness}
-                </Badge>
-              </div>
-
-              <div className="grid gap-3">
-                <div className="rounded-lg bg-surface px-4 py-3">
-                  <p className="text-label font-bold text-ink-muted">
-                    开场判断
-                  </p>
-                  <p className="mt-1 text-body-sm leading-6 text-ink">
-                    {interviewExpressionCard.openingClaim}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-surface px-4 py-3">
-                  <p className="text-label font-bold text-ink-muted">
-                    证据抓手
-                  </p>
-                  <p className="mt-1 text-body-sm leading-6 text-ink">
-                    {interviewExpressionCard.proofPoint}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-warning-soft px-4 py-3">
-                  <p className="text-label font-bold text-warning">
-                    追问风险
-                  </p>
-                  <p className="mt-1 text-body-sm leading-6 text-ink">
-                    {interviewExpressionCard.followupRisk}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-lg border border-line bg-surface-raised p-4">
-                <p className="text-label font-bold text-ink-muted">
-                  可复制表达版本
-                </p>
-                <p className="mt-2 text-body-sm leading-6 text-ink">
-                  {interviewExpressionCard.copyScript}
-                </p>
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-label font-semibold text-ink-muted">
-                  {expressionCardStatus === "saved"
-                    ? "表达卡已入账，画像处方会参考这条材料"
-                    : expressionCardStatus === "failed"
-                      ? "入账失败，请稍后重试"
-                      : "把这张表达卡沉淀到画像账本，作为下一轮推荐的证据。"}
-                </p>
-                <button
-                  onClick={handleSaveExpressionCard}
-                  disabled={expressionCardStatus === "saving"}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-                >
-                  <FileCheck2 className="h-4 w-4" />
-                  {expressionCardStatus === "saving"
-                    ? "入账中"
-                    : "沉淀到画像账本"}
-                </button>
-              </div>
-            </Card>
-          )}
-
-          {evaluation && (
-            <div className="rounded-xl border border-line bg-white p-4">
-              <p className="text-label font-bold text-primary">下一步处方摘要</p>
-              <div className="mt-3 space-y-3">
-                {[
-                  ["下一步", evaluation.next_practice],
-                  ["最该补", evaluation.gaps[0]],
-                  ["可复用框架", evaluation.thinking_framework[0]],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="grid gap-2 rounded-lg bg-surface px-3 py-2 sm:grid-cols-[6rem_1fr]"
-                  >
-                    <p className="text-label font-bold text-ink-muted">
-                      {label}
-                    </p>
-                    <p className="line-clamp-2 text-body-sm font-semibold leading-relaxed text-ink">
-                      {value}
-                    </p>
+                    </dl>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-          </section>
-
-          {(analysis || evaluation) && (
-            <Card size="md" className="relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary" />
-              <div className="flex items-center gap-2 mb-4 pt-1">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <span className="text-body-md font-bold text-ink">
-                  AI 深度解析
-                </span>
-              </div>
-
-              {evaluation ? (
-                <TrainingEvaluationPanel evaluation={evaluation} />
-              ) : (
-                <>
-                  {sections.diagnosis && (
-                    <section className="mb-4">
-                      <div className="text-body-sm text-ink flex items-center gap-2 mb-2">
-                        <Activity className="w-4 h-4 text-primary" />
-                        诊断
-                      </div>
-                      <div className="bg-surface rounded-xl p-4 border border-line">
-                        <div className="markdown-content text-body-sm">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {sections.diagnosis}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-                    </section>
-                  )}
-
-                  {sections.suggestion && (
-                    <section>
-                      <div className="text-body-sm text-ink flex items-center gap-2 mb-2">
-                        <Lightbulb className="w-4 h-4 text-primary" />
-                        建议
-                      </div>
-                      <div className="bg-primary-soft rounded-xl p-4 border border-primary-muted">
-                        <div className="markdown-content text-body-sm">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {sections.suggestion}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-                    </section>
-                  )}
-                </>
-              )}
-            </Card>
-          )}
-
-          {record.ai_feedback?.hidden_risks?.length > 0 && (
-            <Card size="md">
-              <div className="mb-3 flex items-center gap-2 text-label font-bold text-ink-muted">
-                <Target className="h-4 w-4 text-warning" />
-                案例推演隐藏风险
-              </div>
-              <div className="space-y-2">
-                {record.ai_feedback.hidden_risks.map((risk: string) => (
-                  <p
-                    key={risk}
-                    className="rounded-lg bg-warning-soft px-3 py-2 text-body-sm text-ink"
-                  >
-                    {risk}
-                  </p>
-                ))}
-              </div>
-            </Card>
-          )}
+                </div>
+              </article>
+            )}
           </div>
-        </div>
+        </section>
       </div>
     </>
   );

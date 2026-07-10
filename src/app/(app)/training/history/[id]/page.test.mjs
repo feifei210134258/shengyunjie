@@ -19,19 +19,22 @@ test("training history can save a second-pass revision from the review queue", (
   assert.match(source, /handleSaveRevision/);
   assert.match(source, /method: "PATCH"/);
   assert.match(source, /\/api\/training\/record/);
-  assert.match(source, /保存二次修正/);
+  assert.match(source, /保存并入账/);
 });
 
-test("training history presents a single review processing workspace", () => {
+test("training history presents a light three-stage review workflow", () => {
   assert.match(source, /ReviewProcessingDesk/);
   assert.match(source, /historyPrimaryAction/);
-  assert.match(source, /复盘处理台/);
-  assert.match(source, /本轮处理顺序/);
-  assert.match(source, /原答与修正版/);
-  assert.match(source, /入账动作台/);
-  assert.match(source, /回到训练流水线/);
-  assert.match(source, /先保存修正版/);
-  assert.doesNotMatch(source, /grid gap-3 sm:grid-cols-3/);
+  assert.match(source, /原回答/);
+  assert.match(source, /AI 反馈/);
+  assert.match(source, /修正版/);
+  assert.match(source, /保存并入账/);
+  assert.match(source, /返回训练队列/);
+  assert.doesNotMatch(source, /复盘处理台/);
+  assert.doesNotMatch(source, /本轮处理顺序/);
+  assert.doesNotMatch(source, /入账动作台/);
+  assert.doesNotMatch(source, /bg-ink/);
+  assert.doesNotMatch(source, /sm:text-\[36px\]/);
 });
 
 test("training history saves a profile snapshot after revision", () => {
@@ -46,6 +49,8 @@ test("training history renders an interview expression card from the record", ()
   assert.match(source, /开场判断/);
   assert.match(source, /追问风险/);
   assert.match(source, /copyScript/);
+  assert.match(source, /navigator\.clipboard\.writeText/);
+  assert.match(source, /复制表达/);
 });
 
 test("training history can save the interview expression card into the profile ledger", () => {
