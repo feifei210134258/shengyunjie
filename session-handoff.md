@@ -6,7 +6,7 @@
 - 分支：`deploy/pm`
 - 当前功能：`training-001`
 - 功能状态：`completed`
-- 目标：完成产品路径化大改造的提交、推送、生产部署与公网验收
+- 生产：`https://pm.imfly.site` 已部署并验收
 
 ## 已完成
 
@@ -17,6 +17,8 @@
 - `/training` 现在优先读回 `latestRecommendation`，与 Dashboard 使用同一标题和入口。
 - 8 个读取 `growth_snapshots` 最新状态的 API 已统一按 `snapshot_date desc, created_at desc` 排序。
 - 本地生产构建浏览器验收：Dashboard、`/training`、`/bootcamp` 三条关键页面状态与布局一致。
+- 代码提交 `f91ac9d` 已推送并部署，服务器输出 `DEPLOY_OK deploy/pm f91ac9d`。
+- 公网脚本返回 `VERIFY_OK https://pm.imfly.site`，生产真实账号验收三条关键页面通过。
 
 ## 验证证据
 
@@ -36,7 +38,5 @@
 
 ## 剩余步骤
 
-1. 提交相关文件并推送 `deploy/pm`。
-2. SSH 到 `root@159.75.213.142`，在 `/www/wwwroot/shengyunjie` 执行 `bash scripts/deploy-production.sh`。
-3. 执行 `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh`。
-4. 进行公网关键路径验收，确认生产版本包含本轮处方一致性与训练闭环改造。
+- 本轮目标已完成，无阻塞项。
+- 工作区仍保留未提交的 `docs/progress/` 与 `supabase/.temp/` CLI 缓存；它们不属于本轮产品改造，也未被覆盖或提交。

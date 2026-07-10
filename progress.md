@@ -18,6 +18,9 @@
 - 全量 51 个 `*.test.mjs` 文件通过，共 258 项测试、0 失败。
 - `npx tsc --noEmit` 与定向 ESLint 通过；`npm run build` 通过。
 - 本地生产构建浏览器验收通过：Dashboard 和 `/training` 使用同一本周处方及同一 href，`/bootcamp` 的无简历状态、资产数量和下一步动作保持一致；三页首屏均无明显遮挡或布局错位。
+- 提交 `f91ac9d feat: close training prescription loop` 已推送到 `origin/deploy/pm`。
+- 生产服务器执行 `bash scripts/deploy-production.sh`，输出 `DEPLOY_OK deploy/pm f91ac9d`；`BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK`。
+- 生产真实账号验收通过：Dashboard 与 `/training` 均读回同一本周处方和 `/training/session?focus=strategic_thinking`；`/bootcamp` 显示“面试证据库 / 等待简历 / 2 条训练表达资产”。
 
 ## [2026-07-10] Feature: training-001 真实闭环验收完成
 

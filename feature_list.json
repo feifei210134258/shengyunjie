@@ -108,7 +108,7 @@
             "id": "training-001",
             "name": "日常训练 — 场景题库",
             "description": "看板式训练首页（连击统计+日历+历史）、AI 动态出题、答题→AI 评分反馈、记录落库",
-            "latest_evidence": "2026-07-10 training-001 与跨路径收口验收完成：修复 training_records 缺少 UPDATE RLS 导致二次修正 PATCH 500，新增并远端应用 migration 20260710130148_add_training_records_update_policy.sql；真实 Supabase 训练记录 9afd0741-bab5-448c-bff7-da4bae3d723f 完成反馈入账、修正版保存、revision_saved 快照 4694975b-f098-4158-9671-d08b89b0c65d、处方快照 7ded58da-2245-4ec9-8965-5a780d2662bf，并由历史复盘页读回原答、修正版、面试表达资产和思维升级卡。训练首页现在优先读回已保存的本周处方，Dashboard 与 /training 均显示“本周处方：先练 战略思维 的真实任务”并指向 /training/session?focus=strategic_thinking；8 个 growth_snapshots 聚合查询增加 snapshot_date + created_at 确定性排序。浏览器验证反馈处理台无导航覆盖、会话恢复失败不覆盖持久化草稿、/bootcamp 无简历状态和 2 条训练表达资产一致。验证：全量 51 个 test 文件共 258 项通过，npx tsc、全量 ESLint、npm run build、./init.sh、git diff --check 通过。",
+            "latest_evidence": "2026-07-10 training-001 与跨路径收口验收完成：修复 training_records 缺少 UPDATE RLS 导致二次修正 PATCH 500，新增并远端应用 migration 20260710130148_add_training_records_update_policy.sql；真实 Supabase 训练记录 9afd0741-bab5-448c-bff7-da4bae3d723f 完成反馈入账、修正版保存、revision_saved 快照 4694975b-f098-4158-9671-d08b89b0c65d、处方快照 7ded58da-2245-4ec9-8965-5a780d2662bf，并由历史复盘页读回原答、修正版、面试表达资产和思维升级卡。训练首页现在优先读回已保存的本周处方，Dashboard 与 /training 均显示“本周处方：先练 战略思维 的真实任务”并指向 /training/session?focus=strategic_thinking；8 个 growth_snapshots 聚合查询增加 snapshot_date + created_at 确定性排序。浏览器验证反馈处理台无导航覆盖、会话恢复失败不覆盖持久化草稿、/bootcamp 无简历状态和 2 条训练表达资产一致。验证：全量 51 个 test 文件共 258 项通过，npx tsc、全量 ESLint、npm run build、./init.sh、git diff --check 通过；代码提交 f91ac9d 已部署生产，公网脚本 VERIFY_OK，生产真实账号读回处方与资产状态一致。",
             "dependencies": [
                 "infra-004",
                 "profile-001"
