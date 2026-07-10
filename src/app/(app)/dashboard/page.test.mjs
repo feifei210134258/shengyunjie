@@ -11,15 +11,22 @@ test("dashboard foregrounds two product outcome paths instead of one module entr
   assert.match(source, /设为主线/);
 });
 
-test("dashboard first viewport is a single-action command deck instead of two large path cards", () => {
-  assert.match(source, /今日主动作/);
-  assert.match(source, /行动理由/);
-  assert.match(source, /完成后入账/);
-  assert.match(source, /资产流水线/);
-  assert.match(source, /目标简报 → 今日动作 → 证据入账 → 下一步处方/);
+test("dashboard first viewport is a light 68/32 focused queue", () => {
+  assert.match(source, /PathFirstHero/);
+  assert.match(source, /xl:grid-cols-\[minmax\(0,68fr\)_minmax\(280px,32fr\)\]/);
+  assert.match(source, /今日/);
+  assert.match(source, /优先 1/);
+  assert.match(source, /原回答/);
+  assert.match(source, /修正版/);
+  assert.match(source, /表达资产/);
+  assert.match(source, /进度/);
+  assert.match(source, /最近证据/);
   assert.match(source, /primary\.href/);
   assert.match(source, /primary\.cta/);
-  assert.doesNotMatch(source, /min-h-\[270px\]/);
+  assert.doesNotMatch(source, /资产流水线/);
+  assert.doesNotMatch(source, /今日主动作/);
+  assert.doesNotMatch(source, /bg-ink/);
+  assert.doesNotMatch(source, /text-\[(?:3[3-9]|[4-9]\\d|\\d{3,})px\]/);
 });
 
 test("dashboard lets users persist their current outcome goal focus", () => {

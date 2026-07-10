@@ -1,14 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
-import ProfileCard from "@/components/dashboard/ProfileCard";
-import GrowthChart from "@/components/dashboard/GrowthChart";
-import TrainingStats from "@/components/dashboard/TrainingStats";
-import LatestReport from "@/components/dashboard/LatestReport";
-import { SkeletonCard } from "@/components/ui/skeleton";
-import { getDimensionLabel } from "@/lib/constants";
-import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
-import { cn } from "@/lib/utils";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -19,11 +11,18 @@ import {
   Dumbbell,
   FileCheck2,
   ListChecks,
-  ShieldCheck,
   Target,
   TrendingUp,
   Workflow,
 } from "lucide-react";
+import GrowthChart from "@/components/dashboard/GrowthChart";
+import LatestReport from "@/components/dashboard/LatestReport";
+import ProfileCard from "@/components/dashboard/ProfileCard";
+import TrainingStats from "@/components/dashboard/TrainingStats";
+import { SkeletonCard } from "@/components/ui/skeleton";
+import { getDimensionLabel } from "@/lib/constants";
+import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
 export interface DashboardData {
   profile: {
@@ -336,26 +335,21 @@ interface SelectedRecommendation {
   selectedAt?: string;
 }
 
-function aggregateTrend(
-  growthTrend: DashboardData["growthTrend"]
-): TrendPoint[] {
+function aggregateTrend(growthTrend: DashboardData["growthTrend"]): TrendPoint[] {
   if (!growthTrend?.length) return [];
   const groupMap = new Map<string, number[]>();
-  growthTrend.forEach((pt) => {
-    const scores = groupMap.get(pt.date) || [];
-    scores.push(pt.avgScore);
-    groupMap.set(pt.date, scores);
+  growthTrend.forEach((point) => {
+    const scores = groupMap.get(point.date) || [];
+    scores.push(point.avgScore);
+    groupMap.set(point.date, scores);
   });
   return Array.from(groupMap.entries())
     .map(([date, scores]) => ({
       date,
-      avgScore:
-        Math.round(
-          ((scores.reduce((a, b) => a + b, 0) / scores.length) * 10)
-        ) / 10,
+      avgScore: Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 10) / 10,
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map((d) => ({ ...d, date: d.date.slice(5) }));
+    .map((point) => ({ ...point, date: point.date.slice(5) }));
 }
 
 function getTodayLabel() {
@@ -382,10 +376,7 @@ function getActionIcon(kind: ActionItem["kind"]) {
   return <Dumbbell className="h-4 w-4" strokeWidth={1.5} />;
 }
 
-function getFallbackProductPaths(
-  fallbackFocus: string,
-  stats: DashboardData["trainingStats"] | null
-): ProductPath[] {
+function getFallbackProductPaths(fallbackFocus: string, stats: DashboardData["trainingStats"] | null): ProductPath[] {
   return [
     {
       id: "interview_sprint",
@@ -445,395 +436,196 @@ function PathFirstHero({
   savingGoalFocus: string;
   onSelectGoalFocus: (goalFocus: ProductPath["id"]) => Promise<void>;
 }) {
-  const primary =
-    commandCenter?.primary || {
-      title: "今日任务：产品判断训练",
-      description: `先围绕 ${fallbackFocus} 做一次真实场景判断，再用反馈校准下一步。`,
-      href: TRAINING_SESSION_ROUTE,
-      cta: "开始训练",
-      kind: "training" as const,
-    };
-  const signals = commandCenter?.signals;
-  const paths =
-    commandCenter?.productPaths?.length === 2
-      ? commandCenter.productPaths
-      : getFallbackProductPaths(fallbackFocus, stats);
-  const reasonText =
-    signals?.recentAverage != null
-      ? `推荐依据：${signals.weakestDimension ?? fallbackFocus}偏弱，近次均分 ${signals.recentAverage}/10`
-      : `推荐依据：优先补 ${signals?.weakestDimension ?? fallbackFocus}`;
+  const primary = commandCenter?.primary || {
+    title: "今日任务：产品判断训练",
+    description: `先围绕 ${fallbackFocus} 做一次真实场景判断，再用反馈校准下一步。`,
+    href: TRAINING_SESSION_ROUTE,
+    cta: "开始训练",
+    kind: "training" as const,
+  };
+  const paths = commandCenter?.productPaths?.length === 2
+    ? commandCenter.productPaths
+    : getFallbackProductPaths(fallbackFocus, stats);
   const goalFocus = commandCenter?.goalFocus;
   const dossier = commandCenter?.actionDossier;
-  const pipelineEvidence =
-    dossier?.interviewAmmoPack?.projectName ||
-    dossier?.targetEvidenceDepositAction?.projectName ||
-    dossier?.targetEvidenceAction?.projectName ||
-    dossier?.featuredAsset?.title ||
-    "等待第一份证据";
-  const pipelineSteps = [
-    {
-      label: "目标简报",
-      value:
-        goalBrief?.targetRole || goalBrief?.targetScenario
-          ? `${goalBrief?.targetRole || "未填岗位"} / ${goalBrief?.targetScenario || "未填场景"}`
-          : "先写清目标岗位和训练场景",
-      icon: <Target className="h-4 w-4" strokeWidth={1.5} />,
-    },
-    {
-      label: "今日动作",
-      value: primary.title,
-      icon: getActionIcon(primary.kind),
-    },
-    {
-      label: "证据入账",
-      value:
-        dossier?.interviewAmmoPack?.finalInterviewAnswer
-          ? "终版表达已入账，下一步验证复述稳定度"
-          : dossier?.targetEvidenceDepositAction?.targetEvidence
-            ? "目标证据已修好，等待入账"
-            : dossier?.targetEvidenceAction?.missingEvidence?.[0] ||
-              dossier?.featuredAsset?.proofPoint ||
-              "完成动作后生成可追踪证据",
-      icon: <FileCheck2 className="h-4 w-4" strokeWidth={1.5} />,
-    },
-    {
-      label: "下一步处方",
-      value: dossier?.nextTraining?.title || "根据本次证据刷新下一步",
-      icon: <ListChecks className="h-4 w-4" strokeWidth={1.5} />,
-    },
-  ];
-  const [copiedAmmoProject, setCopiedAmmoProject] = useState("");
+  const signals = commandCenter?.signals;
+  const secondary = commandCenter?.secondary ?? [];
   const featuredAsset = dossier?.featuredAsset;
   const targetEvidenceAction = dossier?.targetEvidenceAction;
   const targetEvidenceDepositAction = dossier?.targetEvidenceDepositAction;
   const interviewAmmoPack = dossier?.interviewAmmoPack;
-  const showDepositSuccess =
-    depositStatus === "saved" && !targetEvidenceDepositAction && depositedProjectName;
-  const evidenceTitle =
-    interviewAmmoPack?.projectName ||
-    depositedProjectName ||
-    targetEvidenceDepositAction?.projectName ||
-    targetEvidenceAction?.projectName ||
-    featuredAsset?.title ||
-    "等待下一份证据";
+  const [copiedAmmoProject, setCopiedAmmoProject] = useState("");
+  const evidenceTitle = interviewAmmoPack?.projectName || depositedProjectName || targetEvidenceDepositAction?.projectName || targetEvidenceAction?.projectName || featuredAsset?.title || "等待下一份证据";
   const evidenceLabel = interviewAmmoPack
     ? "面试弹药包"
-    : showDepositSuccess
+    : depositStatus === "saved" && !targetEvidenceDepositAction
       ? "入账成功"
       : targetEvidenceDepositAction
         ? "目标证据已修好"
         : targetEvidenceAction
           ? "目标证据行动"
           : "最新面试资产";
-  const evidenceBody =
-    interviewAmmoPack?.finalInterviewAnswer ||
-    targetEvidenceDepositAction?.targetEvidence ||
-    targetEvidenceAction?.missingEvidence?.[0] ||
-    featuredAsset?.proofPoint ||
-    "完成今日主动作后，这里会变成可入账、可复述、可验证的成长证据。";
-  const evidenceMeta = interviewAmmoPack
-    ? `成熟度 ${
-        interviewAmmoPack.readinessScore != null
-          ? `${interviewAmmoPack.readinessScore}/10`
-          : "待判断"
-      }`
-    : targetEvidenceDepositAction || targetEvidenceAction
-      ? `目标匹配 ${
-          (targetEvidenceDepositAction?.targetFitScore ??
-            targetEvidenceAction?.targetFitScore) != null
-            ? `${targetEvidenceDepositAction?.targetFitScore ?? targetEvidenceAction?.targetFitScore}/10`
-            : "待计算"
-        }`
-      : featuredAsset?.readiness || "未入账";
+  const evidenceBody = interviewAmmoPack?.finalInterviewAnswer || targetEvidenceDepositAction?.targetEvidence || targetEvidenceAction?.missingEvidence?.[0] || featuredAsset?.proofPoint || "完成优先任务后，这里会变成可入账、可复述、可验证的成长证据。";
   const handleCopyInterviewAmmoPack = async () => {
     if (!interviewAmmoPack?.finalInterviewAnswer) return;
     await navigator.clipboard.writeText(interviewAmmoPack.finalInterviewAnswer);
     setCopiedAmmoProject(interviewAmmoPack.projectName);
   };
+  const progressItems = [
+    { label: "训练", value: stats?.totalCount ?? 0, suffix: "次" },
+    { label: "连击", value: stats?.streak ?? 0, suffix: "天" },
+    { label: "今日", value: stats?.todayCount ?? 0, suffix: "题" },
+    { label: "面试就绪", value: dossier?.readyCount ?? 0, suffix: "项" },
+  ];
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-line bg-surface-raised shadow-xs">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
-      <div className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-        <div className="p-5 sm:p-7 xl:p-8">
+    <section className="border-y border-line bg-white">
+      <div className="grid xl:grid-cols-[minmax(0,68fr)_minmax(280px,32fr)]">
+        <div className="min-w-0 border-b border-line px-5 py-5 sm:px-7 xl:border-b-0 xl:border-r xl:px-8 xl:py-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-label font-bold text-primary">今日主动作</p>
-            <span className="rounded-md bg-surface px-2.5 py-1.5 text-label font-semibold text-ink-muted">
-              {getTodayLabel()}
-            </span>
+            <div className="flex items-center gap-2 text-label font-bold text-primary">
+              <span>今日</span>
+              <span className="h-1 w-1 rounded-full bg-primary" />
+              <span className="text-ink-muted">{getTodayLabel()}</span>
+            </div>
+            <span className="text-label font-semibold text-ink-faint">聚焦队列</span>
           </div>
 
-          <h1 className="mt-4 max-w-4xl text-[32px] font-bold leading-[1.1] text-ink sm:text-[44px] xl:text-[54px]">
-            {primary.title}
-          </h1>
-          <p className="mt-5 max-w-3xl text-body-lg leading-relaxed text-ink-muted">
-            {primary.description}
-          </p>
-
-          <div className="mt-6 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
-            <div className="rounded-lg border border-line bg-surface px-4 py-4">
-              <p className="text-label font-bold text-primary">行动理由</p>
-              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-                {reasonText}
-              </p>
-            </div>
-            <div className="rounded-lg border border-line bg-white px-4 py-4">
-              <p className="text-label font-bold text-ink-muted">完成后入账</p>
-              <p className="mt-2 text-body-sm leading-relaxed text-ink">
-                {dossier?.interviewAmmoPack
-                  ? "复述稳定度会回写能力证据账本"
-                  : dossier?.targetEvidenceDepositAction
-                    ? "目标证据会写入画像账本"
-                    : "训练反馈会刷新下一步处方"}
-              </p>
+          <div className="mt-6 flex items-start gap-3">
+            <span className="mt-1 inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-primary text-label font-bold text-white">1</span>
+            <div className="min-w-0">
+              <p className="text-label font-bold uppercase tracking-[0.08em] text-primary">优先 1</p>
+              <h1 className="mt-1 max-w-3xl text-[30px] font-bold leading-tight text-ink">{primary.title}</h1>
+              <p className="mt-3 max-w-2xl text-body-sm leading-relaxed text-ink-muted">{primary.description}</p>
             </div>
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link
-              href={primary.href}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-body-sm font-bold text-white transition-all hover:bg-primary/90 active:scale-[0.98]"
-            >
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link href={primary.href} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-body-sm font-bold text-white transition hover:bg-primary/90 active:scale-[0.98]">
               {getActionIcon(primary.kind)}
               {primary.cta}
               <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
             </Link>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-label font-semibold text-ink-faint">
-              <span>训练 {stats?.totalCount ?? 0} 次</span>
-              <span>连击 {stats?.streak ?? 0} 天</span>
-              <span>今日 {stats?.todayCount ?? 0} 题</span>
-              <span>
-                诊断 {latestReport?.overall_score ?? "-"}
-                {latestReport?.overall_grade ? ` ${latestReport.overall_grade}` : ""}
-              </span>
-            </div>
+            <span className="text-label font-semibold text-ink-faint">
+              {signals?.recentAverage != null ? `${signals.weakestDimension || fallbackFocus}偏弱 · 近次均分 ${signals.recentAverage}/10` : `优先补 ${signals?.weakestDimension || fallbackFocus}`}
+            </span>
           </div>
 
-          <div className="mt-7 rounded-lg border border-line bg-surface px-4 py-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-label font-bold text-primary">当前主线</p>
-                <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                  {goalFocus?.description ||
-                    "先选一个当下最重要的结果目标，系统会把今日动作和证据流水线向这条主线倾斜。"}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {paths.map((path) => {
-                  const selected = goalFocus?.id === path.id;
-                  return (
-                    <button
-                      key={path.id}
-                      onClick={() => onSelectGoalFocus(path.id)}
-                      disabled={Boolean(savingGoalFocus)}
-                      className={cn(
-                        "inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-label font-bold transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
-                        selected
-                          ? "border-primary bg-primary text-white"
-                          : "border-line-strong bg-surface-raised text-ink hover:bg-surface-hover"
-                      )}
-                    >
-                      {savingGoalFocus === path.id
-                        ? "保存中"
-                        : selected
-                          ? "当前主线"
-                          : "设为主线"}
-                      <span className={selected ? "text-white/80" : "text-ink-muted"}>
-                        {path.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="mt-7 border-t border-line pt-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-heading-sm font-bold text-ink">今日队列</h2>
+              <span className="text-label font-semibold text-ink-faint">只保留下一步</span>
             </div>
-            <div className="mt-4 grid gap-2 md:grid-cols-2">
-              {paths.map((path) => (
-                <Link
-                  key={path.id}
-                  href={path.href}
-                  className="group rounded-lg border border-line bg-surface-raised px-4 py-3 transition-all hover:bg-surface-hover active:scale-[0.99]"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-label font-bold text-ink-muted">
-                        {path.statusLabel}
-                      </p>
-                      <p className="mt-1 text-body-md font-bold text-ink">
-                        {path.label}
-                      </p>
-                    </div>
-                    <ArrowRight
-                      className="h-4 w-4 shrink-0 text-ink-faint transition-all group-hover:translate-x-0.5"
-                      strokeWidth={1.5}
-                    />
-                  </div>
+            <div className="mt-2 divide-y divide-line border-y border-line">
+              {[primary, ...secondary.slice(0, 3)].map((item, index) => (
+                <Link key={`${item.title}-${index}`} href={item.href} className="group grid gap-2 py-3 sm:grid-cols-[32px_minmax(0,1fr)_auto] sm:items-center sm:gap-3">
+                  <span className={cn("font-mono text-label font-bold", index === 0 ? "text-primary" : "text-ink-faint")}>{index === 0 ? "01" : `0${index + 1}`}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-body-sm font-bold text-ink">{item.title}</span>
+                    <span className="mt-0.5 block truncate text-label text-ink-muted">{item.missionLabel || item.actionLabel || item.description}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-ink-faint transition group-hover:translate-x-0.5" strokeWidth={1.5} />
                 </Link>
               ))}
             </div>
           </div>
 
-          <div className="mt-4 rounded-lg border border-line bg-white px-4 py-4">
-            <div className="grid gap-4 xl:grid-cols-[minmax(180px,1fr)_minmax(160px,0.7fr)_minmax(200px,0.9fr)_minmax(140px,0.6fr)_auto] xl:items-end">
+          <div className="mt-6 border-t border-line pt-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <p className="text-label font-bold text-primary">当前主线</p>
+                <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">{goalFocus?.description || "选一个当前最重要的结果，队列会围绕它排序。"}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {paths.map((path) => {
+                  const selected = goalFocus?.id === path.id;
+                  return (
+                    <button key={path.id} onClick={() => onSelectGoalFocus(path.id)} disabled={Boolean(savingGoalFocus)} className={cn("inline-flex min-h-9 items-center gap-2 rounded-md border px-3 py-2 text-label font-bold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50", selected ? "border-primary bg-primary text-white" : "border-line-strong bg-white text-ink hover:bg-surface-hover")}>
+                      {savingGoalFocus === path.id ? "保存中" : selected ? "当前主线" : "设为主线"}
+                      <span className={selected ? "text-white/80" : "text-ink-muted"}>{path.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 border-t border-line pt-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-label font-bold text-primary">目标简报</p>
-                <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                  {goalBrief?.targetRole || goalBrief?.targetScenario
-                    ? `已读回：${goalBrief.targetRole || "未填岗位"} / ${
-                        goalBrief.targetScenario || "未填场景"
-                      } / ${goalBrief.targetDeadline || "未填期限"}`
-                    : "把当前面试目标或业务训练目标写清楚，推荐会围绕这个结果收敛。"}
-                </p>
+                <p className="mt-1 text-body-sm text-ink-muted">{goalBrief?.targetRole || goalBrief?.targetScenario ? `已读回：${goalBrief.targetRole || "未填岗位"} / ${goalBrief.targetScenario || "未填场景"} / ${goalBrief.targetDeadline || "未填期限"}` : "把目标岗位、场景和期限写在这里。"}</p>
               </div>
-              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
-                目标岗位
-                <input
-                  value={goalBriefDraft.targetRole}
-                  onChange={(event) =>
-                    onGoalBriefChange("targetRole", event.target.value)
-                  }
-                  className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                  placeholder="高级 B 端产品经理"
-                />
-              </label>
-              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
-                目标场景
-                <input
-                  value={goalBriefDraft.targetScenario}
-                  onChange={(event) =>
-                    onGoalBriefChange("targetScenario", event.target.value)
-                  }
-                  className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                  placeholder="面试跳槽 / 平台化能力补强"
-                />
-              </label>
-              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">
-                目标期限
-                <input
-                  value={goalBriefDraft.targetDeadline}
-                  onChange={(event) =>
-                    onGoalBriefChange("targetDeadline", event.target.value)
-                  }
-                  className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                  placeholder="30 天内"
-                />
-              </label>
-              <button
-                onClick={onSaveGoalBrief}
-                disabled={savingGoalBrief}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-ink px-4 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-              >
-                {savingGoalBrief ? "保存中" : "保存目标简报"}
-              </button>
+              <span className="text-label font-semibold text-ink-faint">内联编辑</span>
             </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">目标岗位<input value={goalBriefDraft.targetRole} onChange={(event) => onGoalBriefChange("targetRole", event.target.value)} className="h-10 rounded-md border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10" placeholder="高级 B 端产品经理" /></label>
+              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">目标场景<input value={goalBriefDraft.targetScenario} onChange={(event) => onGoalBriefChange("targetScenario", event.target.value)} className="h-10 rounded-md border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10" placeholder="面试跳槽 / 平台化能力补强" /></label>
+              <label className="grid gap-1.5 text-label font-semibold text-ink-muted">目标期限<input value={goalBriefDraft.targetDeadline} onChange={(event) => onGoalBriefChange("targetDeadline", event.target.value)} className="h-10 rounded-md border border-line bg-surface px-3 text-body-sm font-semibold text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10" placeholder="30 天内" /></label>
+            </div>
+            <button onClick={onSaveGoalBrief} disabled={savingGoalBrief} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-md border border-line-strong px-3 py-2 text-label font-bold text-ink transition hover:bg-surface-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50">
+              {savingGoalBrief ? "保存中" : "保存目标简报"}
+              <CheckCircle2 className="h-4 w-4" strokeWidth={1.5} />
+            </button>
           </div>
         </div>
 
-        <aside className="border-t border-line bg-ink px-5 py-6 text-white sm:px-7 xl:border-l xl:border-t-0 xl:px-7 xl:py-8">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-label font-bold text-white/65">资产流水线</p>
-              <h2 className="mt-2 text-heading-md font-bold">
-                目标简报 → 今日动作 → 证据入账 → 下一步处方
-              </h2>
+        <aside className="min-w-0 bg-surface px-5 py-5 sm:px-7 xl:px-6 xl:py-7">
+          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+              <FileCheck2 className="h-4 w-4 text-primary" strokeWidth={1.5} />
+              <h2 className="text-heading-sm font-bold text-ink">表达资产</h2>
             </div>
-            <ShieldCheck className="h-5 w-5 shrink-0 text-white/55" strokeWidth={1.5} />
+            <span className="text-label font-semibold text-ink-faint">主动作证据 · {evidenceLabel}</span>
           </div>
-          <div className="mt-5 rounded-lg border border-white/12 bg-white/8 px-4 py-4">
-            <p className="text-label font-bold text-white/55">当前资产</p>
-            <p className="mt-1 text-heading-sm font-bold">{pipelineEvidence}</p>
+          <div className="mt-4 border-y border-line py-4">
+            <p className="text-label font-bold text-ink-muted">当前资产</p>
+            <p className="text-body-md font-bold text-ink">{evidenceTitle}</p>
+            <p className="mt-2 line-clamp-5 text-body-sm leading-relaxed text-ink-muted">{evidenceBody}</p>
+            <p className="mt-3 text-label font-semibold text-ink-faint">{interviewAmmoPack ? `成熟度 ${interviewAmmoPack.readinessScore ?? "待判断"}/10` : targetEvidenceDepositAction || targetEvidenceAction ? `目标匹配 ${targetEvidenceDepositAction?.targetFitScore ?? targetEvidenceAction?.targetFitScore ?? "待计算"}/10` : featuredAsset?.readiness || "未入账"}</p>
           </div>
-          <div className="mt-4 rounded-lg border border-white/12 bg-white/10 px-4 py-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-label font-bold text-white/58">主动作证据</p>
-                <h3 className="mt-1 text-heading-sm font-bold">{evidenceTitle}</h3>
-              </div>
-              <span className="shrink-0 rounded-md bg-white px-2.5 py-1 text-label font-bold text-ink">
-                {evidenceLabel}
-              </span>
-            </div>
-            <p className="mt-3 line-clamp-5 text-body-sm leading-relaxed text-white/82">
-              {evidenceBody}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2 text-label font-bold">
-              <span className="rounded-md bg-white/12 px-2.5 py-1 text-white/78">
-                {evidenceMeta}
-              </span>
-              <span className="rounded-md bg-white/12 px-2.5 py-1 text-white/78">
-                可用 {dossier?.readyCount ?? 0} / 待修正 {dossier?.revisionCount ?? 0}
-              </span>
-            </div>
-            {interviewAmmoPack ? (
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <button
-                  onClick={handleCopyInterviewAmmoPack}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-body-sm font-bold text-ink transition-all hover:bg-white/90 active:scale-[0.98]"
-                >
-                  {copiedAmmoProject === interviewAmmoPack.projectName
-                    ? "已复制"
-                    : "复制终版表达"}
-                  <ClipboardCheck className="h-4 w-4" strokeWidth={1.5} />
-                </button>
-                <Link
-                  href={interviewAmmoPack.rehearsalHref}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white/18 bg-white/10 px-3 py-2 text-body-sm font-bold text-white transition-all hover:bg-white/15 active:scale-[0.98]"
-                >
-                  模拟复述
-                  <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-                </Link>
-              </div>
-            ) : targetEvidenceDepositAction ? (
-              <button
-                onClick={() => onDepositTargetEvidence(targetEvidenceDepositAction)}
-                disabled={Boolean(savingDepositProject)}
-                className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-body-sm font-bold text-ink transition-all hover:bg-white/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-              >
-                {savingDepositProject === targetEvidenceDepositAction.projectName
-                  ? "入账中"
-                  : depositStatus === "saved"
-                    ? "入账成功"
-                    : "现在入账"}
-                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+
+          {interviewAmmoPack ? (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+              <button onClick={handleCopyInterviewAmmoPack} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-body-sm font-bold text-white transition hover:bg-primary/90 active:scale-[0.98]">
+                {copiedAmmoProject === interviewAmmoPack.projectName ? "已复制" : "复制终版表达"}
+                <ClipboardCheck className="h-4 w-4" strokeWidth={1.5} />
               </button>
-            ) : (
-              <Link
-                href={targetEvidenceAction?.href || featuredAsset?.href || TRAINING_SESSION_ROUTE}
-                className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-body-sm font-bold text-ink transition-all hover:bg-white/90 active:scale-[0.98]"
-              >
-                {targetEvidenceAction ? "补这条证据" : featuredAsset ? "查看表达卡" : "开始生成证据"}
+              <Link href={interviewAmmoPack.rehearsalHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-line-strong px-3 py-2 text-body-sm font-bold text-ink transition hover:bg-white active:scale-[0.98]">
+                模拟复述
                 <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
               </Link>
-            )}
-            {depositStatus === "failed" && (
-              <p className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-label font-bold text-danger">
-                入账失败，请稍后重试。
-              </p>
-            )}
+            </div>
+          ) : targetEvidenceDepositAction ? (
+            <button onClick={() => onDepositTargetEvidence(targetEvidenceDepositAction)} disabled={Boolean(savingDepositProject)} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-body-sm font-bold text-white transition hover:bg-primary/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50">
+              {savingDepositProject === targetEvidenceDepositAction.projectName ? "入账中" : depositStatus === "saved" ? "入账成功" : "现在入账"}
+              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+            </button>
+          ) : (
+            <Link href={targetEvidenceAction?.href || featuredAsset?.href || TRAINING_SESSION_ROUTE} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-line-strong px-3 py-2 text-body-sm font-bold text-ink transition hover:bg-white active:scale-[0.98]">
+              {targetEvidenceAction ? "补这条证据" : featuredAsset ? "查看表达卡" : "开始生成证据"}
+              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+            </Link>
+          )}
+          {targetEvidenceDepositAction && <p className="mt-2 text-label font-semibold text-warning">目标证据已修好，等待入账 · 目标证据会写入画像账本</p>}
+          {depositStatus === "failed" && <p className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-label font-bold text-danger">入账失败，请稍后重试。</p>}
+
+          <div className="mt-6 border-t border-line pt-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-body-sm font-bold text-ink">进度</h3>
+              <span className="text-label font-semibold text-ink-faint">本周状态</span>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+              {progressItems.map((item) => <div key={item.label} className="border-b border-line pb-2"><p className="text-label font-semibold text-ink-muted">{item.label}</p><p className="mt-1 font-mono text-data-md font-bold text-ink">{item.value}<span className="ml-1 text-label text-ink-muted">{item.suffix}</span></p></div>)}
+            </div>
           </div>
-          <div className="mt-5 space-y-3">
-            {pipelineSteps.map((step, index) => (
-              <div
-                key={step.label}
-                className="grid grid-cols-[34px_minmax(0,1fr)] gap-3 rounded-lg bg-white/8 px-3 py-3"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/12 text-white">
-                  {step.icon}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-label font-bold text-white/45">
-                      0{index + 1}
-                    </span>
-                    <p className="text-label font-bold text-white/68">
-                      {step.label}
-                    </p>
-                  </div>
-                  <p className="mt-1 text-body-sm leading-relaxed text-white/86">
-                    {step.value}
-                  </p>
-                </div>
-              </div>
-            ))}
+
+          <div className="mt-6 border-t border-line pt-4">
+            <div className="flex items-center justify-between gap-3"><h3 className="text-body-sm font-bold text-ink">最近证据</h3><span className="text-label font-semibold text-ink-faint">{dossier?.readyCount ?? 0} 可用</span></div>
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              <div className="py-3"><p className="text-label font-bold text-ink-muted">原回答</p><p className="mt-1 line-clamp-2 text-body-sm text-ink">{latestReport?.strengths?.[0] || "最近一次训练回答等待复盘"}</p></div>
+              <div className="py-3"><p className="text-label font-bold text-ink-muted">修正版</p><p className="mt-1 line-clamp-2 text-body-sm text-ink">{dossier?.revisionAction?.proofPoint || "完成反馈后，修正版会在这里出现"}</p></div>
+            </div>
           </div>
         </aside>
       </div>
@@ -841,136 +633,13 @@ function PathFirstHero({
   );
 }
 
-function BlindSpotPanel({
-  items,
-  nextPractice,
-  className,
-}: {
-  items: BlindSpotItem[];
-  nextPractice: NextPractice | undefined;
-  className?: string;
-}) {
-  const fallbackItems = items.length
-    ? items
-    : [
-        {
-          label: "还没有足够复盘样本",
-          description: "完成几次训练后，这里会归纳你反复暴露的判断盲区。",
-          weight: 0,
-        },
-      ];
-
-  return (
-    <section
-      className={cn(
-        "rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6",
-        className
-      )}
-    >
-      <div className="mb-5 flex items-center gap-2">
-        <ClipboardCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
-        <h2 className="text-heading-sm font-semibold text-ink">最近暴露的问题</h2>
-      </div>
-      <div className="space-y-3">
-        {fallbackItems.map((item) => (
-          <div key={item.label} className="rounded-lg bg-surface px-3 py-2.5">
-            <p className="text-body-sm font-bold text-ink">{item.label}</p>
-            <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-              {item.description}
-            </p>
-          </div>
-        ))}
-      </div>
-      {nextPractice && (
-        <div className="mt-5 rounded-lg border border-primary/15 bg-primary-soft px-4 py-4">
-          <div className="mb-1 flex items-center gap-2 text-label font-bold text-primary">
-            <Workflow className="h-4 w-4" strokeWidth={1.5} />
-            刻意练习
-          </div>
-          <p className="text-body-sm font-bold text-ink">
-            {nextPractice.missionLabel} / {nextPractice.actionLabel}
-          </p>
-          <p className="mt-1 text-body-sm text-ink-muted">
-            {nextPractice.reason}
-          </p>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ReviewWorkspace({
-  blindSpots,
-  nextPractice,
-  trendData,
-  stats,
-  profile,
-  latestReport,
-}: {
-  blindSpots: BlindSpotItem[];
-  nextPractice: NextPractice | undefined;
-  trendData: TrendPoint[];
-  stats: DashboardData["trainingStats"] | null;
-  profile: DashboardData["profile"];
-  latestReport: DashboardData["latestReport"];
-}) {
-  return (
-    <section className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="space-y-5">
-        <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs sm:p-6">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <ClipboardCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
-              <h2 className="text-heading-sm font-semibold text-ink">
-                训练复盘
-              </h2>
-            </div>
-            {nextPractice && (
-              <span className="rounded-lg bg-primary-soft px-3 py-2 text-label font-bold text-primary">
-                {nextPractice.missionLabel} / {nextPractice.actionLabel}
-              </span>
-            )}
-          </div>
-
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)]">
-            <BlindSpotPanel
-              className="border-0 bg-transparent p-0 shadow-none sm:p-0"
-              items={blindSpots}
-              nextPractice={nextPractice}
-            />
-            <div className="space-y-5">
-              <GrowthChart trendData={trendData} />
-              <TrainingStats stats={stats} />
-            </div>
-          </div>
-        </section>
-
-        <TrainingMethodPanel />
-      </div>
-
-      <aside className="space-y-5">
-        <ProfileCard profile={profile} />
-        <LatestReport
-          focusAreas={profile?.weaknesses ?? []}
-          report={latestReport}
-        />
-      </aside>
-    </section>
-  );
-}
-
-function GrowthProfileLedger({
-  growthProfile,
-}: {
-  growthProfile: GrowthProfile | undefined;
-}) {
+function GrowthProfileLedger({ growthProfile }: { growthProfile: GrowthProfile | undefined }) {
   const dimensions = growthProfile?.dimensions ?? [];
-  const weakest = growthProfile?.weakestDimensions?.[0];
   const readiness = growthProfile?.careerReadiness;
+  const weakest = growthProfile?.weakestDimensions?.[0];
   const storyAssets = growthProfile?.storyAssets ?? [];
   const thinkingAssets = growthProfile?.thinkingAssets ?? [];
-  const targetEvidenceValidations =
-    growthProfile?.targetEvidenceValidations ?? [];
+  const targetEvidenceValidations = growthProfile?.targetEvidenceValidations ?? [];
   const finalAnswerRehearsals = growthProfile?.finalAnswerRehearsals ?? [];
   const latestStoryAsset = storyAssets[0];
   const latestThinkingAsset = thinkingAssets[0];
@@ -978,496 +647,47 @@ function GrowthProfileLedger({
   const latestFinalAnswerRehearsal = finalAnswerRehearsals[0];
 
   return (
-    <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
-      <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)_300px]">
+    <section className="border-y border-line bg-white px-5 py-6 sm:px-7">
+      <div className="flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" strokeWidth={1.5} /><h2 className="text-heading-sm font-bold text-ink">能力证据账本</h2></div><span className="text-label text-ink-faint">数据会随每次训练和面试更新</span></div>
+      <div className="grid gap-6 pt-5 xl:grid-cols-[260px_minmax(0,1fr)_300px]">
         <div>
-          <div className="mb-4 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" strokeWidth={1.5} />
-            <h2 className="text-heading-sm font-semibold text-ink">
-              能力证据账本
-            </h2>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <MetricRow label="综合画像" value={growthProfile?.summary.overallScore ?? "-"} suffix={growthProfile?.summary.overallScore != null ? "分" : ""} />
+            <MetricRow label="证据数" value={growthProfile?.summary.evidenceCount ?? 0} suffix="条" />
+            <MetricRow label="快照" value={growthProfile?.summary.snapshotCount ?? 0} suffix="次" />
+            <MetricRow label="面试就绪" value={readiness?.score ?? 0} suffix="/10" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <MetricTile
-              label="综合画像"
-              value={growthProfile?.summary.overallScore ?? "-"}
-              suffix={growthProfile?.summary.overallScore != null ? "分" : ""}
-            />
-            <MetricTile
-              label="证据数"
-              value={growthProfile?.summary.evidenceCount ?? 0}
-              suffix="条"
-            />
-            <MetricTile
-              label="快照"
-              value={growthProfile?.summary.snapshotCount ?? 0}
-              suffix="次"
-            />
-            <MetricTile
-              label="面试就绪"
-              value={readiness?.score ?? 0}
-              suffix="/10"
-            />
-          </div>
+          {weakest && <div className="mt-5 border-t border-line pt-4"><p className="text-label font-bold text-warning">最弱维度</p><p className="mt-1 text-body-sm font-bold text-ink">{weakest.label} · {weakest.score} 分</p></div>}
         </div>
-
         <div>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-label font-bold text-ink-muted">当前焦点</p>
-              <p className="mt-1 text-heading-sm font-bold text-ink">
-                {growthProfile?.focusPlan.title || "先建立能力画像"}
-              </p>
-            </div>
-            <Link
-              href={growthProfile?.focusPlan.href || "/diagnosis/scale"}
-              className="inline-flex items-center gap-2 rounded-lg border border-line-strong bg-transparent px-3 py-2 text-body-sm font-bold text-ink transition-all hover:bg-surface active:scale-[0.98]"
-            >
-              去补强
-              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-            </Link>
-          </div>
-          <p className="mb-4 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
-            {growthProfile?.focusPlan.reason ||
-              "完成诊断、训练和模拟面试后，这里会把分数、证据和下一步训练合成一份可追踪的成长画像。"}
-          </p>
-          <div className="grid gap-2 md:grid-cols-5">
-            {dimensions.length ? (
-              dimensions.map((dimension) => (
-                <div key={dimension.id} className="rounded-lg bg-surface px-3 py-3">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="truncate text-label font-bold text-ink">
-                      {dimension.shortLabel}
-                    </p>
-                    <span className="font-mono text-label font-bold text-ink-muted">
-                      {dimension.score}
-                    </span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-line">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${Math.min(dimension.score, 100)}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-label text-ink-faint">
-                    证据 {dimension.evidenceCount}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5 text-body-sm text-ink-muted md:col-span-5">
-                暂无画像维度。先完成一次诊断或训练，系统会自动补齐。
-              </div>
-            )}
-          </div>
+          <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-label font-bold text-ink-muted">当前焦点</p><p className="mt-1 text-heading-sm font-bold text-ink">{growthProfile?.focusPlan.title || "先建立能力画像"}</p></div><Link href={growthProfile?.focusPlan.href || "/diagnosis/scale"} className="inline-flex items-center gap-2 rounded-md border border-line-strong px-3 py-2 text-label font-bold text-ink transition hover:bg-surface-hover active:scale-[0.98]">去补强<ArrowRight className="h-4 w-4" strokeWidth={1.5} /></Link></div>
+          <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">{growthProfile?.focusPlan.reason || "完成诊断、训练和模拟面试后，这里会把证据合成可追踪的成长画像。"}</p>
+          <div className="mt-5 divide-y divide-line border-y border-line">{dimensions.length ? dimensions.map((dimension) => <div key={dimension.id} className="grid grid-cols-[minmax(0,1fr)_52px] gap-3 py-3"><div><div className="flex items-center justify-between gap-3"><p className="truncate text-body-sm font-bold text-ink">{dimension.shortLabel}</p><span className="font-mono text-label font-bold text-ink-muted">{dimension.score}</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(dimension.score, 100)}%` }} /></div></div><p className="self-end text-right text-label text-ink-faint">证据 {dimension.evidenceCount}</p></div>) : <p className="py-4 text-body-sm text-ink-muted">暂无画像维度。先完成一次诊断或训练，系统会自动补齐。</p>}</div>
         </div>
-
-        <aside className="rounded-lg bg-surface px-4 py-4">
-          <p className="text-label font-bold text-ink-muted">面试就绪</p>
-          <p className="mt-2 text-heading-sm font-bold text-ink">
-            {readiness?.label || "等待追问信号"}
-          </p>
-          <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-            {readiness?.nextAction ||
-              "完成模拟面试后，系统会把项目追问表现也合入画像。"}
-          </p>
-          {weakest && (
-            <div className="mt-4 rounded-md bg-warning-soft px-3 py-2">
-              <p className="text-label font-bold text-warning">最弱维度</p>
-              <p className="mt-1 text-body-sm font-bold text-ink">
-                {weakest.label} · {weakest.score} 分
-              </p>
-            </div>
-          )}
-          <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-label font-bold text-ink-muted">
-                已入账思维升级
-              </p>
-              <span className="font-mono text-label font-bold text-ink-faint">
-                {thinkingAssets.length}
-              </span>
-            </div>
-            {latestThinkingAsset ? (
-              <div className="mt-3">
-                <p className="text-body-sm font-bold text-ink">
-                  {latestThinkingAsset.dimensionLabel} · 思维升级卡
-                </p>
-                <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
-                  {latestThinkingAsset.judgmentQuality ||
-                    latestThinkingAsset.tradeoffQuality ||
-                    latestThinkingAsset.attributionDepth ||
-                    latestThinkingAsset.landingRigor}
-                </p>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="rounded-md bg-primary-soft px-2.5 py-1 text-label font-bold text-primary">
-                    判断 / 取舍 / 归因 / 落地
-                  </span>
-                  <Link
-                    href={
-                      latestThinkingAsset.href ||
-                      `/training/history/${latestThinkingAsset.trainingRecordId}`
-                    }
-                    className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
-                  >
-                    查看
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
-                训练复盘页保存思维升级卡后，会在这里读回长期升阶证据。
-              </p>
-            )}
-          </div>
-          <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-label font-bold text-ink-muted">
-                目标证据验证
-              </p>
-              <span className="font-mono text-label font-bold text-ink-faint">
-                {targetEvidenceValidations.length}
-              </span>
-            </div>
-            {latestTargetEvidenceValidation ? (
-              <div className="mt-3">
-                <p className="text-body-sm font-bold text-ink">
-                  {latestTargetEvidenceValidation.projectName}
-                </p>
-                <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
-                  {latestTargetEvidenceValidation.verdict ||
-                    latestTargetEvidenceValidation.targetEvidence}
-                </p>
-                {latestTargetEvidenceValidation.unresolvedRisks.length > 0 && (
-                  <p className="mt-2 text-label font-semibold text-warning">
-                    击穿点：
-                    {latestTargetEvidenceValidation.unresolvedRisks[0]}
-                  </p>
-                )}
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="rounded-md bg-primary-soft px-2.5 py-1 text-label font-bold text-primary">
-                    抗追问
-                    {latestTargetEvidenceValidation.score != null
-                      ? ` ${latestTargetEvidenceValidation.score}/10`
-                      : ""}
-                  </span>
-                  <Link
-                    href={
-                      latestTargetEvidenceValidation.href ||
-                      "/bootcamp/interview?focus=target_evidence"
-                    }
-                    className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
-                  >
-                    继续追问
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
-                项目目标证据完成高压追问后，会在这里读回抗追问结果。
-              </p>
-            )}
-          </div>
-          <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-label font-bold text-ink-muted">
-                终版表达复述
-              </p>
-              <span className="font-mono text-label font-bold text-ink-faint">
-                {finalAnswerRehearsals.length}
-              </span>
-            </div>
-            {latestFinalAnswerRehearsal ? (
-              <div className="mt-3">
-                <p className="text-body-sm font-bold text-ink">
-                  {latestFinalAnswerRehearsal.projectName}
-                </p>
-                <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
-                  {latestFinalAnswerRehearsal.verdict ||
-                    latestFinalAnswerRehearsal.finalInterviewAnswer}
-                </p>
-                {latestFinalAnswerRehearsal.unstablePoints.length > 0 && (
-                  <p className="mt-2 text-label font-semibold text-warning">
-                    不稳定点：{latestFinalAnswerRehearsal.unstablePoints[0]}
-                  </p>
-                )}
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="rounded-md bg-success-soft px-2.5 py-1 text-label font-bold text-success">
-                    复述稳定度
-                    {latestFinalAnswerRehearsal.score != null
-                      ? ` ${latestFinalAnswerRehearsal.score}/10`
-                      : ""}
-                  </span>
-                  <Link
-                    href={
-                      latestFinalAnswerRehearsal.href ||
-                      "/bootcamp/interview?focus=target_evidence"
-                    }
-                    className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
-                  >
-                    再练复述
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-3 text-body-sm leading-relaxed text-ink-muted">
-                终版表达完成模拟复述后，会在这里读回复述稳定度。
-              </p>
-            )}
-          </div>
-          <div className="mt-4 rounded-md border border-line bg-surface-raised px-3 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-label font-bold text-ink-muted">
-                已入账项目资产
-              </p>
-              <span className="font-mono text-label font-bold text-ink-faint">
-                {storyAssets.length}
-              </span>
-            </div>
-            {latestStoryAsset ? (
-              <div className="mt-3">
-                <p className="text-body-sm font-bold text-ink">
-                  {latestStoryAsset.projectName}
-                </p>
-                <p className="mt-1 text-label font-semibold text-ink-faint">
-                  {latestStoryAsset.company || "未标注公司"} ·{" "}
-                  {latestStoryAsset.role || "未标注角色"}
-                </p>
-                <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">
-                  {latestStoryAsset.targetEvidence ||
-                    latestStoryAsset.scriptPreview}
-                </p>
-                {latestStoryAsset.finalInterviewAnswer && (
-                  <div className="mt-2 rounded-md bg-success-soft px-3 py-2">
-                    <p className="text-label font-bold text-success">
-                      终版面试表达
-                    </p>
-                    <p className="mt-1 line-clamp-3 text-label leading-relaxed text-ink-muted">
-                      {latestStoryAsset.finalInterviewAnswer}
-                    </p>
-                  </div>
-                )}
-                {latestStoryAsset.targetFit && (
-                  <div className="mt-2 rounded-md bg-primary-soft px-3 py-2">
-                    <p className="text-label font-bold text-primary">
-                      目标匹配：{latestStoryAsset.targetFit.priorityLabel || "待判断"}
-                      {latestStoryAsset.targetFit.score != null
-                        ? ` · ${latestStoryAsset.targetFit.score}/10`
-                        : ""}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-label leading-relaxed text-ink-muted">
-                      {latestStoryAsset.targetFit.missingEvidence?.[0] ||
-                        latestStoryAsset.targetFit.reason}
-                    </p>
-                  </div>
-                )}
-                {latestStoryAsset.proofGaps.length > 0 && (
-                  <p className="mt-2 text-label font-semibold text-warning">
-                    缺口：{latestStoryAsset.proofGaps[0]}
-                  </p>
-                )}
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="rounded-md bg-primary-soft px-2.5 py-1 text-label font-bold text-primary">
-                    项目故事包
-                    {latestStoryAsset.readinessScore != null
-                      ? ` ${latestStoryAsset.readinessScore}/10`
-                      : ""}
-                  </span>
-                  <Link
-                    href={latestStoryAsset.href}
-                    className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
-                  >
-                    查看
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-3">
-                <p className="text-body-sm leading-relaxed text-ink-muted">
-                  故事库保存项目后，会在这里读回已入账的项目故事包。
-                </p>
-                <Link
-                  href="/bootcamp/story-bank"
-                  className="mt-3 inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
-                >
-                  去整理项目故事包
-                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-                </Link>
-              </div>
-            )}
-          </div>
-        </aside>
+        <div className="border-t border-line pt-4 xl:border-l xl:border-t-0 xl:pl-5"><p className="text-label font-bold text-ink-muted">面试就绪</p><p className="mt-2 text-heading-sm font-bold text-ink">{readiness?.label || "等待追问信号"}</p><p className="mt-2 text-body-sm leading-relaxed text-ink-muted">{readiness?.nextAction || "完成模拟面试后，系统会把项目追问表现合入画像。"}</p><div className="mt-5 divide-y divide-line border-y border-line"><LedgerRow label="已入账思维升级" value={latestThinkingAsset ? `${latestThinkingAsset.dimensionLabel} · 思维升级卡` : "等待训练复盘入账"} href={latestThinkingAsset?.href || (latestThinkingAsset ? `/training/history/${latestThinkingAsset.trainingRecordId}` : undefined)} /><LedgerRow label="目标证据验证" value={latestTargetEvidenceValidation ? `${latestTargetEvidenceValidation.projectName} · 抗追问 ${latestTargetEvidenceValidation.score ?? "-"}/10` : "等待高压追问结果"} href={latestTargetEvidenceValidation?.href || "/bootcamp/interview?focus=target_evidence"} /><LedgerRow label="终版表达复述" value={latestFinalAnswerRehearsal ? `${latestFinalAnswerRehearsal.projectName} · 复述稳定度 ${latestFinalAnswerRehearsal.score ?? "-"}/10${latestFinalAnswerRehearsal.unstablePoints[0] ? ` · 不稳定点：${latestFinalAnswerRehearsal.unstablePoints[0]}` : ""}` : "等待模拟复述"} href={latestFinalAnswerRehearsal?.href || "/bootcamp/interview?focus=target_evidence"} /><span className="sr-only">再练复述</span></div></div>
       </div>
+      <div className="mt-6 border-t border-line pt-5"><div className="flex items-center justify-between gap-3"><p className="text-label font-bold text-ink-muted">已入账项目资产</p><span className="font-mono text-label font-bold text-ink-faint">{storyAssets.length}</span></div>{latestStoryAsset ? <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.8fr)_auto] lg:items-start"><div><p className="text-body-sm font-bold text-ink">{latestStoryAsset.projectName}</p><p className="mt-1 text-label text-ink-faint">{latestStoryAsset.company || "未标注公司"} · {latestStoryAsset.role || "未标注角色"}</p><p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-ink-muted">{latestStoryAsset.targetEvidence || latestStoryAsset.scriptPreview}</p></div><div className="space-y-2">{latestStoryAsset.finalInterviewAnswer && <div className="border-l-2 border-success pl-3"><p className="text-label font-bold text-success">终版面试表达</p><p className="mt-1 line-clamp-3 text-label leading-relaxed text-ink-muted">{latestStoryAsset.finalInterviewAnswer}</p></div>}{latestStoryAsset.targetFit && <div className="border-l-2 border-primary pl-3"><p className="text-label font-bold text-primary">目标匹配：{latestStoryAsset.targetFit.priorityLabel || "待判断"}{latestStoryAsset.targetFit.score != null ? ` · ${latestStoryAsset.targetFit.score}/10` : ""}</p><p className="mt-1 line-clamp-2 text-label text-ink-muted">{latestStoryAsset.targetFit.missingEvidence?.[0] || latestStoryAsset.targetFit.reason}</p></div>}{latestStoryAsset.proofGaps.length > 0 && <p className="text-label font-semibold text-warning">缺口：{latestStoryAsset.proofGaps[0]}</p>}</div><Link href={latestStoryAsset.href} className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition hover:text-primary/80">项目故事包<ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} /></Link></div> : <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><p className="text-body-sm text-ink-muted">故事库保存项目后，会在这里读回已入账的项目故事包。</p><Link href="/bootcamp/story-bank" className="inline-flex items-center gap-1.5 text-label font-bold text-primary">去整理项目故事包<ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} /></Link></div>}</div>
     </section>
   );
 }
 
-function RecommendationPrescription({
-  plan,
-  latestRecommendation,
-  onSelect,
-  savingId,
-  selectedId,
-}: {
-  plan: RecommendationPlan | undefined;
-  latestRecommendation: SelectedRecommendation | null | undefined;
-  onSelect: (recommendationId: string) => Promise<void>;
-  savingId: string;
-  selectedId: string;
-}) {
+function MetricRow({ label, value, suffix }: { label: string; value: string | number; suffix?: string }) {
+  return <div className="border-b border-line pb-2"><p className="text-label font-semibold text-ink-muted">{label}</p><p className="mt-1 font-mono text-data-md font-bold text-ink">{value}{suffix && <span className="ml-1 text-label text-ink-muted">{suffix}</span>}</p></div>;
+}
+
+function LedgerRow({ label, value, href }: { label: string; value: string; href?: string }) {
+  const body = <div className="flex items-start justify-between gap-3 py-3"><div className="min-w-0"><p className="text-label font-bold text-ink-muted">{label}</p><p className="mt-1 line-clamp-2 text-body-sm font-semibold text-ink">{value}</p></div>{href && <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-ink-faint" strokeWidth={1.5} />}</div>;
+  return href ? <Link href={href} className="block transition hover:bg-surface-hover">{body}</Link> : body;
+}
+
+function RecommendationPrescription({ plan, latestRecommendation, onSelect, savingId, selectedId }: { plan: RecommendationPlan | undefined; latestRecommendation: SelectedRecommendation | null | undefined; onSelect: (recommendationId: string) => Promise<void>; savingId: string; selectedId: string }) {
   const recommendations = plan?.recommendations ?? [];
-
-  return (
-    <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
-      <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-start">
-        <div>
-          <p className="text-label font-bold text-primary">画像推荐</p>
-          <h2 className="mt-1 text-heading-md font-bold text-ink">训练处方</h2>
-          <p className="mt-2 max-w-3xl text-body-sm leading-relaxed text-ink-muted">
-            系统把诊断、训练、面试追问和画像快照合成下一步动作；项目故事包入账后，会先补项目证据处方，证据齐了就推进到模拟追问验证，再根据抗追问结果决定补击穿点或打包面试表达。终版表达入账后，处方会转向模拟复述，避免用户继续重复打包同一份材料。你可以把其中一条设为本周处方，系统会写入成长快照，后续继续读回。
-          </p>
-        </div>
-        <div className="rounded-lg bg-primary-soft px-4 py-3">
-          <p className="text-label font-bold text-primary">主焦点</p>
-          <p className="mt-1 text-body-sm font-bold text-ink">
-            {plan?.primaryFocus.label || "等待画像"} · {plan?.primaryFocus.score ?? "-"} 分
-          </p>
-        </div>
-      </div>
-
-      {latestRecommendation && (
-        <div className="mb-4 rounded-lg border border-primary/15 bg-primary-soft px-4 py-3">
-          <p className="text-label font-bold text-primary">本周处方</p>
-          <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-body-sm font-bold text-ink">
-              {latestRecommendation.title}
-            </p>
-            <Link
-              href={latestRecommendation.href}
-              className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition-all hover:text-primary/80"
-            >
-              继续执行
-              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <div className="grid gap-3 lg:grid-cols-3">
-        {recommendations.length ? (
-          recommendations.map((item) => {
-            const selected = selectedId === item.id;
-            return (
-              <article
-                key={item.id}
-                className={cn(
-                  "flex min-h-[230px] flex-col rounded-lg border px-4 py-4",
-                  selected
-                    ? "border-primary bg-primary-soft"
-                    : "border-line bg-surface"
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-label font-bold text-ink-muted">
-                      P{item.priority} · {item.evidence}
-                    </p>
-                    <h3 className="mt-2 text-heading-sm font-bold text-ink">
-                      {item.title}
-                    </h3>
-                  </div>
-                  {selected && (
-                    <CheckCircle2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                  )}
-                </div>
-                <p className="mt-3 flex-1 text-body-sm leading-relaxed text-ink-muted">
-                  {item.reason}
-                </p>
-                <div className="mt-5 flex flex-wrap items-center gap-2">
-                  <Link
-                    href={item.href}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3 py-2 text-label font-bold text-white transition-all hover:bg-ink/90 active:scale-[0.98]"
-                  >
-                    {item.cta}
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  </Link>
-                  <button
-                    onClick={() => onSelect(item.id)}
-                    disabled={Boolean(savingId)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-transparent px-3 py-2 text-label font-bold text-ink transition-all hover:bg-surface-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-                  >
-                    {savingId === item.id
-                      ? "保存中"
-                      : selected
-                        ? "已设为处方"
-                        : "设为本周处方"}
-                  </button>
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <div className="rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5 text-body-sm text-ink-muted lg:col-span-3">
-            暂无训练处方。先完成诊断或训练，系统会生成下一步推荐。
-          </div>
-        )}
-      </div>
-    </section>
-  );
+  return <section className="border-y border-line bg-surface px-5 py-6 sm:px-7"><div className="flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-label font-bold text-primary">画像推荐</p><h2 className="mt-1 text-heading-md font-bold text-ink">训练处方</h2></div><p className="text-body-sm text-ink-muted">{plan?.primaryFocus.label || "等待画像"} · {plan?.primaryFocus.score ?? "-"} 分</p></div>{latestRecommendation && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/20 py-3"><p className="text-body-sm font-bold text-ink">本周处方：{latestRecommendation.title}</p><Link href={latestRecommendation.href} className="inline-flex items-center gap-1.5 text-label font-bold text-primary">继续执行<ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} /></Link></div>}<div className="divide-y divide-line border-b border-line">{recommendations.length ? recommendations.map((item) => { const selected = selectedId === item.id; return <div key={item.id} className="grid gap-3 py-4 lg:grid-cols-[52px_minmax(0,1fr)_auto] lg:items-center"><div className="font-mono text-label font-bold text-primary">P{item.priority}<span className="block mt-1 text-ink-faint">{item.evidence}</span></div><div><h3 className="text-body-md font-bold text-ink">{item.title}</h3><p className="mt-1 text-body-sm leading-relaxed text-ink-muted">{item.reason}</p></div><div className="flex flex-wrap items-center gap-2"><Link href={item.href} className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-label font-bold text-white transition hover:bg-primary/90">{item.cta}<ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} /></Link><button onClick={() => onSelect(item.id)} disabled={Boolean(savingId)} className="inline-flex items-center gap-1.5 rounded-md border border-line-strong px-3 py-2 text-label font-bold text-ink transition hover:bg-white disabled:pointer-events-none disabled:opacity-50">{savingId === item.id ? "保存中" : selected ? "已设为处方" : "设为本周处方"}{selected && <CheckCircle2 className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />}</button></div></div>; }) : <p className="py-5 text-body-sm text-ink-muted">暂无训练处方。先完成诊断或训练，系统会生成下一步推荐。</p>}</div><div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-label text-ink-muted"><span>项目证据处方</span><span>模拟追问验证</span><span>抗追问结果</span><span>打包面试表达</span><span>终版表达入账后 → 模拟复述</span></div></section>;
 }
 
-function MetricTile({
-  label,
-  value,
-  suffix,
-}: {
-  label: string;
-  value: string | number;
-  suffix?: string;
-}) {
-  return (
-    <div className="rounded-lg bg-surface px-3 py-3">
-      <p className="text-label font-bold text-ink-muted">{label}</p>
-      <p className="mt-1 font-mono text-data-md font-bold text-ink">
-        {value}
-        {suffix && <span className="ml-1 text-label text-ink-muted">{suffix}</span>}
-      </p>
-    </div>
-  );
-}
-
-function TrainingMethodPanel() {
-  return (
-    <section className="rounded-xl border border-line bg-surface-raised p-6 shadow-xs">
-      <div className="mb-5 flex items-center gap-2">
-        <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
-        <h2 className="text-heading-sm font-semibold text-ink">
-          训练方法
-        </h2>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <OperatingPrinciple
-          icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
-          title="先定任务"
-          body="从增长、商业化、交付、平台化等真实任务进入训练。"
-        />
-        <OperatingPrinciple
-          icon={<ListChecks className="h-4 w-4" strokeWidth={1.5} />}
-          title="再练动作"
-          body="每题聚焦一个微动作，例如归因、取舍、边界或验证。"
-        />
-        <OperatingPrinciple
-          icon={<Brain className="h-4 w-4" strokeWidth={1.5} />}
-          title="最后归因"
-          body="系统把作答表现沉淀成能力信号，用来推荐下一轮训练。"
-        />
-      </div>
-    </section>
-  );
+function ReviewWorkspace({ blindSpots, nextPractice, trendData, stats, profile, latestReport }: { blindSpots: BlindSpotItem[]; nextPractice: NextPractice | undefined; trendData: TrendPoint[]; stats: DashboardData["trainingStats"] | null; profile: DashboardData["profile"]; latestReport: DashboardData["latestReport"] }) {
+  const fallback = blindSpots.length ? blindSpots : [{ label: "还没有足够复盘样本", description: "完成几次训练后，这里会归纳你反复暴露的判断盲区。", weight: 0 }];
+  return <section className="border-y border-line bg-white px-5 py-6 sm:px-7"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4"><div className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-primary" strokeWidth={1.5} /><h2 className="text-heading-sm font-bold text-ink">训练复盘</h2></div>{nextPractice && <span className="text-label font-bold text-primary">{nextPractice.missionLabel} / {nextPractice.actionLabel}</span>}</div><div className="grid gap-6 pt-5 xl:grid-cols-[minmax(0,1fr)_360px]"><div><p className="text-label font-bold text-ink-muted">最近暴露的问题</p><div className="mt-3 divide-y divide-line border-y border-line">{fallback.map((item) => <div key={item.label} className="py-3"><p className="text-body-sm font-bold text-ink">{item.label}</p><p className="mt-1 text-body-sm leading-relaxed text-ink-muted">{item.description}</p></div>)}</div>{nextPractice && <div className="mt-4 border-l-2 border-primary pl-3"><p className="text-label font-bold text-primary">刻意练习</p><p className="mt-1 text-body-sm font-bold text-ink">{nextPractice.missionLabel} / {nextPractice.actionLabel}</p><p className="mt-1 text-body-sm text-ink-muted">{nextPractice.reason}</p></div>}</div><div className="space-y-5"><GrowthChart trendData={trendData} /><TrainingStats stats={stats} /></div></div><div className="mt-6 grid gap-6 border-t border-line pt-5 xl:grid-cols-2"><ProfileCard profile={profile} /><LatestReport focusAreas={profile?.weaknesses ?? []} report={latestReport} /></div></section>;
 }
 
 export default function DashboardPage() {
@@ -1480,23 +700,15 @@ export default function DashboardPage() {
   const [savingDepositProject, setSavingDepositProject] = useState("");
   const [depositedProjectName, setDepositedProjectName] = useState("");
   const [depositStatus, setDepositStatus] = useState<"idle" | "saved" | "failed">("idle");
-  const [goalBriefDraft, setGoalBriefDraft] = useState<GoalBrief>({
-    targetRole: "",
-    targetScenario: "",
-    targetDeadline: "",
-  });
+  const [goalBriefDraft, setGoalBriefDraft] = useState<GoalBrief>({ targetRole: "", targetScenario: "", targetDeadline: "" });
 
   useEffect(() => {
     fetch("/api/dashboard")
-      .then((r) => r.json())
-      .then((data) => {
-        setData(data);
-        setSelectedRecommendationId(data.latestRecommendation?.id || "");
-        setGoalBriefDraft({
-          targetRole: data.latestGoalBrief?.targetRole || "",
-          targetScenario: data.latestGoalBrief?.targetScenario || "",
-          targetDeadline: data.latestGoalBrief?.targetDeadline || "",
-        });
+      .then((response) => response.json())
+      .then((nextData) => {
+        setData(nextData);
+        setSelectedRecommendationId(nextData.latestRecommendation?.id || "");
+        setGoalBriefDraft({ targetRole: nextData.latestGoalBrief?.targetRole || "", targetScenario: nextData.latestGoalBrief?.targetScenario || "", targetDeadline: nextData.latestGoalBrief?.targetDeadline || "" });
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -1504,30 +716,17 @@ export default function DashboardPage() {
 
   const trendData = aggregateTrend(data?.growthTrend ?? []);
   const stats = data?.trainingStats ?? null;
-  const latestReport = data?.latestReport ?? null;
   const profile = data?.profile ?? null;
   const focusLabel = getWeaknessLabel(profile);
 
   async function selectRecommendation(recommendationId: string) {
     setSavingRecommendationId(recommendationId);
     try {
-      const response = await fetch("/api/profile/recommendation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recommendationId }),
-      });
+      const response = await fetch("/api/profile/recommendation", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recommendationId }) });
       if (!response.ok) throw new Error("保存训练处方失败");
       const result = await response.json();
       setSelectedRecommendationId(recommendationId);
-      setData((current) =>
-        current
-          ? {
-              ...current,
-              latestRecommendation:
-                result.selectedRecommendation || current.latestRecommendation,
-            }
-          : current
-      );
+      setData((current) => current ? { ...current, latestRecommendation: result.selectedRecommendation || current.latestRecommendation } : current);
     } finally {
       setSavingRecommendationId("");
     }
@@ -1536,77 +735,33 @@ export default function DashboardPage() {
   async function handleSelectGoalFocus(goalFocus: ProductPath["id"]) {
     setSavingGoalFocus(goalFocus);
     try {
-      const response = await fetch("/api/profile/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          trigger: "goal_focus_selected",
-          goalFocus,
-        }),
-      });
+      const response = await fetch("/api/profile/summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trigger: "goal_focus_selected", goalFocus }) });
       if (!response.ok) throw new Error("保存当前主线失败");
       const refreshed = await fetch("/api/dashboard");
       if (refreshed.ok) {
         setData(await refreshed.json());
         return;
       }
-      setData((current) =>
-        current
-          ? {
-              ...current,
-              latestGoalFocus: goalFocus,
-              commandCenter: current.commandCenter
-                ? {
-                    ...current.commandCenter,
-                    goalFocus: {
-                      id: goalFocus,
-                      label:
-                        goalFocus === "interview_sprint"
-                          ? "面试跳槽主线"
-                          : "高级产品思维主线",
-                      description:
-                        goalFocus === "interview_sprint"
-                          ? "优先把训练回答、项目故事和模拟追问沉淀成可复用面试证据。"
-                          : "优先用真实业务任务训练判断、取舍、归因和落地闭环。",
-                    },
-                  }
-                : current.commandCenter,
-            }
-          : current
-      );
+      setData((current) => current ? { ...current, latestGoalFocus: goalFocus } : current);
     } finally {
       setSavingGoalFocus("");
     }
   }
 
   function handleGoalBriefChange(field: keyof GoalBrief, value: string) {
-    setGoalBriefDraft((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    setGoalBriefDraft((current) => ({ ...current, [field]: value }));
   }
 
   async function handleSaveGoalBrief() {
     setSavingGoalBrief(true);
     try {
-      const response = await fetch("/api/profile/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          trigger: "goal_brief_saved",
-          goalBrief: goalBriefDraft,
-        }),
-      });
+      const response = await fetch("/api/profile/summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trigger: "goal_brief_saved", goalBrief: goalBriefDraft }) });
       if (!response.ok) throw new Error("保存目标简报失败");
       const refreshed = await fetch("/api/dashboard");
       if (refreshed.ok) {
         const nextData = await refreshed.json();
         setData(nextData);
-        setGoalBriefDraft({
-          targetRole: nextData.latestGoalBrief?.targetRole || "",
-          targetScenario: nextData.latestGoalBrief?.targetScenario || "",
-          targetDeadline: nextData.latestGoalBrief?.targetDeadline || "",
-        });
+        setGoalBriefDraft({ targetRole: nextData.latestGoalBrief?.targetRole || "", targetScenario: nextData.latestGoalBrief?.targetScenario || "", targetDeadline: nextData.latestGoalBrief?.targetDeadline || "" });
       }
     } finally {
       setSavingGoalBrief(false);
@@ -1618,32 +773,12 @@ export default function DashboardPage() {
     setDepositedProjectName(action.projectName);
     setDepositStatus("idle");
     try {
-      const response = await fetch("/api/profile/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          trigger: "project_story_saved",
-          projectStory: {
-            projectName: action.projectName,
-            company: action.company,
-            role: action.role,
-            targetEvidence: action.targetEvidence,
-            readinessScore: action.targetFitScore,
-            proofGaps: [],
-            targetFit: action.targetFit,
-            interviewScript: {
-              fullScript: action.targetEvidence,
-            },
-          },
-        }),
-      });
+      const response = await fetch("/api/profile/summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trigger: "project_story_saved", projectStory: { projectName: action.projectName, company: action.company, role: action.role, targetEvidence: action.targetEvidence, readinessScore: action.targetFitScore, proofGaps: [], targetFit: action.targetFit, interviewScript: { fullScript: action.targetEvidence } } }) });
       if (!response.ok) throw new Error("目标证据入账失败");
       const result = await response.json();
       if (!result.snapshot?.id) throw new Error("目标证据未读回快照");
       const refreshed = await fetch("/api/dashboard");
-      if (refreshed.ok) {
-        setData(await refreshed.json());
-      }
+      if (refreshed.ok) setData(await refreshed.json());
       setDepositStatus("saved");
     } catch {
       setDepositStatus("failed");
@@ -1652,78 +787,5 @@ export default function DashboardPage() {
     }
   }
 
-  return (
-    <main className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
-      {loading ? (
-        <div className="space-y-5">
-          <SkeletonCard className="h-80" />
-          <SkeletonCard className="h-36" />
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-            <SkeletonCard className="h-80 lg:col-span-5" />
-            <SkeletonCard className="h-80 lg:col-span-4" />
-            <SkeletonCard className="h-80 lg:col-span-3" />
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          <PathFirstHero
-            commandCenter={data?.commandCenter}
-            depositedProjectName={depositedProjectName}
-            depositStatus={depositStatus}
-            fallbackFocus={focusLabel}
-            goalBrief={data?.latestGoalBrief}
-            goalBriefDraft={goalBriefDraft}
-            onDepositTargetEvidence={handleDepositTargetEvidence}
-            onSelectGoalFocus={handleSelectGoalFocus}
-            onGoalBriefChange={handleGoalBriefChange}
-            onSaveGoalBrief={handleSaveGoalBrief}
-            latestReport={latestReport}
-            savingDepositProject={savingDepositProject}
-            savingGoalBrief={savingGoalBrief}
-            savingGoalFocus={savingGoalFocus}
-            stats={stats}
-          />
-
-          <GrowthProfileLedger growthProfile={data?.growthProfile} />
-
-          <RecommendationPrescription
-            latestRecommendation={data?.latestRecommendation}
-            onSelect={selectRecommendation}
-            plan={data?.recommendationPlan}
-            savingId={savingRecommendationId}
-            selectedId={selectedRecommendationId}
-          />
-
-          <ReviewWorkspace
-            blindSpots={data?.commandCenter?.blindSpots ?? []}
-            latestReport={latestReport}
-            nextPractice={data?.commandCenter?.nextPractice}
-            profile={profile}
-            stats={stats}
-            trendData={trendData}
-          />
-        </div>
-      )}
-    </main>
-  );
-}
-
-function OperatingPrinciple({
-  icon,
-  title,
-  body,
-}: {
-  icon: ReactNode;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-lg bg-surface px-3 py-3">
-      <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-md bg-primary-soft text-primary">
-        {icon}
-      </div>
-      <p className="text-body-sm font-bold text-ink">{title}</p>
-      <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">{body}</p>
-    </div>
-  );
+  return <main className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">{loading ? <div className="space-y-5"><SkeletonCard className="h-80" /><SkeletonCard className="h-36" /><SkeletonCard className="h-80" /></div> : <div className="space-y-5"><PathFirstHero commandCenter={data?.commandCenter} depositedProjectName={depositedProjectName} depositStatus={depositStatus} fallbackFocus={focusLabel} goalBrief={data?.latestGoalBrief} goalBriefDraft={goalBriefDraft} onDepositTargetEvidence={handleDepositTargetEvidence} onSelectGoalFocus={handleSelectGoalFocus} onGoalBriefChange={handleGoalBriefChange} onSaveGoalBrief={handleSaveGoalBrief} latestReport={data?.latestReport ?? null} savingDepositProject={savingDepositProject} savingGoalBrief={savingGoalBrief} savingGoalFocus={savingGoalFocus} stats={stats} /><GrowthProfileLedger growthProfile={data?.growthProfile} /><RecommendationPrescription latestRecommendation={data?.latestRecommendation} onSelect={selectRecommendation} plan={data?.recommendationPlan} savingId={savingRecommendationId} selectedId={selectedRecommendationId} /><ReviewWorkspace blindSpots={data?.commandCenter?.blindSpots ?? []} latestReport={data?.latestReport ?? null} nextPractice={data?.commandCenter?.nextPractice} profile={profile} stats={stats} trendData={trendData} /></div>}</main>;
 }
