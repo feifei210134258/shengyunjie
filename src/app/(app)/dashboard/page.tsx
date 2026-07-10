@@ -1,24 +1,18 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
   Brain,
   CheckCircle2,
+  ChevronDown,
   ClipboardCheck,
   Dumbbell,
   FileCheck2,
-  ListChecks,
-  Target,
   TrendingUp,
-  Workflow,
 } from "lucide-react";
-import GrowthChart from "@/components/dashboard/GrowthChart";
-import LatestReport from "@/components/dashboard/LatestReport";
-import ProfileCard from "@/components/dashboard/ProfileCard";
-import TrainingStats from "@/components/dashboard/TrainingStats";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { getDimensionLabel } from "@/lib/constants";
 import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
@@ -477,6 +471,37 @@ function PathFirstHero({
     { label: "今日", value: stats?.todayCount ?? 0, suffix: "题" },
     { label: "面试就绪", value: dossier?.readyCount ?? 0, suffix: "项" },
   ];
+  const queueItems = [primary, ...secondary.slice(0, 3)];
+  const [expandedQueueKey, setExpandedQueueKey] = useState<string | null>(null);
+  const recentEvidenceRows = [
+    {
+      label: "原回答",
+      evidence: latestReport?.strengths?.[0] || "最近一次回答等待反馈归档",
+      status: latestReport ? "已记录" : "待生成",
+      href: latestReport ? `/diagnosis/report?id=${latestReport.id}` : TRAINING_SESSION_ROUTE,
+    },
+    {
+      label: "修正版",
+      evidence: dossier?.revisionAction?.proofPoint || "完成二次修正后在这里读回",
+      status: dossier?.revisionAction ? dossier.revisionAction.readiness : "待修正",
+      href: dossier?.revisionAction?.href || TRAINING_SESSION_ROUTE,
+    },
+    {
+      label: "表达资产",
+      evidence: evidenceBody,
+      status: evidenceLabel,
+      href:
+        interviewAmmoPack?.href ||
+        targetEvidenceDepositAction?.href ||
+        targetEvidenceAction?.href ||
+        featuredAsset?.href ||
+        TRAINING_SESSION_ROUTE,
+    },
+  ];
+
+  function toggleQueueItem(queueKey: string) {
+    setExpandedQueueKey((current) => (current === queueKey ? null : queueKey));
+  }
 
   return (
     <section className="border-y border-line bg-white">
@@ -495,7 +520,7 @@ function PathFirstHero({
             <span className="mt-1 inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-primary text-label font-bold text-white">1</span>
             <div className="min-w-0">
               <p className="text-label font-bold uppercase tracking-[0.08em] text-primary">优先 1</p>
-              <h1 className="mt-1 max-w-3xl text-[30px] font-bold leading-tight text-ink">{primary.title}</h1>
+              <h1 className="mt-1 max-w-3xl text-[28px] font-bold leading-tight text-ink">{primary.title}</h1>
               <p className="mt-3 max-w-2xl text-body-sm leading-relaxed text-ink-muted">{primary.description}</p>
             </div>
           </div>
@@ -517,16 +542,42 @@ function PathFirstHero({
               <span className="text-label font-semibold text-ink-faint">只保留下一步</span>
             </div>
             <div className="mt-2 divide-y divide-line border-y border-line">
-              {[primary, ...secondary.slice(0, 3)].map((item, index) => (
-                <Link key={`${item.title}-${index}`} href={item.href} className="group grid gap-2 py-3 sm:grid-cols-[32px_minmax(0,1fr)_auto] sm:items-center sm:gap-3">
-                  <span className={cn("font-mono text-label font-bold", index === 0 ? "text-primary" : "text-ink-faint")}>{index === 0 ? "01" : `0${index + 1}`}</span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-body-sm font-bold text-ink">{item.title}</span>
-                    <span className="mt-0.5 block truncate text-label text-ink-muted">{item.missionLabel || item.actionLabel || item.description}</span>
-                  </span>
-                  <ArrowRight className="h-4 w-4 text-ink-faint transition group-hover:translate-x-0.5" strokeWidth={1.5} />
-                </Link>
-              ))}
+              {queueItems.map((item, index) => {
+                const queueKey = `${item.title}-${index}`;
+                const expanded = expandedQueueKey === queueKey;
+
+                return (
+                  <div key={queueKey}>
+                    <button
+                      type="button"
+                      aria-expanded={expanded}
+                      onClick={() => toggleQueueItem(queueKey)}
+                      className="grid w-full gap-2 py-3 text-left transition hover:bg-surface-hover sm:grid-cols-[32px_minmax(0,1fr)_auto] sm:items-center sm:gap-3"
+                    >
+                      <span className={cn("font-mono text-label font-bold", index === 0 ? "text-primary" : "text-ink-faint")}>{index === 0 ? "01" : `0${index + 1}`}</span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-body-sm font-bold text-ink">{item.title}</span>
+                        <span className="mt-0.5 block truncate text-label text-ink-muted">{item.missionLabel || item.actionLabel || item.description}</span>
+                      </span>
+                      <ChevronDown className={cn("h-4 w-4 text-ink-faint transition", expanded && "rotate-180")} strokeWidth={1.5} />
+                    </button>
+                    {expanded && (
+                      <div className="grid gap-3 border-t border-line bg-surface px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                        <div>
+                          <p className="text-body-sm leading-relaxed text-ink-muted">{item.description}</p>
+                          <p className="mt-1 text-label font-semibold text-ink-faint">{item.missionLabel || "当前任务"} · {item.actionLabel || item.cta}</p>
+                        </div>
+                        {index > 0 && (
+                          <Link href={item.href} className="inline-flex items-center gap-1.5 text-label font-bold text-primary transition hover:text-primary/80">
+                            打开任务
+                            <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -536,17 +587,35 @@ function PathFirstHero({
                 <p className="text-label font-bold text-primary">当前主线</p>
                 <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">{goalFocus?.description || "选一个当前最重要的结果，队列会围绕它排序。"}</p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {paths.map((path) => {
-                  const selected = goalFocus?.id === path.id;
-                  return (
-                    <button key={path.id} onClick={() => onSelectGoalFocus(path.id)} disabled={Boolean(savingGoalFocus)} className={cn("inline-flex min-h-9 items-center gap-2 rounded-md border px-3 py-2 text-label font-bold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50", selected ? "border-primary bg-primary text-white" : "border-line-strong bg-white text-ink hover:bg-surface-hover")}>
+            </div>
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              {paths.map((path) => {
+                const selected = goalFocus?.id === path.id;
+                return (
+                  <div key={path.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <Link href={path.href} className="group min-w-0">
+                      <span className="flex items-center gap-2 text-body-sm font-bold text-ink">
+                        {path.label}
+                        <ArrowRight className="h-3.5 w-3.5 text-ink-faint transition group-hover:translate-x-0.5" strokeWidth={1.5} />
+                      </span>
+                      <span className="mt-1 block text-label leading-relaxed text-ink-muted">{path.statusLabel} · {path.nextStep}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => onSelectGoalFocus(path.id)}
+                      disabled={Boolean(savingGoalFocus)}
+                      className={cn(
+                        "inline-flex min-h-9 items-center justify-center rounded-md border px-3 py-2 text-label font-bold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+                        selected
+                          ? "border-primary/30 bg-primary-soft text-primary"
+                          : "border-line-strong bg-white text-ink hover:bg-surface-hover"
+                      )}
+                    >
                       {savingGoalFocus === path.id ? "保存中" : selected ? "当前主线" : "设为主线"}
-                      <span className={selected ? "text-white/80" : "text-ink-muted"}>{path.label}</span>
                     </button>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -568,6 +637,35 @@ function PathFirstHero({
               <CheckCircle2 className="h-4 w-4" strokeWidth={1.5} />
             </button>
           </div>
+
+          <div className="mt-6 border-t border-line pt-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-label font-bold text-primary">最近证据</p>
+                <h2 className="mt-1 text-heading-sm font-bold text-ink">从回答到可复用表达</h2>
+              </div>
+              <span className="text-label font-semibold text-ink-faint">{dossier?.readyCount ?? 0} 条可用</span>
+            </div>
+            <div className="mt-3 hidden grid-cols-[100px_minmax(0,1fr)_110px_72px] gap-3 border-b border-line pb-2 text-label font-bold text-ink-faint sm:grid">
+              <span>类型</span>
+              <span>证据</span>
+              <span>状态</span>
+              <span className="text-right">动作</span>
+            </div>
+            <div className="divide-y divide-line border-b border-line">
+              {recentEvidenceRows.map((row) => (
+                <div key={row.label} className="grid gap-2 py-3 sm:grid-cols-[100px_minmax(0,1fr)_110px_72px] sm:items-center sm:gap-3">
+                  <p className="text-label font-bold text-ink-muted">{row.label}</p>
+                  <p className="line-clamp-2 text-body-sm leading-relaxed text-ink">{row.evidence}</p>
+                  <span className="text-label font-semibold text-ink-muted">{row.status}</span>
+                  <Link href={row.href} className="inline-flex items-center justify-end gap-1 text-label font-bold text-primary transition hover:text-primary/80">
+                    查看
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <aside className="min-w-0 bg-surface px-5 py-5 sm:px-7 xl:px-6 xl:py-7">
@@ -587,7 +685,7 @@ function PathFirstHero({
 
           {interviewAmmoPack ? (
             <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-              <button onClick={handleCopyInterviewAmmoPack} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-body-sm font-bold text-white transition hover:bg-primary/90 active:scale-[0.98]">
+              <button onClick={handleCopyInterviewAmmoPack} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-line-strong bg-white px-3 py-2 text-body-sm font-bold text-ink transition hover:bg-surface-hover active:scale-[0.98]">
                 {copiedAmmoProject === interviewAmmoPack.projectName ? "已复制" : "复制终版表达"}
                 <ClipboardCheck className="h-4 w-4" strokeWidth={1.5} />
               </button>
@@ -597,7 +695,7 @@ function PathFirstHero({
               </Link>
             </div>
           ) : targetEvidenceDepositAction ? (
-            <button onClick={() => onDepositTargetEvidence(targetEvidenceDepositAction)} disabled={Boolean(savingDepositProject)} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-body-sm font-bold text-white transition hover:bg-primary/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50">
+            <button onClick={() => onDepositTargetEvidence(targetEvidenceDepositAction)} disabled={Boolean(savingDepositProject)} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-primary/30 bg-primary-soft px-3 py-2 text-body-sm font-bold text-primary transition hover:bg-primary-soft/70 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50">
               {savingDepositProject === targetEvidenceDepositAction.projectName ? "入账中" : depositStatus === "saved" ? "入账成功" : "现在入账"}
               <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
             </button>
@@ -620,13 +718,6 @@ function PathFirstHero({
             </div>
           </div>
 
-          <div className="mt-6 border-t border-line pt-4">
-            <div className="flex items-center justify-between gap-3"><h3 className="text-body-sm font-bold text-ink">最近证据</h3><span className="text-label font-semibold text-ink-faint">{dossier?.readyCount ?? 0} 可用</span></div>
-            <div className="mt-3 divide-y divide-line border-y border-line">
-              <div className="py-3"><p className="text-label font-bold text-ink-muted">原回答</p><p className="mt-1 line-clamp-2 text-body-sm text-ink">{latestReport?.strengths?.[0] || "最近一次训练回答等待复盘"}</p></div>
-              <div className="py-3"><p className="text-label font-bold text-ink-muted">修正版</p><p className="mt-1 line-clamp-2 text-body-sm text-ink">{dossier?.revisionAction?.proofPoint || "完成反馈后，修正版会在这里出现"}</p></div>
-            </div>
-          </div>
         </aside>
       </div>
     </section>
@@ -687,7 +778,104 @@ function RecommendationPrescription({ plan, latestRecommendation, onSelect, savi
 
 function ReviewWorkspace({ blindSpots, nextPractice, trendData, stats, profile, latestReport }: { blindSpots: BlindSpotItem[]; nextPractice: NextPractice | undefined; trendData: TrendPoint[]; stats: DashboardData["trainingStats"] | null; profile: DashboardData["profile"]; latestReport: DashboardData["latestReport"] }) {
   const fallback = blindSpots.length ? blindSpots : [{ label: "还没有足够复盘样本", description: "完成几次训练后，这里会归纳你反复暴露的判断盲区。", weight: 0 }];
-  return <section className="border-y border-line bg-white px-5 py-6 sm:px-7"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4"><div className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-primary" strokeWidth={1.5} /><h2 className="text-heading-sm font-bold text-ink">训练复盘</h2></div>{nextPractice && <span className="text-label font-bold text-primary">{nextPractice.missionLabel} / {nextPractice.actionLabel}</span>}</div><div className="grid gap-6 pt-5 xl:grid-cols-[minmax(0,1fr)_360px]"><div><p className="text-label font-bold text-ink-muted">最近暴露的问题</p><div className="mt-3 divide-y divide-line border-y border-line">{fallback.map((item) => <div key={item.label} className="py-3"><p className="text-body-sm font-bold text-ink">{item.label}</p><p className="mt-1 text-body-sm leading-relaxed text-ink-muted">{item.description}</p></div>)}</div>{nextPractice && <div className="mt-4 border-l-2 border-primary pl-3"><p className="text-label font-bold text-primary">刻意练习</p><p className="mt-1 text-body-sm font-bold text-ink">{nextPractice.missionLabel} / {nextPractice.actionLabel}</p><p className="mt-1 text-body-sm text-ink-muted">{nextPractice.reason}</p></div>}</div><div className="space-y-5"><GrowthChart trendData={trendData} /><TrainingStats stats={stats} /></div></div><div className="mt-6 grid gap-6 border-t border-line pt-5 xl:grid-cols-2"><ProfileCard profile={profile} /><LatestReport focusAreas={profile?.weaknesses ?? []} report={latestReport} /></div></section>;
+  const recentTrend = trendData.slice(-5).reverse();
+  const profileDimensions = [...(profile?.dimensions ?? [])].sort((a, b) => a.score - b.score);
+
+  return (
+    <section className="border-y border-line bg-white px-5 py-6 sm:px-7">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+        <div className="flex items-center gap-2">
+          <ClipboardCheck className="h-4 w-4 text-primary" strokeWidth={1.5} />
+          <h2 className="text-heading-sm font-bold text-ink">训练复盘</h2>
+        </div>
+        {nextPractice && <span className="text-label font-bold text-primary">{nextPractice.missionLabel} / {nextPractice.actionLabel}</span>}
+      </div>
+
+      <div className="divide-y divide-line">
+        <div className="grid gap-6 py-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div>
+            <p className="text-label font-bold text-ink-muted">最近暴露的问题</p>
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              {fallback.map((item) => (
+                <div key={item.label} className="py-3">
+                  <p className="text-body-sm font-bold text-ink">{item.label}</p>
+                  <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-label font-bold text-primary">刻意练习</p>
+            <p className="mt-2 text-body-sm font-bold text-ink">{nextPractice ? `${nextPractice.missionLabel} / ${nextPractice.actionLabel}` : "等待下一次训练处方"}</p>
+            <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">{nextPractice?.reason || "完成一次训练后，系统会在这里给出下一步动作。"}</p>
+          </div>
+        </div>
+
+        <div className="grid gap-6 py-5 lg:grid-cols-3">
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-label font-bold text-ink-muted">能力趋势</p>
+              <span className="text-label text-ink-faint">最近 {recentTrend.length} 次</span>
+            </div>
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              {recentTrend.length ? recentTrend.map((point) => (
+                <div key={point.date} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="text-label text-ink-muted">{point.date}</span>
+                  <span className="font-mono text-body-sm font-bold text-ink">{point.avgScore}</span>
+                </div>
+              )) : <p className="py-3 text-body-sm text-ink-muted">等待训练趋势</p>}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-label font-bold text-ink-muted">训练统计</p>
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              <CompactDataRow label="累计训练" value={`${stats?.totalCount ?? 0} 次`} />
+              <CompactDataRow label="今日完成" value={`${stats?.todayCount ?? 0} 题`} />
+              <CompactDataRow label="连续训练" value={`${stats?.streak ?? 0} 天`} />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-label font-bold text-ink-muted">最近诊断</p>
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              <CompactDataRow label="综合分" value={latestReport?.overall_score ?? "-"} />
+              <CompactDataRow label="等级" value={latestReport?.overall_grade || "待诊断"} />
+              <CompactDataRow label="优先补强" value={profile?.weaknesses?.[0] ? getDimensionLabel(profile.weaknesses[0]) : "待识别"} />
+            </div>
+          </div>
+        </div>
+
+        <div className="py-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-label font-bold text-ink-muted">能力画像</p>
+            <Link href="/diagnosis/scale" className="inline-flex items-center gap-1 text-label font-bold text-primary">
+              更新诊断
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </Link>
+          </div>
+          <div className="mt-3 divide-y divide-line border-y border-line">
+            {profileDimensions.length ? profileDimensions.map((dimension) => (
+              <div key={dimension.name} className="grid gap-2 py-3 sm:grid-cols-[minmax(0,1fr)_80px_56px] sm:items-center">
+                <p className="text-body-sm font-bold text-ink">{getDimensionLabel(dimension.name)}</p>
+                <span className="text-label font-semibold text-ink-muted">{dimension.grade}</span>
+                <span className="font-mono text-body-sm font-bold text-ink sm:text-right">{dimension.score}</span>
+              </div>
+            )) : <p className="py-3 text-body-sm text-ink-muted">完成诊断后，这里会显示能力维度。</p>}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CompactDataRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5">
+      <span className="text-label text-ink-muted">{label}</span>
+      <span className="text-body-sm font-bold text-ink">{value}</span>
+    </div>
+  );
 }
 
 export default function DashboardPage() {

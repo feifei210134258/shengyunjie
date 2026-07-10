@@ -8,7 +8,10 @@ test("dashboard foregrounds two product outcome paths instead of one module entr
   assert.match(source, /productPaths/);
   assert.match(source, /面试跳槽冲刺/);
   assert.match(source, /高级产品思维训练/);
+  assert.match(source, /href=\{path\.href\}/);
   assert.match(source, /设为主线/);
+  assert.match(source, /border-primary\/30 bg-primary-soft text-primary/);
+  assert.doesNotMatch(source, /border-primary bg-primary text-white/);
 });
 
 test("dashboard first viewport is a light 68/32 focused queue", () => {
@@ -26,7 +29,60 @@ test("dashboard first viewport is a light 68/32 focused queue", () => {
   assert.doesNotMatch(source, /资产流水线/);
   assert.doesNotMatch(source, /今日主动作/);
   assert.doesNotMatch(source, /bg-ink/);
-  assert.doesNotMatch(source, /text-\[(?:3[3-9]|[4-9]\\d|\\d{3,})px\]/);
+  assert.doesNotMatch(source, /text-\[(?:29|[3-9]\d|\d{3,})px\]/);
+});
+
+test("dashboard queue rows expand in place instead of all navigating immediately", () => {
+  assert.match(source, /queueItems/);
+  assert.match(source, /expandedQueueKey/);
+  assert.match(source, /setExpandedQueueKey/);
+  assert.match(source, /aria-expanded=\{expanded\}/);
+  assert.match(source, /onClick=\{\(\) => toggleQueueItem/);
+  assert.doesNotMatch(
+    source,
+    /<Link key=\{`\$\{item\.title\}-\$\{index\}`\} href=\{item\.href\}/
+  );
+});
+
+test("dashboard keeps recent evidence at the bottom of the main workspace", () => {
+  const hero = source.slice(
+    source.indexOf("function PathFirstHero"),
+    source.indexOf("function GrowthProfileLedger")
+  );
+  const asideStart = hero.indexOf("<aside");
+
+  assert.match(hero, /recentEvidenceRows/);
+  assert.ok(hero.indexOf("最近证据") > 0);
+  assert.ok(hero.indexOf("最近证据") < asideStart);
+  assert.doesNotMatch(hero.slice(asideStart), /最近证据/);
+  assert.match(hero, /divide-y divide-line/);
+});
+
+test("dashboard first viewport has only one filled interactive action", () => {
+  const hero = source.slice(
+    source.indexOf("function PathFirstHero"),
+    source.indexOf("function GrowthProfileLedger")
+  );
+  const filledActions = [
+    ...hero.matchAll(
+      /<(?:button|Link)[^>]*className="[^"]*bg-primary(?:\s|")[^"]*"[^>]*>/g
+    ),
+  ];
+
+  assert.equal(filledActions.length, 1);
+  assert.match(filledActions[0][0], /href=\{primary\.href\}/);
+  assert.match(hero, /onClick=\{handleCopyInterviewAmmoPack\}[\s\S]{0,240}border border-line-strong/);
+  assert.match(hero, /onClick=\{\(\) => onDepositTargetEvidence[\s\S]{0,300}bg-primary-soft/);
+});
+
+test("dashboard lower workspace uses continuous sections instead of legacy cards", () => {
+  assert.doesNotMatch(source, /<ProfileCard/);
+  assert.doesNotMatch(source, /<GrowthChart/);
+  assert.doesNotMatch(source, /<TrainingStats/);
+  assert.doesNotMatch(source, /<LatestReport/);
+  assert.match(source, /能力趋势/);
+  assert.match(source, /训练统计/);
+  assert.match(source, /最近诊断/);
 });
 
 test("dashboard lets users persist their current outcome goal focus", () => {
