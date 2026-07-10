@@ -73,7 +73,8 @@ test("training session displays and sends the outcome goal brief", () => {
 
 test("training session scaffolds answers around senior PM judgment moves", () => {
   assert.match(source, /ANSWER_SKELETON_ITEMS/);
-  assert.match(source, /高级 PM 作答骨架/);
+  assert.match(source, /答案构建台/);
+  assert.match(source, /写作动作/);
   assert.match(source, /插入判断/);
   assert.match(source, /插入依据/);
   assert.match(source, /插入取舍/);
@@ -85,9 +86,12 @@ test("training session scaffolds answers around senior PM judgment moves", () =>
 test("training session turns readiness gaps into the next answer action", () => {
   assert.match(source, /nextMissingReadiness/);
   assert.match(source, /nextSkeletonItem/);
-  assert.match(source, /下一步补齐/);
+  assert.match(source, /primaryAnswerAction/);
+  assert.match(source, /当前只补这一步/);
   assert.match(source, /补齐缺口/);
-  assert.match(source, /四步齐了/);
+  assert.match(source, /提交这一版/);
+  assert.doesNotMatch(source, /lg:grid-cols-\[minmax\(0,1fr\)_280px\]/);
+  assert.doesNotMatch(source, /高级 PM 作答骨架/);
 });
 
 test("training feedback turns the top gap into a revision instruction", () => {

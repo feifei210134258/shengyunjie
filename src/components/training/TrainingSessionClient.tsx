@@ -779,6 +779,23 @@ function A1BeforeSubmit({
     (item) => item.id === nextMissingReadiness?.id
   );
   const draftStatus = answer?.draftStatus || "idle";
+  const primaryAnswerAction = nextSkeletonItem
+    ? {
+        title: nextSkeletonItem.label,
+        label: "补齐缺口",
+        description: `还差“${nextMissingReadiness?.label}”，先插入${nextSkeletonItem.label}起手句，再补你的真实判断。`,
+        onClick: () => onInsertAnswerSkeleton(nextSkeletonItem.template),
+        disabled: Boolean(answer?.submitting),
+      }
+    : {
+        title: "提交这一版",
+        label: answer?.submitting ? "AI 深度思考中..." : "提交这一版",
+        description:
+          "四步齐了。现在把这一版交给 AI 教练，验证它能否入账为面试表达或思维升级资产。",
+        onClick: onSubmit,
+        disabled:
+          !answerText.trim() || Boolean(answer?.submitting) || isQuestionLoading,
+      };
 
   return (
     <Frame
@@ -947,17 +964,34 @@ function A1BeforeSubmit({
           </section>
 
           <section className="rounded-xl border border-line bg-white p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
-            <div className="mb-3">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-label font-semibold text-primary">
-                  我的回答
-                </p>
-                <span className="shrink-0 rounded-lg bg-[#F3F6FA] px-3 py-2 text-label font-semibold text-ink-faint">
-                  {analysis?.loading ? "分析中" : "未提交"}
-                </span>
+            <div className="rounded-lg border border-primary/15 bg-primary-soft/45 px-3 py-3">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-label font-bold text-primary">
+                    答案构建台
+                  </p>
+                  <h3 className="mt-1 text-heading-sm font-bold text-ink">
+                    当前只补这一步：{primaryAnswerAction.title}
+                  </h3>
+                  <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
+                    {primaryAnswerAction.description}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={primaryAnswerAction.onClick}
+                  disabled={primaryAnswerAction.disabled}
+                  className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-body-sm font-bold text-white transition hover:bg-primary-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {primaryAnswerAction.label}
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
+                </button>
               </div>
+            </div>
+
+            <div className="mt-3">
               {answerHint && (
-                <div className="mt-2 rounded-lg border border-primary/10 bg-primary-soft/45 px-3 py-2.5">
+                <div className="rounded-lg border border-primary/10 bg-[#F8FAFC] px-3 py-2.5">
                   <p className="text-label font-semibold text-primary">
                     思考框架
                   </p>
@@ -967,29 +1001,30 @@ function A1BeforeSubmit({
                 </div>
               )}
             </div>
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
-              <textarea
-                value={answerText}
-                onChange={(event) => onAnswerChange(event.target.value)}
-                disabled={answer?.submitting}
-                className="min-h-[230px] w-full resize-none rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-sm leading-7 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-                placeholder="先写结论，再补依据、取舍和验证指标。"
-              />
-              <aside className="rounded-lg border border-line bg-[#F8FAFC] p-3">
-                <p className="text-label font-bold text-primary">
-                  高级 PM 作答骨架
-                </p>
-                <p className="mt-1 text-label font-semibold leading-relaxed text-ink-muted">
-                  不替你答题，只帮你把思考拆成面试和升阶都能复用的四步。
-                </p>
-                <div className="mt-3 grid gap-2">
+
+            <div className="mt-3 rounded-lg border border-line bg-[#F8FAFC] px-3 py-3">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-label font-bold text-primary">
+                    写作动作
+                  </p>
+                  <p className="mt-1 text-label font-semibold leading-relaxed text-ink-muted">
+                    只在卡住时插入起手句，答案仍然由你的真实项目判断来完成。
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                   {ANSWER_SKELETON_ITEMS.map((item) => (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => onInsertAnswerSkeleton(item.template)}
                       disabled={answer?.submitting}
-                      className="group rounded-lg border border-line bg-white px-3 py-2 text-left transition hover:border-primary/35 hover:bg-primary-soft/35 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
+                      className={cn(
+                        "group rounded-lg border px-3 py-2 text-left transition active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50",
+                        nextSkeletonItem?.id === item.id
+                          ? "border-primary/35 bg-white shadow-[0_8px_22px_rgba(67,56,202,0.08)]"
+                          : "border-line bg-white hover:border-primary/30 hover:bg-primary-soft/30"
+                      )}
                     >
                       <span className="flex items-center justify-between gap-2 text-label font-bold text-ink">
                         {item.action}
@@ -999,12 +1034,22 @@ function A1BeforeSubmit({
                         />
                       </span>
                       <span className="mt-1 block text-label font-semibold leading-relaxed text-ink-muted">
-                        {item.label}：{item.hint}
+                        {item.label}
                       </span>
                     </button>
                   ))}
                 </div>
-              </aside>
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <textarea
+                value={answerText}
+                onChange={(event) => onAnswerChange(event.target.value)}
+                disabled={answer?.submitting}
+                className="min-h-[260px] w-full resize-none rounded-lg border border-line bg-[#FAFBFC] p-4 text-body-sm leading-7 text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+                placeholder="先写结论，再补依据、取舍和验证指标。"
+              />
             </div>
             <div className="mt-3 border-t border-line pt-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1044,29 +1089,6 @@ function A1BeforeSubmit({
                   ))}
                 </div>
               </div>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-[#FAFBFC] px-3 py-2.5">
-                <div>
-                  <p className="text-label font-bold text-ink">
-                    {nextSkeletonItem ? "下一步补齐" : "四步齐了"}
-                  </p>
-                  <p className="mt-1 text-label font-semibold leading-relaxed text-ink-muted">
-                    {nextSkeletonItem
-                      ? `还差“${nextMissingReadiness?.label}”，先插入${nextSkeletonItem.label}起手句，再补你的真实判断。`
-                      : "现在可以提交给 AI 教练，检查这套判断能不能转成面试表达或思维升级资产。"}
-                  </p>
-                </div>
-                {nextSkeletonItem && (
-                  <button
-                    type="button"
-                    onClick={() => onInsertAnswerSkeleton(nextSkeletonItem.template)}
-                    disabled={answer?.submitting}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-2 text-label font-bold text-primary transition hover:border-primary/40 hover:bg-primary-soft active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-                  >
-                    <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
-                    补齐缺口
-                  </button>
-                )}
-              </div>
             </div>
             <div className="mt-3 flex justify-end">
               <button
@@ -1075,7 +1097,7 @@ function A1BeforeSubmit({
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-body-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Zap className="h-4 w-4" />
-                {answer?.submitting ? "AI 深度思考中..." : "提交并获取分析"}
+                {answer?.submitting ? "AI 深度思考中..." : "提交这一版"}
               </button>
             </div>
           </section>

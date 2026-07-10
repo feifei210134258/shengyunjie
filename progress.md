@@ -1,5 +1,30 @@
 # 会话进度日志
 
+## [2026-07-10] Feature: 训练实战页答案构建台
+
+### 背景判断
+- `/training/session` 已经有草稿自动保存、高级 PM 作答骨架和四项作答质检，但输入区仍是“文本框 + 右侧骨架 + 底部质检”的三块拼接。
+- 从第一性原理看，用户作答时不应该在多个区域判断下一步，而应该只看到“当前只补这一步”，然后直接写出一版可提交、可入账的答案。
+
+### 完成内容
+- `/training/session` 提交前作答区改为“答案构建台”。
+- 顶部新增 `primaryAnswerAction`，把当前缺口提升为“当前只补这一步”。
+- 缺少判断/依据/取舍/验证时，主按钮直接“补齐缺口”；四步齐全后主按钮切换为“提交这一版”。
+- 将原右侧“高级 PM 作答骨架”侧栏收束为横向“写作动作”，只作为卡住时的插入辅助。
+- 提交按钮文案同步为“提交这一版”，让训练页从“提交分析”转成“提交当前答案资产”。
+- 继续复用既有 `training_sessions.questions[missionId].draftAnswer`、`/api/training/questions` 和 `/api/train?action=analyze`，不新增 schema 或 API。
+
+### 验证记录
+- TDD 红灯：`TrainingSessionClient` 源测试先失败于缺少 `答案构建台 / 写作动作 / primaryAnswerAction / 当前只补这一步 / 提交这一版`，并捕获旧 `lg:grid-cols-[minmax(0,1fr)_280px]` 与“高级 PM 作答骨架”侧栏仍存在。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs` 通过 14 项。
+- 回归：`node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 16 项。
+- `npx tsc --noEmit` 通过。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 单独复跑通过，环境健康检查 10/10。
+
 ## [2026-07-09] Feature: 训练首页节奏归因面板
 
 ### 背景判断

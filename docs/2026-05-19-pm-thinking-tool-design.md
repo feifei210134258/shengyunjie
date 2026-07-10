@@ -146,6 +146,7 @@ Dashboard 还支持保存更具体的“目标简报”：目标岗位、目标�
 - 今日训练处方链接会携带 `focus` 进入 `/training/session`，训练页把画像维度映射为具体高阶 PM 任务（如资源排期、平台抽象、增长诊断），并把 `profileFocus/prescriptionId` 与题目一起写入 `training_sessions.questions`，刷新后可读回。
 - 直接进入 `/training/session` 时，`GET /api/training/sessions?date=...` 会读回最近 `growth_snapshots.dimension_scores.__goalFocus` 并返回 `latestGoalFocus`；训练实战页用它恢复主线任务计划和顶部训练框架，避免用户绕过首页后退回默认刷题。
 - 训练页作答区会把用户草稿保存到当天 `training_sessions.questions[missionId].draftAnswer`，刷新或重新进入当天训练时恢复答案；提交前展示“判断、依据、取舍、验证”四项作答质检，并在输入区提供可插入的高级 PM 作答骨架（判断、依据、取舍、验证），插入内容仍进入同一份草稿自动保存链路。质检区会把第一个未满足项转成“下一步补齐”动作，用户可一键插入对应起手句，帮助回答从直觉表达拉回结构化表达。
+- 训练实战页作答区进一步收束为“答案构建台”：当前最该补的一步被提升到输入区顶部，骨架按钮降级为“写作动作”，提交按钮统一为“提交这一版”，避免用户在文本框、骨架侧栏和质检区之间来回找下一步。
 - AI 反馈页提供“二次修正”输入，用户可基于反馈当场重写关键答案；`PATCH /api/training/record` 会把修正内容写入 `training_records.ai_feedback.__revision`，历史复盘页会读回原回答、AI 反馈和用户修正版。
 - AI 反馈页会从本次 `evaluation.suggestions` 或 `evaluation.gaps` 提炼“本轮修正指令”，放在二次修正输入上方；用户可一键“带入修正”，把最关键缺口写进修正草稿，再通过既有 `PATCH /api/training/record` 落库，避免反馈只停留在阅读状态。
 - AI 反馈页顶部会展示“本轮升级闭环”，把反馈入账、修正版、下一题处方三个状态放在同一轨道里，帮助用户明确本题不是拿到评分就结束，而是要完成修正保存和下一题处方承接。
