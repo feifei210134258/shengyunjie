@@ -37,6 +37,20 @@ test("bootcamp hub presents a light evidence queue with one primary gap", () => 
   assert.doesNotMatch(source, /grid-cols-4/);
 });
 
+test("bootcamp exposes exactly one filled primary CTA", () => {
+  const primaryCtas = source.match(/data-primary-cta="true"/g) || [];
+
+  assert.equal(primaryCtas.length, 1);
+  assert.doesNotMatch(source, /<EvidenceGapRow[\s\S]*?\sprimary\s*\/>/);
+  assert.doesNotMatch(source, /primary \? "bg-primary text-white/);
+});
+
+test("bootcamp uses defined tokens and a pressed transform", () => {
+  assert.match(source, /active:scale-\[0\.98\]/);
+  assert.doesNotMatch(source, /active:bg-primary-pressed/);
+  assert.doesNotMatch(source, /text-ink-subtle/);
+});
+
 test("bootcamp evidence queue displays the persisted interview target brief", () => {
   assert.match(source, /目标岗位/);
   assert.match(source, /目标场景/);

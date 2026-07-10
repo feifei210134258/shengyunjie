@@ -157,7 +157,6 @@ export default function BootcampPage() {
               item={primaryGap}
               href={primaryAction.href}
               actionLabel={primaryAction.label}
-              primary
             />
             <EvidenceGapRow
               priority="优先 2"
@@ -238,7 +237,8 @@ export default function BootcampPage() {
             </h2>
             <Link
               href={primaryAction.href}
-              className="mt-3 flex items-center justify-between gap-3 rounded-md bg-primary px-3 py-3 text-body-sm font-bold text-white transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:bg-primary-pressed"
+              data-primary-cta="true"
+              className="mt-3 flex items-center justify-between gap-3 rounded-md bg-primary px-3 py-3 text-body-sm font-bold text-white transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98]"
             >
               <span>{primaryAction.label}</span>
               <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
@@ -349,19 +349,17 @@ function EvidenceGapRow({
   item,
   href,
   actionLabel,
-  primary = false,
 }: {
   priority: string;
   icon: ReactNode;
   item: BootcampHub["evidenceBank"]["tellableProjects"];
   href: string;
   actionLabel: string;
-  primary?: boolean;
 }) {
   return (
-    <div className={cn("border-b border-line px-4 py-4 last:border-b-0 sm:px-5", primary && "bg-primary-soft/40")}>
+    <div className="border-b border-line px-4 py-4 last:border-b-0 sm:px-5">
       <div className="flex items-start gap-3">
-        <span className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md", primary ? "bg-primary text-white" : "bg-surface text-primary")}>
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface text-primary">
           {icon}
         </span>
         <div className="min-w-0 flex-1">
@@ -375,10 +373,7 @@ function EvidenceGapRow({
         </div>
         <Link
           href={href}
-          className={cn(
-            "mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-label font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-            primary ? "bg-primary text-white hover:bg-primary-hover" : "text-primary hover:bg-primary-soft"
-          )}
+          className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-label font-bold text-primary transition hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98]"
         >
           {actionLabel}
           <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.6} />
@@ -400,7 +395,7 @@ function PipelineRow({
   return (
     <div className="flex items-center justify-between gap-3 py-3 text-body-sm">
       <div className="flex min-w-0 items-center gap-2">
-        <CheckCircle2 className={cn("h-4 w-4 shrink-0", active ? "text-success" : "text-ink-subtle")} strokeWidth={1.6} />
+        <CheckCircle2 className={cn("h-4 w-4 shrink-0", active ? "text-success" : "text-ink-faint")} strokeWidth={1.6} />
         <span className="font-semibold text-ink">{label}</span>
       </div>
       <span className={cn("shrink-0 text-label font-bold", active ? "text-success" : "text-ink-muted")}>
