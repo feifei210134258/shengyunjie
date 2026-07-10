@@ -20,17 +20,36 @@ test("bootcamp hub is an interview sprint cockpit driven by API state", () => {
   assert.doesNotMatch(source, /supabase\.auth\.getUser/);
 });
 
-test("bootcamp hub first screen centers the evidence bank decision surface", () => {
-  assert.match(source, /可讲项目/);
+test("bootcamp hub presents a light evidence queue with one primary gap", () => {
+  assert.match(source, /目标岗位/);
+  assert.match(source, /面试就绪/);
   assert.match(source, /证据缺口/);
+  assert.match(source, /下一步/);
+  assert.match(source, /证据工具/);
+  assert.match(source, /可讲项目/);
   assert.match(source, /追问风险/);
   assert.match(source, /表达资产/);
-  assert.match(source, /下一步只做这件事/);
+  assert.match(source, /primaryGap/);
+  assert.match(source, /summaryMetrics/);
+  assert.doesNotMatch(source, /目标证据令/);
+  assert.doesNotMatch(source, /下一步只做这件事/);
+  assert.doesNotMatch(source, /bg-ink/);
+  assert.doesNotMatch(source, /grid-cols-4/);
 });
 
-test("bootcamp evidence bank displays the persisted interview target brief", () => {
-  assert.match(source, /目标证据令/);
+test("bootcamp evidence queue displays the persisted interview target brief", () => {
   assert.match(source, /目标岗位/);
   assert.match(source, /目标场景/);
   assert.match(source, /目标期限/);
+});
+
+test("bootcamp preserves every evidence route and hub data contract", () => {
+  assert.match(source, /\/bootcamp\/resume/);
+  assert.match(source, /\/bootcamp\/story-bank/);
+  assert.match(source, /\/bootcamp\/interview/);
+  assert.match(source, /\/bootcamp\/report/);
+  assert.match(source, /nextActions/);
+  assert.match(source, /assetPipeline/);
+  assert.match(source, /latestGoalBrief/);
+  assert.match(source, /evidenceBank/);
 });

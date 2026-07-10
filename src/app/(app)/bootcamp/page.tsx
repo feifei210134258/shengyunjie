@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
+  CheckCircle2,
   FileText,
   Layers3,
   MessageSquareQuote,
@@ -96,121 +97,199 @@ export default function BootcampPage() {
   const assetPipeline = hub?.assetPipeline || fallbackHub.assetPipeline;
   const evidenceBank = hub?.evidenceBank || fallbackHub.evidenceBank;
   const latestGoalBrief = hub?.latestGoalBrief || fallbackHub.latestGoalBrief;
+  const nextActions = hub?.nextActions?.length
+    ? hub.nextActions
+    : fallbackHub.nextActions;
   const primaryAction = evidenceBank.primaryNextAction;
+  const primaryGap = evidenceBank.proofGaps;
+  const interviewReady = assetPipeline.resumeReady &&
+    (assetPipeline.storyAssets > 0 || assetPipeline.evaluatedInterviews > 0)
+    ? "已有可用证据"
+    : sprintBrief.statusLabel;
+  const summaryMetrics = [
+    { icon: <Target className="h-4 w-4" strokeWidth={1.6} />, label: evidenceBank.tellableProjects.label, value: evidenceBank.tellableProjects.count },
+    { icon: <FileText className="h-4 w-4" strokeWidth={1.6} />, label: evidenceBank.proofGaps.label, value: evidenceBank.proofGaps.count },
+    { icon: <MessageSquareQuote className="h-4 w-4" strokeWidth={1.6} />, label: evidenceBank.followupRisks.label, value: evidenceBank.followupRisks.count },
+    { icon: <BarChart3 className="h-4 w-4" strokeWidth={1.6} />, label: evidenceBank.expressionAssets.label, value: evidenceBank.expressionAssets.count },
+  ];
 
   return (
     <main className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-8">
-      <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-7">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_430px]">
-          <div>
+      <header className="border-b border-line pb-5">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="max-w-3xl">
             <p className="text-label font-bold text-primary">面试跳槽冲刺</p>
-            <h1 className="mt-2 max-w-4xl text-[34px] font-bold leading-[1.08] text-ink sm:text-[48px]">
+            <h1 className="mt-2 text-[28px] font-bold leading-tight text-ink">
               面试证据库
             </h1>
-            <p className="mt-4 max-w-3xl text-body-md leading-relaxed text-ink-muted">
-              {sprintBrief.primaryGoal}。这里优先回答一件事：哪些项目能讲，哪里缺证据，哪些追问有风险，哪些表达已经能直接用于面试。
+            <p className="mt-2 text-body-md leading-relaxed text-ink-muted">
+              {sprintBrief.primaryGoal}。
             </p>
+          </div>
+          <GoalBriefPanel latestGoalBrief={latestGoalBrief} />
+        </div>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <EvidenceTile
-                icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
-                item={evidenceBank.tellableProjects}
-              />
-              <EvidenceTile
-                icon={<FileText className="h-4 w-4" strokeWidth={1.5} />}
-                item={evidenceBank.proofGaps}
-                urgent={evidenceBank.proofGaps.count > 0}
-              />
-              <EvidenceTile
-                icon={<MessageSquareQuote className="h-4 w-4" strokeWidth={1.5} />}
-                item={evidenceBank.followupRisks}
-              />
-              <EvidenceTile
-                icon={<BarChart3 className="h-4 w-4" strokeWidth={1.5} />}
-                item={evidenceBank.expressionAssets}
-              />
+        <div className="mt-6 grid grid-cols-2 divide-x divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface-raised sm:grid-cols-[repeat(4,minmax(0,1fr))] sm:divide-y-0">
+          {summaryMetrics.map((metric) => (
+            <SummaryMetric key={metric.label} {...metric} />
+          ))}
+        </div>
+      </header>
+
+      <div className="grid gap-8 py-7 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <section aria-labelledby="evidence-gaps-heading">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-label font-bold uppercase tracking-[0.14em] text-primary">
+                证据队列
+              </p>
+              <h2 id="evidence-gaps-heading" className="mt-1 text-heading-md font-bold text-ink">
+                证据缺口
+              </h2>
             </div>
+            <p className="text-label text-ink-muted">按面试影响排序</p>
           </div>
 
-          <div className="rounded-lg bg-ink px-5 py-5 text-white">
-            <GoalBriefPanel latestGoalBrief={latestGoalBrief} />
-            <p className="text-label font-bold text-white/65">
-              下一步只做这件事
+          <div className="mt-4 overflow-hidden rounded-lg border border-line bg-surface-raised">
+            <EvidenceGapRow
+              priority="优先 1"
+              icon={<FileText className="h-4 w-4" strokeWidth={1.6} />}
+              item={primaryGap}
+              href={primaryAction.href}
+              actionLabel={primaryAction.label}
+              primary
+            />
+            <EvidenceGapRow
+              priority="优先 2"
+              icon={<Target className="h-4 w-4" strokeWidth={1.6} />}
+              item={evidenceBank.tellableProjects}
+              href="/bootcamp/resume"
+              actionLabel="查看项目"
+            />
+            <EvidenceGapRow
+              priority="优先 3"
+              icon={<MessageSquareQuote className="h-4 w-4" strokeWidth={1.6} />}
+              item={evidenceBank.followupRisks}
+              href="/bootcamp/interview"
+              actionLabel="开始追问"
+            />
+            <EvidenceGapRow
+              priority="优先 4"
+              icon={<BarChart3 className="h-4 w-4" strokeWidth={1.6} />}
+              item={evidenceBank.expressionAssets}
+              href="/training"
+              actionLabel="去训练复盘"
+            />
+          </div>
+
+          <section className="mt-8 border-t border-line pt-5" aria-labelledby="pipeline-heading">
+            <div className="flex items-center gap-2">
+              <Layers3 className="h-4 w-4 text-primary" strokeWidth={1.6} />
+              <h2 id="pipeline-heading" className="text-heading-sm font-bold text-ink">
+                资产生产线
+              </h2>
+              <span className="text-label text-ink-muted">持续更新</span>
+            </div>
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              <PipelineRow
+                active={assetPipeline.resumeReady}
+                label="简历项目"
+                value={assetPipeline.resumeReady ? "已建立" : "待上传"}
+              />
+              <PipelineRow
+                active={assetPipeline.storyAssets > 0}
+                label="项目故事"
+                value={`${assetPipeline.storyAssets} 个`}
+              />
+              <PipelineRow
+                active={assetPipeline.evaluatedInterviews > 0}
+                label="模拟追问"
+                value={`${assetPipeline.evaluatedInterviews} 题`}
+              />
+              <PipelineRow
+                active={assetPipeline.trainingExpressionAssets > 0}
+                label="训练表达资产"
+                value={`${assetPipeline.trainingExpressionAssets} 条`}
+              />
+            </div>
+          </section>
+        </section>
+
+        <aside className="space-y-7">
+          <section aria-labelledby="readiness-heading" className="border-b border-line pb-6">
+            <p className="text-label font-bold uppercase tracking-[0.14em] text-primary">
+              状态
             </p>
+            <h2 id="readiness-heading" className="mt-1 text-heading-sm font-bold text-ink">
+              面试就绪
+            </h2>
+            <p className="mt-2 text-body-sm font-semibold text-ink">{interviewReady}</p>
+            <p className="mt-1 text-label leading-relaxed text-ink-muted">
+              {sprintBrief.evaluatedCount} 道追问已评估，{sprintBrief.weaknessCount} 个风险待处理。
+            </p>
+          </section>
+
+          <section aria-labelledby="next-step-heading" className="border-b border-line pb-6">
+            <p className="text-label font-bold uppercase tracking-[0.14em] text-primary">
+              行动
+            </p>
+            <h2 id="next-step-heading" className="mt-1 text-heading-sm font-bold text-ink">
+              下一步
+            </h2>
             <Link
               href={primaryAction.href}
-              className="mt-4 block rounded-lg bg-white px-4 py-4 text-ink transition-all hover:-translate-y-0.5 active:scale-[0.99]"
+              className="mt-3 flex items-center justify-between gap-3 rounded-md bg-primary px-3 py-3 text-body-sm font-bold text-white transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:bg-primary-pressed"
             >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-heading-sm font-bold">{primaryAction.label}</p>
-                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-              </div>
-              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-                {primaryAction.reason}
-              </p>
+              <span>{primaryAction.label}</span>
+              <ArrowRight className="h-4 w-4" strokeWidth={1.6} />
             </Link>
-            <div className="mt-5 grid grid-cols-2 gap-3 text-white/75">
-              <MiniMetric label="状态" value={sprintBrief.statusLabel} />
-              <MiniMetric label="已评追问" value={`${sprintBrief.evaluatedCount} 题`} />
-            </div>
-          </div>
-        </div>
-      </section>
+            <p className="mt-2 text-label leading-relaxed text-ink-muted">{primaryAction.reason}</p>
+            {nextActions.length > 1 ? (
+              <div className="mt-4 border-t border-line pt-3">
+                {nextActions.slice(1, 3).map((action) => (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    className="flex items-center justify-between gap-3 py-2 text-label font-semibold text-ink-muted transition-colors hover:text-primary"
+                  >
+                    <span>{action.label}</span>
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.6} />
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+          </section>
 
-      <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
-          <div className="mb-5 flex items-center gap-2">
-            <Layers3 className="h-4 w-4 text-primary" strokeWidth={1.5} />
-            <h2 className="text-heading-sm font-semibold text-ink">
-              资产生产线
+          <section aria-labelledby="evidence-tools-heading">
+            <p className="text-label font-bold uppercase tracking-[0.14em] text-primary">
+              入口
+            </p>
+            <h2 id="evidence-tools-heading" className="mt-1 text-heading-sm font-bold text-ink">
+              证据工具
             </h2>
-          </div>
-          <div className="grid gap-3 md:grid-cols-4">
-            <PipelineStep
-              active={assetPipeline.resumeReady}
-              icon={<FileText className="h-4 w-4" strokeWidth={1.5} />}
-              label="简历项目"
-              value={assetPipeline.resumeReady ? "已建立" : "待上传"}
-            />
-            <PipelineStep
-              active={assetPipeline.storyAssets > 0}
-              icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
-              label="项目故事"
-              value={`${assetPipeline.storyAssets} 个`}
-            />
-            <PipelineStep
-              active={assetPipeline.evaluatedInterviews > 0}
-              icon={<MessageSquareQuote className="h-4 w-4" strokeWidth={1.5} />}
-              label="模拟追问"
-              value={`${assetPipeline.evaluatedInterviews} 题`}
-            />
-            <PipelineStep
-              active={assetPipeline.trainingExpressionAssets > 0}
-              icon={<BarChart3 className="h-4 w-4" strokeWidth={1.5} />}
-              label="训练表达资产"
-              value={`${assetPipeline.trainingExpressionAssets} 条`}
-            />
-          </div>
-        </div>
-
-        <aside className="space-y-3">
-          <ActionLink
-            href="/bootcamp/story-bank"
-            label="项目故事库"
-            text="整理可讲版本、结果证据、证据缺口和日常训练表达资产。"
-          />
-          <ActionLink
-            href="/bootcamp/interview"
-            label="模拟面试"
-            text="用追问暴露漏洞，把回答继续沉淀回故事库。"
-          />
-          <ActionLink
-            href="/bootcamp/report"
-            label="冲刺报告"
-            text="查看综合表现和下一轮补强方向。"
-          />
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              <ToolLink
+                href="/bootcamp/story-bank"
+                icon={<Target className="h-4 w-4" strokeWidth={1.6} />}
+                label="项目故事库"
+                text="整理可讲版本与结果证据"
+              />
+              <ToolLink
+                href="/bootcamp/interview"
+                icon={<MessageSquareQuote className="h-4 w-4" strokeWidth={1.6} />}
+                label="模拟面试"
+                text="用追问暴露表达风险"
+              />
+              <ToolLink
+                href="/bootcamp/report"
+                icon={<BarChart3 className="h-4 w-4" strokeWidth={1.6} />}
+                label="冲刺报告"
+                text="查看综合表现与补强方向"
+              />
+            </div>
+          </section>
         </aside>
-      </section>
+      </div>
     </main>
   );
 }
@@ -221,21 +300,15 @@ function GoalBriefPanel({
   latestGoalBrief: BootcampHub["latestGoalBrief"];
 }) {
   return (
-    <div className="mb-5 rounded-lg bg-white/10 px-4 py-4">
-      <p className="text-label font-bold text-white/60">目标证据令</p>
-      <div className="mt-3 space-y-2">
-        <BriefLine
-          label="目标岗位"
-          value={latestGoalBrief?.targetRole || "未设置"}
-        />
+    <div className="min-w-0 rounded-lg border border-line bg-surface-raised px-4 py-3 xl:w-[360px]">
+      <p className="text-label font-bold text-ink-muted">目标简报</p>
+      <div className="mt-2 space-y-1.5">
+        <BriefLine label="目标岗位" value={latestGoalBrief?.targetRole || "未设置"} />
         <BriefLine
           label="目标场景"
           value={latestGoalBrief?.targetScenario || "先按高级 PM 面试准备"}
         />
-        <BriefLine
-          label="目标期限"
-          value={latestGoalBrief?.targetDeadline || "未设置"}
-        />
+        <BriefLine label="目标期限" value={latestGoalBrief?.targetDeadline || "未设置"} />
       </div>
     </div>
   );
@@ -244,100 +317,123 @@ function GoalBriefPanel({
 function BriefLine({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 text-label leading-relaxed">
-      <span className="font-bold text-white/45">{label}</span>
-      <span className="font-semibold text-white">{value}</span>
+      <span className="font-bold text-ink-muted">{label}</span>
+      <span className="truncate font-semibold text-ink">{value}</span>
     </div>
   );
 }
 
-function EvidenceTile({
-  icon,
-  item,
-  urgent = false,
-}: {
-  icon: ReactNode;
-  item: BootcampHub["evidenceBank"]["tellableProjects"];
-  urgent?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg px-4 py-4",
-        urgent ? "bg-primary-soft" : "bg-surface"
-      )}
-    >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-primary">
-          {icon}
-        </div>
-        <span className="text-heading-sm font-bold text-ink">{item.count}</span>
-      </div>
-      <p className="text-body-sm font-bold text-ink">{item.label}</p>
-      <p className="mt-1 text-label font-bold text-ink-muted">{item.status}</p>
-      <p className="mt-3 text-label leading-relaxed text-ink-subtle">
-        {item.note}
-      </p>
-    </div>
-  );
-}
-
-function MiniMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-white/10 px-3 py-3">
-      <p className="text-label font-bold text-white/55">{label}</p>
-      <p className="mt-1 text-body-sm font-bold text-white">{value}</p>
-    </div>
-  );
-}
-
-function PipelineStep({
-  active,
+function SummaryMetric({
   icon,
   label,
   value,
 }: {
-  active: boolean;
   icon: ReactNode;
   label: string;
-  value: string;
+  value: number;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-lg px-4 py-4",
-        active ? "bg-primary-soft text-primary" : "bg-surface text-ink-muted"
-      )}
-    >
-      <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-md bg-white/70">
+    <div className="flex min-w-0 items-center gap-2 px-3 py-3 sm:px-4">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
         {icon}
-      </div>
-      <p className="text-body-sm font-bold text-ink">{label}</p>
-      <p className="mt-1 text-label font-bold">{value}</p>
+      </span>
+      <span className="min-w-0 truncate text-label font-semibold text-ink-muted">{label}</span>
+      <span className="ml-auto text-body-md font-bold text-ink">{value}</span>
     </div>
   );
 }
 
-function ActionLink({
+function EvidenceGapRow({
+  priority,
+  icon,
+  item,
   href,
+  actionLabel,
+  primary = false,
+}: {
+  priority: string;
+  icon: ReactNode;
+  item: BootcampHub["evidenceBank"]["tellableProjects"];
+  href: string;
+  actionLabel: string;
+  primary?: boolean;
+}) {
+  return (
+    <div className={cn("border-b border-line px-4 py-4 last:border-b-0 sm:px-5", primary && "bg-primary-soft/40")}>
+      <div className="flex items-start gap-3">
+        <span className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md", primary ? "bg-primary text-white" : "bg-surface text-primary")}>
+          {icon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-label font-bold text-primary">{priority}</span>
+            <span className="text-body-sm font-bold text-ink">{item.label}</span>
+            <span className="text-label font-semibold text-ink-muted">{item.count} 项</span>
+          </div>
+          <p className="mt-1 text-label font-semibold text-ink-muted">{item.status}</p>
+          <p className="mt-1 max-w-2xl text-body-sm leading-relaxed text-ink-muted">{item.note}</p>
+        </div>
+        <Link
+          href={href}
+          className={cn(
+            "mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-label font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            primary ? "bg-primary text-white hover:bg-primary-hover" : "text-primary hover:bg-primary-soft"
+          )}
+        >
+          {actionLabel}
+          <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.6} />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function PipelineRow({
+  active,
+  label,
+  value,
+}: {
+  active: boolean;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-3 text-body-sm">
+      <div className="flex min-w-0 items-center gap-2">
+        <CheckCircle2 className={cn("h-4 w-4 shrink-0", active ? "text-success" : "text-ink-subtle")} strokeWidth={1.6} />
+        <span className="font-semibold text-ink">{label}</span>
+      </div>
+      <span className={cn("shrink-0 text-label font-bold", active ? "text-success" : "text-ink-muted")}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ToolLink({
+  href,
+  icon,
   label,
   text,
 }: {
   href: string;
+  icon: ReactNode;
   label: string;
   text: string;
 }) {
   return (
     <Link
       href={href}
-      className="block rounded-xl border border-line bg-surface-raised px-4 py-4 shadow-xs transition-all hover:-translate-y-0.5 hover:bg-surface-hover active:scale-[0.99]"
+      className="flex items-center gap-3 py-3 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-body-sm font-bold text-ink">{label}</p>
-        <ArrowRight className="h-4 w-4 text-primary" strokeWidth={1.5} />
-      </div>
-      <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-        {text}
-      </p>
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface text-primary">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-body-sm font-bold text-ink">{label}</span>
+        <span className="mt-0.5 block truncate text-label text-ink-muted">{text}</span>
+      </span>
+      <ArrowRight className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.6} />
     </Link>
   );
 }
