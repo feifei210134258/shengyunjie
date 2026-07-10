@@ -71,6 +71,19 @@ test("training session displays and sends the outcome goal brief", () => {
   assert.match(source, /goalBrief: goalBrief \|\| undefined/);
 });
 
+test("training session collapses goal context into an expandable mission strip", () => {
+  assert.match(source, /function MissionContextStrip/);
+  assert.match(source, /任务上下文/);
+  assert.match(source, /展开查看/);
+  assert.match(source, /<details/);
+  assert.match(source, /<MissionContextStrip/);
+  assert.doesNotMatch(source, /md:grid-cols-3/);
+  assert.doesNotMatch(
+    source,
+    /本题会围绕这个结果生成场景、评价答案和沉淀资产/
+  );
+});
+
 test("training session scaffolds answers around senior PM judgment moves", () => {
   assert.match(source, /ANSWER_SKELETON_ITEMS/);
   assert.match(source, /答案构建台/);

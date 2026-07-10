@@ -22,6 +22,7 @@ import {
 import {
   ArrowRight,
   Check,
+  ChevronDown,
   MessageSquare,
   PenLine,
   RefreshCw,
@@ -750,6 +751,120 @@ function FocusedWorkspace() {
   );
 }
 
+function MissionContextStrip({
+  question,
+  currentDisplayLabel,
+  prescriptionLabel,
+  goalFocusFrame,
+  goalBrief,
+  migrationTarget,
+}: {
+  question?: QuestionState;
+  currentDisplayLabel: string;
+  prescriptionLabel?: string;
+  goalFocusFrame?: {
+    badge: string;
+    description: string;
+  } | null;
+  goalBrief?: GoalBrief | null;
+  migrationTarget?: ThinkingUpgradeMigrationTarget | null;
+}) {
+  const contextSummary = goalBrief
+    ? [goalBrief.targetRole, goalBrief.targetScenario, goalBrief.targetDeadline]
+        .filter(Boolean)
+        .join(" · ")
+    : migrationTarget
+      ? `迁移上一张 ${migrationTarget.dimensionLabel} 思维升级卡`
+      : goalFocusFrame?.description ||
+        `来自训练处方：优先补 ${
+          prescriptionLabel || currentDisplayLabel
+        }。`;
+
+  return (
+    <section className="rounded-xl border border-primary/15 bg-white px-4 py-3 shadow-[0_10px_28px_rgba(67,56,202,0.05)]">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-label font-bold text-primary">
+              {goalFocusFrame?.badge || "处方训练"}
+            </p>
+            <span className="rounded-md bg-primary-soft px-2.5 py-1 text-label font-semibold text-primary">
+              {question?.targetLabel || "定向练习"}
+            </span>
+          </div>
+          <p className="mt-1 truncate text-body-sm text-ink-muted">
+            {contextSummary || "本题沿用当前目标简报和训练处方。"}
+          </p>
+        </div>
+      </div>
+
+      {(goalBrief || migrationTarget) && (
+        <details className="group mt-2 border-t border-line pt-2">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-1 py-1.5 text-label font-bold text-ink-muted transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20">
+            <span>任务上下文</span>
+            <span className="inline-flex items-center gap-1.5 text-primary">
+              展开查看
+              <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+            </span>
+          </summary>
+
+          <div className="mt-2 space-y-3 rounded-lg bg-[#F8FAFC] px-3 py-3">
+            {goalBrief && (
+              <div>
+                <p className="text-label font-bold text-primary">目标简报</p>
+                <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-body-sm text-ink">
+                  <p>
+                    <span className="font-semibold text-ink-muted">岗位：</span>
+                    {goalBrief.targetRole || "未填写"}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-ink-muted">场景：</span>
+                    {goalBrief.targetScenario || "未填写"}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-ink-muted">期限：</span>
+                    {goalBrief.targetDeadline || "未填写"}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {migrationTarget && (
+              <div className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-label font-bold text-primary">
+                    本题迁移目标
+                  </p>
+                  <span className="text-label font-semibold text-ink-muted">
+                    上一张思维升级卡 · {migrationTarget.dimensionLabel}
+                  </span>
+                </div>
+                <div className="mt-2 space-y-1.5 text-body-sm leading-relaxed text-ink">
+                  {migrationTarget.judgmentQuality && (
+                    <p><span className="font-semibold">判断：</span>{migrationTarget.judgmentQuality}</p>
+                  )}
+                  {migrationTarget.tradeoffQuality && (
+                    <p><span className="font-semibold">取舍：</span>{migrationTarget.tradeoffQuality}</p>
+                  )}
+                  {migrationTarget.attributionDepth && (
+                    <p><span className="font-semibold">归因：</span>{migrationTarget.attributionDepth}</p>
+                  )}
+                  {migrationTarget.landingRigor && (
+                    <p><span className="font-semibold">落地：</span>{migrationTarget.landingRigor}</p>
+                  )}
+                  {migrationTarget.migrationCheck && (
+                    <p><span className="font-semibold">上次迁移验证：</span>{migrationTarget.migrationCheck}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </details>
+      )}
+    </section>
+  );
+}
+
 function A1BeforeSubmit({
   currentIndex,
   totalCount,
@@ -820,95 +935,15 @@ function A1BeforeSubmit({
         </div>
 
         <div className="space-y-4">
-          {(question?.profileFocus || goalFocusFrame) && (
-            <section className="rounded-xl border border-primary/15 bg-white px-4 py-3 shadow-[0_10px_28px_rgba(67,56,202,0.05)]">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-label font-bold text-primary">
-                    {goalFocusFrame?.badge || "处方训练"}
-                  </p>
-                  <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                    {goalFocusFrame?.description ||
-                      `来自训练处方：优先补 ${
-                        prescriptionLabel || currentDisplayLabel
-                      }，本题会写入今日训练缓存。`}
-                  </p>
-                </div>
-                <span className="rounded-md bg-primary-soft px-3 py-1.5 text-label font-semibold text-primary">
-                  {question?.targetLabel || "定向练习"}
-                </span>
-              </div>
-              {goalBrief && (
-                <div className="mt-3 grid gap-2 rounded-lg border border-line bg-surface px-3 py-3 md:grid-cols-3">
-                  <p className="text-body-sm leading-relaxed text-ink md:col-span-3">
-                    <span className="font-semibold text-primary">目标简报：</span>
-                    本题会围绕这个结果生成场景、评价答案和沉淀资产。
-                  </p>
-                  <p className="text-body-sm leading-relaxed text-ink">
-                    <span className="block text-label font-bold text-primary">
-                      目标岗位
-                    </span>
-                    {goalBrief.targetRole || "未填写"}
-                  </p>
-                  <p className="text-body-sm leading-relaxed text-ink">
-                    <span className="block text-label font-bold text-primary">
-                      目标场景
-                    </span>
-                    {goalBrief.targetScenario || "未填写"}
-                  </p>
-                  <p className="text-body-sm leading-relaxed text-ink">
-                    <span className="block text-label font-bold text-primary">
-                      目标期限
-                    </span>
-                    {goalBrief.targetDeadline || "未填写"}
-                  </p>
-                </div>
-              )}
-              {migrationTarget && (
-                <div className="mt-3 rounded-lg border border-primary/10 bg-primary-soft/45 px-3 py-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-white px-2 py-1 text-label font-semibold text-primary">
-                      本题迁移目标
-                    </span>
-                    <span className="text-label font-semibold text-ink-muted">
-                      上一张思维升级卡 · {migrationTarget.dimensionLabel}
-                    </span>
-                  </div>
-                  <div className="mt-2 grid gap-2 md:grid-cols-2">
-                    {migrationTarget.judgmentQuality && (
-                      <p className="text-body-sm leading-relaxed text-ink">
-                        <span className="font-semibold">判断：</span>
-                        {migrationTarget.judgmentQuality}
-                      </p>
-                    )}
-                    {migrationTarget.tradeoffQuality && (
-                      <p className="text-body-sm leading-relaxed text-ink">
-                        <span className="font-semibold">取舍：</span>
-                        {migrationTarget.tradeoffQuality}
-                      </p>
-                    )}
-                    {migrationTarget.attributionDepth && (
-                      <p className="text-body-sm leading-relaxed text-ink">
-                        <span className="font-semibold">归因：</span>
-                        {migrationTarget.attributionDepth}
-                      </p>
-                    )}
-                    {migrationTarget.landingRigor && (
-                      <p className="text-body-sm leading-relaxed text-ink">
-                        <span className="font-semibold">落地：</span>
-                        {migrationTarget.landingRigor}
-                      </p>
-                    )}
-                    {migrationTarget.migrationCheck && (
-                      <p className="text-body-sm leading-relaxed text-ink md:col-span-2">
-                        <span className="font-semibold">上次迁移验证：</span>
-                        {migrationTarget.migrationCheck}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </section>
+          {(question?.profileFocus || goalFocusFrame || goalBrief || migrationTarget) && (
+            <MissionContextStrip
+              question={question}
+              currentDisplayLabel={currentDisplayLabel}
+              prescriptionLabel={prescriptionLabel}
+              goalFocusFrame={goalFocusFrame}
+              goalBrief={goalBrief}
+              migrationTarget={migrationTarget}
+            />
           )}
 
           <section className="rounded-xl border border-primary/20 bg-[#EEF2FF] p-4 shadow-[0_10px_28px_rgba(67,56,202,0.06)]">

@@ -1,5 +1,29 @@
 # 会话进度日志
 
+## [2026-07-10] Feature: 训练实战页任务上下文折叠
+
+### 背景判断
+- `/training/session` 提交前会完整展开目标简报和上一张思维升级卡，信息正确，但会把题目和答案构建台继续向下推。
+- 从第一性原理看，这些内容是训练约束，不是当前任务本身；默认状态只需要让用户知道“这题服务什么目标”，细节应当按需展开。
+
+### 完成内容
+- 新增 `MissionContextStrip`，把主线、当前训练任务和目标摘要合并为一条紧凑上下文。
+- 使用原生 `details/summary` 提供“任务上下文 / 展开查看”，目标岗位、目标场景、目标期限和思维迁移要求默认折叠。
+- 删除旧目标简报三列网格和迁移目标双列大面板，让题目与答案构建台更靠近首屏。
+- 继续复用 `latestGoalBrief`、`latestThinkingUpgrade` 和题目缓存里的 `goalBrief/migrationTarget`，不新增 schema 或 API。
+
+### 验证记录
+- TDD 红灯：`TrainingSessionClient` 源测试先失败于缺少 `MissionContextStrip / 任务上下文 / 展开查看 / details`，并捕获旧 `md:grid-cols-3` 目标简报网格仍存在。
+- GREEN：`node --test src/components/training/TrainingSessionClient.test.mjs` 通过 16 项。
+- `npx tsc --noEmit` 通过。
+- 定向 ESLint 通过。
+- 回归：`node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs` 通过 18 项。
+- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 通过。
+- `feature_list.json` JSON 解析通过。
+- `git diff --check` 通过。
+- `npm run build` 通过。
+- `./init.sh` 单独复跑通过，环境健康检查 10/10。
+
 ## [2026-07-10] Feature: 训练反馈页辅助操作降权
 
 ### 背景判断

@@ -108,6 +108,7 @@
             "id": "training-001",
             "name": "日常训练 — 场景题库",
             "description": "看板式训练首页（连击统计+日历+历史）、AI 动态出题、答题→AI 评分反馈、记录落库",
+            "latest_evidence": "2026-07-10 训练实战页任务上下文折叠：/training/session 新增 MissionContextStrip，将目标主线、当前任务和目标摘要收束为紧凑上下文条；目标简报与上一张思维升级卡改用 details/summary 按需展开，删除旧 md:grid-cols-3 目标简报网格，继续复用 latestGoalBrief/latestThinkingUpgrade 和题目缓存，不新增 schema/API。验证：TDD 红灯覆盖 MissionContextStrip/任务上下文/展开查看/details 与旧网格移除；node --test src/components/training/TrainingSessionClient.test.mjs 通过 16 项；回归 node --test src/components/training/TrainingSessionClient.test.mjs feature_list.test.mjs 通过 18 项，npx tsc、全量 ESLint、JSON 解析、git diff --check、npm run build、./init.sh 均通过。",
             "dependencies": [
                 "infra-004",
                 "profile-001"
