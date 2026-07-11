@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const variants = {
   default: "bg-surface-raised border border-line",
-  elevated: "bg-surface-raised shadow-md border border-line/50",
+  elevated: "bg-surface-raised border border-line-strong",
   subtle: "bg-surface border border-transparent",
   glass: "bg-white/60 backdrop-blur-xl border border-white/30",
 };
@@ -35,7 +35,7 @@ export function Card({
         "rounded-lg transition-all duration-300",
         variants[variant],
         sizes[size],
-        hoverable && "hover:shadow-lg hover:border-primary/20 cursor-pointer",
+        hoverable && "hover:border-primary/30 cursor-pointer",
         className
       )}
       {...props}

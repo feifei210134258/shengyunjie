@@ -13,8 +13,10 @@ import {
 } from "@/lib/bootcamp";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageSpinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { MessageSquareWarning } from "lucide-react";
 
 interface TargetEvidenceFocus {
   projectName: string;
@@ -179,6 +181,24 @@ function BootcampInterviewContent() {
 
   const progress = calculateDayProgress(questions);
   const currentQuestion = questions[currentIndex];
+
+  if (!currentQuestion) {
+    return (
+      <>
+        <PageHeader title="模拟面试" backHref="/bootcamp" />
+        <EmptyState
+          icon={<MessageSquareWarning className="h-6 w-6" strokeWidth={1.5} />}
+          title="还没有面试题"
+          description="先上传简历，再生成基于真实项目的追问。"
+          action={
+            <Button onClick={() => router.push("/bootcamp/resume")}>
+              上传简历
+            </Button>
+          }
+        />
+      </>
+    );
+  }
 
   if (showSummary) {
     const avgScore =

@@ -44,3 +44,9 @@ test("bootcamp interview is a quiet evidence rehearsal workspace", () => {
   assert.match(source, /divide-y divide-line border-y border-line/);
   assert.match(source, /variant=\{canAdvanceFromQuestion\(currentQuestion\)/);
 });
+
+test("bootcamp interview handles an empty question set", () => {
+  assert.match(source, /if \(!currentQuestion\)/);
+  assert.match(source, /title="还没有面试题"/);
+  assert.match(source, /router\.push\("\/bootcamp\/resume"\)/);
+});

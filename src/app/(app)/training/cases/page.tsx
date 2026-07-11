@@ -289,6 +289,13 @@ export default function CasesPage() {
     router.push(`/training/cases/${encodeURIComponent(selectedProduct.name)}`);
   }
 
+  function selectProduct(product: Product) {
+    setSelectedProduct(product);
+    setScenario(null);
+    setEvaluation(null);
+    setRecordId(null);
+  }
+
   return (
     <>
       <PageHeader
@@ -328,8 +335,29 @@ export default function CasesPage() {
           </div>
         )}
 
+        <div className="mb-4 lg:hidden">
+          <label className="block text-label font-semibold text-ink-muted" htmlFor="mobile-case-product">
+            当前产品
+          </label>
+          <select
+            id="mobile-case-product"
+            value={selectedProduct?.name || ""}
+            onChange={(event) => {
+              const product = products.find((item) => item.name === event.target.value);
+              if (product) selectProduct(product);
+            }}
+            className="mt-1 h-11 w-full rounded-md border border-line bg-white px-3 text-body-md font-semibold text-ink outline-none focus:border-primary"
+          >
+            {filteredProducts.map((product) => (
+              <option key={product.name} value={product.name}>
+                {product.name} · {product.articleCount > 0 ? `${product.articleCount} 篇` : "待拆"}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <section className="grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-          <aside className="space-y-4">
+          <aside className="hidden space-y-4 lg:block">
             <div>
               <Input
                 value={query}
@@ -365,12 +393,7 @@ export default function CasesPage() {
                       key={`${product.name}-${product.enName || "custom"}`}
                       product={product}
                       active={selectedProduct?.name === product.name}
-                      onSelect={(item) => {
-                        setSelectedProduct(item);
-                        setScenario(null);
-                        setEvaluation(null);
-                        setRecordId(null);
-                      }}
+                      onSelect={selectProduct}
                     />
                   ))
                 )}
