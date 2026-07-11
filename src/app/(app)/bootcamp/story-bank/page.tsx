@@ -158,20 +158,20 @@ export default function StoryBankPage() {
     };
 
     return (
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <section className="rounded-xl border border-line bg-surface-raised p-8 text-center shadow-xs">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-primary-soft text-primary">
-            <BriefcaseBusiness className="h-7 w-7" strokeWidth={1.5} />
+      <main className="mx-auto max-w-[1180px] px-4 py-8 sm:px-6 lg:px-8">
+        <section className="border-b border-line pb-6">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-soft text-primary">
+            <BriefcaseBusiness className="h-5 w-5" strokeWidth={1.5} />
           </div>
-          <h1 className="mt-5 text-display-md font-bold text-ink">
+          <h1 className="mt-4 text-[28px] font-bold leading-9 text-ink">
             先建立项目故事库
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-body-md text-ink-muted">
+          <p className="mt-2 text-body-sm text-ink-muted">
             {action.reason}
           </p>
           <Link
             href={action.href}
-            className="mt-7 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-body-md font-bold text-white transition-all hover:bg-primary-hover active:scale-[0.98]"
+            className="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-body-sm font-bold text-white transition hover:bg-primary-hover active:scale-[0.98]"
           >
             {action.label}
             <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
@@ -183,15 +183,15 @@ export default function StoryBankPage() {
 
   return (
     <main className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-8">
-      <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-7">
+      <section className="border-b border-line px-1 pb-5 pt-2">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
             <p className="text-label font-bold text-primary">面试证据</p>
-            <h1 className="mt-2 text-[32px] font-bold leading-[1.12] text-ink sm:text-[44px]">
+            <h1 className="mt-1 text-[28px] font-bold leading-9 text-ink">
               项目故事库
             </h1>
-            <p className="mt-3 max-w-3xl text-body-md leading-relaxed text-ink-muted">
-              把简历项目、模拟面试追问、AI 改写和证据缺口收在一起。目标不是保存资料，而是让每个项目都变成面试时能讲清的高级 PM 证据。
+            <p className="mt-2 text-body-sm text-ink-muted">
+              选择项目，补齐证据，保存可讲版本。
             </p>
           </div>
           <div className="flex flex-wrap gap-2 text-label font-bold text-ink-muted">
@@ -210,20 +210,20 @@ export default function StoryBankPage() {
 
       <section className="mt-5 grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
         <aside className="space-y-4">
-          <div className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+          <div className="rounded-lg border border-line bg-surface-raised p-4">
             <div className="mb-4 flex items-center gap-2">
               <Target className="h-4 w-4 text-primary" strokeWidth={1.5} />
               <h2 className="text-heading-sm font-semibold text-ink">
                 项目资产
               </h2>
             </div>
-            <div className="space-y-2">
+            <div className="divide-y divide-line border-y border-line">
               {storyBank.projectStories.map((story) => (
                 <button
                   key={story.projectName}
                   onClick={() => handleSelectProject(story.projectName)}
                   className={cn(
-                    "w-full rounded-lg px-3 py-3 text-left transition-all active:scale-[0.99]",
+                    "w-full px-3 py-3 text-left transition-all active:scale-[0.99]",
                     activeStory?.projectName === story.projectName
                       ? "bg-primary-soft text-primary"
                       : "bg-surface text-ink hover:bg-surface-hover"
@@ -261,7 +261,7 @@ export default function StoryBankPage() {
             latestGoalBrief={latestGoalBrief}
           />
 
-          <div className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+          <div className="border-y border-line py-4">
             <h2 className="text-heading-sm font-semibold text-ink">
               当前建议
             </h2>
@@ -270,7 +270,7 @@ export default function StoryBankPage() {
             </p>
             <Link
               href={storyBank.recommendedNextAction.href}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-primary-hover active:scale-[0.98]"
+              className="mt-3 inline-flex items-center gap-2 text-body-sm font-bold text-primary transition hover:text-primary-hover"
             >
               {storyBank.recommendedNextAction.label}
               <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
@@ -308,38 +308,37 @@ function TargetPriorityPanel({
     ) || storyBank.projectStories[0];
 
   return (
-    <div className="rounded-xl border border-line bg-ink p-4 text-white shadow-xs">
+    <div className="rounded-lg border border-primary/20 bg-primary-soft/40 p-4">
       <div className="mb-4 flex items-center gap-2">
-        <Target className="h-4 w-4 text-white/80" strokeWidth={1.5} />
-        <h2 className="text-heading-sm font-semibold">
+        <Target className="h-4 w-4 text-primary" strokeWidth={1.5} />
+        <h2 className="text-heading-sm font-semibold text-ink">
           目标项目优先级
         </h2>
       </div>
-      <div className="space-y-2 text-label leading-relaxed text-white/65">
-        <p>目标岗位：{latestGoalBrief?.targetRole || "未设置"}</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-label leading-relaxed text-ink-muted">
+        <p>岗位：{latestGoalBrief?.targetRole || "未设置"}</p>
         <p>
-          目标场景：
+          场景：
           {latestGoalBrief?.targetScenario || "先按高级 PM 面试准备"}
         </p>
-        <p>优先讲 / 备选讲 / 暂缓讲</p>
       </div>
       {priorityStory && (
-        <div className="mt-4 rounded-lg bg-white/10 px-3 py-3">
+        <div className="mt-3 border-t border-primary/20 pt-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-body-sm font-bold">
                 {priorityStory.projectName}
               </p>
-              <p className="mt-1 text-label font-bold text-white/60">
+              <p className="mt-1 text-label font-bold text-ink-muted">
                 {priorityStory.targetFit.priorityLabel} · 目标匹配度{" "}
                 {priorityStory.targetFit.score}/10
               </p>
             </div>
-            <span className="rounded-md bg-white px-2 py-1 text-label font-bold text-ink">
-              先讲
+            <span className="rounded-md bg-white px-2 py-1 text-label font-bold text-primary">
+              优先讲
             </span>
           </div>
-          <p className="mt-3 text-body-sm leading-relaxed text-white/80">
+          <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
             {priorityStory.targetFit.reason}
           </p>
         </div>
@@ -352,16 +351,13 @@ function TrainingExpressionAssets({ storyBank }: { storyBank: StoryBank }) {
   const assets = storyBank.trainingExpressionAssets ?? [];
 
   return (
-    <div className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+    <div className="rounded-lg border border-line bg-surface-raised p-4">
       <div className="mb-4 flex items-center gap-2">
         <Layers3 className="h-4 w-4 text-primary" strokeWidth={1.5} />
         <h2 className="text-heading-sm font-semibold text-ink">
           日常训练表达资产
         </h2>
       </div>
-      <p className="mb-4 text-body-sm leading-relaxed text-ink-muted">
-        训练回答经过二次修正后，也可以变成跳槽时可复述的判断证据。
-      </p>
       <div className="space-y-3">
         {assets.length ? (
           assets.slice(0, 3).map((asset) => (
@@ -448,7 +444,7 @@ function StoryDetail({
 
   return (
     <section className="space-y-5">
-      <div className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
+      <div className="rounded-lg border border-line bg-surface-raised p-5 sm:p-6">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
           <div>
             <p className="text-label font-bold text-ink-muted">
@@ -457,7 +453,7 @@ function StoryDetail({
             <h2 className="mt-2 text-heading-lg font-bold text-ink">
               {story.projectName}
             </h2>
-            <p className="mt-3 max-w-3xl text-body-md leading-relaxed text-ink-muted">
+            <p className="mt-2 line-clamp-2 max-w-3xl text-body-sm leading-6 text-ink-muted">
               {story.description || "简历里还没有足够项目描述，需要补充业务背景、角色边界和关键结果。"}
             </p>
           </div>
@@ -472,13 +468,10 @@ function StoryDetail({
           </span>
         </div>
 
-        <div className="mt-5 flex flex-col gap-3 rounded-lg bg-surface px-4 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="mt-5 flex flex-col gap-3 border-y border-line py-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-body-sm font-bold text-ink">
               沉淀到画像账本
-            </p>
-            <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-              把这份项目讲述稿、成熟度和证据缺口写入能力证据链，后续推荐会知道你已经有可讲项目资产。
             </p>
             {storyPackStatus === "saved" && (
               <p className="mt-2 text-label font-bold text-success">
@@ -494,14 +487,14 @@ function StoryDetail({
           <button
             onClick={() => onSaveProjectStoryPack(story)}
             disabled={storyPackStatus === "saving"}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-ink-muted active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-line-strong bg-white px-4 py-2.5 text-body-sm font-bold text-ink transition hover:bg-surface active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45"
           >
             <Save className="h-4 w-4" strokeWidth={1.5} />
             {storyPackStatus === "saving" ? "入账中" : "沉淀到画像账本"}
           </button>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="mt-6 divide-y divide-line border-y border-line md:grid md:grid-cols-2 md:divide-x md:divide-y-0">
           <EvidenceBox
             title="目标证据修补台"
             icon={<Target className="h-4 w-4" strokeWidth={1.5} />}
@@ -550,18 +543,18 @@ function StoryDetail({
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
+        <section className="rounded-lg border border-line bg-surface-raised p-5 sm:p-6">
           <div className="mb-4 flex items-center gap-2">
             <MessageSquareQuote className="h-4 w-4 text-primary" strokeWidth={1.5} />
             <h3 className="text-heading-sm font-semibold text-ink">
               可讲版本
             </h3>
           </div>
-          <p className="rounded-lg bg-surface px-4 py-4 text-body-md leading-relaxed text-ink">
+          <p className="border-y border-line py-4 text-body-md leading-relaxed text-ink">
             {story.interviewReadyAnswer}
           </p>
 
-          <div className="mt-5 rounded-xl border border-line bg-white p-4">
+          <div className="mt-5 border-y border-line py-4">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" strokeWidth={1.5} />
@@ -591,7 +584,7 @@ function StoryDetail({
             </div>
           </div>
 
-          <div className="mt-5 rounded-xl border border-primary/20 bg-primary-soft/40 p-4">
+          <div className="mt-5 rounded-lg border border-primary/20 bg-primary-soft/40 p-4">
             <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-start">
               <div>
                 <div className="flex items-center gap-2">
@@ -646,7 +639,7 @@ function StoryDetail({
                   })
                 }
                 disabled={saving}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-bold text-white transition-all hover:bg-ink-muted active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-line-strong bg-white px-4 py-2.5 text-body-sm font-bold text-ink transition hover:bg-surface active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
               >
                 <Save className="h-4 w-4" strokeWidth={1.5} />
                 {saving ? "保存中" : "保存终版表达"}
@@ -682,7 +675,7 @@ function StoryDetail({
         </section>
 
         <aside className="space-y-5">
-          <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
+          <section className="rounded-lg border border-line bg-surface-raised p-5 sm:p-6">
             <div className="mb-4 flex items-center gap-2">
               <Save className="h-4 w-4 text-primary" strokeWidth={1.5} />
               <h3 className="text-heading-sm font-semibold text-ink">
@@ -766,7 +759,7 @@ function StoryDetail({
             </button>
           </section>
 
-          <section className="rounded-xl border border-line bg-surface-raised p-5 shadow-xs sm:p-6">
+          <section className="rounded-lg border border-line bg-surface-raised p-5 sm:p-6">
           <div className="mb-4 flex items-center gap-2">
             <FileText className="h-4 w-4 text-primary" strokeWidth={1.5} />
             <h3 className="text-heading-sm font-semibold text-ink">
@@ -807,7 +800,7 @@ function EvidenceBox({
   items: string[];
 }) {
   return (
-    <div className="rounded-lg bg-surface px-4 py-4">
+    <div className="px-4 py-4">
       <div className="mb-3 flex items-center gap-2 text-label font-bold text-primary">
         {icon}
         {title}

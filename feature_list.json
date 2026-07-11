@@ -210,8 +210,8 @@
                 "training-001",
                 "bootcamp-004"
             ],
-            "status": "completed",
-            "evidence": "2026-07-11 已完成 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台研究、三版主页面视觉探索及四个核心页面落地。Dashboard、训练首页、训练复盘和面试证据库已统一为浅色固定导航、列表/表格优先和单一首屏主动作；复盘标题压缩为 24px 两行摘要并清理 Markdown 前缀。Kimi WebBridge 在 1470x797 验证四页无横向滚动、无黑色面板和首屏多主动作；Codex Browser 在 390x844 验证移动顶部栏、四页 scrollWidth=390、无可见溢出。全量 272 项测试、历史页 11 项定向测试、TypeScript、ESLint、Next build、git diff --check 与 ./init.sh 均通过。设计规范见 docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md。"
+            "status": "in-progress",
+            "evidence": "2026-07-11 已完成 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台研究、三版主页面视觉探索及四个核心页面落地。Dashboard、训练首页、训练复盘和面试证据库已统一为浅色固定导航、列表/表格优先和单一首屏主动作；复盘标题压缩为 24px 两行摘要并清理 Markdown 前缀。Kimi WebBridge 在 1470x797 验证四页无横向滚动、无黑色面板和首屏多主动作；Codex Browser 在 390x844 验证移动顶部栏、四页 scrollWidth=390、无可见溢出。全量 272 项测试、历史页 11 项定向测试、TypeScript、ESLint、Next build、git diff --check 与 ./init.sh 均通过。完成性审计发现关键子流程仍有旧视觉：项目故事库存在 44px Hero、页面级黑色优先级面板和重复说明，诊断与设置页仍使用 40px 标题，训练反馈态仍保留黑色吸顶面板；继续在 ux-003 中收口这些子流程。设计规范见 docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md。"
         }
     ]
 }

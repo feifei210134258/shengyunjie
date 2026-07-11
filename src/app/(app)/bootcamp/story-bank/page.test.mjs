@@ -85,3 +85,20 @@ test("story bank page lets users package and persist a final interview answer", 
 test("story bank page deposits the final interview answer with the project story pack", () => {
   assert.match(source, /finalInterviewAnswer:\s*story\.finalInterviewPackage\.savedAnswer/);
 });
+
+test("story bank uses the quiet list-first workspace system", () => {
+  assert.match(source, /text-\[28px\] font-bold leading-9 text-ink/);
+  assert.match(source, /选择项目，补齐证据，保存可讲版本/);
+  assert.doesNotMatch(source, /sm:text-\[44px\]/);
+  assert.doesNotMatch(source, /text-display-md/);
+  assert.doesNotMatch(source, /bg-ink/);
+  assert.doesNotMatch(source, /目标不是保存资料/);
+  assert.doesNotMatch(source, /shadow-xs/);
+});
+
+test("story bank flattens project evidence into divided rows", () => {
+  assert.match(source, /divide-y divide-line border-y border-line/);
+  assert.match(source, /TargetPriorityPanel/);
+  assert.match(source, /bg-primary-soft\/40/);
+  assert.doesNotMatch(source, /rounded-xl border border-line bg-white/);
+});

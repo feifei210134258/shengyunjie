@@ -23,7 +23,7 @@ test("profile-002 tracks the personalized recommendation engine", () => {
 test("ux-003 tracks the research-informed core workspace redesign", () => {
   const feature = featureList.features.find((item) => item.id === "ux-003");
   assert.ok(feature);
-  assert.equal(feature.status, "completed");
+  assert.equal(feature.status, "in-progress");
   assert.deepEqual(feature.dependencies, ["ux-001", "training-001", "bootcamp-004"]);
   assert.match(feature.description, /Dashboard/);
   assert.match(feature.description, /训练首页/);
@@ -33,4 +33,5 @@ test("ux-003 tracks the research-informed core workspace redesign", () => {
   assert.match(feature.evidence, /272/);
   assert.match(feature.evidence, /390x844/);
   assert.match(feature.evidence, /Kimi WebBridge/);
+  assert.match(feature.evidence, /子流程/);
 });
