@@ -210,8 +210,8 @@
                 "training-001",
                 "bootcamp-004"
             ],
-            "status": "in-progress",
-            "evidence": "2026-07-11 已完成 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台研究、三版主页面视觉探索及四个核心页面落地。Dashboard、训练首页、训练复盘和面试证据库已统一为浅色固定导航、列表/表格优先和单一首屏主动作；复盘标题压缩为 24px 两行摘要并清理 Markdown 前缀。Kimi WebBridge 在 1470x797 验证四页无横向滚动、无黑色面板和首屏多主动作，阶段性全量测试 272 项通过。后续完成性审计继续收口项目故事库、训练反馈、能力量表、设置页、诊断案例/访谈/报告、简历证据、面试演练、训练报告和产品案例等关键子流程：删除黑色面板、渐变头像、大型 Stepper、卡片墙、40px 标题和冗长说明，统一 28px 标题、浅色连续行与内联错误；简历经历、项目、风险、作答抓手和产品选择改为连续分隔行，面试动作按作答状态交接，共享 Card、骨架与空状态圆角统一为 8px 且移除页面阴影。浏览器在桌面检查 Dashboard、产品案例、简历证据、能力量表和深度访谈；移动 390x844 检查 Dashboard、训练、训练实战、产品案例、面试证据库、项目故事库、模拟面试、能力量表、深度访谈和设置，均无页面级横向滚动；模拟面试无题状态改为上传简历入口。现有 API、Supabase 持久化和跳转链路保持不变。待全量验证和生产部署，ux-003 保持 in-progress。设计规范见 docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md。"
+            "status": "passed",
+            "evidence": "2026-07-11 基于 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台研究和三版视觉探索，完成核心工作台及关键子流程重设计。Dashboard、训练首页、训练实战/复盘、面试证据库、项目故事、简历证据、面试演练/报告、能力量表、诊断访谈/案例/报告、设置和产品案例均统一为浅色固定导航、24-28px 标题、列表/分隔行优先、单一主动作和 8px 工具边界；删除页面级黑色面板、巨型 Hero、渐变头像、大型 Stepper、卡片墙、大阴影及冗余说明。模拟面试无题状态改为上传简历入口，产品案例移动端加入首屏产品选择器；现有 API、Supabase 持久化和数据库 schema 保持不变。Kimi WebBridge 与 Codex Browser 完成桌面和 390x844 移动回归，核心页面无页面级横向滚动。最终全量测试 297/297、训练历史定向测试 11/11、TypeScript、全量 ESLint、Next build、git diff --check 与 ./init.sh 10/10 通过。设计规范见 docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md。"
         }
     ]
 }
