@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-11] Feature: ux-003 设置页收口
+
+### 完成内容
+- 设置页移除 40px 通用 PageHeader 和居中大卡，改为 28px 标题与连续表单工作区。
+- DeepSeek / 自定义供应商改为响应式分段控制；内置供应商不再展示无用 API Key，自定义模式才显示 API Key 和模型名称。
+- 深度思考使用带 `aria-pressed` 的开关；保存状态增加 `saving`、内联错误和禁用状态，继续写入既有 `/api/settings`。
+- 删除“配置你的 AI 模型参数”等重复说明，Reasoning 描述压缩为一句。
+
+### 验证记录
+- 新增 TDD 源测试 `src/app/(app)/settings/page.test.mjs`，3/3 通过。
+- `npx tsc --noEmit` 与定向 ESLint 通过。
+- Kimi WebBridge 桌面验证：1470px 标题 28px、内置供应商不展示 API Key，截图 `/tmp/settings-redesign-desktop.png`。
+- Codex Browser 移动验证：390x844 `scrollWidth=390`，供应商、模型、开关和保存按钮均无裁切。
+
 ## [2026-07-11] Feature: ux-003 能力量表诊断收口
 
 ### 完成内容
