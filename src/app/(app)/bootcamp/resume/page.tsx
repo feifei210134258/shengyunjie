@@ -156,18 +156,15 @@ export default function ResumePage() {
 
   return (
     <>
-      <PageHeader title="简历解析" backHref="/bootcamp" />
+      <PageHeader
+        title="简历证据"
+        subtitle="上传或粘贴简历，生成项目证据和追问风险。"
+        backHref="/bootcamp"
+      />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <div>
-          <h1 className="text-display-md font-bold text-ink">简历解析</h1>
-          <p className="text-body-lg text-ink-muted mt-2">
-            上传你的简历，AI 将解析你的工作经历和项目经验，生成针对性的面试弱点预测
-          </p>
-        </div>
-
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-5 sm:px-6 lg:px-8">
         {isLoadingResume && (
-          <div className="rounded-xl border border-line bg-surface p-6 text-body-sm text-ink-muted">
+          <div className="rounded-lg border border-line bg-white px-4 py-5 text-body-sm text-ink-muted">
             正在读取简历解析记录...
           </div>
         )}
@@ -181,13 +178,13 @@ export default function ResumePage() {
         )}
 
         {error && (
-          <div className="bg-danger-soft p-4 rounded-xl text-danger text-body-sm">
+          <div role="alert" className="rounded-md bg-danger-soft px-4 py-3 text-body-sm text-danger">
             {error}
           </div>
         )}
 
         {parsedProfile && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <ResumePreview
               profile={parsedProfile}
               rawMarkdown={rawMarkdown || undefined}
@@ -197,7 +194,7 @@ export default function ResumePage() {
               <WeaknessReport prediction={weaknessPrediction} />
             )}
 
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <div className="grid gap-3 border-t border-line pt-5 sm:grid-cols-[1fr_auto]">
               <Button fullWidth size="lg" onClick={startBootcamp}>
                 生成 Day 1 题并进入特训
               </Button>

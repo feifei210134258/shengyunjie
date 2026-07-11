@@ -39,10 +39,10 @@ export default function WeaknessReport({ prediction }: Props) {
         </Card>
       )}
 
-      <div className="space-y-3">
+      <div className="divide-y divide-line border-y border-line bg-white">
         {prediction.weak_dimensions?.map((w, idx) => (
-          <Card key={idx} variant="subtle" size="sm">
-            <div className="flex items-center justify-between mb-2">
+          <div key={idx} className="px-4 py-4 sm:px-5">
+            <div className="mb-2 flex items-center justify-between gap-3">
               <span className="font-semibold text-ink">
                 {w.dimension}
               </span>
@@ -53,12 +53,12 @@ export default function WeaknessReport({ prediction }: Props) {
             <p className="text-body-sm text-ink-muted">
               {w.gap_description}
             </p>
-          </Card>
+          </div>
         ))}
       </div>
 
       {prediction.recommended_focus?.length > 0 && (
-        <div className="bg-primary-soft p-4 rounded-xl">
+        <div className="rounded-lg bg-primary-soft p-4">
           <h4 className="font-semibold text-primary mb-2">
             建议重点训练
           </h4>

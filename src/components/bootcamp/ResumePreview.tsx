@@ -12,7 +12,7 @@ interface Props {
 export default function ResumePreview({ profile, rawMarkdown }: Props) {
   if (rawMarkdown) {
     return (
-      <div className="rounded-xl bg-surface p-6">
+      <div className="border-y border-line bg-white px-4 py-5 sm:px-6">
         <div className="markdown-content">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{rawMarkdown}</ReactMarkdown>
         </div>
@@ -22,13 +22,12 @@ export default function ResumePreview({ profile, rawMarkdown }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Work experience */}
       <section>
-        <h3 className="text-heading-md font-semibold text-ink mb-3">工作经历</h3>
-        <div className="space-y-3">
+        <h3 className="mb-3 text-heading-md font-semibold text-ink">工作经历</h3>
+        <div className="divide-y divide-line border-y border-line bg-white">
           {profile.work_experience?.map((work, idx) => (
-            <div key={idx} className="bg-surface p-4 rounded-xl">
-              <div className="flex justify-between items-start">
+            <div key={idx} className="px-4 py-4 sm:px-5">
+              <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-semibold text-ink">{work.company}</p>
                   <p className="text-body-sm text-ink-muted">{work.title}</p>
@@ -51,12 +50,11 @@ export default function ResumePreview({ profile, rawMarkdown }: Props) {
         </div>
       </section>
 
-      {/* Projects */}
       <section>
-        <h3 className="text-heading-md font-semibold text-ink mb-3">项目经历</h3>
-        <div className="space-y-3">
+        <h3 className="mb-3 text-heading-md font-semibold text-ink">项目经历</h3>
+        <div className="divide-y divide-line border-y border-line bg-white">
           {profile.projects?.map((project, idx) => (
-            <div key={idx} className="bg-surface p-4 rounded-xl">
+            <div key={idx} className="px-4 py-4 sm:px-5">
               <p className="font-semibold text-ink">{project.name}</p>
               <p className="text-body-sm text-ink-muted mt-1">
                 {project.description}
@@ -70,14 +68,13 @@ export default function ResumePreview({ profile, rawMarkdown }: Props) {
         </div>
       </section>
 
-      {/* Skills */}
       <section>
         <h3 className="text-heading-md font-semibold text-ink mb-3">技能栈</h3>
         <div className="flex flex-wrap gap-2">
           {profile.skills?.map((skill, idx) => (
             <span
               key={idx}
-              className="px-3 py-1 bg-secondary-soft text-secondary rounded-lg text-label font-medium"
+              className="rounded-md bg-secondary-soft px-3 py-1 text-label font-medium text-secondary"
             >
               {skill}
             </span>

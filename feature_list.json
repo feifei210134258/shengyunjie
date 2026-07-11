@@ -211,7 +211,7 @@
                 "bootcamp-004"
             ],
             "status": "in-progress",
-            "evidence": "2026-07-11 已完成 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台研究、三版主页面视觉探索及四个核心页面落地。Dashboard、训练首页、训练复盘和面试证据库已统一为浅色固定导航、列表/表格优先和单一首屏主动作；复盘标题压缩为 24px 两行摘要并清理 Markdown 前缀。Kimi WebBridge 在 1470x797 验证四页无横向滚动、无黑色面板和首屏多主动作；Codex Browser 在 390x844 验证移动顶部栏、四页 scrollWidth=390、无可见溢出。全量 272 项测试、历史页 11 项定向测试、TypeScript、ESLint、Next build、git diff --check 与 ./init.sh 均通过。完成性审计后继续收口项目故事库、训练反馈、能力量表、设置页及诊断案例/访谈/报告等关键子流程：删除黑色面板、渐变头像、大型 Stepper、卡片墙、40px 标题和冗长说明，统一 28px 标题、浅色连续行与内联错误；现有 API、Supabase 持久化和跳转链路保持不变。剩余冲刺营与训练案例子页仍待视觉审计，ux-003 保持 in-progress。设计规范见 docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md。"
+            "evidence": "2026-07-11 已完成 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台研究、三版主页面视觉探索及四个核心页面落地。Dashboard、训练首页、训练复盘和面试证据库已统一为浅色固定导航、列表/表格优先和单一首屏主动作；复盘标题压缩为 24px 两行摘要并清理 Markdown 前缀。Kimi WebBridge 在 1470x797 验证四页无横向滚动、无黑色面板和首屏多主动作；Codex Browser 在 390x844 验证移动顶部栏、四页 scrollWidth=390、无可见溢出。全量 272 项测试、历史页 11 项定向测试、TypeScript、ESLint、Next build、git diff --check 与 ./init.sh 均通过。完成性审计后继续收口项目故事库、训练反馈、能力量表、设置页、诊断案例/访谈/报告及简历证据等关键子流程：删除黑色面板、渐变头像、大型 Stepper、卡片墙、40px 标题和冗长说明，统一 28px 标题、浅色连续行与内联错误；简历经历、项目和风险改为连续分隔行。现有 API、Supabase 持久化和跳转链路保持不变。剩余冲刺营面试/报告与训练案例子页仍待视觉审计，ux-003 保持 in-progress。设计规范见 docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md。"
         }
     ]
 }
