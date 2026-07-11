@@ -1,5 +1,12 @@
 # 会话进度日志
 
+## [2026-07-11] Feature: ux-003 生产发布
+
+### 发布结果
+- `deploy/pm` 推送至 `a7ac887` 后，生产脚本完成拉取、Next.js 构建、PM2 重启、Nginx 缓存清理和健康检查；`shengyunjie` 状态为 online。
+- `BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK`。
+- 生产环境桌面复验 Dashboard、产品案例、简历证据、能力量表和深度访谈，未发现页面级黑色面板；移动 390x844 复验 Dashboard、训练、产品案例、面试证据库、模拟面试、能力量表、深度访谈和设置，全部 `scrollWidth=390`。
+
 ## [2026-07-11] Feature: ux-003 完成性验收
 
 ### 验收结论

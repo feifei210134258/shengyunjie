@@ -211,7 +211,7 @@
                 "bootcamp-004"
             ],
             "status": "passed",
-            "evidence": "2026-07-11 基于 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台研究和三版视觉探索，完成核心工作台及关键子流程重设计。Dashboard、训练首页、训练实战/复盘、面试证据库、项目故事、简历证据、面试演练/报告、能力量表、诊断访谈/案例/报告、设置和产品案例均统一为浅色固定导航、24-28px 标题、列表/分隔行优先、单一主动作和 8px 工具边界；删除页面级黑色面板、巨型 Hero、渐变头像、大型 Stepper、卡片墙、大阴影及冗余说明。模拟面试无题状态改为上传简历入口，产品案例移动端加入首屏产品选择器；现有 API、Supabase 持久化和数据库 schema 保持不变。Kimi WebBridge 与 Codex Browser 完成桌面和 390x844 移动回归，核心页面无页面级横向滚动。最终全量测试 297/297、训练历史定向测试 11/11、TypeScript、全量 ESLint、Next build、git diff --check 与 ./init.sh 10/10 通过。设计规范见 docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md。"
+            "evidence": "2026-07-11 基于 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台研究和三版视觉探索，完成核心工作台及关键子流程重设计。Dashboard、训练首页、训练实战/复盘、面试证据库、项目故事、简历证据、面试演练/报告、能力量表、诊断访谈/案例/报告、设置和产品案例均统一为浅色固定导航、24-28px 标题、列表/分隔行优先、单一主动作和 8px 工具边界；删除页面级黑色面板、巨型 Hero、渐变头像、大型 Stepper、卡片墙、大阴影及冗余说明。模拟面试无题状态改为上传简历入口，产品案例移动端加入首屏产品选择器；现有 API、Supabase 持久化和数据库 schema 保持不变。Kimi WebBridge 与 Codex Browser 完成桌面和 390x844 移动回归，核心页面无页面级横向滚动。最终全量测试 297/297、训练历史定向测试 11/11、TypeScript、全量 ESLint、Next build、git diff --check 与 ./init.sh 10/10 通过。生产发布完成 Next build、PM2 online、Nginx 缓存清理和 `VERIFY_OK https://pm.imfly.site`；线上桌面无页面级黑色面板，移动关键页 `scrollWidth=390`。设计规范见 docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md。"
         }
     ]
 }
