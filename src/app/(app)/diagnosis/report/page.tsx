@@ -195,7 +195,7 @@ export default function ReportPage() {
           />
         ) : (
           <div className="space-y-5">
-            <section className="rounded-xl border border-line bg-primary-soft px-5 py-5 sm:px-6">
+            <section className="rounded-lg border border-line bg-primary-soft px-5 py-5 sm:px-6">
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
                 <div className="min-w-0">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -204,11 +204,11 @@ export default function ReportPage() {
                       诊断时间：{formatReportDate(report)}
                     </span>
                   </div>
-                  <h1 className="text-heading-xl font-bold text-ink sm:text-display-md">
+                  <h1 className="text-[28px] font-bold leading-9 text-ink">
                     产品思维深度画像报告
                   </h1>
-                  <p className="mt-2 max-w-3xl text-body-md leading-relaxed text-ink-muted">
-                    基于能力量表、AI 教练访谈和案例实战生成；案例回答会校准量表自评，用来定位当前能力结构和下一步训练重点。
+                  <p className="mt-2 max-w-3xl text-body-sm text-ink-muted">
+                    量表、访谈和案例校准后的能力证据。
                   </p>
                 </div>
 

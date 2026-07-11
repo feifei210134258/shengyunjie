@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageSpinner } from "@/components/ui/spinner";
-import { StepProgress } from "@/components/ui/step-progress";
 import { getPendingDiagnosisReportId } from "@/lib/browser/safe-storage";
 import { cn } from "@/lib/utils";
 import { Sparkles, Layers, GitBranch, AlertCircle } from "lucide-react";
@@ -47,6 +45,7 @@ export default function CasePage() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [logicInput, setLogicInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     setReportId(getPendingDiagnosisReportId());
@@ -79,6 +78,7 @@ export default function CasePage() {
   const handleSubmit = async () => {
     if (!selectedOption || !logicInput.trim()) return;
     setSubmitting(true);
+    setSubmitError("");
     try {
       const res = await fetch("/api/diagnosis/case", {
         method: "POST",
@@ -95,7 +95,7 @@ export default function CasePage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
     } catch (err: any) {
-      alert("提交失败：" + (err.message || "未知错误"));
+      setSubmitError(`提交失败：${err.message || "未知错误"}`);
       setSubmitting(false);
       return;
     }
@@ -105,73 +105,73 @@ export default function CasePage() {
   return (
     <div className="min-h-[100dvh] bg-bg">
       <PageHeader
-        title="诊断模块"
-        actions={<Badge>阶段三：案例实战验证</Badge>}
+        title="案例判断"
+        actions={
+          <span className="text-label font-bold text-primary">案例 3/3</span>
+        }
       />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <StepProgress
-          steps={["能力量表", "深度访谈", "案例实战"]}
-          current={2}
-          variant="circle"
-          className="mb-8"
-        />
+      <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6 lg:px-8">
 
-        {/* 案例场景 */}
-        <Card size="lg" className="mb-8 bg-gradient-warm text-center">
-          <h3 className="text-display-md font-bold text-ink mb-4">
+        <section className="border-y border-line bg-white px-4 py-5 sm:px-6">
+          <p className="text-label font-bold text-primary">业务场景</p>
+          <h2 className="mt-1 text-[24px] font-bold leading-8 text-ink">
             {CASE_SCENARIO.title}
-          </h3>
-          <p className="text-body-lg text-ink-muted leading-relaxed max-w-3xl mx-auto">
+          </h2>
+          <p className="mt-2 max-w-3xl text-body-sm leading-6 text-ink-muted">
             {CASE_SCENARIO.description}
           </p>
-        </Card>
+        </section>
 
-        {/* 方案选择 */}
-        <div className="mb-8">
-          <h4 className="text-heading-md font-semibold text-ink mb-6">
-            请选择你的核心解题思路
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section className="mt-5">
+          <h2 className="mb-3 text-[20px] font-semibold leading-7 text-ink">
+            选择核心思路
+          </h2>
+          <div className="divide-y divide-line border-y border-line bg-white">
             {OPTIONS.map((opt) => {
               const Icon = opt.icon;
               return (
                 <button
                   key={opt.id}
                   onClick={() => setSelectedOption(opt.id)}
+                  aria-pressed={selectedOption === opt.id}
                   className={cn(
-                    "rounded-xl border-2 bg-surface-raised p-6 text-left transition-all duration-200 active:scale-[0.98]",
+                    "flex w-full items-start gap-3 px-4 py-4 text-left transition duration-200 active:scale-[0.99]",
                     selectedOption === opt.id
-                      ? "border-primary bg-primary-soft"
-                      : "border-line hover:border-primary/40"
+                      ? "bg-primary-soft"
+                      : "bg-white hover:bg-surface"
                   )}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center mb-4">
-                    <Icon className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface text-primary">
+                    <Icon className="h-4 w-4" strokeWidth={1.5} />
                   </div>
-                  <p className="font-semibold text-ink mb-2">{opt.title}</p>
-                  <p className="text-body-sm text-ink-muted">
-                    {opt.desc}
-                  </p>
+                  <div>
+                    <p className="font-semibold text-ink">{opt.title}</p>
+                    <p className="mt-1 text-body-sm text-ink-muted">{opt.desc}</p>
+                  </div>
                 </button>
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* 思维框架输入 */}
-        <Card size="lg" className="mb-8">
+        <section className="mt-5 border-y border-line bg-white px-4 py-5 sm:px-6">
           <Textarea
-            label="补充你的思维框架与逻辑（必填）"
+            label="判断依据与取舍（必填）"
             value={logicInput}
             onChange={(e) => setLogicInput(e.target.value)}
             placeholder="请详细描述你的核心决策逻辑，以及如何利用有限资源最大化 ROI..."
             rows={6}
           />
-        </Card>
+        </section>
 
-        {/* 提交 */}
-        <div className="flex justify-end gap-4">
+        {submitError && (
+          <p role="alert" className="mt-4 rounded-md bg-danger-soft px-3 py-2 text-body-sm text-danger">
+            {submitError}
+          </p>
+        )}
+
+        <div className="mt-5 flex justify-end gap-3">
           <Button variant="secondary" onClick={() => router.push("/diagnosis/interview")}>
             返回访谈
           </Button>

@@ -27,30 +27,30 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4",
+        "mx-auto max-w-[1400px] px-4 pb-4 pt-6 sm:px-6 lg:px-8",
         className
       )}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
           {backHref && (
             <Link
               href={backHref}
-              className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-surface"
               aria-label={backLabel || "返回"}
             >
               <ArrowLeft className="w-[18px] h-[18px]" strokeWidth={1.5} />
             </Link>
           )}
           <div>
-            <h1 className="text-display-lg font-bold text-ink">{title}</h1>
+            <h1 className="text-[28px] font-bold leading-9 text-ink">{title}</h1>
             {subtitle && (
-              <p className="text-body-lg text-ink-muted mt-0.5">{subtitle}</p>
+              <p className="mt-0.5 text-body-sm text-ink-muted">{subtitle}</p>
             )}
           </div>
         </div>
         {actions && (
-          <div className="flex items-center gap-2 shrink-0 mt-1">{actions}</div>
+          <div className="flex flex-wrap items-center gap-2 sm:mt-1">{actions}</div>
         )}
       </div>
       {extra && <div className="mt-4">{extra}</div>}
