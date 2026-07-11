@@ -156,7 +156,7 @@ export default function ProductCasePage() {
     <>
       <PageHeader
         title={productName}
-        subtitle="按视角拆解 B 端产品决策，把案例读成可复用的产品判断框架"
+        subtitle="切换视角，比较同类产品判断。"
         backHref="/training/cases"
         backLabel="返回案例库"
         actions={
@@ -186,23 +186,18 @@ export default function ProductCasePage() {
         }
       />
 
-      <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-6 lg:px-8">
-        <section className="mb-5 rounded-xl border border-line bg-surface-raised px-5 py-4 shadow-xs">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Badge>案例拆解</Badge>
-                <Badge variant="neutral">{activePerspectiveLabel}</Badge>
-              </div>
-              <h2 className="text-heading-lg font-bold text-ink">
-                {productName} / {activePerspectiveLabel}
-              </h2>
-              <p className="mt-1 max-w-3xl text-body-sm text-ink-muted">
-                左侧切换分析视角，也可以直接切换产品，适合连续横向比较不同产品的同一类拆解。
-              </p>
+      <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-8">
+        <section className="mb-5 border-y border-line bg-white px-4 py-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>案例拆解</Badge>
+              <Badge variant="neutral">{activePerspectiveLabel}</Badge>
+              <span className="font-mono text-label font-semibold text-ink-muted">
+                {generatedCount}/{perspectives.length || 0} 个视角
+              </span>
             </div>
-            <div className="grid gap-3 sm:min-w-[360px]">
-              <label className="rounded-lg bg-surface px-3 py-2">
+            <div className="min-w-0 sm:w-[320px]">
+              <label className="block rounded-md bg-surface px-3 py-2">
                 <span className="text-label font-semibold text-ink-muted">
                   切换产品
                 </span>
@@ -227,24 +222,6 @@ export default function ProductCasePage() {
                     ))}
                 </select>
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-surface px-3 py-2">
-                  <p className="text-label font-semibold text-ink-muted">
-                    已生成视角
-                  </p>
-                  <p className="mt-1 font-mono text-data-md font-bold text-ink">
-                    {generatedCount}/{perspectives.length || 0}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-surface px-3 py-2">
-                  <p className="text-label font-semibold text-ink-muted">
-                    当前视角
-                  </p>
-                  <p className="mt-1 truncate text-body-sm font-semibold text-ink">
-                    {activePerspectiveLabel}
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -253,7 +230,7 @@ export default function ProductCasePage() {
         <div className="mb-4 lg:hidden">
           <button
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-surface-raised border border-line rounded-xl text-body-md text-ink"
+            className="flex w-full items-center justify-between rounded-lg border border-line bg-white px-4 py-3 text-body-md text-ink"
           >
             <span>
               {perspectives.find((p) => p.slug === activePerspective)
@@ -267,7 +244,7 @@ export default function ProductCasePage() {
             />
           </button>
           {mobileNavOpen && (
-            <div className="mt-2 bg-surface-raised border border-line rounded-xl p-2 space-y-1 animate-slide-down">
+            <div className="mt-2 animate-slide-down space-y-1 rounded-lg border border-line bg-white p-2">
               {perspectives.map((p) => {
                 const isActive = p.slug === activePerspective;
                 return (
@@ -294,7 +271,7 @@ export default function ProductCasePage() {
           {/* Reading rail — desktop only */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-5">
-              <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+              <section className="rounded-lg border border-line bg-white p-4">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Layers3 className="h-4 w-4 text-primary" strokeWidth={1.5} />
@@ -310,7 +287,7 @@ export default function ProductCasePage() {
                 {perspectivesLoading ? (
                   <div className="space-y-2">
                     {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} height="h-12" className="rounded-xl" />
+                      <Skeleton key={i} height="h-12" className="rounded-lg" />
                     ))}
                   </div>
                 ) : (
@@ -360,7 +337,7 @@ export default function ProductCasePage() {
                 )}
               </section>
 
-              <section className="rounded-xl border border-line bg-surface-raised p-4 shadow-xs">
+              <section className="border-y border-line bg-white px-4 py-4">
                 <div className="mb-3 flex items-center gap-2">
                   <BookOpen
                     className="h-4 w-4 text-primary"
@@ -390,7 +367,7 @@ export default function ProductCasePage() {
           </aside>
 
           {/* Article Content */}
-          <main className="min-w-0 rounded-xl border border-line bg-surface-raised shadow-xs">
+          <main className="min-w-0 rounded-lg border border-line bg-white">
             {articleLoading ? (
               <div className="mx-auto max-w-[920px] space-y-3 px-5 py-10 sm:px-10">
                 <Skeleton width="w-1/2" height="h-7" />

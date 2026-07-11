@@ -8,9 +8,7 @@ import {
   BookOpen,
   BrainCircuit,
   CheckCircle2,
-  FileText,
   Loader2,
-  RefreshCw,
   Search,
   Sparkles,
   Target,
@@ -66,10 +64,10 @@ function ProductButton({
       type="button"
       onClick={() => onSelect(product)}
       className={cn(
-        "w-full rounded-lg border px-4 py-3 text-left transition-all",
+        "w-full px-4 py-3 text-left transition-colors",
         active
-          ? "border-primary bg-primary-soft shadow-xs"
-          : "border-line bg-surface-raised hover:border-line-strong hover:bg-surface"
+          ? "bg-primary-soft"
+          : "bg-white hover:bg-surface"
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -85,9 +83,6 @@ function ProductButton({
           {product.articleCount > 0 ? `${product.articleCount} 篇` : "待拆"}
         </Badge>
       </div>
-      <p className="mt-2 line-clamp-2 text-body-sm text-ink-muted">
-        {product.description}
-      </p>
     </button>
   );
 }
@@ -297,93 +292,45 @@ export default function CasesPage() {
   return (
     <>
       <PageHeader
-        title="案例库"
-        subtitle="从产品拆解走到决策推演，把案例读成可复盘的判断训练"
+        title="产品案例"
+        subtitle="选择产品，做决策推演或阅读拆解。"
+        actions={
+          <>
+            <Button
+              onClick={() => generateScenario()}
+              disabled={!selectedProduct || scenarioLoading}
+              icon={
+                scenarioLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <BrainCircuit className="h-4 w-4" />
+                )
+              }
+            >
+              生成推演
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={openSelectedProduct}
+              disabled={!selectedProduct}
+              icon={<BookOpen className="h-4 w-4" />}
+            >
+              阅读拆解
+            </Button>
+          </>
+        }
       />
 
-      <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-6 lg:px-8">
-        <section className="mb-5 grid gap-4">
-          <Card size="lg" className="overflow-hidden">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <Badge>案例工作台</Badge>
-                  <Badge variant="neutral">{products.length} 个产品</Badge>
-                  <Badge variant="neutral">{totalArticles} 篇拆解</Badge>
-                  {selectedProduct && (
-                    <Badge variant="outline">当前：{selectedProduct.name}</Badge>
-                  )}
-                </div>
-                <h1 className="text-heading-lg font-bold text-ink">
-                  先做一题真实产品决策
-                </h1>
-                <p className="mt-2 text-body-md text-ink-muted">
-                  选择一个产品，生成一题具体推演，写下你的判断。完整拆解和复盘归档都放在后面，不打断当前动作。
-                </p>
-              </div>
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                <Sparkles className="h-6 w-6" strokeWidth={1.5} />
-              </div>
-            </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button
-                onClick={() => generateScenario()}
-                disabled={!selectedProduct || scenarioLoading}
-                icon={
-                  scenarioLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <BrainCircuit className="h-4 w-4" />
-                  )
-                }
-              >
-                生成{selectedProduct ? ` ${selectedProduct.name} ` : " "}推演
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={openSelectedProduct}
-                disabled={!selectedProduct}
-                icon={<BookOpen className="h-4 w-4" />}
-              >
-                阅读完整拆解
-              </Button>
-            </div>
-          </Card>
-
-          <Card size="lg" className="hidden">
-            <p className="text-label font-bold text-ink-muted">训练闭环</p>
-            <div className="mt-4 space-y-3">
-              <div className="flex gap-3">
-                <FileText className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <p className="text-body-sm text-ink-muted">
-                  文章拆解沉淀在 case_articles，共享给所有登录用户。
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <BrainCircuit className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
-                <p className="text-body-sm text-ink-muted">
-                  推演结果写入 training_records，自动进入训练统计和历史。
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                <p className="text-body-sm text-ink-muted">
-                  复盘页会展示改写示范、盲区和下一题建议。
-                </p>
-              </div>
-            </div>
-          </Card>
-        </section>
-
+      <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-8">
         {error && (
-          <div className="mb-5 rounded-lg border border-danger/20 bg-danger-soft px-4 py-3 text-body-sm text-danger">
+          <div role="alert" className="mb-5 rounded-md border border-danger/20 bg-danger-soft px-4 py-3 text-body-sm text-danger">
             {error}
           </div>
         )}
 
         <section className="grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
           <aside className="space-y-4">
-            <Card size="md">
+            <div>
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -392,22 +339,20 @@ export default function CasesPage() {
                 wrapperClassName="relative"
               />
               <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-ink-faint" />
-            </Card>
+            </div>
 
-            <Card size="md" className="overflow-hidden">
-              <div className="flex items-center justify-between gap-3">
+            <section>
+              <div className="mb-3 flex items-end justify-between gap-3">
                 <div>
                   <p className="text-label font-bold text-ink-muted">
                     产品列表
                   </p>
-                  <p className="mt-0.5 text-body-sm text-ink-faint">
-                    选择后生成推演或进入拆解页
-                  </p>
+                  <p className="mt-0.5 text-label text-ink-faint">{products.length} 个产品 · {totalArticles} 篇拆解</p>
                 </div>
                 <Badge variant="neutral">{filteredProducts.length}</Badge>
               </div>
 
-              <div className="mt-4 max-h-[350px] space-y-2 overflow-auto pr-1">
+              <div className="max-h-[430px] divide-y divide-line border-y border-line overflow-auto bg-white">
                 {loadingProducts ? (
                   <>
                     <SkeletonCard className="h-24" />
@@ -431,14 +376,11 @@ export default function CasesPage() {
                 )}
               </div>
 
-            </Card>
+            </section>
 
-            <Card size="md">
+            <section className="border-t border-line pt-4">
               <p className="text-label font-bold text-ink-muted">
                 自定义产品
-              </p>
-              <p className="mt-0.5 text-body-sm text-ink-faint">
-                临时添加一个产品进入推演
               </p>
               <div className="mt-3 flex gap-2">
                 <Input
@@ -454,7 +396,7 @@ export default function CasesPage() {
                   添加
                 </Button>
               </div>
-            </Card>
+            </section>
           </aside>
 
           <main className="space-y-4">
