@@ -29,7 +29,7 @@ export default function TrainingStats({ stats }: Props) {
       </div>
 
       {!stats ? (
-        <div className="rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5">
+        <div className="rounded-xl border border-dashed border-line-strong bg-surface px-4 py-5">
           <p className="text-body-sm font-semibold text-ink">还没有训练记录</p>
           <p className="mt-1 text-body-sm text-ink-muted">
             完成训练后，这里会显示各能力维度的平均得分。

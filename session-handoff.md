@@ -1,42 +1,80 @@
 # 会话交接记录
 
+> 当一个会话结束时留下的上下文快照，供下个会话（或另一个 agent）快速恢复。
+
+---
+
+## 交接摘要
+
+**日期：** YYYY-MM-DD
+**交接人：** [agent/用户名]
+**接棒人：** [agent/用户名]
+
+**一句话总结：** [本次会话完成了什么，下个会话从哪里开始]
+
+**Next Session:** [接棒人启动时需要注意什么]
+
+---
+
 ## 当前状态
 
-- 日期：2026-07-10
-- 分支：`deploy/pm`
-- 当前功能：`training-001`
-- 功能状态：`completed`
-- 生产：`https://pm.imfly.site` 已部署并验收
+- **当前功能 ID：** `feat-xxx`
+- **功能状态：** `in-progress` | `completed` | `blocked`
+- **当前分支：** `[branch-name]`
+- **未提交的变更：** [有哪些改动了还没提交]
 
-## 已完成
+---
 
-- 真实训练闭环已验收：反馈、二次修正、修正版画像快照、本周处方快照和历史读回均有真实 Supabase 证据。
-- 已修复 `training_records` UPDATE RLS，并将 migration `20260710130148_add_training_records_update_policy.sql` 应用到远端项目。
-- 训练反馈页已收束为反馈处理台；训练实战页已收束任务上下文、答案构建台和辅助操作。
-- Dashboard 在已有训练证据且无诊断时不再强推诊断，优先执行已保存的本周处方。
-- `/training` 现在优先读回 `latestRecommendation`，与 Dashboard 使用同一标题和入口。
-- 8 个读取 `growth_snapshots` 最新状态的 API 已统一按 `snapshot_date desc, created_at desc` 排序。
-- 本地生产构建浏览器验收：Dashboard、`/training`、`/bootcamp` 三条关键页面状态与布局一致。
-- 代码提交 `f91ac9d` 已推送并部署，服务器输出 `DEPLOY_OK deploy/pm f91ac9d`。
-- 公网脚本返回 `VERIFY_OK https://pm.imfly.site`，生产真实账号验收三条关键页面通过。
+## 关键上下文 / Key Context
 
-## 验证证据
+### 架构决策
+- [本会话中做了哪些架构/设计决策，为什么]
 
-- 全量 51 个 `*.test.mjs` 文件：258 项通过，0 失败。
-- `npx tsc --noEmit` 通过。
-- `ESLINT_USE_FLAT_CONFIG=false npx eslint src/ supabase/schema.test.mjs feature_list.test.mjs --max-warnings 0` 通过。
-- `npm run build` 通过。
-- `./init.sh` 通过，10/10。
-- `git diff --check` 与 `feature_list.json` JSON 解析通过。
-- 本地真实账号验证：Dashboard 与 `/training` 均显示“本周处方：先练 战略思维 的真实任务”，href 均为 `/training/session?focus=strategic_thinking`；`/bootcamp` 正确显示等待简历和 2 条训练表达资产。
+### 尚未解决的问题
+- [哪些问题悬而未决，需要下个会话处理]
 
-## 提交范围
+### 已知风险 / 技术债务
+- [当前代码中有哪些已知问题、临时方案、需要重构的地方]
 
-- 应提交本轮产品改造、测试、Supabase schema/migration、`feature_list.json`、`progress.md`、设计文档与本交接文件。
-- 不提交 `docs/progress/`。
-- 不提交 `supabase/.temp/` 下的 CLI 链接缓存与版本文件。
+---
 
-## 剩余步骤
+## 待办事项
 
-- 本轮目标已完成，无阻塞项。
-- 工作区仍保留未提交的 `docs/progress/` 与 `supabase/.temp/` CLI 缓存；它们不属于本轮产品改造，也未被覆盖或提交。
+### 必须完成（阻塞后续）
+1. [ ] [事项] — [描述，为什么必须优先]
+
+### 建议完成（当前功能的一部分）
+1. [ ] [事项] — [描述]
+
+### 可推迟（但别忘了）
+1. [ ] [事项] — [描述]
+
+---
+
+## 关键文件索引
+
+| 文件 | 最后修改 | 说明 |
+|------|---------|------|
+| `path/to/file.ts` | YYYY-MM-DD | [改了什么东西] |
+| `path/to/file.tsx` | YYYY-MM-DD | [改了什么东西] |
+
+---
+
+## 验证状态
+
+- [ ] `./init.sh` 通过（启动前运行验证）
+- [ ] 测试覆盖当前变更
+- [ ] 类型检查通过
+
+---
+
+## 下个会话启动提示
+
+```
+1. pwd                        # 确认目录
+2. cat AGENTS.md              # 重温工作规则
+3. cat progress.md            # 看日志
+4. cat feature_list.json      # 看功能状态
+5. ./init.sh                  # 验证环境
+6. git log --oneline -5       # 看最近提交
+```

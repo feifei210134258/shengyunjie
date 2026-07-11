@@ -29,7 +29,7 @@ export default function ProfileCard({ profile, className }: Props) {
             <Brain className="h-5 w-5 text-primary" strokeWidth={1.5} />
             <h3 className="text-heading-md font-semibold text-ink">能力画像</h3>
           </div>
-          <div className="rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5">
+          <div className="rounded-xl border border-dashed border-line-strong bg-surface px-4 py-5">
             <p className="text-body-sm font-semibold text-ink">
               还没有可用画像
             </p>
@@ -79,7 +79,7 @@ export default function ProfileCard({ profile, className }: Props) {
       </div>
 
       {weakest && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-warning-soft bg-warning-soft/45 px-3 py-2.5">
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-warning-soft bg-warning-soft/45 px-3 py-2.5">
           <Target className="h-4 w-4 shrink-0 text-warning" strokeWidth={1.5} />
           <div className="min-w-0">
             <p className="text-label font-semibold text-warning">优先补强</p>

@@ -102,7 +102,8 @@ export default function ResumeUploader({
 
   return (
     <div className="space-y-4">
-      <div className="flex rounded-lg bg-surface p-1">
+      {/* Mode toggle */}
+      <div className="flex bg-surface rounded-xl p-1">
         <button
           disabled={isUploading}
           onClick={() => {
@@ -110,7 +111,7 @@ export default function ResumeUploader({
             setError("");
           }}
           className={cn(
-            "flex-1 rounded-md py-2 text-body-sm font-semibold transition-colors",
+            "flex-1 py-2 rounded-lg text-body-sm font-semibold transition-colors",
             mode === "file"
               ? "bg-primary text-white"
               : "text-ink-muted hover:text-ink"
@@ -125,7 +126,7 @@ export default function ResumeUploader({
             setError("");
           }}
           className={cn(
-            "flex-1 rounded-md py-2 text-body-sm font-semibold transition-colors",
+            "flex-1 py-2 rounded-lg text-body-sm font-semibold transition-colors",
             mode === "paste"
               ? "bg-primary text-white"
               : "text-ink-muted hover:text-ink"
@@ -141,7 +142,7 @@ export default function ResumeUploader({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "rounded-lg border-2 border-dashed px-5 py-8 text-center transition-colors sm:px-8",
+            "rounded-xl border-2 border-dashed p-12 text-center transition-colors",
             isUploading ? "cursor-wait opacity-80" : "cursor-pointer",
             isDragActive
               ? "border-primary bg-primary-soft"
@@ -162,16 +163,16 @@ export default function ResumeUploader({
           >
             {isUploading ? (
               <Loader2
-                className="mx-auto mb-3 h-8 w-8 animate-spin text-primary"
+                className="w-12 h-12 text-primary mx-auto mb-4 animate-spin"
                 strokeWidth={1.5}
               />
             ) : (
               <FileUp
-                className="mx-auto mb-3 h-8 w-8 text-primary"
+                className="w-12 h-12 text-primary mx-auto mb-4"
                 strokeWidth={1.5}
               />
             )}
-            <p className="text-body-md font-semibold text-ink">
+            <p className="text-body-lg text-ink font-medium">
               {isUploading
                 ? "正在解析简历..."
                 : isDragActive
@@ -180,7 +181,7 @@ export default function ResumeUploader({
             </p>
             <p className="text-body-sm text-ink-muted mt-2">
               {isUploading
-                ? "解析完成后将显示项目证据。"
+                ? "这通常需要几十秒，解析完成后会自动显示画像和下一步"
                 : "支持 PDF、Word、Markdown 格式，最大 10MB"}
             </p>
           </label>
@@ -206,7 +207,7 @@ export default function ResumeUploader({
       )}
 
       {error && (
-        <div role="alert" className="flex items-center gap-2 text-body-sm text-danger">
+        <div className="flex items-center gap-2 text-danger text-body-sm">
           <AlertCircle className="w-4 h-4" />
           {error}
         </div>

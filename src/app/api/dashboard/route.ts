@@ -1,12 +1,11 @@
 import { createServerClient } from "@/lib/supabase-server";
-import { buildCommandCenter } from "@/lib/dashboard/training-command-center";
+import { getDimensionLabel } from "@/lib/constants";
+import { TRAINING_SESSION_ROUTE } from "@/lib/routes";
 import {
   getDiagnosisGrade,
   getDiagnosisReportSummary,
   normalizeDiagnosisScore,
 } from "@/lib/diagnosis/report-summary";
-import { buildGrowthProfile } from "@/lib/profile/growth-profile";
-import { buildRecommendationPlan } from "@/lib/profile/recommendation";
 import { NextResponse } from "next/server";
 
 /* ------------------------------------------------------------------ */
@@ -49,56 +48,12 @@ async function calcStreak(supabase: any, userId: string): Promise<number> {
   return streak;
 }
 
-function compactText(value: unknown) {
-  return String(value || "").trim();
-}
-
-function buildTargetEvidenceRepairs(
-  bootcampSession: any,
-  storyAssets: Array<{
-    projectName?: string;
-    targetEvidence?: string;
-    targetFit?: { score?: number | null; priorityLabel?: string | null; missingEvidence?: string[] };
-    href?: string;
-  }>
-) {
-  const ledgeredProjects = new Set(
-    storyAssets
-      .filter(
-        (asset) =>
-          asset.projectName &&
-          asset.targetEvidence &&
-          asset.targetFit &&
-          !asset.targetFit.missingEvidence?.length
-      )
-      .map((asset) => asset.projectName)
-  );
-  const projects = Array.isArray(bootcampSession?.parsed_profile?.projects)
-    ? bootcampSession.parsed_profile.projects
-    : [];
-
-  return projects
-    .map((project: any) => {
-      const projectName = compactText(project?.name);
-      const targetEvidence = compactText(project?.targetEvidence);
-      if (!projectName || !targetEvidence || ledgeredProjects.has(projectName)) {
-        return null;
-      }
-      const savedAsset = storyAssets.find((asset) => asset.projectName === projectName);
-      return {
-        projectName,
-        company: compactText(project?.company),
-        role: compactText(project?.role),
-        targetEvidence,
-        priorityLabel: savedAsset?.targetFit?.priorityLabel || "优先讲",
-        targetFitScore:
-          typeof savedAsset?.targetFit?.score === "number"
-            ? savedAsset.targetFit.score
-            : null,
-        href: savedAsset?.href || "/bootcamp/story-bank",
-      };
-    })
-    .filter(Boolean);
+function getAverageScore(records: any[]) {
+  const scores = records
+    .map((record) => Number(record.score))
+    .filter((score) => Number.isFinite(score) && score > 0);
+  if (!scores.length) return null;
+  return Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length / 10) * 10) / 10;
 }
 
 /* ------------------------------------------------------------------ */
@@ -186,19 +141,6 @@ export async function GET() {
       .order("created_at", { ascending: false })
       .limit(8);
 
-    const { data: profileTrainingRecords } = await supabase
-      .from("training_records")
-      .select("id, dimension, score, ai_feedback, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(80);
-
-    const { data: bootcampSession } = await supabase
-      .from("bootcamp_sessions")
-      .select("id, status, current_day, parsed_profile, weakness_prediction")
-      .eq("user_id", userId)
-      .maybeSingle();
-
     /* ------- Latest Diagnosis Report ------- */
 
     const { data: latestReport } = await supabase
@@ -211,48 +153,6 @@ export async function GET() {
       .maybeSingle();
 
     const latestReportSummary = getDiagnosisReportSummary(latestReport);
-
-    let bootcampInterviews: any[] = [];
-    if (bootcampSession?.id) {
-      const { data: interviews } = await supabase
-        .from("bootcamp_interviews")
-        .select("id, question_type, status, user_answer, ai_evaluation, created_at")
-        .eq("session_id", bootcampSession.id)
-        .order("created_at", { ascending: false });
-      bootcampInterviews = interviews || [];
-    }
-
-    const { data: growthSnapshots } = await supabase
-      .from("growth_snapshots")
-      .select("id, snapshot_date, created_at, overall_score, dimension_scores")
-      .eq("user_id", userId)
-      .order("snapshot_date", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(12);
-
-    const growthProfile = buildGrowthProfile({
-      latestReport,
-      trainingRecords: profileTrainingRecords || [],
-      bootcampInterviews,
-      growthSnapshots: growthSnapshots || [],
-    });
-    const targetEvidenceRepairs = buildTargetEvidenceRepairs(
-      bootcampSession,
-      growthProfile.storyAssets
-    );
-    const recommendationPlan = buildRecommendationPlan(growthProfile);
-    const latestRecommendation =
-      (growthSnapshots || []).find(
-        (snapshot: any) => snapshot.dimension_scores?.__recommendation
-      )?.dimension_scores?.__recommendation || null;
-    const latestGoalFocus =
-      (growthSnapshots || []).find(
-        (snapshot: any) => snapshot.dimension_scores?.__goalFocus
-      )?.dimension_scores?.__goalFocus || null;
-    const latestGoalBrief =
-      (growthSnapshots || []).find(
-        (snapshot: any) => snapshot.dimension_scores?.__goalBrief
-      )?.dimension_scores?.__goalBrief || null;
 
     /* ------- Profile Calculation ------- */
 
@@ -332,52 +232,101 @@ export async function GET() {
       : null;
 
     const recentRecords = recentActionRecords || [];
+    const recentAverage = getAverageScore(recentRecords);
+    const latestRecord = recentRecords[0] || null;
     const hasCaseSimulation = recentRecords.some(
       (record: any) => record.ai_feedback?.source === "case_simulation"
     );
-    const commandCenter = buildCommandCenter({
-      todayCount: todayCount || 0,
-      totalCount: totalCount || 0,
-      recentRecords,
-      dimAverages,
-      profileWeaknesses: profile?.weaknesses || [],
-      latestReport: latestReport ? { id: latestReport.id } : null,
-      storyAssets: growthProfile.storyAssets,
-      repairedTargetEvidence: targetEvidenceRepairs,
-      latestGoalBrief,
-      hasCaseSimulation,
-      selectedGoalFocus: latestGoalFocus,
-      latestRecommendation,
-      bootcampSession: bootcampSession
+    const weakestDimension =
+      profile?.weaknesses?.[0] ||
+      Object.entries(dimAverages)
+        .sort((a, b) => Number(a[1]) - Number(b[1]))[0]?.[0] ||
+      "战略思维";
+    const weakestDimensionLabel = getDimensionLabel(weakestDimension);
+    const primaryAction = !latestReport
+      ? {
+          title: "先完成一次能力诊断",
+          description: "系统需要一份完整画像，才能把训练题、案例和特训建议聚焦到真实短板。",
+          href: "/diagnosis/scale",
+          cta: "开始诊断",
+          kind: "diagnosis",
+        }
+      : (todayCount || 0) === 0
         ? {
-            status: bootcampSession.status,
-            currentDay: bootcampSession.current_day,
-            hasResume: Boolean(bootcampSession.parsed_profile),
-            weaknessCount: Array.isArray(
-              bootcampSession.weakness_prediction?.likely_gaps
-            )
-              ? bootcampSession.weakness_prediction.likely_gaps.length
-              : 0,
+            title: `今日先练 ${weakestDimensionLabel}`,
+            description: "完成一题高质量作答，再用 AI 反馈校准今天的判断链路。",
+            href: TRAINING_SESSION_ROUTE,
+            cta: "开始训练",
+            kind: "training",
           }
-        : null,
-    });
+        : recentAverage != null && recentAverage < 7
+          ? {
+              title: "复盘最近一次低分回答",
+              description: "先把盲区、改写示范和下一题建议吃透，再继续刷题。",
+              href: latestRecord ? `/training/history/${latestRecord.id}` : "/training",
+              cta: "查看复盘",
+              kind: "review",
+            }
+          : !hasCaseSimulation
+            ? {
+                title: "做一次案例决策推演",
+                description: "从读案例进入取舍训练，把战略判断写入训练档案。",
+                href: "/training/cases",
+                cta: "去案例库",
+                kind: "case",
+              }
+            : {
+                title: "继续推进下一题训练",
+                description: "当前节奏不错，保持每日一次高质量训练即可。",
+                href: TRAINING_SESSION_ROUTE,
+                cta: "继续训练",
+                kind: "training",
+              };
+
+    const latestReportHref = latestReport
+      ? `/diagnosis/report?reportId=${encodeURIComponent(latestReport.id)}`
+      : "/diagnosis/scale";
+
+    const secondaryActions = [
+        {
+          title: "案例库推演",
+          description: hasCaseSimulation ? "已有推演记录，可继续换产品做取舍。" : "补一次真实产品决策题。",
+          href: "/training/cases",
+          cta: "打开",
+          kind: "case",
+        },
+        {
+          title: "复盘归档",
+          description: latestRecord ? `最近记录：${getDimensionLabel(latestRecord.dimension)}` : "训练后会自动沉淀复盘记录。",
+          href: latestRecord ? `/training/history/${latestRecord.id}` : "/training",
+          cta: "查看",
+          kind: "review",
+        },
+        {
+          title: "能力报告",
+          description: latestReportSummary.overall_score != null ? `最近诊断 ${latestReportSummary.overall_score} 分` : "暂无完整诊断报告。",
+          href: latestReportHref,
+          cta: latestReport ? "查看" : "诊断",
+          kind: "diagnosis",
+        },
+      ].filter((action) => action.kind !== primaryAction.kind);
+
+    const nextActions = {
+      primary: primaryAction,
+      secondary: secondaryActions,
+      signals: {
+        weakestDimension: weakestDimensionLabel,
+        recentAverage,
+        hasCaseSimulation,
+      },
+    };
 
     return NextResponse.json({
       profile,
-      growthProfile,
-      recommendationPlan,
-      latestRecommendation,
-      latestGoalFocus,
-      latestGoalBrief,
       trainingStats,
       growthTrend,
       latestReport: reportResponse,
-      commandCenter,
-      nextActions: {
-        primary: commandCenter.primary,
-        secondary: commandCenter.secondary,
-        signals: commandCenter.signals,
-      },
+      nextActions,
     });
   } catch (error: any) {
     return NextResponse.json(

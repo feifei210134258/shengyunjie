@@ -76,7 +76,7 @@ export default function ReportCard({ report }: Props) {
 
       {/* Comparison (comprehensive only) */}
       {isComprehensive && report.content.comparison && (
-        <div className="rounded-lg bg-primary-soft p-4">
+        <div className="bg-primary-soft p-4 rounded-xl">
           <h4 className="font-semibold text-primary mb-2">成长对比</h4>
           <p className="text-body-sm text-ink-muted">
             {report.content.comparison.growth}
@@ -84,6 +84,20 @@ export default function ReportCard({ report }: Props) {
         </div>
       )}
 
+      {/* Recommended reading */}
+      {report.content.recommended_reading &&
+        report.content.recommended_reading.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-ink mb-2">推荐学习资源</h4>
+            <ul className="space-y-1">
+              {report.content.recommended_reading.map((resource, idx) => (
+                <li key={idx} className="text-body-sm text-primary">
+                  {resource}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
     </Card>
   );
 }

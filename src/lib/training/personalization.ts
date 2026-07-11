@@ -12,20 +12,8 @@ export interface TrainingEvaluation {
   suggestions: string[];
   thinking_framework: string[];
   example_answer: string;
+  improved_answer: string;
   next_practice: string;
-  interview_expression?: {
-    opening_judgment: string;
-    evidence_hooks: string[];
-    follow_up_risks: string[];
-    answer_version: string;
-  };
-  thinking_upgrade?: {
-    judgment_quality: string;
-    tradeoff_quality: string;
-    attribution_depth: string;
-    landing_rigor: string;
-    migration_check?: string;
-  };
 }
 
 export interface TrainingPersonalization {
@@ -34,7 +22,6 @@ export interface TrainingPersonalization {
   recentLowDimensions: string[];
   recentGaps: string[];
   recentQuestions: string[];
-  todayQuestions: string[];
   averageScore: number | null;
   recommendationReason: string;
 }
@@ -91,51 +78,6 @@ function normalizeText(value: unknown, fallback: string) {
   return text || fallback;
 }
 
-function normalizeInterviewExpression(value: unknown) {
-  if (!value || typeof value !== "object") return undefined;
-  const data = value as Record<string, unknown>;
-  return {
-    opening_judgment: normalizeText(
-      data.opening_judgment,
-      "先用一句话给出判断，再说明业务问题、关键证据和取舍边界。"
-    ),
-    evidence_hooks: normalizeList(data.evidence_hooks, [
-      "补充能被面试官追问的用户、业务或数据证据。",
-    ]),
-    follow_up_risks: normalizeList(data.follow_up_risks, [
-      "准备解释指标归因、反证和落地风险。",
-    ]),
-    answer_version: normalizeText(
-      data.answer_version,
-      "面试表达版本：先给判断，再补证据、取舍和复盘结论。"
-    ),
-  };
-}
-
-function normalizeThinkingUpgrade(value: unknown) {
-  if (!value || typeof value !== "object") return undefined;
-  const data = value as Record<string, unknown>;
-  return {
-    judgment_quality: normalizeText(
-      data.judgment_quality,
-      "判断需要更清楚地落到业务矛盾和成功标准。"
-    ),
-    tradeoff_quality: normalizeText(
-      data.tradeoff_quality,
-      "取舍需要说明优先做什么、暂时放弃什么，以及为什么。"
-    ),
-    attribution_depth: normalizeText(
-      data.attribution_depth,
-      "归因需要补充证据来源、反证指标和噪音排除。"
-    ),
-    landing_rigor: normalizeText(
-      data.landing_rigor,
-      "落地需要说明节奏、风险护栏和复盘动作。"
-    ),
-    migration_check: normalizeText(data.migration_check, ""),
-  };
-}
-
 export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation {
   const data = (parsed || {}) as Record<string, any>;
   const rawScores = (data.scores || {}) as Record<string, unknown>;
@@ -187,49 +129,21 @@ export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation
       data.example_answer,
       "示例：我会先把问题定义为某类客户在关键流程中的转化或效率损失，再用访谈、工单和行为数据确认影响面。方案上先对比轻量提示、流程改造和机制沉淀三种路径，选择能最快验证价值且不破坏现有流程的一种，最后用核心指标和客户反馈复盘是否继续投入。"
     ),
+    improved_answer: normalizeText(
+      data.improved_answer ?? data.rewrite_example,
+      "改写示范：我不会先急着列功能，而是先确认这个问题影响的是哪类客户、哪个流程节点和哪个业务指标。确认影响面后，我会把方案拆成快速验证和长期机制两层，先用低成本方案验证价值，再决定是否沉淀成平台能力。"
+    ),
     next_practice: normalizeText(
       data.next_practice ?? data.next_exercise,
       "下一题前，先把答案压缩成 5 句话：目标、证据、方案、取舍、结果。"
     ),
-    interview_expression: normalizeInterviewExpression(data.interview_expression),
-    thinking_upgrade: normalizeThinkingUpgrade(data.thinking_upgrade),
   };
 }
 
 export function parseGeneratedQuestionText(text: string) {
   const raw = String(text || "").trim();
   let reason = "";
-  let hint = "";
   let question = raw;
-
-  const sectionPattern =
-    /(?:^|\n)【(为什么练这题|推荐理由|答题提点)[:：]?([^】]*)】\s*([\s\S]*?)(?=\n【(?:为什么练这题|推荐理由|答题提点)[:：]?[^】]*】|\n{0,2}题目正文\s*[：:]|$)/gi;
-  const sections = Array.from(raw.matchAll(sectionPattern));
-
-  if (sections.length) {
-    for (const match of sections) {
-      const label = match[1];
-      const inlineValue = match[2]?.trim() || "";
-      const blockValue = match[3]?.trim() || "";
-      const value = inlineValue || blockValue;
-      if (/为什么练这题|推荐理由/.test(label) && value) reason = value;
-      if (/答题提点/.test(label) && value) hint = value;
-    }
-
-    const lastSection = sections[sections.length - 1];
-    const afterSections = raw.slice(
-      (lastSection.index || 0) + lastSection[0].length
-    );
-    const explicitQuestionMatch =
-      raw.match(/(?:^|\n)题目正文\s*[：:]\s*([\s\S]*)/i) ||
-      raw.match(/(?:^|\n)题目\s*[：:]\s*([\s\S]*)/i);
-    const lastInlineValue = lastSection[2]?.trim() || "";
-    const lastBlockValue = lastSection[3]?.trim() || "";
-    question =
-      explicitQuestionMatch?.[1]?.trim() ||
-      (lastInlineValue ? lastBlockValue : "") ||
-      afterSections.trim();
-  }
 
   const inlineReasonMatch = raw.match(
     /^【(?:为什么练这题|推荐理由)[:：]\s*([^】]+)】\s*/i
@@ -241,23 +155,15 @@ export function parseGeneratedQuestionText(text: string) {
     /^(?:为什么练这题|推荐理由)\s*[：:]\s*([\s\S]*?)(?:\n{2,}|(?:\r?\n)?题目正文\s*[：:])/i
   );
 
-  if (!sections.length && inlineReasonMatch) {
+  if (inlineReasonMatch) {
     reason = inlineReasonMatch[1]?.trim() || "";
     question = raw.slice(inlineReasonMatch[0].length).trim();
-  } else if (!sections.length && blockReasonMatch) {
+  } else if (blockReasonMatch) {
     reason = blockReasonMatch[1]?.trim() || "";
     question = raw.slice(blockReasonMatch[0].length).trim();
-  } else if (!sections.length && plainReasonMatch) {
+  } else if (plainReasonMatch) {
     reason = plainReasonMatch[1]?.trim() || "";
     question = raw.slice(plainReasonMatch[0].length).trim();
-  }
-
-  const leadingInlineHintMatch = question.match(
-    /^【答题提点[:：]\s*([^】]+)】\s*/i
-  );
-  if (leadingInlineHintMatch) {
-    hint = hint || leadingInlineHintMatch[1]?.trim() || "";
-    question = question.slice(leadingInlineHintMatch[0].length).trim();
   }
 
   question = question
@@ -269,16 +175,13 @@ export function parseGeneratedQuestionText(text: string) {
     .replace(/^【题目】\s*/i, "")
     .trim();
 
-  hint = hint.replace(/\s+/g, " ").trim();
-
-  return { reason, hint, question };
+  return { reason, question };
 }
 
 export function buildTrainingPersonalization(input: {
   requestedDimension?: string;
   latestReport?: any;
   recentRecords?: any[];
-  todayQuestions?: string[];
   latestBootcampSession?: any;
 }): TrainingPersonalization {
   const weakFromReport =
@@ -306,9 +209,6 @@ export function buildTrainingPersonalization(input: {
     .map((record) => String(record.question_scenario || "").trim())
     .filter(Boolean)
     .slice(0, 5);
-  const todayQuestions = Array.from(
-    new Set((input.todayQuestions || []).map((item) => String(item || "").trim()).filter(Boolean))
-  ).slice(0, 5);
   const scored = recentRecords
     .map((record) => Number(record.score))
     .filter((score) => Number.isFinite(score) && score > 0);
@@ -341,7 +241,6 @@ export function buildTrainingPersonalization(input: {
     recentLowDimensions: Array.from(new Set(recentLowDimensions)).slice(0, 3),
     recentGaps,
     recentQuestions,
-    todayQuestions,
     averageScore,
     recommendationReason:
       reasonParts.join("；") || "先完成一题高阶 PM 场景题，用答案质量校准当前能力。",

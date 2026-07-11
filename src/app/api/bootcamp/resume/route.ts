@@ -89,14 +89,10 @@ export async function POST(req: NextRequest) {
 JSON 结构必须为：
 {
   "work_experience": [{"company": "string", "title": "string", "duration": "string", "highlights": ["string"]}],
-  "projects": [{"name": "string", "company": "string", "description": "string", "role": "string", "outcomes": ["string"]}],
+  "projects": [{"name": "string", "description": "string", "role": "string", "outcomes": ["string"]}],
   "skills": ["string"],
   "education": [{"school": "string", "degree": "string", "major": "string"}]
-}
-解析要求：
-1. projects.company 必须填写该项目在简历中明确归属的公司；如果简历没有明确写出，填空字符串。
-2. 不要因为项目和某公司都出现在简历里就推断项目属于该公司；项目公司归属只能来自同一段经历、同一小节标题或项目描述中的明确公司名。
-3. 如果无法判断项目归属，宁可留空，不要猜测。`,
+}`,
       messages: [{ role: "user", content: `简历内容：\n${text}` }],
     });
 

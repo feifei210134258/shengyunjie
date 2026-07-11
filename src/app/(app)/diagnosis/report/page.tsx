@@ -35,15 +35,6 @@ type Report = {
   completed_at?: string | null;
   strengths?: string[] | null;
   weaknesses?: string[] | null;
-  stage3_case_data?: {
-    ai_evaluation?: {
-      summary?: string;
-      improvement_suggestions?: string[];
-    };
-    calibration?: {
-      weight?: number;
-    };
-  } | null;
 };
 
 const RADAR_OUTER_POINTS: Array<[number, number]> = [
@@ -164,8 +155,6 @@ export default function ReportPage() {
   const radarPointString = getRadarPointString(dimensions);
   const focusDimensions = getFocusDimensions(report);
   const strengthDimensions = getStrengthDimensions(report);
-  const caseEvaluationSummary = report?.stage3_case_data?.ai_evaluation?.summary;
-  const calibrationWeight = report?.stage3_case_data?.calibration?.weight;
 
   return (
     <div className="min-h-[100dvh] bg-bg">
@@ -195,7 +184,7 @@ export default function ReportPage() {
           />
         ) : (
           <div className="space-y-5">
-            <section className="rounded-lg border border-line bg-primary-soft px-5 py-5 sm:px-6">
+            <section className="rounded-xl border border-line bg-primary-soft px-5 py-5 sm:px-6">
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
                 <div className="min-w-0">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -204,11 +193,11 @@ export default function ReportPage() {
                       诊断时间：{formatReportDate(report)}
                     </span>
                   </div>
-                  <h1 className="text-[28px] font-bold leading-9 text-ink">
+                  <h1 className="text-heading-xl font-bold text-ink sm:text-display-md">
                     产品思维深度画像报告
                   </h1>
-                  <p className="mt-2 max-w-3xl text-body-sm text-ink-muted">
-                    量表、访谈和案例校准后的能力证据。
+                  <p className="mt-2 max-w-3xl text-body-md leading-relaxed text-ink-muted">
+                    基于能力量表、AI 教练访谈和案例实战生成，用来定位当前能力结构和下一步训练重点。
                   </p>
                 </div>
 
@@ -383,25 +372,6 @@ export default function ReportPage() {
                     ))}
                   </div>
                 </Card>
-
-                {caseEvaluationSummary && (
-                  <Card size="md">
-                    <div className="mb-3 flex items-center gap-2">
-                      <Brain className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      <h2 className="text-heading-sm font-bold text-ink">
-                        实战校准
-                      </h2>
-                    </div>
-                    <p className="text-body-sm leading-relaxed text-ink-muted">
-                      {caseEvaluationSummary}
-                    </p>
-                    {calibrationWeight ? (
-                      <p className="mt-3 text-label font-medium text-ink-faint">
-                        案例实战按 {Math.round(calibrationWeight * 100)}% 权重校准量表分数
-                      </p>
-                    ) : null}
-                  </Card>
-                )}
 
                 <Card size="md">
                   <div className="mb-3 flex items-center gap-2">

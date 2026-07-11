@@ -52,13 +52,11 @@ export default function AnswerEvaluation({
     !evaluation.feedback ||
     !evaluation.thinking_framework?.length ||
     !evaluation.example_answer;
-  const targetEvidenceValidation = evaluation.target_evidence_validation;
-  const finalAnswerRehearsal = evaluation.final_answer_rehearsal;
 
   return (
     <Card variant="subtle" size="md" className="space-y-6">
       {isIncomplete && onRegenerate && (
-        <div className="rounded-lg border border-warning/30 bg-warning-soft p-4">
+        <div className="rounded-xl border border-warning/30 bg-warning-soft p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h4 className="font-semibold text-ink">这条反馈内容不完整</h4>
@@ -70,7 +68,7 @@ export default function AnswerEvaluation({
               type="button"
               onClick={onRegenerate}
               disabled={isRegenerating}
-              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-line-strong px-4 py-2 text-body-sm font-semibold text-ink transition-colors hover:bg-surface-raised disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-4 py-2 text-body-sm font-semibold text-white transition-all hover:bg-primary-hover disabled:pointer-events-none disabled:opacity-40"
             >
               {isRegenerating ? "正在重新生成..." : "重新生成反馈"}
             </button>
@@ -100,7 +98,7 @@ export default function AnswerEvaluation({
             </button>
           )}
         </div>
-        <div className="shrink-0 rounded-lg border border-line bg-surface-raised px-5 py-4 text-center">
+        <div className="shrink-0 rounded-xl border border-line bg-surface-raised px-5 py-4 text-center">
           <div
             className={cn(
               "text-display-md font-bold",
@@ -136,136 +134,8 @@ export default function AnswerEvaluation({
         ))}
       </div>
 
-      {targetEvidenceValidation && (
-        <section className="rounded-lg border border-primary/20 bg-primary-soft p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-label font-bold text-primary">
-                目标证据验证
-              </p>
-              <h4 className="mt-1 text-heading-sm font-bold text-ink">
-                抗追问评分：{formatScore(targetEvidenceValidation.score)} / 10
-              </h4>
-              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-                {targetEvidenceValidation.verdict}
-              </p>
-            </div>
-            <span className="rounded-md bg-surface-raised px-3 py-1.5 text-label font-bold text-primary">
-              {targetEvidenceValidation.status === "defended"
-                ? "证据站得住"
-                : targetEvidenceValidation.status === "weak"
-                  ? "仍有击穿点"
-                  : "证据不清晰"}
-            </span>
-          </div>
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            <div className="rounded-lg bg-surface-raised p-3">
-              <p className="text-label font-bold text-success">已证明住</p>
-              <ul className="mt-2 space-y-1">
-                {targetEvidenceValidation.evidence_matched.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-start gap-2 text-body-sm text-ink-muted"
-                  >
-                    <Check
-                      className="mt-0.5 h-4 w-4 shrink-0 text-success"
-                      strokeWidth={1.8}
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-lg bg-surface-raised p-3">
-              <p className="text-label font-bold text-danger">未解除风险</p>
-              <ul className="mt-2 space-y-1">
-                {targetEvidenceValidation.unresolved_risks.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-start gap-2 text-body-sm text-ink-muted"
-                  >
-                    <X
-                      className="mt-0.5 h-4 w-4 shrink-0 text-danger"
-                      strokeWidth={1.8}
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <p className="mt-3 rounded-lg bg-surface-raised px-3 py-2 text-body-sm leading-relaxed text-ink-muted">
-            下一轮：{targetEvidenceValidation.next_drill}
-          </p>
-        </section>
-      )}
-
-      {finalAnswerRehearsal && (
-        <section className="rounded-lg border border-success/25 bg-success-soft p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-label font-bold text-success">
-                终版表达复述
-              </p>
-              <h4 className="mt-1 text-heading-sm font-bold text-ink">
-                复述稳定度：{formatScore(finalAnswerRehearsal.score)} / 10
-              </h4>
-              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-                {finalAnswerRehearsal.verdict}
-              </p>
-            </div>
-            <span className="rounded-md bg-surface-raised px-3 py-1.5 text-label font-bold text-success">
-              {finalAnswerRehearsal.status === "stable"
-                ? "复述稳定"
-                : finalAnswerRehearsal.status === "shaky"
-                  ? "再练复述"
-                  : "复述不清晰"}
-            </span>
-          </div>
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            <div className="rounded-lg bg-surface-raised p-3">
-              <p className="text-label font-bold text-success">稳定保住</p>
-              <ul className="mt-2 space-y-1">
-                {finalAnswerRehearsal.stable_points.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-start gap-2 text-body-sm text-ink-muted"
-                  >
-                    <Check
-                      className="mt-0.5 h-4 w-4 shrink-0 text-success"
-                      strokeWidth={1.8}
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-lg bg-surface-raised p-3">
-              <p className="text-label font-bold text-danger">不稳定点</p>
-              <ul className="mt-2 space-y-1">
-                {finalAnswerRehearsal.unstable_points.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-start gap-2 text-body-sm text-ink-muted"
-                  >
-                    <X
-                      className="mt-0.5 h-4 w-4 shrink-0 text-danger"
-                      strokeWidth={1.8}
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <p className="mt-3 rounded-lg bg-surface-raised px-3 py-2 text-body-sm leading-relaxed text-ink-muted">
-            再练复述：{finalAnswerRehearsal.next_drill}
-          </p>
-        </section>
-      )}
-
       {evaluation.thinking_framework?.length ? (
-        <section className="rounded-lg border border-primary/15 bg-primary-soft p-4">
+        <section className="rounded-xl border border-primary/15 bg-primary-soft p-4">
           <div className="mb-3 flex items-center gap-2">
             <Lightbulb className="h-4 w-4 text-primary" strokeWidth={1.8} />
             <h4 className="font-semibold text-primary">这道题建议这样答</h4>
@@ -288,7 +158,7 @@ export default function AnswerEvaluation({
 
       <div className="grid gap-4 lg:grid-cols-2">
         {evaluation.example_answer && (
-          <section className="rounded-lg border border-line bg-surface-raised p-4">
+          <section className="rounded-xl border border-line bg-surface-raised p-4">
             <div className="mb-2 flex items-center gap-2">
               <MessageSquare
                 className="h-4 w-4 text-primary"
@@ -303,7 +173,7 @@ export default function AnswerEvaluation({
         )}
 
         {evaluation.improved_answer && (
-          <section className="rounded-lg border border-line bg-surface-raised p-4">
+          <section className="rounded-xl border border-line bg-surface-raised p-4">
             <div className="mb-2 flex items-center gap-2">
               <PenLine className="h-4 w-4 text-primary" strokeWidth={1.8} />
               <h4 className="font-semibold text-ink">把你的回答改成这样</h4>
@@ -358,7 +228,7 @@ export default function AnswerEvaluation({
       </div>
 
       {evaluation.suggestions?.length > 0 && (
-        <section className="rounded-lg border border-line bg-surface-raised p-4">
+        <section className="rounded-xl border border-line bg-surface-raised p-4">
           <h4 className="font-semibold text-ink mb-2">下一轮立刻这样改</h4>
           <ul className="space-y-2">
             {evaluation.suggestions.map((s, idx) => (
@@ -378,7 +248,7 @@ export default function AnswerEvaluation({
       )}
 
       {evaluation.next_practice && (
-        <section className="flex items-start gap-3 rounded-lg border border-line bg-surface-raised p-4">
+        <section className="flex items-start gap-3 rounded-xl border border-line bg-surface-raised p-4">
           <Target
             className="mt-0.5 h-4 w-4 shrink-0 text-primary"
             strokeWidth={1.8}

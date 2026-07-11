@@ -4,11 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { StepProgress } from "@/components/ui/step-progress";
 import { Spinner } from "@/components/ui/spinner";
 import { getPendingDiagnosisReportId } from "@/lib/browser/safe-storage";
 import { parseInterviewReadiness } from "@/lib/diagnosis/interview-readiness";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, User, Send } from "lucide-react";
+import { CheckCircle2, Sparkles, User, Send } from "lucide-react";
 
 type Message = {
   role: "user" | "assistant";
@@ -17,7 +19,8 @@ type Message = {
 
 const INITIAL_AI_MESSAGE: Message = {
   role: "assistant",
-  content: "先说最近负责的产品、你的角色和一个关键结果。",
+  content:
+    "你好！我是你的 AI 教练。基于你刚才的量表自评结果，我注意到你在「系统设计能力」和「商业思维」两个维度上有一些值得深挖的地方。\n\n我们先聊聊你的工作背景吧，简单介绍一下你最近负责的产品和你在团队中的角色？",
 };
 
 export default function InterviewPage() {
@@ -150,11 +153,18 @@ export default function InterviewPage() {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-64px)] flex-col bg-bg">
-      <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-bg px-4 py-3 sm:px-6 lg:px-8">
-        <div className="min-w-0">
-          <h1 className="text-[28px] font-bold leading-9 text-ink">深度访谈</h1>
-          <p className="text-label font-semibold text-primary">访谈 2/3</p>
+    <div className="h-[calc(100dvh-64px)] flex flex-col bg-bg">
+      {/* 顶部栏 */}
+      <header className="border-b border-line bg-bg/80 backdrop-blur-xl flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16 shrink-0">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h2 className="text-heading-sm font-semibold text-ink">诊断模块</h2>
+          <div className="hidden sm:block h-5 w-px bg-line" />
+          <Badge>阶段二：教练深度访谈</Badge>
+          <StepProgress
+            steps={["量表", "访谈", "案例"]}
+            current={1}
+            className="hidden sm:flex w-24"
+          />
         </div>
         <Button
           onClick={handleFinish}
@@ -171,13 +181,14 @@ export default function InterviewPage() {
         </Button>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl space-y-5">
+      {/* 对话区域 */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-3xl mx-auto space-y-6">
           {interviewReady && (
             <div
               role="status"
               aria-live="polite"
-              className="flex items-start gap-3 rounded-lg border border-primary/25 bg-primary-soft px-4 py-3 text-body-sm text-ink"
+              className="flex items-start gap-3 rounded-xl border border-primary/25 bg-primary-soft/70 px-4 py-3 text-body-sm text-ink"
             >
               <CheckCircle2
                 className="mt-0.5 h-4 w-4 shrink-0 text-primary"
@@ -185,7 +196,9 @@ export default function InterviewPage() {
               />
               <div>
                 <p className="font-semibold">AI 教练认为信息已足够</p>
-                <p className="mt-1 text-ink-muted">可以继续补充，或进入案例分析。</p>
+                <p className="mt-1 text-ink-muted">
+                  你可以继续补充细节，也可以进入下一阶段的案例分析。
+                </p>
               </div>
             </div>
           )}
@@ -205,24 +218,32 @@ export default function InterviewPage() {
                   msg.role === "user" && "flex-row-reverse"
                 )}
               >
+                {/* Avatar */}
                 <div
                   className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                    "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
                     msg.role === "assistant"
-                      ? "bg-primary-soft text-primary"
+                      ? "bg-[linear-gradient(135deg,#4338CA_0%,#0F766E_100%)] text-white"
                       : "bg-secondary-soft text-secondary"
                   )}
                 >
                   {msg.role === "assistant" ? (
-                    <span className="font-mono text-label font-bold">AI</span>
+                    <div className="relative flex h-full w-full items-center justify-center">
+                      <span className="font-mono text-label font-bold">AI</span>
+                      <Sparkles
+                        className="absolute right-1.5 top-1.5 h-3 w-3 text-white/80"
+                        strokeWidth={1.8}
+                      />
+                    </div>
                   ) : (
                     <User className="w-[18px] h-[18px]" strokeWidth={1.5} />
                   )}
                 </div>
 
+                {/* Bubble */}
                 <div
                   className={cn(
-                    "max-w-[82%] whitespace-pre-wrap rounded-lg px-4 py-3 text-body-md leading-relaxed sm:max-w-[70%]",
+                    "max-w-[80%] sm:max-w-[70%] rounded-xl p-4 whitespace-pre-wrap leading-relaxed text-body-md",
                     msg.role === "assistant"
                       ? "bg-surface-raised border border-line rounded-tl-sm"
                       : "bg-primary text-white rounded-tr-sm",
@@ -257,8 +278,9 @@ export default function InterviewPage() {
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-line bg-bg px-4 py-3 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-lg border border-line bg-white p-2">
+      {/* 输入区域 */}
+      <div className="border-t border-line bg-bg/90 px-4 py-4 shadow-[0_-12px_30px_rgba(15,23,42,0.04)] backdrop-blur-xl sm:px-6 lg:px-8 shrink-0">
+        <div className="mx-auto flex max-w-5xl items-end gap-3 rounded-xl border border-line bg-surface p-2 shadow-sm">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -269,18 +291,21 @@ export default function InterviewPage() {
             rows={2}
             disabled={isLoading}
             wrapperClassName="flex-1"
-            className="min-h-[56px] border-0 bg-transparent px-3 py-3 focus:border-transparent focus:ring-0"
+            className="min-h-[56px] border-0 bg-transparent px-3 py-3 shadow-none focus:border-transparent focus:ring-0"
           />
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
             loading={isLoading}
             icon={<Send className="w-4 h-4" />}
-            className="h-14 shrink-0 px-4 sm:w-28"
+            className="h-14 w-32 shrink-0"
           >
             {isLoading ? "等待回复" : "发送"}
           </Button>
         </div>
+        <p className="mx-auto mt-2 max-w-5xl px-1 text-label text-ink-faint">
+          Enter 发送，Shift+Enter 换行
+        </p>
       </div>
     </div>
   );

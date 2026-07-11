@@ -18,13 +18,3 @@ test("surfaces an AI-recommended interview completion state", () => {
   assert.match(source, /AI 教练认为信息已足够/);
   assert.match(source, /进入案例分析/);
 });
-
-test("diagnosis interview uses a quiet compact conversation workspace", () => {
-  assert.match(source, /深度访谈/);
-  assert.match(source, /访谈 2\/3/);
-  assert.doesNotMatch(source, /linear-gradient/);
-  assert.doesNotMatch(source, /rounded-xl/);
-  assert.doesNotMatch(source, /shadow-/);
-  assert.doesNotMatch(source, /Enter 发送/);
-  assert.doesNotMatch(source, /我是你的 AI 教练/);
-});

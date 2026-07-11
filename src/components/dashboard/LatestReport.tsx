@@ -58,7 +58,7 @@ export default function LatestReport({
 
       {!report ? (
         <div className="flex flex-1 flex-col">
-          <div className="rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5">
+          <div className="rounded-xl border border-dashed border-line-strong bg-surface px-4 py-5">
             <ClipboardList
               className="mb-3 h-5 w-5 text-ink-faint"
               strokeWidth={1.5}
@@ -74,7 +74,7 @@ export default function LatestReport({
         </div>
       ) : (
         <div className="flex flex-1 flex-col">
-          <div className="mb-4 rounded-lg bg-surface px-4 py-3">
+          <div className="mb-4 rounded-xl bg-surface px-4 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-mono text-data-lg font-bold text-ink">
@@ -98,7 +98,7 @@ export default function LatestReport({
           </div>
 
           {focusList.length > 0 && (
-            <div className="mb-4 rounded-lg border border-warning-soft bg-warning-soft/40 px-3 py-3">
+            <div className="mb-4 rounded-xl border border-warning-soft bg-warning-soft/40 px-3 py-3">
               <div className="mb-2 flex items-center gap-2">
                 <Lightbulb
                   className="h-4 w-4 text-warning"

@@ -7,7 +7,6 @@ export interface ParsedProfile {
   }>;
   projects: Array<{
     name: string;
-    company?: string;
     description: string;
     role: string;
     outcomes: string[];
@@ -43,26 +42,6 @@ export interface AIEvaluation {
   example_answer?: string;
   improved_answer?: string;
   next_practice?: string;
-  target_evidence_validation?: {
-    score: number;
-    status: "defended" | "weak" | "unclear";
-    verdict: string;
-    evidence_matched: string[];
-    unresolved_risks: string[];
-    next_drill: string;
-    project_name?: string;
-    target_evidence?: string;
-  };
-  final_answer_rehearsal?: {
-    score: number;
-    status: "stable" | "shaky" | "unclear";
-    verdict: string;
-    stable_points: string[];
-    unstable_points: string[];
-    next_drill: string;
-    project_name?: string;
-    final_interview_answer?: string;
-  };
 }
 
 export interface InterviewQuestion {

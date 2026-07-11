@@ -1,0 +1,412 @@
+<!DOCTYPE html><html class="light" lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>产品思维综合诊断报告 - 认知架构设计系统</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#2f2ebe",
+                        "on-secondary-fixed-variant": "#005049",
+                        "surface-container-low": "#f2f4f6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#3b3bc9",
+                        "surface-container-high": "#e6e8ea",
+                        "primary-fixed": "#e3dfff",
+                        "on-surface": "#191c1e",
+                        "background": "#f7f9fb",
+                        "outline": "#777586",
+                        "tertiary": "#1f1ab3",
+                        "on-background": "#191c1e",
+                        "outline-variant": "#c7c4d7",
+                        "surface-dim": "#d8dadc",
+                        "surface-container": "#eceef0",
+                        "on-tertiary-container": "#bebfff",
+                        "on-primary-fixed": "#100069",
+                        "primary": "#2a14b4",
+                        "on-primary-container": "#c1beff",
+                        "surface-variant": "#e0e3e5",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface": "#f7f9fb",
+                        "on-secondary-container": "#006f66",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-bright": "#f7f9fb",
+                        "secondary-fixed": "#89f5e7",
+                        "primary-container": "#4338ca",
+                        "secondary": "#006a61",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#86f2e4",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#5148d7",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#372abf",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "inverse-surface": "#2d3133",
+                        "inverse-primary": "#c3c0ff",
+                        "tertiary-fixed": "#e1e0ff",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#00201d",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#07006c",
+                        "on-surface-variant": "#464554",
+                        "secondary-fixed-dim": "#6bd8cb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "48px",
+                        "gutter": "24px",
+                        "md": "24px",
+                        "xl": "80px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px",
+                        "base": "8px",
+                        "xs": "4px",
+                        "sm": "12px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-bold": ["Hanken Grotesk"],
+                        "headline-xl": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+        .radar-grid { stroke: #e2e8f0; stroke-width: 1; fill: none; }
+        .radar-area { fill: rgba(42, 20, 180, 0.15); stroke: #2a14b4; stroke-width: 2; }
+        .radar-point { fill: #2a14b4; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container-low border-r border-outline-variant flex flex-col py-gutter hidden md:flex">
+<div class="px-6 mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">产品思维提升</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">专业版</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-bold text-label-bold">工作台</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-primary border-l-2 border-primary bg-primary-fixed/20 transition-colors" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="font-label-bold text-label-bold">AI 诊断</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-bold text-label-bold">日常训练</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-label-bold text-label-bold">特训冲刺</span>
+</a>
+
+</nav>
+<div class="px-4 mt-auto">
+<div class="border-t border-outline-variant pt-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="font-label-bold text-label-bold text-sm">设置</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">help</span>
+<span class="font-label-bold text-label-bold text-sm">帮助中心</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 left-0 md:left-[280px] h-20 flex items-center justify-between px-margin-mobile md:px-margin-desktop bg-background/80 backdrop-blur-md z-40">
+<div class="flex items-center gap-4">
+<span class="md:hidden material-symbols-outlined text-on-surface cursor-pointer">menu</span>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">综合诊断报告</h2>
+</div>
+<div class="flex items-center gap-4">
+
+<div class="w-10 h-10 rounded-full bg-surface-container border border-outline-variant overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9V4lg1L8TMqhAC96qBD3YGMA_SMOH_1uqBI_3RVB1Qmpv--9SlxaEMkpa-IsICXXpZdc4pmEx9BYuZfbraX0NRObBca1KqOM7nvGtlymt_ESE4JRXRawRU0IFMTnLU3PPd2LdsBWxtChaSXuIB-UyqT8HnxPfzo-EYn1PLDCNd8kYrWFOkr9SoHvy9BZ0GgQjwSCOaSEztZ5QmsbeSQ74RJT58bK37teXPhBNTSVB8OOosRRdrDC4F5gPdkSxxdQedcfl5DzldcY">
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-24 pb-12 px-margin-mobile md:px-margin-desktop ml-0 md:ml-[280px]">
+<!-- Header Info -->
+<div class="mb-10">
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2 py-1 bg-primary-container text-on-primary-container text-[10px] font-bold rounded uppercase">已定稿</span>
+<span class="text-on-surface-variant text-sm">诊断时间：2024年8月24日</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface mb-4">产品思维深度画像报告</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">
+                基于三阶段评估（能力量表初筛、AI 教练深度访谈、案例实战验证）生成的综合诊断。该报告已写入您的个人画像，将作为后续个性化训练的核心依据。
+            </p>
+</div>
+<!-- Result Content -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-gutter">
+<!-- Core Radar Chart & Score (Left/Top) -->
+<div class="lg:col-span-4 flex flex-col gap-4">
+<!-- Score Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-on-surface-variant text-sm mb-1">综合评分</p>
+<div class="flex items-baseline gap-2">
+<h4 class="text-4xl font-bold text-primary">82</h4>
+<span class="text-xl text-on-surface-variant">/ 100</span>
+</div>
+</div>
+<div class="text-right">
+<p class="text-on-surface-variant text-sm mb-2">评估等级</p>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full font-bold text-sm">高级 PM (B端方向)</span>
+</div>
+</div>
+</div>
+<!-- Radar Chart Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex-1 flex flex-col justify-center">
+<h3 class="font-headline-md text-[18px] font-bold text-on-surface mb-6 text-center">能力维度雷达图</h3>
+<div class="aspect-square relative flex items-center justify-center max-w-[280px] mx-auto w-full"><svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+<polygon class="radar-grid" points="100,20 176,75 147,164 53,164 24,75"></polygon>
+<polygon class="radar-grid" points="100,60 138,87 123,132 77,132 62,87"></polygon>
+<line class="radar-grid" x1="100" x2="100" y1="100" y2="20"></line>
+<line class="radar-grid" x1="100" x2="176" y1="100" y2="75"></line>
+<line class="radar-grid" x1="100" x2="147" y1="100" y2="164"></line>
+<line class="radar-grid" x1="100" x2="53" y1="100" y2="164"></line>
+<line class="radar-grid" x1="100" x2="24" y1="100" y2="75"></line>
+<polygon class="radar-area" points="100,28 168,77 137,151 62,151 40,80"></polygon>
+<circle class="radar-point" cx="100" cy="28" r="3"></circle>
+<circle class="radar-point" cx="168" cy="77" r="3"></circle>
+<circle class="radar-point" cx="137" cy="151" r="3"></circle>
+<circle class="radar-point" cx="62" cy="151" r="3"></circle>
+<circle class="radar-point" cx="40" cy="80" r="3"></circle>
+</svg>
+<div class="absolute top-0 left-1/2 -translate-x-1/2 font-label-bold text-label-bold text-primary whitespace-nowrap">战略思维</div>
+<div class="absolute top-[30%] -right-8 font-label-bold text-label-bold whitespace-nowrap">用户洞察</div>
+<div class="absolute bottom-0 right-[15%] font-label-bold text-label-bold whitespace-nowrap">系统设计</div>
+<div class="absolute bottom-0 left-[15%] font-label-bold text-label-bold whitespace-nowrap">数据决策</div>
+<div class="absolute top-[30%] -left-8 font-label-bold text-label-bold text-primary whitespace-nowrap">商业思维</div></div>
+</div>
+</div>
+<!-- Detailed Dimensions (Right/Core) -->
+<div class="lg:col-span-8">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 h-full content-start">
+<!-- Dimension 1 -->
+<div class="p-5 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">rocket_launch</span>
+<h4 class="font-bold text-[16px] text-on-surface">战略思维</h4>
+</div>
+<span class="text-xl font-bold text-primary">A</span>
+</div>
+<div class="w-full bg-surface-container-high h-[6px] rounded-full mb-3">
+<div class="bg-primary h-full w-[90%] rounded-full"></div>
+</div>
+<p class="text-sm text-on-surface-variant flex-1">具备极强的商业宏观架构能力，能敏锐捕捉 B 端市场的增长机会。</p>
+</div>
+<!-- Dimension 2 -->
+<div class="p-5 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">account_tree</span>
+<h4 class="font-bold text-[16px] text-on-surface">系统设计能力</h4>
+</div>
+<span class="text-xl font-bold text-secondary">B-</span>
+</div>
+<div class="w-full bg-surface-container-high h-[6px] rounded-full mb-3">
+<div class="bg-secondary h-full w-[65%] rounded-full"></div>
+</div>
+<p class="text-sm text-on-surface-variant flex-1">逻辑链条完整，但在处理超大规模复杂并发业务逻辑时仍显吃力。</p>
+</div>
+<!-- Dimension 3 -->
+<div class="p-5 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[20px]">query_stats</span>
+<h4 class="font-bold text-[16px] text-on-surface">数据决策能力</h4>
+</div>
+<span class="text-xl font-bold text-tertiary">B+</span>
+</div>
+<div class="w-full bg-surface-container-high h-[6px] rounded-full mb-3">
+<div class="bg-tertiary h-full w-[75%] rounded-full"></div>
+</div>
+<p class="text-sm text-on-surface-variant flex-1">能通过数据看板发现异动，但在建立多维因果归因模型上需提升。</p>
+</div>
+<!-- Dimension 4 -->
+<div class="p-5 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">visibility</span>
+<h4 class="font-bold text-[16px] text-on-surface">用户洞察</h4>
+</div>
+<span class="text-xl font-bold text-primary">A-</span>
+</div>
+<div class="w-full bg-surface-container-high h-[6px] rounded-full mb-3">
+<div class="bg-primary h-full w-[85%] rounded-full"></div>
+</div>
+<p class="text-sm text-on-surface-variant flex-1">能够精准还原 B 端多角色博弈下的核心诉求，需求优先级权衡出色。</p>
+</div>
+<!-- Dimension 5 -->
+<div class="p-5 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col xl:col-span-2">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">trending_up</span>
+<h4 class="font-bold text-[16px] text-on-surface">商业思维</h4>
+</div>
+<span class="text-xl font-bold text-primary">A</span>
+</div>
+<div class="w-full bg-surface-container-high h-[6px] rounded-full mb-3">
+<div class="bg-primary h-full w-[88%] rounded-full"></div>
+</div>
+<p class="text-sm text-on-surface-variant flex-1">对市场趋势具有敏锐的嗅觉，能够从商业闭环的角度思考产品定价与商业模式。</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Analysis & Suggestions Area -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Strengths & Weaknesses (Bottom Left/Full Width on Mobile) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 lg:col-span-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                    强项与弱项深度分析
+                </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-outline-variant">
+<div class="space-y-5 md:pr-8">
+<h5 class="font-label-bold text-label-bold text-secondary uppercase flex items-center gap-2 text-[16px]">
+<span class="material-symbols-outlined text-secondary">check_circle</span> 核心强项
+                        </h5>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 flex-shrink-0"></div>
+<p class="text-on-surface text-sm leading-relaxed">
+<strong class="font-semibold block mb-1">宏观架构能力</strong>
+                                    在处理模糊需求时表现卓越。AI 访谈阶段显示您能迅速提取商业价值核心，属于资深产品经理的稀缺素质。
+                                </p>
+</li>
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 flex-shrink-0"></div>
+<p class="text-on-surface text-sm leading-relaxed">
+<strong class="font-semibold block mb-1">多角色需求平衡</strong>
+                                    实战案例验证中，您对 B 端复杂决策链的拆解非常清晰，展现了优秀的用户共情与博弈思维。
+                                </p>
+</li>
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 flex-shrink-0"></div>
+<p class="text-on-surface text-sm leading-relaxed">
+<strong class="font-semibold block mb-1">市场嗅觉与商业化</strong>
+                                    访谈中显示您对细分市场的变现逻辑有深刻理解，能将产品功能与商业目标紧密挂钩。
+                                </p>
+</li>
+</ul>
+</div>
+<div class="space-y-5 pt-8 md:pt-0 md:pl-8">
+<h5 class="font-label-bold text-label-bold text-error uppercase flex items-center gap-2 text-[16px]">
+<span class="material-symbols-outlined text-error">warning</span> 薄弱环节
+                        </h5>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-error mt-2 flex-shrink-0"></div>
+<p class="text-on-surface text-sm leading-relaxed">
+<strong class="font-semibold block mb-1">系统实现可行性判断</strong>
+                                    对数据流转和系统边界认知较模糊。案例实战中，部分方案忽略了底层工程成本。
+                                </p>
+</li>
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-error mt-2 flex-shrink-0"></div>
+<p class="text-on-surface text-sm leading-relaxed">
+<strong class="font-semibold block mb-1">复杂逻辑推演深度</strong>
+                                    面对非线性、多并发的业务场景，逻辑推演容易出现断层，需加强结构化建模训练。
+                                </p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Improvement Suggestions (Bottom Full Width) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 lg:col-span-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">lightbulb</span>
+                    具体改进建议
+                </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex gap-4 p-4 rounded-lg bg-surface hover:bg-surface-container-high transition-colors border border-transparent hover:border-outline-variant">
+<div class="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">architecture</span>
+</div>
+<div>
+<h6 class="font-bold text-on-surface text-[16px] mb-2">补足技术架构短板</h6>
+<p class="text-sm text-on-surface-variant leading-relaxed">建议在未来两个季度内深入学习“微服务架构”与“分布式系统”基础概念，提高在提出产品方案时的技术预判能力。</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 rounded-lg bg-surface hover:bg-surface-container-high transition-colors border border-transparent hover:border-outline-variant">
+<div class="flex-shrink-0 w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">draw</span>
+</div>
+<div>
+<h6 class="font-bold text-on-surface text-[16px] mb-2">强化逻辑建模能力</h6>
+<p class="text-sm text-on-surface-variant leading-relaxed">通过“场景化训练模块”练习复杂业务流建模，重点关注异常流程处理和并发状态机的设计。</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 rounded-lg bg-surface hover:bg-surface-container-high transition-colors border border-transparent hover:border-outline-variant">
+<div class="flex-shrink-0 w-12 h-12 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">dataset</span>
+</div>
+<div>
+<h6 class="font-bold text-on-surface text-[16px] mb-2">建立多维归因模型</h6>
+<p class="text-sm text-on-surface-variant leading-relaxed">在日常分析中尝试摒弃单一指标依赖，学习构建 B 端产品的北极星指标体系及漏斗转化归因。</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 rounded-lg bg-surface hover:bg-surface-container-high transition-colors border border-transparent hover:border-outline-variant">
+<div class="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<h6 class="font-bold text-on-surface text-[16px] mb-2">敏捷商业化实战</h6>
+<p class="text-sm text-on-surface-variant leading-relaxed">建议通过“竞品财报拆解”训练，学习如何从财务视角评估产品投入产出比（ROI），强化商业化决策的确定性。</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mobile Menu Toggle
+            const menuBtn = document.querySelector('.material-symbols-outlined.md\\:hidden');
+            const sidebar = document.querySelector('aside');
+            if (menuBtn && sidebar) {
+                menuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('hidden');
+                    sidebar.classList.toggle('fixed');
+                    sidebar.classList.toggle('z-50');
+                    sidebar.classList.toggle('w-full');
+                });
+            }
+        });
+    </script>
+
+
+
+
+</body></html>

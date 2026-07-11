@@ -11,46 +11,46 @@ const config: Config = {
     extend: {
       colors: {
         /* ── Surfaces ── */
-        bg: "#F6F7F5",
-        surface: "#F0F2EF",
+        bg: "#F7F9FB",
+        surface: "#F2F4F6",
         "surface-raised": "#FFFFFF",
-        "surface-hover": "#E8ECE8",
+        "surface-hover": "#E6E8EA",
 
         /* ── Text ── */
-        ink: "#171A1F",
-        "ink-muted": "#59616D",
-        "ink-faint": "#818995",
-        "ink-inverse": "#F6F7F5",
+        ink: "#191C1E",
+        "ink-muted": "#464554",
+        "ink-faint": "#777586",
+        "ink-inverse": "#EFF1F3",
 
         /* ── Borders ── */
-        line: "#DDE2E6",
-        "line-strong": "#C7CED4",
+        line: "#E2E8F0",
+        "line-strong": "#C7CBD4",
 
         /* ── Primary: deep indigo ── */
-        primary: "#3157D5",
-        "primary-hover": "#2848B5",
-        "primary-soft": "#EDF1FF",
-        "primary-muted": "#C7D2FA",
+        primary: "#4338CA",
+        "primary-hover": "#3730A3",
+        "primary-soft": "#EEF2FF",
+        "primary-muted": "#C7D2FE",
 
         /* ── Secondary: precise teal ── */
-        secondary: "#24835B",
-        "secondary-hover": "#1E6D4C",
-        "secondary-soft": "#E5F3EC",
-        "secondary-muted": "#B7DCC9",
+        secondary: "#0D9488",
+        "secondary-hover": "#0F766E",
+        "secondary-soft": "#CCFBF1",
+        "secondary-muted": "#99F6E4",
 
         /* ── Accent: measured blue ── */
-        accent: "#657080",
-        "accent-soft": "#EBEEF1",
+        accent: "#2563EB",
+        "accent-soft": "#DBEAFE",
 
         /* ── Semantic ── */
-        success: "#24835B",
-        "success-soft": "#E5F3EC",
-        warning: "#C88624",
-        "warning-soft": "#FFF3DB",
-        danger: "#C74D4D",
-        "danger-soft": "#FCEAEA",
-        info: "#3157D5",
-        "info-soft": "#EDF1FF",
+        success: "#15803D",
+        "success-soft": "#DCFCE7",
+        warning: "#A16207",
+        "warning-soft": "#FEF9C3",
+        danger: "#BA1A1A",
+        "danger-soft": "#FEE2E2",
+        info: "#2563EB",
+        "info-soft": "#DBEAFE",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
@@ -88,18 +88,23 @@ const config: Config = {
         bold: "700",
       },
       borderRadius: {
-        DEFAULT: "0.375rem",
-        lg: "0.5rem",
-        xl: "0.625rem",
-        "2xl": "0.75rem",
-        "3xl": "0.875rem",
+        DEFAULT: "0.5rem",
+        lg: "0.75rem",
+        xl: "1rem",
+        "2xl": "1.25rem",
+        "3xl": "1.5rem",
       },
       boxShadow: {
         xs: "0 1px 2px rgba(15, 23, 42, 0.04)",
         sm: "0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04)",
         md: "0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04)",
         lg: "0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04)",
-        glow: "0 0 24px rgba(49, 87, 213, 0.1)",
+        glow: "0 0 30px rgba(67, 56, 202, 0.12)",
+      },
+      backgroundImage: {
+        "grain": "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E\")",
+        "gradient-warm": "linear-gradient(135deg, #EEF2FF 0%, #F7F9FB 44%, #ECFDF5 100%)",
+        "gradient-hero": "linear-gradient(145deg, #1E1B4B 0%, #312E81 54%, #0F766E 100%)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-out",

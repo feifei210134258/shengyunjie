@@ -1,19 +1,11 @@
-import type { InterviewQuestion, AIEvaluation } from "@/types/bootcamp";
-
-export function isQuestionEvaluated(question: InterviewQuestion) {
-  return question.status === "evaluated" || Boolean(question.ai_evaluation);
-}
-
-export function canAdvanceFromQuestion(question?: InterviewQuestion) {
-  return Boolean(question && isQuestionEvaluated(question));
-}
+import { InterviewQuestion, AIEvaluation } from "@/types/bootcamp";
 
 export function calculateDayProgress(questions: InterviewQuestion[]): {
   completed: number;
   total: number;
   allEvaluated: boolean;
 } {
-  const completed = questions.filter(isQuestionEvaluated).length;
+  const completed = questions.filter((q) => q.status === "evaluated").length;
   return {
     completed,
     total: questions.length,

@@ -1,55 +1,22 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import InterviewQuestion from "@/components/bootcamp/InterviewQuestion";
 import AnswerEvaluation from "@/components/bootcamp/AnswerEvaluation";
 import DailySummary from "@/components/bootcamp/DailySummary";
 import { InterviewQuestion as InterviewQuestionType } from "@/types/bootcamp";
-import {
-  calculateDayProgress,
-  canAdvanceFromQuestion,
-  isQuestionEvaluated,
-} from "@/lib/bootcamp";
+import { calculateDayProgress } from "@/lib/bootcamp";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
 import { PageSpinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { MessageSquareWarning } from "lucide-react";
-
-interface TargetEvidenceFocus {
-  projectName: string;
-  company: string;
-  role: string;
-  targetEvidence: string;
-  finalInterviewAnswer?: string;
-  targetFit?: {
-    score: number | null;
-    priorityLabel: string;
-    reason: string;
-  } | null;
-}
 
 export default function BootcampInterviewPage() {
-  return (
-    <Suspense fallback={<PageSpinner />}>
-      <BootcampInterviewContent />
-    </Suspense>
-  );
-}
-
-function BootcampInterviewContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const interviewFocus =
-    searchParams.get("focus") === "target_evidence" ? "target_evidence" : "";
   const [questions, setQuestions] = useState<InterviewQuestionType[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentDay, setCurrentDay] = useState(1);
-  const [targetEvidenceFocus, setTargetEvidenceFocus] =
-    useState<TargetEvidenceFocus | null>(null);
-  const [validationSnapshot, setValidationSnapshot] = useState<any>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isRegeneratingEvaluation, setIsRegeneratingEvaluation] =
     useState(false);
@@ -59,17 +26,15 @@ function BootcampInterviewContent() {
 
   useEffect(() => {
     async function fetchQuestions() {
-      const focusQuery = interviewFocus ? `&focus=${interviewFocus}` : "";
-      const res = await fetch(`/api/bootcamp/interview?day=${currentDay}${focusQuery}`);
+      const res = await fetch(`/api/bootcamp/interview?day=${currentDay}`);
       const data = await res.json();
       if (data.questions) {
         setQuestions(data.questions);
       }
-      setTargetEvidenceFocus(data.targetEvidenceFocus || null);
       setLoading(false);
     }
     fetchQuestions();
-  }, [currentDay, interviewFocus]);
+  }, [currentDay]);
 
   const handleSubmitAnswer = async (answer: string) => {
     const question = questions[currentIndex];
@@ -81,7 +46,7 @@ function BootcampInterviewContent() {
       const res = await fetch("/api/bootcamp/interview/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interview_id: question.id, answer, interviewFocus }),
+        body: JSON.stringify({ interview_id: question.id, answer }),
       });
 
       const data = await res.json();
@@ -94,7 +59,6 @@ function BootcampInterviewContent() {
           status: "evaluated",
         };
         setQuestions(updated);
-        setValidationSnapshot(data.validationSnapshot || null);
         return;
       }
 
@@ -114,7 +78,7 @@ function BootcampInterviewContent() {
       const res = await fetch("/api/bootcamp/interview/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interview_id: question.id, interviewFocus }),
+        body: JSON.stringify({ interview_id: question.id }),
       });
 
       const data = await res.json();
@@ -126,7 +90,6 @@ function BootcampInterviewContent() {
           status: "evaluated",
         };
         setQuestions(updated);
-        setValidationSnapshot(data.validationSnapshot || null);
         return;
       }
 
@@ -157,7 +120,7 @@ function BootcampInterviewContent() {
     await fetch("/api/bootcamp/interview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ day_number: nextDay, interviewFocus }),
+      body: JSON.stringify({ day_number: nextDay }),
     });
 
     setCurrentDay(nextDay);
@@ -165,13 +128,11 @@ function BootcampInterviewContent() {
     setShowSummary(false);
     setLoading(true);
 
-    const focusQuery = interviewFocus ? `&focus=${interviewFocus}` : "";
-    const res = await fetch(`/api/bootcamp/interview?day=${nextDay}${focusQuery}`);
+    const res = await fetch(`/api/bootcamp/interview?day=${nextDay}`);
     const data = await res.json();
     if (data.questions) {
       setQuestions(data.questions);
     }
-    setTargetEvidenceFocus(data.targetEvidenceFocus || null);
     setLoading(false);
   };
 
@@ -181,24 +142,6 @@ function BootcampInterviewContent() {
 
   const progress = calculateDayProgress(questions);
   const currentQuestion = questions[currentIndex];
-
-  if (!currentQuestion) {
-    return (
-      <>
-        <PageHeader title="模拟面试" backHref="/bootcamp" />
-        <EmptyState
-          icon={<MessageSquareWarning className="h-6 w-6" strokeWidth={1.5} />}
-          title="还没有面试题"
-          description="先上传简历，再生成基于真实项目的追问。"
-          action={
-            <Button onClick={() => router.push("/bootcamp/resume")}>
-              上传简历
-            </Button>
-          }
-        />
-      </>
-    );
-  }
 
   if (showSummary) {
     const avgScore =
@@ -231,54 +174,7 @@ function BootcampInterviewContent() {
 
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(360px,0.82fr)_minmax(560px,1.18fr)] lg:px-8">
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          {targetEvidenceFocus && (
-            <section className="rounded-lg border border-primary/20 bg-primary-soft p-4">
-              <p className="text-label font-bold text-primary">
-                {targetEvidenceFocus.finalInterviewAnswer
-                  ? "终版表达复述"
-                  : "目标证据追问"}
-              </p>
-              <h2 className="mt-2 text-heading-sm font-bold text-ink">
-                {targetEvidenceFocus.finalInterviewAnswer ? "模拟复述" : "高压追问"}：
-                {targetEvidenceFocus.projectName}
-              </h2>
-              {targetEvidenceFocus.finalInterviewAnswer && (
-                <div className="mt-3 rounded-lg bg-surface-raised px-3 py-3">
-                  <p className="text-label font-bold text-primary">
-                    终版面试表达
-                  </p>
-                  <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
-                    {targetEvidenceFocus.finalInterviewAnswer}
-                  </p>
-                </div>
-              )}
-              <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
-                {targetEvidenceFocus.targetEvidence}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-label font-bold">
-                <span className="rounded-md bg-surface-raised px-2.5 py-1 text-primary">
-                  {targetEvidenceFocus.targetFit?.priorityLabel || "已入账"}
-                </span>
-                {targetEvidenceFocus.targetFit?.score != null && (
-                  <span className="rounded-md bg-surface-raised px-2.5 py-1 text-ink">
-                    目标匹配 {targetEvidenceFocus.targetFit.score}/10
-                  </span>
-                )}
-              </div>
-              {validationSnapshot && (
-                <p className="mt-3 rounded-md bg-surface-raised px-3 py-2 text-label font-bold text-success">
-                  验证结果已入账
-                </p>
-              )}
-              {targetEvidenceFocus.finalInterviewAnswer && (
-                <p className="mt-3 text-label font-semibold text-ink-muted">
-                  先练 90 秒复述，再用追问检查临场稳定度。
-                </p>
-              )}
-            </section>
-          )}
-
-          <div className="rounded-lg border border-line bg-surface p-4">
+          <div className="rounded-xl border border-line bg-surface p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-label font-semibold text-ink-muted">
                 今日进度
@@ -296,7 +192,7 @@ function BootcampInterviewContent() {
                     "h-2.5 rounded-full transition-colors",
                     idx === currentIndex
                       ? "bg-primary"
-                      : isQuestionEvaluated(q)
+                      : q.status === "evaluated"
                         ? "bg-success"
                         : "bg-line"
                   )}
@@ -315,7 +211,7 @@ function BootcampInterviewContent() {
           )}
 
           {error && (
-            <div role="alert" className="rounded-md border border-danger/20 bg-danger-soft px-4 py-3 text-body-sm text-danger">
+            <div className="rounded-xl border border-danger/20 bg-danger-soft p-4 text-body-sm text-danger">
               {error}
             </div>
           )}
@@ -330,7 +226,6 @@ function BootcampInterviewContent() {
               上一题
             </Button>
             <Button
-              variant={canAdvanceFromQuestion(currentQuestion) ? "primary" : "secondary"}
               fullWidth
               onClick={() => {
                 if (currentIndex < questions.length - 1) {
@@ -341,7 +236,7 @@ function BootcampInterviewContent() {
               }}
               disabled={
                 currentIndex < questions.length - 1 &&
-                !canAdvanceFromQuestion(currentQuestion)
+                currentQuestion?.status !== "evaluated"
               }
             >
               {currentIndex < questions.length - 1
@@ -359,23 +254,26 @@ function BootcampInterviewContent() {
               isRegenerating={isRegeneratingEvaluation}
             />
           ) : (
-            <section className="rounded-lg border border-line bg-white p-5">
+            <section className="rounded-xl border border-line bg-surface p-6">
               <p className="text-label font-semibold text-primary">
                 作答抓手
               </p>
               <h2 className="mt-2 text-heading-lg font-semibold text-ink">
                 先把面试官想听的证据摆上桌
               </h2>
-              <div className="mt-5 divide-y divide-line border-y border-line">
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
                 {[
                   ["背景", "一句话说明业务目标、用户角色和当时的约束。"],
                   ["证据", "讲清你用了哪些调研、数据或客户现场信息。"],
                   ["取舍", "至少对比两个方案，说出选择和放弃的理由。"],
                   ["结果", "用指标、反馈或复盘说明这个判断是否成立。"],
                 ].map(([title, description]) => (
-                  <div key={title} className="grid gap-1 py-3 sm:grid-cols-[72px_1fr] sm:gap-3">
+                  <div
+                    key={title}
+                    className="rounded-lg bg-surface-raised p-4"
+                  >
                     <h3 className="font-semibold text-ink">{title}</h3>
-                    <p className="text-body-sm leading-relaxed text-ink-muted">
+                    <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
                       {description}
                     </p>
                   </div>

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const variants = {
   default: "bg-surface-raised border border-line",
-  elevated: "bg-surface-raised border border-line-strong",
+  elevated: "bg-surface-raised shadow-md border border-line/50",
   subtle: "bg-surface border border-transparent",
   glass: "bg-white/60 backdrop-blur-xl border border-white/30",
 };
@@ -32,10 +32,10 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-lg transition-all duration-300",
+        "rounded-xl transition-all duration-300",
         variants[variant],
         sizes[size],
-        hoverable && "hover:border-primary/30 cursor-pointer",
+        hoverable && "hover:shadow-lg hover:border-primary/20 cursor-pointer",
         className
       )}
       {...props}

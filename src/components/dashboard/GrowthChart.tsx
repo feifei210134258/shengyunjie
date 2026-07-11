@@ -40,7 +40,7 @@ export default function GrowthChart({ trendData }: Props) {
       </div>
 
       {!hasEnough ? (
-        <div className="flex min-h-[170px] flex-col justify-center rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5">
+        <div className="flex min-h-[170px] flex-col justify-center rounded-xl border border-dashed border-line-strong bg-surface px-4 py-5">
           <Activity className="mb-2 h-5 w-5 text-ink-faint" strokeWidth={1.5} />
           <p className="text-body-sm font-semibold text-ink">
             完成更多训练后生成曲线

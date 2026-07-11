@@ -1,5 +1,4 @@
 import { createServerClient } from "@/lib/supabase-server";
-import { buildInterviewExpressionCard } from "@/lib/training/interview-expression-card";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -23,10 +22,5 @@ export async function GET(
     return NextResponse.json({ error: "记录不存在" }, { status: 404 });
   }
 
-  return NextResponse.json({
-    record: {
-      ...data,
-      interviewExpressionCard: buildInterviewExpressionCard(data),
-    },
-  });
+  return NextResponse.json({ record: data });
 }
