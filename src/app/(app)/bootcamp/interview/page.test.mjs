@@ -36,3 +36,11 @@ test("bootcamp interview page passes target evidence focus into answer evaluatio
   assert.match(source, /body:\s*JSON\.stringify\(\{\s*interview_id:\s*question\.id,\s*answer,\s*interviewFocus/s);
   assert.match(source, /validationSnapshot/);
 });
+
+test("bootcamp interview is a quiet evidence rehearsal workspace", () => {
+  assert.doesNotMatch(source, /rounded-xl/);
+  assert.doesNotMatch(source, /shadow-/);
+  assert.match(source, /role="alert"/);
+  assert.match(source, /divide-y divide-line border-y border-line/);
+  assert.match(source, /variant=\{canAdvanceFromQuestion\(currentQuestion\)/);
+});

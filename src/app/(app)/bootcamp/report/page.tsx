@@ -33,11 +33,11 @@ export default function BootcampReportPage() {
   if (reports.length === 0) {
     return (
       <>
-        <PageHeader title="特训报告" backHref="/bootcamp" />
+        <PageHeader title="训练报告" backHref="/bootcamp" />
         <EmptyState
           icon={<FileText className="w-7 h-7" strokeWidth={1.5} />}
           title="尚未完成特训"
-          description="完成 3 天特训后将生成详细的成长报告"
+          description="完成三天训练后生成报告。"
           action={
             <Link href="/bootcamp">
               <Button>开始特训</Button>
@@ -56,12 +56,11 @@ export default function BootcampReportPage() {
   return (
     <>
       <PageHeader
-        title="特训报告"
-        subtitle="查看你的特训成果和能力成长轨迹"
+        title="训练报告"
         backHref="/bootcamp"
       />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="mx-auto max-w-4xl space-y-7 px-4 py-5 sm:px-6 lg:px-8">
         {comprehensiveReport && (
           <div className="space-y-4">
             <h2 className="text-heading-lg font-semibold text-ink">

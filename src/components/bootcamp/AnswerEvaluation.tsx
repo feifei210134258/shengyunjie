@@ -58,7 +58,7 @@ export default function AnswerEvaluation({
   return (
     <Card variant="subtle" size="md" className="space-y-6">
       {isIncomplete && onRegenerate && (
-        <div className="rounded-xl border border-warning/30 bg-warning-soft p-4">
+        <div className="rounded-lg border border-warning/30 bg-warning-soft p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h4 className="font-semibold text-ink">这条反馈内容不完整</h4>
@@ -70,7 +70,7 @@ export default function AnswerEvaluation({
               type="button"
               onClick={onRegenerate}
               disabled={isRegenerating}
-              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-4 py-2 text-body-sm font-semibold text-white transition-all hover:bg-primary-hover disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-line-strong px-4 py-2 text-body-sm font-semibold text-ink transition-colors hover:bg-surface-raised disabled:pointer-events-none disabled:opacity-40"
             >
               {isRegenerating ? "正在重新生成..." : "重新生成反馈"}
             </button>
@@ -100,7 +100,7 @@ export default function AnswerEvaluation({
             </button>
           )}
         </div>
-        <div className="shrink-0 rounded-xl border border-line bg-surface-raised px-5 py-4 text-center">
+        <div className="shrink-0 rounded-lg border border-line bg-surface-raised px-5 py-4 text-center">
           <div
             className={cn(
               "text-display-md font-bold",
@@ -137,7 +137,7 @@ export default function AnswerEvaluation({
       </div>
 
       {targetEvidenceValidation && (
-        <section className="rounded-xl border border-primary/20 bg-primary-soft p-4">
+        <section className="rounded-lg border border-primary/20 bg-primary-soft p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-label font-bold text-primary">
@@ -201,7 +201,7 @@ export default function AnswerEvaluation({
       )}
 
       {finalAnswerRehearsal && (
-        <section className="rounded-xl border border-success/25 bg-success-soft p-4">
+        <section className="rounded-lg border border-success/25 bg-success-soft p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-label font-bold text-success">
@@ -265,7 +265,7 @@ export default function AnswerEvaluation({
       )}
 
       {evaluation.thinking_framework?.length ? (
-        <section className="rounded-xl border border-primary/15 bg-primary-soft p-4">
+        <section className="rounded-lg border border-primary/15 bg-primary-soft p-4">
           <div className="mb-3 flex items-center gap-2">
             <Lightbulb className="h-4 w-4 text-primary" strokeWidth={1.8} />
             <h4 className="font-semibold text-primary">这道题建议这样答</h4>
@@ -288,7 +288,7 @@ export default function AnswerEvaluation({
 
       <div className="grid gap-4 lg:grid-cols-2">
         {evaluation.example_answer && (
-          <section className="rounded-xl border border-line bg-surface-raised p-4">
+          <section className="rounded-lg border border-line bg-surface-raised p-4">
             <div className="mb-2 flex items-center gap-2">
               <MessageSquare
                 className="h-4 w-4 text-primary"
@@ -303,7 +303,7 @@ export default function AnswerEvaluation({
         )}
 
         {evaluation.improved_answer && (
-          <section className="rounded-xl border border-line bg-surface-raised p-4">
+          <section className="rounded-lg border border-line bg-surface-raised p-4">
             <div className="mb-2 flex items-center gap-2">
               <PenLine className="h-4 w-4 text-primary" strokeWidth={1.8} />
               <h4 className="font-semibold text-ink">把你的回答改成这样</h4>
@@ -358,7 +358,7 @@ export default function AnswerEvaluation({
       </div>
 
       {evaluation.suggestions?.length > 0 && (
-        <section className="rounded-xl border border-line bg-surface-raised p-4">
+        <section className="rounded-lg border border-line bg-surface-raised p-4">
           <h4 className="font-semibold text-ink mb-2">下一轮立刻这样改</h4>
           <ul className="space-y-2">
             {evaluation.suggestions.map((s, idx) => (
@@ -378,7 +378,7 @@ export default function AnswerEvaluation({
       )}
 
       {evaluation.next_practice && (
-        <section className="flex items-start gap-3 rounded-xl border border-line bg-surface-raised p-4">
+        <section className="flex items-start gap-3 rounded-lg border border-line bg-surface-raised p-4">
           <Target
             className="mt-0.5 h-4 w-4 shrink-0 text-primary"
             strokeWidth={1.8}

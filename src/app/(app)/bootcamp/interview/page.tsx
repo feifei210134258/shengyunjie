@@ -212,7 +212,7 @@ function BootcampInterviewContent() {
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(360px,0.82fr)_minmax(560px,1.18fr)] lg:px-8">
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
           {targetEvidenceFocus && (
-            <section className="rounded-xl border border-primary/20 bg-primary-soft p-4">
+            <section className="rounded-lg border border-primary/20 bg-primary-soft p-4">
               <p className="text-label font-bold text-primary">
                 {targetEvidenceFocus.finalInterviewAnswer
                   ? "终版表达复述"
@@ -258,7 +258,7 @@ function BootcampInterviewContent() {
             </section>
           )}
 
-          <div className="rounded-xl border border-line bg-surface p-4">
+          <div className="rounded-lg border border-line bg-surface p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-label font-semibold text-ink-muted">
                 今日进度
@@ -295,7 +295,7 @@ function BootcampInterviewContent() {
           )}
 
           {error && (
-            <div className="rounded-xl border border-danger/20 bg-danger-soft p-4 text-body-sm text-danger">
+            <div role="alert" className="rounded-md border border-danger/20 bg-danger-soft px-4 py-3 text-body-sm text-danger">
               {error}
             </div>
           )}
@@ -310,6 +310,7 @@ function BootcampInterviewContent() {
               上一题
             </Button>
             <Button
+              variant={canAdvanceFromQuestion(currentQuestion) ? "primary" : "secondary"}
               fullWidth
               onClick={() => {
                 if (currentIndex < questions.length - 1) {
@@ -338,26 +339,23 @@ function BootcampInterviewContent() {
               isRegenerating={isRegeneratingEvaluation}
             />
           ) : (
-            <section className="rounded-xl border border-line bg-surface p-6">
+            <section className="rounded-lg border border-line bg-white p-5">
               <p className="text-label font-semibold text-primary">
                 作答抓手
               </p>
               <h2 className="mt-2 text-heading-lg font-semibold text-ink">
                 先把面试官想听的证据摆上桌
               </h2>
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="mt-5 divide-y divide-line border-y border-line">
                 {[
                   ["背景", "一句话说明业务目标、用户角色和当时的约束。"],
                   ["证据", "讲清你用了哪些调研、数据或客户现场信息。"],
                   ["取舍", "至少对比两个方案，说出选择和放弃的理由。"],
                   ["结果", "用指标、反馈或复盘说明这个判断是否成立。"],
                 ].map(([title, description]) => (
-                  <div
-                    key={title}
-                    className="rounded-lg bg-surface-raised p-4"
-                  >
+                  <div key={title} className="grid gap-1 py-3 sm:grid-cols-[72px_1fr] sm:gap-3">
                     <h3 className="font-semibold text-ink">{title}</h3>
-                    <p className="mt-2 text-body-sm leading-relaxed text-ink-muted">
+                    <p className="text-body-sm leading-relaxed text-ink-muted">
                       {description}
                     </p>
                   </div>

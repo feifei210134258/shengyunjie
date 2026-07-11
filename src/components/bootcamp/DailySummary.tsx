@@ -28,7 +28,7 @@ export default function DailySummary({
       </h2>
 
       <div className="py-4">
-        <div className="text-display-xl font-bold text-primary">
+        <div className="font-mono text-[36px] font-bold leading-10 text-primary">
           {averageScore.toFixed(1)}
         </div>
         <p className="text-body-sm text-ink-muted mt-1">
@@ -38,8 +38,8 @@ export default function DailySummary({
 
       <p className="text-body-md text-ink-muted">
         {isLastDay
-          ? "恭喜完成全部 3 天特训，查看你的综合成长报告。"
-          : `休息片刻，准备迎接第 ${dayNumber + 1} 天的挑战。`}
+          ? "三天训练已完成。"
+          : `下一步：第 ${dayNumber + 1} 天。`}
       </p>
 
       <Button size="lg" onClick={onContinue}>
