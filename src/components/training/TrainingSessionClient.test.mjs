@@ -118,6 +118,13 @@ test("training session turns readiness gaps into the next answer action", () => 
   assert.doesNotMatch(source, /高级 PM 作答骨架/);
 });
 
+test("training session keeps the mobile toolbar on one line", () => {
+  assert.match(source, /w-20 items-center gap-1\.5 sm:w-36/);
+  assert.match(source, /aria-label="重新开始"/);
+  assert.match(source, /aria-label="结束训练"/);
+  assert.match(source, /hidden sm:inline/);
+});
+
 test("training feedback turns the top gap into a revision instruction", () => {
   assert.match(source, /primaryRevisionCue/);
   assert.match(source, /handleApplyRevisionCue/);
@@ -138,7 +145,7 @@ test("training feedback frames revision and prescription as an upgrade loop", ()
 
 test("training feedback consolidates status and hides the full report by default", () => {
   assert.match(source, /function FeedbackProcessingDesk/);
-  assert.match(source, /反馈处理台/);
+  assert.match(source, /本轮进度/);
   assert.match(source, /关键反馈/);
   assert.match(source, /展开完整反馈/);
   assert.match(source, /完整反馈[\s\S]*<TrainingEvaluationPanel/);
@@ -146,6 +153,10 @@ test("training feedback consolidates status and hides the full report by default
   assert.match(source, /function FeedbackProcessingDesk[\s\S]*sticky top-36/);
   assert.match(source, /window\.scrollTo\(\{ top: 0/);
   assert.doesNotMatch(source, /完整内容\s*完整内容/);
+  assert.doesNotMatch(source, /反馈处理台/);
+  assert.doesNotMatch(source, /bg-ink/);
+  assert.doesNotMatch(source, /rounded-2xl/);
+  assert.doesNotMatch(source, /shadow-\[/);
 });
 
 test("training feedback promotes the next incomplete loop step as the primary action", () => {
@@ -160,7 +171,7 @@ test("training feedback promotes the next incomplete loop step as the primary ac
 
 test("training feedback demotes repeated footer actions below the primary loop action", () => {
   assert.match(source, /辅助操作/);
-  assert.match(source, /这些操作不改变本轮主路径/);
+  assert.doesNotMatch(source, /这些操作不改变本轮主路径/);
   assert.doesNotMatch(source, /重新分析[\s\S]{0,700}\{currentIndex === totalCount - 1 \? "再来一轮" : "下一题"\}/);
 });
 

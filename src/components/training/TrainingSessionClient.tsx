@@ -388,7 +388,7 @@ function MiniProgress({
   total?: number;
 }) {
   return (
-    <div className="flex w-36 items-center gap-1.5">
+    <div className="flex w-20 items-center gap-1.5 sm:w-36">
       {Array.from({ length: total }, (_, item) => (
         <div
           key={item}
@@ -417,9 +417,9 @@ function Frame({
 }) {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-[#F7F9FB]">
-      <header className="sticky top-16 z-20 flex h-14 items-center justify-between border-b border-line bg-white/88 px-6 backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <span className="text-body-md font-semibold text-primary">
+      <header className="sticky top-16 z-20 flex h-14 items-center justify-between border-b border-line bg-white/88 px-3 backdrop-blur-xl sm:px-6">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <span className="whitespace-nowrap text-body-sm font-semibold text-primary sm:text-body-md">
             日常训练
           </span>
           <MiniProgress current={currentIndex} total={totalCount} />
@@ -428,18 +428,22 @@ function Frame({
           {onRestart && (
             <button
               onClick={onRestart}
-              className="flex h-10 items-center gap-2 rounded-lg px-3 text-body-sm font-semibold text-ink hover:bg-surface"
+              aria-label="重新开始"
+              title="重新开始"
+              className="flex h-10 w-10 items-center justify-center gap-2 rounded-md text-body-sm font-semibold text-ink hover:bg-surface sm:w-auto sm:px-3"
             >
               <RefreshCw className="h-4 w-4" />
-              重新开始
+              <span className="hidden sm:inline">重新开始</span>
             </button>
           )}
           <button
             onClick={onFinish}
-            className="flex h-10 items-center gap-2 rounded-lg px-3 text-body-sm font-semibold text-ink hover:bg-surface"
+            aria-label="结束训练"
+            title="结束训练"
+            className="flex h-10 w-10 items-center justify-center gap-2 rounded-md text-body-sm font-semibold text-ink hover:bg-surface sm:w-auto sm:px-3"
           >
             <X className="h-4 w-4" />
-            结束
+            <span className="hidden sm:inline">结束</span>
           </button>
         </div>
       </header>
@@ -478,7 +482,7 @@ function MissionContextStrip({
         }。`;
 
   return (
-    <section className="rounded-xl border border-primary/15 bg-white px-4 py-3 shadow-[0_10px_28px_rgba(67,56,202,0.05)]">
+    <section className="rounded-lg border border-primary/15 bg-white px-4 py-3">
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -643,7 +647,7 @@ function A1BeforeSubmit({
             />
           )}
 
-          <section className="rounded-xl border border-primary/20 bg-[#EEF2FF] p-4 shadow-[0_10px_28px_rgba(67,56,202,0.06)]">
+          <section className="rounded-lg border border-primary/20 bg-[#EEF2FF] p-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-md bg-white px-3 py-1.5 text-label font-semibold text-primary">
                 {currentDisplayLabel}
@@ -695,7 +699,7 @@ function A1BeforeSubmit({
             </div>
           </section>
 
-          <section className="rounded-xl border border-line bg-white p-4 shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
+          <section className="rounded-lg border border-line bg-white p-4">
             <div className="rounded-lg border border-primary/15 bg-primary-soft/45 px-3 py-3">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
@@ -754,7 +758,7 @@ function A1BeforeSubmit({
                       className={cn(
                         "group rounded-lg border px-3 py-2 text-left transition active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50",
                         nextSkeletonItem?.id === item.id
-                          ? "border-primary/35 bg-white shadow-[0_8px_22px_rgba(67,56,202,0.08)]"
+                          ? "border-primary/35 bg-white ring-2 ring-primary/10"
                           : "border-line bg-white hover:border-primary/30 hover:bg-primary-soft/30"
                       )}
                     >
@@ -848,7 +852,7 @@ function CompactReference({
 }) {
   return (
     <aside className="space-y-3 lg:sticky lg:top-36 lg:h-[calc(100dvh-10rem)] lg:min-h-[520px]">
-      <section className="flex min-h-[220px] flex-col rounded-xl border border-line bg-white p-4 lg:h-[48%] lg:min-h-0">
+      <section className="flex min-h-[220px] flex-col rounded-lg border border-line bg-white p-4 lg:h-[48%] lg:min-h-0">
         <div className="mb-2 flex shrink-0 items-center gap-2">
           <span className="rounded-md bg-primary-soft px-2 py-1 text-label font-semibold text-primary">
             原题
@@ -863,7 +867,7 @@ function CompactReference({
           </ReactMarkdown>
         </div>
       </section>
-      <section className="flex min-h-[220px] flex-col rounded-xl border border-line bg-white p-4 lg:h-[48%] lg:min-h-0">
+      <section className="flex min-h-[220px] flex-col rounded-lg border border-line bg-white p-4 lg:h-[48%] lg:min-h-0">
         <div className="mb-2 flex shrink-0 items-center justify-between">
           <h3 className="font-semibold text-ink">我的回答</h3>
           <span className="text-label font-semibold text-ink-faint">
@@ -934,22 +938,22 @@ function FeedbackProcessingDesk({
           : "反馈已生成";
 
   return (
-    <section className="sticky top-36 z-10 rounded-2xl border border-ink/10 bg-ink px-4 py-4 text-white shadow-[0_22px_60px_rgba(15,23,42,0.22)]">
+    <section className="sticky top-36 z-10 rounded-lg border border-line bg-white px-4 py-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-label font-bold text-white/70">反馈处理台</p>
-            <span className="text-label font-semibold text-white/45">
+            <p className="text-label font-bold text-primary">本轮进度</p>
+            <span className="text-label font-semibold text-ink-muted">
               本轮升级闭环
             </span>
-            <span className="rounded-md border border-white/15 px-2 py-1 text-label font-semibold text-white/70">
+            <span className="rounded-md bg-surface px-2 py-1 text-label font-semibold text-ink-muted">
               {profileStatus}
             </span>
           </div>
-          <h3 className="mt-1 text-heading-sm font-bold text-white">
+          <h3 className="mt-1 text-heading-sm font-bold text-ink">
             本轮下一步：{nextLoopAction.label}
           </h3>
-          <p className="mt-1 text-body-sm leading-relaxed text-white/70">
+          <p className="mt-1 text-body-sm leading-relaxed text-ink-muted">
             {nextLoopAction.description}
           </p>
         </div>
@@ -957,33 +961,33 @@ function FeedbackProcessingDesk({
           type="button"
           onClick={nextLoopAction.onClick}
           disabled={nextLoopAction.disabled}
-          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-4 text-body-sm font-bold text-ink transition hover:bg-white/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-body-sm font-bold text-white transition hover:bg-primary-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
         >
           {nextLoopAction.label}
           <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
         </button>
       </div>
 
-      <div className="mt-4 grid border-t border-white/10 pt-3 sm:grid-cols-3">
+      <div className="mt-4 grid border-t border-line pt-3 sm:grid-cols-3">
         {loopStepStates.map((step, index) => (
           <div
             key={step.id}
             className={cn(
-              "px-1 py-2 sm:px-3 sm:first:pl-0 sm:[&:not(:first-child)]:border-l sm:[&:not(:first-child)]:border-white/10",
+              "px-1 py-2 sm:px-3 sm:first:pl-0 sm:[&:not(:first-child)]:border-l sm:[&:not(:first-child)]:border-line",
               step.done
-                ? "text-white"
+                ? "text-success"
                 : step.active
                   ? "text-warning"
-                  : "text-white/55"
+                  : "text-ink-muted"
             )}
           >
             <div className="flex items-center justify-between gap-2">
               <p className="text-label font-bold">{step.label}</p>
-              <span className="font-mono text-label font-bold text-white/45">
+              <span className="font-mono text-label font-bold text-ink-faint">
                 0{index + 1}
               </span>
             </div>
-            <p className="mt-1 text-label font-semibold leading-relaxed text-white/60">
+            <p className="mt-1 text-label font-semibold leading-relaxed text-ink-muted">
               {step.description}
             </p>
           </div>
@@ -991,13 +995,13 @@ function FeedbackProcessingDesk({
       </div>
 
       {recommendation && (
-        <div className="mt-3 border-t border-white/10 pt-3">
-          <p className="text-label font-bold text-white/60">下一轮处方</p>
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="text-label font-bold text-ink-muted">下一轮处方</p>
           <div className="mt-1 flex flex-col gap-1 lg:flex-row lg:items-baseline lg:gap-3">
-            <p className="text-body-sm font-bold text-white">
+            <p className="text-body-sm font-bold text-ink">
               {recommendation.title}
             </p>
-            <p className="text-label font-semibold leading-relaxed text-white/60">
+            <p className="text-label font-semibold leading-relaxed text-ink-muted">
               {recommendation.reason}
             </p>
           </div>
@@ -1146,7 +1150,7 @@ function A1AfterSubmit({
             recommendation={recommendation}
           />
 
-          <div className="rounded-2xl border border-primary/20 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
+          <div className="rounded-lg border border-primary/20 bg-white p-6">
             <div className="flex flex-col gap-4 border-b border-line pb-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-label font-bold uppercase text-primary">
@@ -1161,7 +1165,7 @@ function A1AfterSubmit({
                     "AI 已完成分析，建议先复盘评分、盲区和下一题练习。"}
                 </p>
               </div>
-              <div className="shrink-0 rounded-xl bg-[#F3F6FA] px-6 py-4 text-center">
+              <div className="shrink-0 rounded-lg bg-[#F3F6FA] px-6 py-4 text-center">
                 <div className="font-mono text-data-md font-bold text-warning">
                   {evaluation?.overall_score || score || "-"}
                 </div>
@@ -1191,7 +1195,7 @@ function A1AfterSubmit({
                   </div>
                 </section>
 
-                <details className="group mt-4 rounded-xl border border-line bg-[#F8FAFC] px-4 py-3">
+                <details className="group mt-4 rounded-lg border border-line bg-[#F8FAFC] px-4 py-3">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-body-sm font-bold text-ink [&::-webkit-details-marker]:hidden">
                     <span>展开完整反馈</span>
                     <ChevronDown className="h-4 w-4 text-ink-muted transition group-open:rotate-180" />
@@ -1206,7 +1210,7 @@ function A1AfterSubmit({
               </>
             ) : (
               <div className="mt-5 space-y-4">
-                <section className="rounded-xl border border-line bg-[#F8FAFC] p-5">
+                <section className="rounded-lg border border-line bg-[#F8FAFC] p-5">
                   <div className="mb-3 flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-primary" />
                     <h4 className="font-semibold text-ink">诊断</h4>
@@ -1219,7 +1223,7 @@ function A1AfterSubmit({
                 </section>
 
                 {sections.suggestion && (
-                  <section className="rounded-xl border border-primary-muted bg-primary-soft p-5">
+                  <section className="rounded-lg border border-primary-muted bg-primary-soft p-5">
                     <div className="mb-3 flex items-center gap-2">
                       <PenLine className="h-4 w-4 text-primary" />
                       <h4 className="font-semibold text-ink">建议</h4>
@@ -1234,7 +1238,7 @@ function A1AfterSubmit({
               </div>
             )}
 
-            <section className="mt-4 rounded-xl border border-line bg-white px-4 py-4">
+            <section className="mt-4 rounded-lg border border-line bg-white px-4 py-4">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="max-w-3xl">
                   <p className="text-label font-bold text-primary">二次修正</p>
@@ -1310,7 +1314,7 @@ function A1AfterSubmit({
                     !revisionHasChanges ||
                     revision.status === "saving"
                   }
-                  className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-body-sm font-semibold text-white transition hover:bg-ink/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-white px-4 py-2.5 text-body-sm font-semibold text-ink transition hover:bg-surface active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
                 >
                   <PenLine className="h-4 w-4" />
                   保存二次修正
@@ -1318,14 +1322,9 @@ function A1AfterSubmit({
               </div>
             </section>
 
-            <div className="mt-5 rounded-xl border border-line bg-[#F8FAFC] px-4 py-3">
+            <div className="mt-5 border-t border-line pt-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p className="text-label font-bold text-ink">辅助操作</p>
-                  <p className="mt-1 text-label font-semibold text-ink-muted">
-                    这些操作不改变本轮主路径；真正推进闭环请使用上方“本轮下一步”。
-                  </p>
-                </div>
+                <p className="text-label font-bold text-ink">辅助操作</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={onFinish}

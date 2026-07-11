@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-11] Feature: ux-003 训练作答与反馈工作台收口
+
+### 完成内容
+- 训练作答页移除自定义大阴影和 12px/16px 大圆角，统一为 8px 工具面板与浅色分隔层级。
+- 反馈吸顶区由黑色“反馈处理台”改为浅色“本轮进度”，保留闭环状态、下一动作和处方读回，主动作统一为蓝色。
+- 二次修正保存和辅助操作降为次级按钮，移除解释“真正推进闭环请使用上方”等冗余说明。
+- 移动端训练工具栏改为紧凑图标按钮，进度条缩短，解决“日常训练 / 重新开始 / 结束”被拆字换行的问题。
+
+### 验证记录
+- TDD 红绿：`src/components/training/TrainingSessionClient.test.mjs` 19/19 通过。
+- `npx tsc --noEmit` 与定向 ESLint 通过。
+- Kimi WebBridge 桌面验证：1470px 视口无黑色面板、无大圆角工具区，截图 `/tmp/training-session-redesign-desktop.png`。
+- Codex Browser 移动验证：390x844 `scrollWidth=390`，工具栏保持单行，重新开始和结束改为带 tooltip/aria-label 的图标按钮。
+
 ## [2026-07-11] Feature: ux-003 子流程完成性审计与项目故事库收口
 
 ### 审计结论
