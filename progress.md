@@ -1,5 +1,19 @@
 # 会话进度日志
 
+## [2026-07-11] Feature: ux-003 能力量表诊断收口
+
+### 完成内容
+- “诊断模块”改为 28px“能力画像诊断”，把阶段、题数和进度压缩到同一标题栏。
+- 删除重复的大型圆形 Stepper，以三列分隔行表达“能力量表 / 深度访谈 / 案例实战”。
+- 维度导航改为紧凑横向分段控制；题目卡改为连续分隔行，评分按钮稳定为五列 58px 高度。
+- 提交错误从浏览器 `alert` 改为操作区附近的内联 `role=alert`，保留既有 Supabase API、报告 ID 和访谈跳转链路。
+
+### 验证记录
+- 新增 TDD 源测试 `src/app/(app)/diagnosis/scale/page.test.mjs`，3/3 通过。
+- `npx tsc --noEmit` 与定向 ESLint 通过。
+- Kimi WebBridge 桌面验证：1470px 标题 28px、连续量表布局，无横向滚动，截图 `/tmp/diagnosis-scale-redesign-desktop.png`。
+- Codex Browser 移动验证：390x844 `scrollWidth=390`，五级评分文字完整，维度栏使用局部横向滚动而非页面溢出。
+
 ## [2026-07-11] Feature: ux-003 训练作答与反馈工作台收口
 
 ### 完成内容

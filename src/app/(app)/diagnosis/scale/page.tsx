@@ -3,10 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { PageHeader } from "@/components/ui/page-header";
-import { StepProgress } from "@/components/ui/step-progress";
 import { safeSessionStorageSet } from "@/lib/browser/safe-storage";
 import { cn } from "@/lib/utils";
 import {
@@ -79,6 +75,7 @@ export default function DiagnosisScalePage() {
   const [dimIndex, setDimIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const currentDim = DIMENSIONS[dimIndex];
   const CurrentDimIcon = currentDim.icon;
@@ -109,6 +106,7 @@ export default function DiagnosisScalePage() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    setSubmitError("");
     try {
       const res = await fetch("/api/diagnosis/scale", {
         method: "POST",
@@ -120,44 +118,54 @@ export default function DiagnosisScalePage() {
       safeSessionStorageSet("reportId", data.reportId);
       router.push(`/diagnosis/interview?reportId=${encodeURIComponent(data.reportId)}`);
     } catch (err: any) {
-      alert("提交失败：" + (err.message || "未知错误"));
+      setSubmitError(`提交失败：${err.message || "未知错误"}`);
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-[100dvh] bg-bg">
-      <PageHeader
-        title="诊断模块"
-        actions={
-          <div className="flex items-center gap-3">
-            <Badge>阶段一：能力量表初筛</Badge>
-            <div className="flex items-center gap-2">
-              <span className="text-body-sm text-ink-muted font-mono">
-                {totalAnswered}/{totalQuestions}
-              </span>
-              <div className="w-24 h-1.5 bg-line rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
+    <main className="mx-auto max-w-[1180px] px-4 py-6 sm:px-6 lg:px-8">
+      <header className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-label font-bold text-primary">能力量表</p>
+          <h1 className="mt-1 text-[28px] font-bold leading-9 text-ink">
+            能力画像诊断
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-label font-bold text-primary">量表 1/3</span>
+          <span className="font-mono text-label font-semibold text-ink-muted">
+            {totalAnswered}/{totalQuestions}
+          </span>
+          <div className="h-1.5 w-24 overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
           </div>
-        }
-      />
+        </div>
+      </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Stepper */}
-        <StepProgress
-          steps={["能力量表", "深度访谈", "案例实战"]}
-          current={0}
-          variant="circle"
-          className="mb-8"
-        />
+      <ol className="grid grid-cols-3 border-b border-line py-3 text-label font-semibold text-ink-muted">
+        {["能力量表", "深度访谈", "案例实战"].map((step, index) => (
+          <li
+            key={step}
+            className={cn(
+              "flex items-center gap-2 border-r border-line px-3 last:border-r-0",
+              index === 0 && "text-primary"
+            )}
+          >
+            <span className="font-mono">0{index + 1}</span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
 
-        {/* 维度导航 */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin">
+      <div className="py-5">
+        <nav
+          aria-label="能力维度"
+          className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-thin sm:mx-0 sm:px-0"
+        >
           {DIMENSIONS.map((dim, i) => {
             const dimAnswered = QUESTIONS[dim.id].every(
               (q) => answers[q.id] !== undefined
@@ -168,9 +176,9 @@ export default function DiagnosisScalePage() {
                 key={dim.id}
                 onClick={() => setDimIndex(i)}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-body-sm font-medium transition-all whitespace-nowrap shrink-0",
+                  "shrink-0 whitespace-nowrap rounded-md px-4 py-2 text-body-sm font-medium transition active:scale-[0.98]",
                   i === dimIndex
-                    ? "bg-primary text-white shadow-sm"
+                    ? "bg-primary text-white"
                     : dimAnswered
                       ? "bg-secondary-soft text-secondary"
                       : "bg-surface text-ink-muted hover:bg-surface-hover"
@@ -184,11 +192,10 @@ export default function DiagnosisScalePage() {
               </button>
             );
           })}
-        </div>
+        </nav>
 
-        {/* 当前维度题目 */}
-        <Card size="lg">
-          <div className="flex items-center gap-3 mb-6">
+        <section className="border-y border-line bg-white px-4 py-5 sm:px-6">
+          <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
               <CurrentDimIcon className="h-5 w-5" strokeWidth={1.5} />
             </div>
@@ -200,24 +207,23 @@ export default function DiagnosisScalePage() {
             </span>
           </div>
 
-          <div className="space-y-8">
+          <div className="divide-y divide-line border-y border-line">
             {currentQuestions.map((q, qIndex) => (
-              <div
-                key={q.id}
-                className="pb-6 border-b border-line last:border-0 last:pb-0"
-              >
-                <p className="text-body-md text-ink font-medium mb-4 leading-relaxed">
+              <fieldset key={q.id} className="py-5">
+                <legend className="mb-4 text-body-md font-medium leading-relaxed text-ink">
                   {dimIndex * 5 + qIndex + 1}. {q.text}
-                </p>
-                <div className="flex gap-2">
+                </legend>
+                <div className="grid grid-cols-5 gap-2">
                   {[1, 2, 3, 4, 5].map((score) => (
                     <button
+                      type="button"
                       key={score}
                       onClick={() => setScore(q.id, score)}
+                      aria-pressed={answers[q.id] === score}
                       className={cn(
-                        "flex-1 py-2.5 px-2 rounded-xl text-body-sm font-medium transition-all duration-200 active:scale-[0.97]",
+                        "min-h-[58px] rounded-md px-1 py-2 text-body-sm font-medium transition duration-200 active:scale-[0.97]",
                         answers[q.id] === score
-                          ? "bg-primary text-white shadow-sm"
+                          ? "bg-primary text-white"
                           : "bg-surface border border-line text-ink-muted hover:border-primary/40 hover:text-primary"
                       )}
                     >
@@ -228,13 +234,21 @@ export default function DiagnosisScalePage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
             ))}
           </div>
-        </Card>
+        </section>
 
-        {/* 底部导航 */}
-        <div className="flex items-center justify-between mt-8">
+        {submitError && (
+          <p
+            role="alert"
+            className="mt-4 rounded-md bg-danger-soft px-3 py-2 text-body-sm text-danger"
+          >
+            {submitError}
+          </p>
+        )}
+
+        <div className="mt-6 flex items-center justify-between">
           <Button
             variant="secondary"
             onClick={handlePrev}
@@ -264,6 +278,6 @@ export default function DiagnosisScalePage() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
