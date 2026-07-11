@@ -1,5 +1,25 @@
 # 会话进度日志
 
+## [2026-07-11] Feature: ux-003 核心工作台 UI 与交互重设计
+
+### 设计依据
+- 先研究 Product Alliance、BetterUp、Reforge 与 Asana/Linear 类工作台，再产出三版主页面视觉探索；最终采用浅色固定侧栏、任务队列、分隔行和单一首屏主动作，不复制品牌外观。
+- 设计规范与实施计划分别记录在 `docs/superpowers/specs/2026-07-11-product-workspace-redesign-design.md` 和 `docs/superpowers/plans/2026-07-11-product-workspace-redesign.md`。
+
+### 完成内容
+- Dashboard 重构为今日聚焦队列、内联展开任务、最近证据表和连续下半区；保留目标主线、目标简报、证据入账和处方选择。
+- 训练首页改为复盘优先队列；面试冲刺改为证据缺口队列；训练历史改为“原回答 / 修正版 / 保存并入账”三阶段工作流。
+- 全站核心页面统一浅色工作区、桌面固定侧栏和移动顶部栏，删除页面级黑色面板、巨型 Hero、重复资产展示和卡片墙。
+- 最后一轮视觉复查将训练复盘的重复 40px 页面标题移除，题目摘要固定为 24px 两行，并清理题目前导 Markdown 分隔符。
+- 本轮复用现有 API、Supabase 表和持久化行为，没有修改数据库 schema 或新增依赖。
+
+### 验证记录
+- Kimi WebBridge 在 1470x797 检查 `/dashboard`、`/training`、`/bootcamp` 和有效 `/training/history/[id]`：四页 `scrollWidth=1470`，核心标题为 24-28px，首屏仅一个填充色主动作；最新桌面截图位于 `/tmp/redesign-dashboard-fresh.png`、`/tmp/redesign-training-fresh.png`、`/tmp/redesign-bootcamp-fresh.png` 和 `/tmp/redesign-history-final-desktop.png`。
+- Codex Browser 在 390x844 检查四页：桌面侧栏替换为移动顶部栏，四页 `scrollWidth=390`，DOM 未发现可见横向溢出；复盘有效记录标题为 24px 两行。
+- TDD 红绿验证复盘标题收束和 Markdown 前缀清理；历史页定向测试 11/11 通过。
+- 全量 `node --test $(rg --files -g '*.test.mjs')` 通过 272 项，0 失败；含既有 Node ESM 类型提示，不影响测试结果。
+- `npx tsc --noEmit`、`ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0` 和 `npm run build` 通过。
+
 ## [2026-07-10] Feature: 产品路径处方一致性收口
 
 ### 背景判断

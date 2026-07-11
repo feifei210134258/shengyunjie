@@ -37,6 +37,16 @@ test("training history presents a light three-stage review workflow", () => {
   assert.doesNotMatch(source, /sm:text-\[36px\]/);
 });
 
+test("training history uses one compact page heading for the loaded review", () => {
+  assert.equal(source.match(/<PageHeader/g)?.length, 1);
+  assert.match(
+    source,
+    /line-clamp-2 max-w-4xl text-\[24px\] font-bold leading-8 text-ink/
+  );
+  assert.doesNotMatch(source, /subtitle="对照反馈修正回答，并把可复用证据写入画像"/);
+  assert.match(source, /replace\(\/\^\\s\*---\\s\*\//);
+});
+
 test("training history keeps deposit assets out of the AI feedback stage", () => {
   assert.match(
     source,

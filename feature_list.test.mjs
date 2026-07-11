@@ -23,11 +23,14 @@ test("profile-002 tracks the personalized recommendation engine", () => {
 test("ux-003 tracks the research-informed core workspace redesign", () => {
   const feature = featureList.features.find((item) => item.id === "ux-003");
   assert.ok(feature);
-  assert.equal(feature.status, "in-progress");
+  assert.equal(feature.status, "completed");
   assert.deepEqual(feature.dependencies, ["ux-001", "training-001", "bootcamp-004"]);
   assert.match(feature.description, /Dashboard/);
   assert.match(feature.description, /训练首页/);
   assert.match(feature.description, /训练复盘/);
   assert.match(feature.description, /面试冲刺/);
   assert.match(feature.description, /不改数据库 schema/);
+  assert.match(feature.evidence, /272/);
+  assert.match(feature.evidence, /390x844/);
+  assert.match(feature.evidence, /Kimi WebBridge/);
 });

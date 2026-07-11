@@ -67,7 +67,7 @@ function ReviewProcessingDesk({
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
         <div>
           <p className="text-label font-bold text-primary">训练复盘</p>
-          <h1 className="mt-2 line-clamp-2 max-w-4xl text-[24px] font-bold leading-8 text-ink sm:text-[28px]">
+          <h1 className="mt-2 line-clamp-2 max-w-4xl text-[24px] font-bold leading-8 text-ink">
             {title}
           </h1>
         </div>
@@ -358,9 +358,14 @@ export default function HistoryDetailPage() {
     typeof record.ai_feedback.thinking_upgrade === "object"
       ? record.ai_feedback.thinking_upgrade
       : null;
-  const title =
-    record.ai_feedback?.scenario_title ||
-    record.question_scenario.replace(/\n/g, " ").slice(0, 82);
+  const rawTitle =
+    record.ai_feedback?.scenario_title || record.question_scenario;
+  const title = rawTitle
+    .replace(/^\s*---\s*/, "")
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 82);
   const hasSavedRevision = Boolean(revisedAnswer) || revisionStatus === "saved";
   const historyPrimaryAction = !hasSavedRevision
     ? {
@@ -419,13 +424,7 @@ export default function HistoryDetailPage() {
 
   return (
     <>
-      <PageHeader
-        title="训练复盘"
-        subtitle="对照反馈修正回答，并把可复用证据写入画像"
-        backHref="/training"
-      />
-
-      <div className="mx-auto max-w-[1180px] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1180px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <ReviewProcessingDesk
           historyPrimaryAction={historyPrimaryAction}
           steps={reviewSteps}
