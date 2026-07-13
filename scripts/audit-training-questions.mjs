@@ -109,6 +109,7 @@ function auditQuestions(questions) {
   const signatures = questions.map((item) => item.questionMeta.signature);
   const coverageByDimension = {};
   const contextConcentration = {};
+  const qualityIssueCounts = {};
   let methodLeakCount = 0;
   let hardIssueCount = 0;
 
@@ -123,6 +124,10 @@ function auditQuestions(questions) {
         (contexts.get(item.questionMeta.contextFamily) || 0) + 1
       );
       const issues = validateGeneratedTrainingQuestion(item, []);
+      for (const issue of issues) {
+        qualityIssueCounts[issue.code] =
+          (qualityIssueCounts[issue.code] || 0) + 1;
+      }
       methodLeakCount += issues.filter(
         (issue) => issue.code === "answer_leak" || issue.code === "source_leak"
       ).length;
@@ -172,6 +177,7 @@ function auditQuestions(questions) {
     topSimilarityPairs: similarityPairs.slice(0, 5),
     methodLeakCount,
     hardIssueCount,
+    qualityIssueCounts,
     contextConcentration,
   };
 }

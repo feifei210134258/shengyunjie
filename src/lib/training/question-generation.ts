@@ -52,6 +52,10 @@ export interface QuestionValidationIssue {
     | "missing_field"
     | "answer_leak"
     | "source_leak"
+    | "task_in_scenario"
+    | "over_guided"
+    | "hint_too_long"
+    | "pseudo_precision"
     | "too_long"
     | "too_similar";
   severity: "hard" | "soft";
@@ -443,6 +447,21 @@ const METHOD_OR_SOURCE_PATTERN =
   /JTBD|Jobs[- ]to[- ]be[- ]Done|机会成本|第一性原理|单位经济|LTV|CAC|商业模式画布|因果推断|系统思维|《[^\u300b]+》|俞军|王诗沐|Marty Cagan/i;
 const EXPLICIT_STEPS_PATTERN =
   /按[^\n。；]{0,30}(?:步|顺序)回答|第一步|第二步|请从以下[\d一二三四五]/i;
+const TASK_IN_SCENARIO_PATTERN =
+  /(?:请|你需要|你的任务是)(?:分析|判断|设计|撰写|给出|回答)/;
+const ANSWER_OUTLINE_TRIGGER = /(?:包括|需要说明|需说明|分别说明|请说明)[：:]?/;
+const MACRO_PSEUDO_PRECISION_PATTERN =
+  /(?:营收|年产值|融资额|市场份额)[^\n。]{0,12}\d|\d[^\n。]{0,12}(?:营收|年产值|融资额|市场份额)/;
+
+function countAnswerOutlineParts(task: string) {
+  const triggerIndex = task.search(ANSWER_OUTLINE_TRIGGER);
+  if (triggerIndex < 0) return 0;
+  return task
+    .slice(triggerIndex)
+    .split(/[、，；]/)
+    .map((item) => item.trim())
+    .filter(Boolean).length;
+}
 
 export function validateGeneratedTrainingQuestion(
   question: GeneratedTrainingQuestion,
@@ -485,6 +504,34 @@ export function validateGeneratedTrainingQuestion(
       code: "answer_leak",
       severity: "hard",
       message: "题面直接给出了答题步骤",
+    });
+  }
+  if (TASK_IN_SCENARIO_PATTERN.test(question.scenario)) {
+    issues.push({
+      code: "task_in_scenario",
+      severity: "hard",
+      message: "场景中混入了需要用户回答的任务",
+    });
+  }
+  if (countAnswerOutlineParts(question.task) >= 4) {
+    issues.push({
+      code: "over_guided",
+      severity: "soft",
+      message: "任务列出了过完整的答题提纲",
+    });
+  }
+  if (question.defaultHint.length > 55 || question.secondaryHint.length > 90) {
+    issues.push({
+      code: "hint_too_long",
+      severity: "soft",
+      message: "提示过长，容易变成参考答案",
+    });
+  }
+  if (MACRO_PSEUDO_PRECISION_PATTERN.test(question.scenario)) {
+    issues.push({
+      code: "pseudo_precision",
+      severity: "soft",
+      message: "题设使用了与核心判断无关的宏大数字",
     });
   }
   if (getTrainingQuestionText(question).length > 420) {

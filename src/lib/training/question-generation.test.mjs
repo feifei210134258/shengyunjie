@@ -196,3 +196,100 @@ test("gives a counterfactual archetype one positive task direction", () => {
 
   assert.match(prompt, /已经发生的决策和结果/);
 });
+
+test("rejects a scenario that repeats the answer task", () => {
+  const target = selectTrainingTarget({
+    dimension: "数据决策能力",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "续费异常",
+      scenario: "某平台出现续费异常。请分析原因并给出方案。",
+      task: "你会如何定位原因？",
+      default_hint: "注意不同客群的变化。",
+      secondary_hint: "什么证据能区分两种解释？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(
+    issues.some(
+      (issue) => issue.code === "task_in_scenario" && issue.severity === "hard"
+    )
+  );
+});
+
+test("flags an over-guided task without blocking the question", () => {
+  const target = selectTrainingTarget({
+    dimension: "战略思维",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "资源取舍",
+      scenario: "团队需要在两个方向中选择一个。",
+      task: "请给出建议，需要说明目标、对象、指标、风险和回退条件。",
+      default_hint: "先看两个方向的时间窗口。",
+      secondary_hint: "哪个选择更容易逆转？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(
+    issues.some(
+      (issue) => issue.code === "over_guided" && issue.severity === "soft"
+    )
+  );
+});
+
+test("flags hints that are long enough to become an answer outline", () => {
+  const target = selectTrainingTarget({
+    dimension: "系统设计能力",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "审批异常",
+      scenario: "某审批流程在跨部门使用时频繁卡住。",
+      task: "你会如何重新设计这个流程？",
+      default_hint:
+        "请同时检查角色目标、状态流转、异常处理、权限分配、责任归属和后续演进方式，以及各种方案对日常操作成本和跨部门协作的长期影响，再得出结论。",
+      secondary_hint: "关注局部失败后谁有权恢复。",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "hint_too_long"));
+});
+
+test("flags macro numbers used as decorative difficulty", () => {
+  const target = selectTrainingTarget({
+    dimension: "商业思维",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "客户价值",
+      scenario: "某制造企业年产值 5 亿元，正考虑引入新的协同产品。",
+      task: "你会如何判断这个机会是否值得投入？",
+      default_hint: "不要只看客户规模。",
+      secondary_hint: "客户的改善能否被产品捕获？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "pseudo_precision"));
+});
