@@ -1,16 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import TrainingEvaluationPanel from "@/components/training/TrainingEvaluationPanel";
 import {
-  normalizeTrainingEvaluation,
-  parseGeneratedQuestionText,
-  parseJsonFromAiText,
-  TrainingEvaluation,
+  type TrainingEvaluation,
 } from "@/lib/training/personalization";
+import { getTrainingQuestionText } from "@/lib/training/question-generation";
+import type { GeneratedTrainingQuestion } from "@/lib/training/question-generation";
 import {
   ArrowRight,
   Check,
@@ -52,15 +51,11 @@ const ALL_DIMS = [
   "商业思维",
 ];
 
-const DIM_FRAMEWORKS: Record<string, string> = {
-  "战略思维": "机会成本分析",
-  "系统设计能力": "系统思维",
-  "数据决策能力": "假设验证",
-  "用户洞察与需求管理": "第一性原理",
-  "商业思维": "单位经济模型",
+type QuestionState = {
+  data?: GeneratedTrainingQuestion;
+  loading: boolean;
+  error?: string;
 };
-
-type QuestionState = { text: string; loading: boolean; reason?: string };
 type AnswerState = { text: string; submitting: boolean };
 type AnalysisState = {
   text: string;
@@ -75,11 +70,12 @@ interface RealTrainingProps {
   answer: AnswerState | undefined;
   analysis: AnalysisState | undefined;
   score: number;
-  streamedText: string;
+  secondaryHintUsed: boolean;
   onAnswerChange: (value: string) => void;
   onSubmit: () => void;
   onNext: () => void;
   onRegenerate: () => void;
+  onShowSecondaryHint: () => void;
   onFinish: () => void;
 }
 
@@ -439,14 +435,16 @@ function A1BeforeSubmit({
   question,
   answer,
   analysis,
-  streamedText,
+  secondaryHintUsed,
   onAnswerChange,
   onSubmit,
   onRegenerate,
+  onShowSecondaryHint,
   onFinish,
 }: RealTrainingProps) {
-  const isQuestionLoading = question?.loading || !question?.text;
+  const isQuestionLoading = question?.loading || !question?.data;
   const answerText = answer?.text || "";
+  const questionData = question?.data;
 
   return (
     <Frame currentIndex={currentIndex} onFinish={onFinish}>
@@ -472,7 +470,7 @@ function A1BeforeSubmit({
                 {currentDim}
               </span>
               <span className="rounded-md bg-primary px-3 py-1.5 text-label font-semibold text-white">
-                {DIM_FRAMEWORKS[currentDim] || "思维框架"}
+                开放判断
               </span>
               <button
                 onClick={onRegenerate}
@@ -487,14 +485,12 @@ function A1BeforeSubmit({
             </div>
             <div className="mt-3">
               <h3 className="text-body-md font-semibold text-ink">
-                本题要你做一个真实取舍
+                {questionData?.title || "正在生成新的训练情境"}
               </h3>
               {isQuestionLoading ? (
-                streamedText ? (
-                  <div className="mt-2 max-h-[320px] overflow-y-auto pr-1 text-body-md leading-7 text-ink">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {streamedText}
-                    </ReactMarkdown>
+                question?.error ? (
+                  <div className="mt-3 rounded-lg border border-danger/20 bg-white/75 px-3 py-3 text-body-sm text-danger">
+                    {question.error}
                   </div>
                 ) : (
                   <div className="mt-3 space-y-2.5 animate-pulse">
@@ -507,15 +503,29 @@ function A1BeforeSubmit({
                 <>
                   <div className="mt-2 max-h-[320px] overflow-y-auto pr-1 text-body-md leading-7 text-ink [&_p]:my-0 [&_p+_p]:mt-2 [&_strong]:font-semibold">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {question?.text || ""}
+                      {questionData
+                        ? `${questionData.scenario}\n\n${questionData.task}`
+                        : ""}
                     </ReactMarkdown>
                   </div>
-                  {question?.reason && (
-                    <div className="mt-2 rounded-lg border border-primary/10 bg-white/75 px-3 py-2 text-body-sm leading-relaxed text-primary">
-                      <span className="font-semibold">为什么练这题：</span>
-                      {question.reason}
-                    </div>
-                  )}
+                  <div className="mt-3 rounded-lg border border-primary/10 bg-white/75 px-3 py-3 text-body-sm leading-relaxed text-primary">
+                    <span className="font-semibold">思考提示：</span>
+                    {questionData?.defaultHint}
+                    {secondaryHintUsed && questionData?.secondaryHint && (
+                      <p className="mt-2 border-t border-primary/10 pt-2 text-ink-muted">
+                        {questionData.secondaryHint}
+                      </p>
+                    )}
+                    {!secondaryHintUsed && questionData?.secondaryHint && (
+                      <button
+                        type="button"
+                        onClick={onShowSecondaryHint}
+                        className="mt-2 block font-semibold text-primary hover:text-primary-hover"
+                      >
+                        再给我一个提示
+                      </button>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -544,7 +554,7 @@ function A1BeforeSubmit({
             />
             <div className="mt-3 flex items-center justify-between">
               <p className="text-body-sm text-ink-faint">
-                推荐结构：结论 / 依据 / 风险 / 验证
+                先给出你的判断，再说明最关键的依据。
               </p>
               <button
                 onClick={onSubmit}
@@ -634,11 +644,14 @@ function A1AfterSubmit({
 }: RealTrainingProps) {
   const evaluation = analysis?.evaluation;
   const sections = extractSections(analysis?.text || "");
+  const questionText = question?.data
+    ? getTrainingQuestionText(question.data)
+    : "";
 
   return (
     <Frame currentIndex={currentIndex} onFinish={onFinish}>
       <main className="mx-auto grid max-w-[1440px] grid-cols-[320px_minmax(0,1fr)] gap-5 px-6 py-5">
-        <CompactReference question={question?.text} answer={answer?.text} />
+        <CompactReference question={questionText} answer={answer?.text} />
 
         <section className="space-y-4">
           <div className="rounded-2xl border border-primary/20 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
@@ -1078,84 +1091,81 @@ export default function TrainingSessionClient() {
   const [questions, setQuestions] = useState<Record<string, QuestionState>>({});
   const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
   const [analyses, setAnalyses] = useState<Record<string, AnalysisState>>({});
+  const [secondaryHints, setSecondaryHints] = useState<Record<string, boolean>>(
+    {}
+  );
   const [score, setScore] = useState(0);
   const [, setRound] = useState(1);
-  const [streamedText, setStreamedText] = useState("");
+  const excludedSignaturesRef = useRef<string[]>([]);
 
   const question = questions[currentDim];
   const answer = answers[currentDim];
   const analysis = analyses[currentDim];
-  const hasAnalysis = !!analysis?.text && !analysis.loading;
+  const hasAnalysis = !!analysis?.evaluation && !analysis.loading;
 
   const generateQuestion = useCallback(async (dim: string) => {
     setQuestions((prev) => ({
       ...prev,
-      [dim]: { text: "", loading: true },
+      [dim]: { loading: true },
     }));
-    setStreamedText("");
 
     try {
       const res = await fetch("/api/train", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate", dimension: dim }),
+        body: JSON.stringify({
+          action: "generate",
+          dimension: dim,
+          excludedSignatures: excludedSignaturesRef.current,
+        }),
       });
-      if (!res.body) throw new Error("无响应");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let text = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
-        for (const line of lines) {
-          if (line.startsWith("0:")) {
-            try {
-              const token = JSON.parse(line.slice(2));
-              if (typeof token === "string") {
-                text += token;
-                setStreamedText(text);
-              }
-            } catch {}
-          }
-        }
+      const payload = (await res.json()) as {
+        question?: GeneratedTrainingQuestion;
+        error?: string;
+      };
+      if (!res.ok || !payload.question) {
+        throw new Error(payload.error || "出题服务暂时不可用");
       }
 
-      const parsedQuestion = parseGeneratedQuestionText(text);
+      const generated = payload.question;
       setQuestions((prev) => ({
         ...prev,
-        [dim]: {
-          text: parsedQuestion.question,
-          loading: false,
-          reason: parsedQuestion.reason,
-        },
+        [dim]: { data: generated, loading: false },
       }));
-      setStreamedText("");
+      if (!excludedSignaturesRef.current.includes(generated.questionMeta.signature)) {
+        excludedSignaturesRef.current = [
+          ...excludedSignaturesRef.current,
+          generated.questionMeta.signature,
+        ].slice(-20);
+      }
 
-      if (parsedQuestion.question) {
-        fetch("/api/training/questions", {
+      const questionText = getTrainingQuestionText(generated);
+      if (questionText) {
+        const saveResponse = await fetch("/api/training/questions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             dimension: dim,
-            question: parsedQuestion.question,
+            question: questionText,
           }),
-        }).catch((err) => console.error("保存题目失败:", err));
+        });
+        if (!saveResponse.ok && saveResponse.status !== 401) {
+          console.error("保存题目失败:", await saveResponse.text());
+        }
       }
-    } catch {
+    } catch (error) {
       setQuestions((prev) => ({
         ...prev,
-        [dim]: { text: "（出题失败，请重新出题）", loading: false },
+        [dim]: {
+          loading: false,
+          error: error instanceof Error ? error.message : "出题失败，请重试",
+        },
       }));
-      setStreamedText("");
     }
   }, []);
 
   useEffect(() => {
-    if (!questions[currentDim]?.text && !questions[currentDim]?.loading) {
+    if (!questions[currentDim]?.data && !questions[currentDim]?.loading) {
       generateQuestion(currentDim);
     }
   }, [currentDim, generateQuestion, questions]);
@@ -1175,8 +1185,9 @@ export default function TrainingSessionClient() {
 
   const handleSubmit = async () => {
     const answerText = answers[currentDim]?.text?.trim();
-    const q = questions[currentDim]?.text;
-    if (!answerText || !q || q.startsWith("（出题失败")) return;
+    const questionData = questions[currentDim]?.data;
+    if (!answerText || !questionData) return;
+    const q = getTrainingQuestionText(questionData);
 
     setAnswers((prev) => ({
       ...prev,
@@ -1194,72 +1205,54 @@ export default function TrainingSessionClient() {
         body: JSON.stringify({
           action: "analyze",
           dimension: currentDim,
-          question: q,
+          questionData,
           userAnswer: answerText,
+          usedSecondaryHint: Boolean(secondaryHints[currentDim]),
         }),
       });
-      if (!res.body) throw new Error("无响应");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
-        for (const line of lines) {
-          if (line.startsWith("0:")) {
-            try {
-              const token = JSON.parse(line.slice(2));
-              if (typeof token === "string") {
-                fullText += token;
-                setAnalyses((prev) => ({
-                  ...prev,
-                  [currentDim]: { text: fullText, loading: true },
-                }));
-              }
-            } catch {}
-          }
-        }
+      const payload = (await res.json()) as {
+        evaluation?: TrainingEvaluation;
+        error?: string;
+      };
+      if (!res.ok || !payload.evaluation) {
+        throw new Error(payload.error || "AI 分析暂时不可用");
       }
 
-      const parsed = parseJsonFromAiText(fullText);
-      const evaluation = parsed ? normalizeTrainingEvaluation(parsed) : null;
-      const scoreMatch = fullText.match(/【评分：(\d+)\/10】/);
-      const extractedScore = evaluation
-        ? evaluation.overall_score
-        : scoreMatch
-          ? parseInt(scoreMatch[1], 10)
-          : 0;
+      const evaluation = payload.evaluation;
+      const extractedScore = evaluation.overall_score;
 
       setScore(extractedScore);
       setAnalyses((prev) => ({
         ...prev,
         [currentDim]: {
-          text: fullText,
+          text: evaluation.feedback,
           loading: false,
-          evaluation: evaluation || undefined,
+          evaluation,
         },
       }));
 
-      await fetch("/api/training/record", {
+      const recordResponse = await fetch("/api/training/record", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dimension: currentDim,
           question_scenario: q,
           user_answer: answerText,
-          ai_feedback: evaluation || { analysis: fullText, score: extractedScore },
+          ai_feedback: evaluation,
           score: extractedScore,
         }),
       });
-    } catch {
+      if (!recordResponse.ok) {
+        throw new Error("训练结果保存失败，请稍后重试");
+      }
+    } catch (error) {
       setAnalyses((prev) => ({
         ...prev,
         [currentDim]: {
-          text: "AI 分析暂时不可用，请稍后再试。",
+          text:
+            error instanceof Error
+              ? error.message
+              : "AI 分析暂时不可用，请稍后再试。",
           loading: false,
         },
       }));
@@ -1279,9 +1272,9 @@ export default function TrainingSessionClient() {
       return;
     }
 
-    const roundQuestions = ALL_DIMS.map((dim) => questions[dim]?.text).filter(
-      Boolean
-    );
+    const roundQuestions = ALL_DIMS.map((dim) => questions[dim]?.data)
+      .filter((item): item is GeneratedTrainingQuestion => Boolean(item))
+      .map(getTrainingQuestionText);
     if (roundQuestions.length > 0) {
       fetch("/api/training/sessions", {
         method: "POST",
@@ -1295,6 +1288,8 @@ export default function TrainingSessionClient() {
     setQuestions({});
     setAnswers({});
     setAnalyses({});
+    setSecondaryHints({});
+    excludedSignaturesRef.current = [];
     setScore(0);
     setActive("before");
   };
@@ -1308,6 +1303,7 @@ export default function TrainingSessionClient() {
       ...prev,
       [currentDim]: { text: "", loading: false },
     }));
+    setSecondaryHints((prev) => ({ ...prev, [currentDim]: false }));
     setScore(0);
     setActive("before");
     generateQuestion(currentDim);
@@ -1320,11 +1316,13 @@ export default function TrainingSessionClient() {
     answer,
     analysis,
     score,
-    streamedText,
+    secondaryHintUsed: Boolean(secondaryHints[currentDim]),
     onAnswerChange: handleAnswerChange,
     onSubmit: handleSubmit,
     onNext: handleNext,
     onRegenerate: handleRegenerate,
+    onShowSecondaryHint: () =>
+      setSecondaryHints((prev) => ({ ...prev, [currentDim]: true })),
     onFinish: () => router.push("/training"),
   };
 

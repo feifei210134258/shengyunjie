@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildQuestionGenerationPrompt,
   calculateChineseTrigramSimilarity,
   collectExcludedQuestionSignatures,
   normalizeGeneratedTrainingQuestion,
@@ -43,6 +44,21 @@ test("excludes signatures generated earlier in the current round", () => {
   });
 
   assert.notEqual(second.meta.signature, first.meta.signature);
+});
+
+test("spreads a five-question round across five subskills", () => {
+  const excludedSignatures = [];
+  const selected = [];
+  for (let index = 0; index < 5; index += 1) {
+    const target = selectTrainingTarget({
+      dimension: "战略思维",
+      excludedSignatures,
+      random: () => 0,
+    });
+    selected.push(target);
+    excludedSignatures.push(target.meta.signature);
+  }
+  assert.equal(new Set(selected.map((item) => item.meta.subSkillId)).size, 5);
 });
 
 test("detects a near rewrite with Chinese character trigrams", () => {
@@ -121,4 +137,22 @@ test("collects unique signatures from generated client question state", () => {
   });
 
   assert.deepEqual(signatures, [target.meta.signature, "second"]);
+});
+
+test("builds an open-diagnosis prompt without prescribing a named method", () => {
+  const target = selectTrainingTarget({
+    dimension: "战略思维",
+    random: () => 0,
+  });
+  const prompt = buildQuestionGenerationPrompt({
+    target,
+    recentQuestions: ["一道需要避免的近期题目"],
+    recentGaps: ["对改变结论的条件说明不足"],
+  });
+
+  assert.match(prompt, /开放诊断/);
+  assert.match(prompt, new RegExp(target.capability.advancedBehavior));
+  assert.match(prompt, /默认提示/);
+  assert.doesNotMatch(prompt, /要求答题者使用「/);
+  assert.doesNotMatch(prompt, /frameworkMap/);
 });

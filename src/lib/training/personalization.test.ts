@@ -4,7 +4,7 @@ import {
   normalizeTrainingEvaluation,
   parseGeneratedQuestionText,
   parseJsonFromAiText,
-} from "./personalization";
+} from "./personalization.ts";
 
 test("normalizes structured training evaluation from fenced AI JSON", () => {
   const parsed = parseJsonFromAiText(`\`\`\`json

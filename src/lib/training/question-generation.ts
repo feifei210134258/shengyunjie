@@ -165,6 +165,20 @@ export function selectTrainingTarget(input: {
     (item) => item?.dimension === input.dimension
   );
   const excluded = new Set(input.excludedSignatures || []);
+  const currentRoundMeta = (input.excludedSignatures || [])
+    .map((signature) => {
+      const [dimension, subSkillId, archetypeId, contextFamily, productStage, tensionId] =
+        signature.split("::");
+      if (dimension !== input.dimension || !subSkillId || !archetypeId) return null;
+      return { subSkillId, archetypeId, contextFamily, productStage, tensionId };
+    })
+    .filter(Boolean) as Array<{
+    subSkillId: string;
+    archetypeId: string;
+    contextFamily: string;
+    productStage: string;
+    tensionId: string;
+  }>;
   const subSkillCounts = countBy(recent, (item) => item.subSkillId);
   const archetypeCounts = countBy(recent, (item) => item.archetypeId);
   const pairCounts = countBy(
@@ -173,6 +187,11 @@ export function selectTrainingTarget(input: {
   );
   const contextCounts = countBy(recent, (item) => item.contextFamily);
   const tensionCounts = countBy(recent, (item) => item.tensionId);
+  const currentSubSkillCounts = countBy(currentRoundMeta, (item) => item.subSkillId);
+  const currentArchetypeCounts = countBy(
+    currentRoundMeta,
+    (item) => item.archetypeId
+  );
   const candidates = capabilities.flatMap((capability, capabilityIndex) =>
     capability.archetypes.map((archetypeId, archetypeIndex) =>
       makeCandidate(
@@ -191,6 +210,8 @@ export function selectTrainingTarget(input: {
   const scored = pool.map((candidate) => {
     const pair = `${candidate.meta.subSkillId}|${candidate.meta.archetypeId}`;
     const score =
+      (currentSubSkillCounts.get(candidate.meta.subSkillId) || 0) * 200 +
+      (currentArchetypeCounts.get(candidate.meta.archetypeId) || 0) * 8 +
       (pairCounts.get(pair) || 0) * 30 +
       (subSkillCounts.get(candidate.meta.subSkillId) || 0) * 12 +
       (archetypeCounts.get(candidate.meta.archetypeId) || 0) * 4 +
@@ -335,6 +356,64 @@ export function getTrainingQuestionText(question: GeneratedTrainingQuestion) {
     .filter(Boolean)
     .join("\n\n")
     .trim();
+}
+
+export function buildQuestionGenerationPrompt(input: {
+  target: SelectedTrainingTarget;
+  recentQuestions?: string[];
+  recentGaps?: string[];
+  retryIssues?: string[];
+}) {
+  const { target } = input;
+  const recentQuestions = (input.recentQuestions || []).slice(0, 5);
+  const relatedGaps = (input.recentGaps || []).slice(0, 3);
+  const retryIssues = (input.retryIssues || []).slice(0, 4);
+
+  return `你是 B 端高级产品思维训练的出题主编。请根据下面的内部题目规格，生成一道需要用户自己识别问题结构的开放诊断题。
+
+内部训练目标（不要逐字复制到题面）：
+- 训练维度：${target.meta.dimension}
+- 子能力：${target.capability.label}
+- 高级行为：${target.capability.advancedBehavior}
+- 执行层常见陷阱：${target.capability.executionTrap}
+- 题型：${target.meta.archetypeId}
+- 参考答案形式：${target.meta.answerFormat}
+- 业务场景：${target.contextLabel}
+- 产品阶段：${target.productStageLabel}
+- 核心矛盾：${target.tensionLabel}
+- 证据状态：${target.evidenceState}
+- 评价重点：${target.capability.evaluationFocus.join("；")}
+
+出题原则：
+1. 题目必须有具体的 B 端业务上下文、相互牵制的角色或目标，以及至少两个可辩护的解释或选择。
+2. 用户不能只列功能清单就完成回答；必须做出判断，并说明证据、边界或改变结论的条件。
+3. 题面不显示任何方法论、书名、作者或资料来源，不告诉用户应套用哪个框架。
+4. 不在 task 中给出“第一步/第二步”、四步模板或完整答题提纲。
+5. 默认提示只给一个观察角度，一句话；不公布方法名和答案结构。
+6. 进一步提示只补充一个需要比较的角度或待验证未知量，不直接作答。
+7. 可以使用合理的“题设已知条件”，但不得将无来源数字声称为真实公司数据，也不得为真实品牌编造内部经营数据。
+8. 题面的 title + scenario + task 合计不超过 420 个中文字符。
+
+需要避免的近期题目：
+${recentQuestions.length ? recentQuestions.map((item, index) => `${index + 1}. ${item}`).join("\n") : "无"}
+
+与本题目标有关的近期盲区（只可自然融入，不得暴露内部评分）：
+${relatedGaps.length ? relatedGaps.map((item) => `- ${item}`).join("\n") : "无"}
+
+${retryIssues.length ? `上一次生成未通过，本次必须修正：\n${retryIssues.map((item) => `- ${item}`).join("\n")}` : ""}
+
+只返回 JSON，不要使用 Markdown 代码块，不要添加解释。JSON 结构：
+{
+  "title": "简短中性标题",
+  "scenario": "具体场景和已知信息",
+  "task": "需要用户做出的判断",
+  "default_hint": "默认显示的一句观察提示",
+  "secondary_hint": "用户主动展开后看到的进一步提示",
+  "evaluation_criteria": [
+    { "id": "english_snake_case", "label": "评价项", "description": "本题中可观察的具体高级产品判断", "weight": 0-100 }
+  ]
+}
+请提供 3-5 个与本题特定认知动作对应的 evaluation_criteria，权重合计 100。`;
 }
 
 const METHOD_OR_SOURCE_PATTERN =

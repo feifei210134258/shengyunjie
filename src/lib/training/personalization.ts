@@ -1,3 +1,13 @@
+import type { TrainingQuestionMeta } from "./question-generation.ts";
+
+export interface TrainingCriterionScore {
+  id: string;
+  label: string;
+  score: number;
+  evidence: string;
+  gap: string;
+}
+
 export interface TrainingEvaluation {
   overall_score: number;
   scores: {
@@ -11,9 +21,14 @@ export interface TrainingEvaluation {
   gaps: string[];
   suggestions: string[];
   thinking_framework: string[];
+  criterion_scores: TrainingCriterionScore[];
+  reference_answer: string;
   example_answer: string;
   improved_answer: string;
+  alternative_path: string;
   next_practice: string;
+  question_meta?: TrainingQuestionMeta;
+  used_secondary_hint?: boolean;
 }
 
 export interface TrainingPersonalization {
@@ -22,6 +37,7 @@ export interface TrainingPersonalization {
   recentLowDimensions: string[];
   recentGaps: string[];
   recentQuestions: string[];
+  recentQuestionMeta: TrainingQuestionMeta[];
   averageScore: number | null;
   recommendationReason: string;
 }
@@ -78,6 +94,33 @@ function normalizeText(value: unknown, fallback: string) {
   return text || fallback;
 }
 
+function normalizeCriterionScores(value: unknown): TrainingCriterionScore[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item, index) => {
+      const data = (item || {}) as Record<string, unknown>;
+      const id = normalizeText(data.id, `criterion_${index + 1}`);
+      const label = normalizeText(data.label, `特定判断 ${index + 1}`);
+      return {
+        id,
+        label,
+        score: normalizeScore(data.score, 5),
+        evidence: normalizeText(data.evidence, "回答中尚未呈现充分证据。"),
+        gap: normalizeText(data.gap, "需要补充更具体的判断依据。"),
+      };
+    })
+    .slice(0, 6);
+}
+
+function normalizeQuestionMeta(value: unknown) {
+  if (!value || typeof value !== "object") return undefined;
+  const data = value as Record<string, unknown>;
+  const signature = normalizeText(data.signature, "");
+  const dimension = normalizeText(data.dimension, "");
+  if (!signature || !dimension) return undefined;
+  return value as TrainingQuestionMeta;
+}
+
 export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation {
   const data = (parsed || {}) as Record<string, any>;
   const rawScores = (data.scores || {}) as Record<string, unknown>;
@@ -93,7 +136,11 @@ export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation
   );
   const overallFallback =
     Math.round(((understanding + framework + solution + decisionLogic) / 4) * 10) /
-    10;
+      10;
+  const referenceAnswer = normalizeText(
+    data.reference_answer ?? data.example_answer,
+    "参考答案：先明确题设中的关键矛盾与当前判断，再用具体证据说明为什么这个选择更好。同时说清放弃了什么、哪些条件会改变结论，以及下一步如何验证。"
+  );
 
   return {
     overall_score: normalizeScore(
@@ -125,18 +172,26 @@ export function normalizeTrainingEvaluation(parsed: unknown): TrainingEvaluation
       "对比至少两个方案，并说明取舍标准",
       "说明上线验证方式、风险和复盘动作",
     ]),
-    example_answer: normalizeText(
-      data.example_answer,
-      "示例：我会先把问题定义为某类客户在关键流程中的转化或效率损失，再用访谈、工单和行为数据确认影响面。方案上先对比轻量提示、流程改造和机制沉淀三种路径，选择能最快验证价值且不破坏现有流程的一种，最后用核心指标和客户反馈复盘是否继续投入。"
-    ),
+    criterion_scores: normalizeCriterionScores(data.criterion_scores),
+    reference_answer: referenceAnswer,
+    example_answer: referenceAnswer,
     improved_answer: normalizeText(
       data.improved_answer ?? data.rewrite_example,
       "改写示范：我不会先急着列功能，而是先确认这个问题影响的是哪类客户、哪个流程节点和哪个业务指标。确认影响面后，我会把方案拆成快速验证和长期机制两层，先用低成本方案验证价值，再决定是否沉淀成平台能力。"
+    ),
+    alternative_path: normalizeText(
+      data.alternative_path,
+      "如果题设中的关键假设发生变化，另一选择也可能成立；需要明确哪条新证据会触发转向。"
     ),
     next_practice: normalizeText(
       data.next_practice ?? data.next_exercise,
       "下一题前，先把答案压缩成 5 句话：目标、证据、方案、取舍、结果。"
     ),
+    question_meta: normalizeQuestionMeta(data.question_meta),
+    used_secondary_hint:
+      typeof data.used_secondary_hint === "boolean"
+        ? data.used_secondary_hint
+        : undefined,
   };
 }
 
@@ -209,6 +264,10 @@ export function buildTrainingPersonalization(input: {
     .map((record) => String(record.question_scenario || "").trim())
     .filter(Boolean)
     .slice(0, 5);
+  const recentQuestionMeta = recentRecords
+    .map((record) => normalizeQuestionMeta(record.ai_feedback?.question_meta))
+    .filter((item): item is TrainingQuestionMeta => Boolean(item))
+    .slice(0, 20);
   const scored = recentRecords
     .map((record) => Number(record.score))
     .filter((score) => Number.isFinite(score) && score > 0);
@@ -241,6 +300,7 @@ export function buildTrainingPersonalization(input: {
     recentLowDimensions: Array.from(new Set(recentLowDimensions)).slice(0, 3),
     recentGaps,
     recentQuestions,
+    recentQuestionMeta,
     averageScore,
     recommendationReason:
       reasonParts.join("；") || "先完成一题高阶 PM 场景题，用答案质量校准当前能力。",
