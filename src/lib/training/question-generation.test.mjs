@@ -123,6 +123,11 @@ test("rejects public text that exposes named methods or answer steps", () => {
   const issues = validateGeneratedTrainingQuestion(question, []);
 
   assert.ok(issues.some((issue) => issue.code === "answer_leak"));
+  assert.ok(
+    issues.some(
+      (issue) => issue.code === "source_leak" && issue.message.includes("JTBD")
+    )
+  );
 });
 
 test("collects unique signatures from generated client question state", () => {

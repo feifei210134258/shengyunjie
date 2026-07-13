@@ -144,6 +144,10 @@ async function generateQuestion(input: {
 
   const usable = candidates.filter((candidate) => !hasHardIssues(candidate.issues));
   if (!usable.length) {
+    console.error(
+      "训练题连续未通过质量校验:",
+      candidates.map((candidate) => candidate.issues.map((issue) => issue.message))
+    );
     throw new Error("连续两次出题未通过质量校验");
   }
   return usable.sort(
@@ -222,7 +226,7 @@ export async function POST(req: Request) {
         ? body.excludedSignatures
             .map((item) => String(item || "").trim())
             .filter(Boolean)
-            .slice(0, 20)
+            .slice(-20)
         : [];
       const question = await generateQuestion({
         apiKey,

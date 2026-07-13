@@ -387,7 +387,7 @@ export function buildQuestionGenerationPrompt(input: {
 出题原则：
 1. 题目必须有具体的 B 端业务上下文、相互牵制的角色或目标，以及至少两个可辩护的解释或选择。
 2. 用户不能只列功能清单就完成回答；必须做出判断，并说明证据、边界或改变结论的条件。
-3. 题面不显示任何方法论、书名、作者或资料来源，不告诉用户应套用哪个框架。
+3. 题面不显示任何方法论、书名、作者或资料来源，不告诉用户应套用哪个框架。公开字段严格禁用 JTBD、机会成本、第一性原理、单位经济、LTV、CAC、商业模式画布、因果推断、系统思维等名称，改用题设中的自然业务语言表达。
 4. 不在 task 中给出“第一步/第二步”、四步模板或完整答题提纲。
 5. 默认提示只给一个观察角度，一句话；不公布方法名和答案结构。
 6. 进一步提示只补充一个需要比较的角度或待验证未知量，不直接作答。
@@ -449,11 +449,12 @@ export function validateGeneratedTrainingQuestion(
       });
     }
   }
-  if (METHOD_OR_SOURCE_PATTERN.test(publicText)) {
+  const sourceLeak = publicText.match(METHOD_OR_SOURCE_PATTERN)?.[0];
+  if (sourceLeak) {
     issues.push({
       code: "source_leak",
       severity: "hard",
-      message: "题面或提示泄露了方法论或资料来源",
+      message: `题面或提示泄露了方法论或资料来源（${sourceLeak}）`,
     });
   }
   if (EXPLICIT_STEPS_PATTERN.test(publicText)) {

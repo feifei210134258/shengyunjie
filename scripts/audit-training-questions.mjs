@@ -66,32 +66,43 @@ function fixtureQuestions() {
 }
 
 async function fetchLiveQuestions(baseUrl) {
-  const questions = [];
-  const excludedSignatures = [];
-
-  for (const dimension of DIMENSIONS) {
-    for (let index = 0; index < 5; index += 1) {
-      const response = await fetch(`${baseUrl}/api/train`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "generate",
-          dimension,
-          excludedSignatures,
-        }),
-      });
-      const payload = await response.json();
-      if (!response.ok || !payload.question) {
-        throw new Error(
-          `${dimension} 第 ${index + 1} 题生成失败：${payload.error || response.status}`
-        );
+  let generationRetryCount = 0;
+  const batches = await Promise.all(
+    DIMENSIONS.map(async (dimension) => {
+      const questions = [];
+      const excludedSignatures = [];
+      for (let index = 0; index < 5; index += 1) {
+        let generated;
+        let lastError = "未知错误";
+        for (let requestAttempt = 0; requestAttempt < 3; requestAttempt += 1) {
+          const response = await fetch(`${baseUrl}/api/train`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "generate",
+              dimension,
+              excludedSignatures,
+            }),
+          });
+          const payload = await response.json();
+          if (response.ok && payload.question) {
+            generated = payload.question;
+            break;
+          }
+          lastError = payload.error || String(response.status);
+          generationRetryCount += 1;
+        }
+        if (!generated) {
+          throw new Error(`${dimension} 第 ${index + 1} 题生成失败：${lastError}`);
+        }
+        questions.push(generated);
+        excludedSignatures.push(generated.questionMeta.signature);
       }
-      questions.push(payload.question);
-      excludedSignatures.push(payload.question.questionMeta.signature);
-    }
-  }
+      return questions;
+    })
+  );
 
-  return questions;
+  return { questions: batches.flat(), generationRetryCount };
 }
 
 function auditQuestions(questions) {
@@ -188,9 +199,12 @@ const baseUrl = readArg(
   "--base-url",
   process.env.TRAINING_AUDIT_BASE_URL || "http://127.0.0.1:3000"
 ).replace(/\/$/, "");
-const questions = fixtureMode
-  ? fixtureQuestions()
+const liveResult = fixtureMode
+  ? { questions: fixtureQuestions(), generationRetryCount: 0 }
   : await fetchLiveQuestions(baseUrl);
-const metrics = auditQuestions(questions);
+const metrics = {
+  ...auditQuestions(liveResult.questions),
+  generationRetryCount: liveResult.generationRetryCount,
+};
 process.stdout.write(`${JSON.stringify(metrics, null, 2)}\n`);
 assertAudit(metrics, fixtureMode);
