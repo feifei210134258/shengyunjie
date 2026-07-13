@@ -657,3 +657,10 @@ pm2 reload shengyunjie --update-env
 ### 验证结果
 - 训练相关 Node 测试 28/28 通过。
 - `npx tsc --noEmit`、`ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --max-warnings 0`、`npx next build`、`./init.sh`、JSON 解析与 `git diff --check` 全部通过。
+
+## [2026-07-13] Deploy: 训练出题质量优化上线
+
+- `codex/training-question-diversity` 已以合并提交并入 `deploy/pm`，合并后再次通过 28 项训练测试、TypeScript、ESLint、Next.js Build 和 `./init.sh` 9/9。
+- `deploy/pm` 已推送至 GitHub；生产机 `/www/wwwroot/shengyunjie` 已更新到合并提交，完成干净构建并重建 `shengyunjie` PM2 进程。
+- 修复部署脚本的 PM2 启动竞态：本地健康检查改为最长 20 秒轮询；同时移除生产校验脚本中已下线的旧文案断言。
+- 生产本机 `http://127.0.0.1:3001/training` 返回 200，PM2 状态为 online；`BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK`。

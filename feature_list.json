@@ -1,8 +1,8 @@
 {
     "project": "产品升云阶 — Product Thinking Enhancement Tool",
-    "last_updated": "2026-06-12",
+    "last_updated": "2026-07-13",
     "current_feature": "training-001",
-    "notes": "Hotfix：登录按钮确认会话后硬跳转 /dashboard；训练真实出题页 /training/session 已对齐新版 A1 UI；/training/session-ui-preview 保留为真实页别名；训练 segment 已禁用长期 HTML 缓存。新增 git 拉取式部署脚本，默认 deploy/pm 分支；等待提交/推送后远端执行，暂未部署。",
+    "notes": "训练真实出题页 /training/session 已对齐新版 UI，开放诊断题、多样性轮换、分层提示和作答后参考答案已上线。2026-07-13 已合并并推送 deploy/pm，生产 PM2 进程已重建，https://pm.imfly.site 校验通过。",
     "features": [
         {
             "id": "infra-001",

@@ -39,6 +39,23 @@ run_training_probe() {
   fi
 }
 
+wait_for_http() {
+  local url="$1"
+  local attempts="${2:-20}"
+  local attempt
+
+  for ((attempt = 1; attempt <= attempts; attempt += 1)); do
+    if curl -fsS -I "$url" >/dev/null; then
+      curl -fsS -I "$url" | sed -n '1,12p'
+      return
+    fi
+    sleep 1
+  done
+
+  echo "Health check timed out: $url" >&2
+  return 1
+}
+
 purge_nginx_cache_if_configured() {
   local nginx_bin
   nginx_bin="$(command -v nginx || true)"
@@ -132,8 +149,8 @@ NODE_ENV=production PORT="$PORT" "$PM2_BIN" start node_modules/next/dist/bin/nex
 "$PM2_BIN" save || true
 
 log "Checking local app health"
-curl -fsS -I "http://127.0.0.1:${PORT}/training" | sed -n '1,12p'
-curl -fsS -I "http://127.0.0.1:${PORT}/training/session" | sed -n '1,12p'
+wait_for_http "http://127.0.0.1:${PORT}/training"
+wait_for_http "http://127.0.0.1:${PORT}/training/session"
 
 purge_nginx_cache_if_configured
 run_training_probe

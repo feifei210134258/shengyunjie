@@ -53,7 +53,6 @@ done
 assert_contains "training" 'href="/training/session"'
 assert_not_contains "training" 'href="/training/session-ui-preview"'
 assert_contains "session" '先读题，再完成你的判断'
-assert_contains "session" '本题要你做一个真实取舍'
 assert_not_contains "session" '训练题页面 UI 方案预览'
 assert_contains "preview" '先读题，再完成你的判断'
 assert_not_contains "preview" '训练题页面 UI 方案预览'
