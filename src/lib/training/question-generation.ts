@@ -169,10 +169,18 @@ export function selectTrainingTarget(input: {
     .map((signature) => {
       const [dimension, subSkillId, archetypeId, contextFamily, productStage, tensionId] =
         signature.split("::");
-      if (dimension !== input.dimension || !subSkillId || !archetypeId) return null;
-      return { subSkillId, archetypeId, contextFamily, productStage, tensionId };
+      if (!dimension || !subSkillId || !archetypeId) return null;
+      return {
+        dimension,
+        subSkillId,
+        archetypeId,
+        contextFamily,
+        productStage,
+        tensionId,
+      };
     })
     .filter(Boolean) as Array<{
+    dimension: string;
     subSkillId: string;
     archetypeId: string;
     contextFamily: string;
@@ -187,10 +195,24 @@ export function selectTrainingTarget(input: {
   );
   const contextCounts = countBy(recent, (item) => item.contextFamily);
   const tensionCounts = countBy(recent, (item) => item.tensionId);
-  const currentSubSkillCounts = countBy(currentRoundMeta, (item) => item.subSkillId);
+  const currentDimensionMeta = currentRoundMeta.filter(
+    (item) => item.dimension === input.dimension
+  );
+  const currentSubSkillCounts = countBy(
+    currentDimensionMeta,
+    (item) => item.subSkillId
+  );
   const currentArchetypeCounts = countBy(
     currentRoundMeta,
     (item) => item.archetypeId
+  );
+  const currentContextCounts = countBy(
+    currentRoundMeta,
+    (item) => item.contextFamily
+  );
+  const currentTensionCounts = countBy(
+    currentRoundMeta,
+    (item) => item.tensionId
   );
   const candidates = capabilities.flatMap((capability, capabilityIndex) =>
     capability.archetypes.map((archetypeId, archetypeIndex) =>
@@ -211,7 +233,9 @@ export function selectTrainingTarget(input: {
     const pair = `${candidate.meta.subSkillId}|${candidate.meta.archetypeId}`;
     const score =
       (currentSubSkillCounts.get(candidate.meta.subSkillId) || 0) * 200 +
-      (currentArchetypeCounts.get(candidate.meta.archetypeId) || 0) * 8 +
+      (currentArchetypeCounts.get(candidate.meta.archetypeId) || 0) * 120 +
+      (currentContextCounts.get(candidate.meta.contextFamily) || 0) * 8 +
+      (currentTensionCounts.get(candidate.meta.tensionId) || 0) * 4 +
       (pairCounts.get(pair) || 0) * 30 +
       (subSkillCounts.get(candidate.meta.subSkillId) || 0) * 12 +
       (archetypeCounts.get(candidate.meta.archetypeId) || 0) * 4 +

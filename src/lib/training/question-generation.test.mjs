@@ -61,6 +61,28 @@ test("spreads a five-question round across five subskills", () => {
   assert.equal(new Set(selected.map((item) => item.meta.subSkillId)).size, 5);
 });
 
+test("spreads a five-dimension round across five answer archetypes", () => {
+  const dimensions = [
+    "战略思维",
+    "系统设计能力",
+    "数据决策能力",
+    "用户洞察与需求管理",
+    "商业思维",
+  ];
+  const excludedSignatures = [];
+  const selected = dimensions.map((dimension) => {
+    const target = selectTrainingTarget({
+      dimension,
+      excludedSignatures,
+      random: () => 0,
+    });
+    excludedSignatures.push(target.meta.signature);
+    return target;
+  });
+
+  assert.equal(new Set(selected.map((item) => item.meta.archetypeId)).size, 5);
+});
+
 test("detects a near rewrite with Chinese character trigrams", () => {
   const left = "续费率下降，需要判断新功能是否导致客户流失";
   const right = "客户续费率下滑，请判断是否由新上线功能造成流失";
