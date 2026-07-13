@@ -1,5 +1,6 @@
 import {
   getAnswerFormat,
+  getArchetypeTaskBrief,
   getCapabilitiesForDimension,
   isTrainingDimension,
 } from "./capability-catalog.ts";
@@ -401,6 +402,7 @@ export function buildQuestionGenerationPrompt(input: {
 - 高级行为：${target.capability.advancedBehavior}
 - 执行层常见陷阱：${target.capability.executionTrap}
 - 题型：${target.meta.archetypeId}
+- 题型任务：${getArchetypeTaskBrief(target.meta.archetypeId)}
 - 参考答案形式：${target.meta.answerFormat}
 - 业务场景：${target.contextLabel}
 - 产品阶段：${target.productStageLabel}
@@ -409,14 +411,11 @@ export function buildQuestionGenerationPrompt(input: {
 - 评价重点：${target.capability.evaluationFocus.join("；")}
 
 出题原则：
-1. 题目必须有具体的 B 端业务上下文、相互牵制的角色或目标，以及至少两个可辩护的解释或选择。
-2. 用户不能只列功能清单就完成回答；必须做出判断，并说明证据、边界或改变结论的条件。
-3. 题面不显示任何方法论、书名、作者或资料来源，不告诉用户应套用哪个框架。公开字段严格禁用 JTBD、机会成本、第一性原理、单位经济、LTV、CAC、商业模式画布、因果推断、系统思维等名称，改用题设中的自然业务语言表达。
-4. 不在 task 中给出“第一步/第二步”、四步模板或完整答题提纲。
-5. 默认提示只给一个观察角度，一句话；不公布方法名和答案结构。
-6. 进一步提示只补充一个需要比较的角度或待验证未知量，不直接作答。
-7. 可以使用合理的“题设已知条件”，但不得将无来源数字声称为真实公司数据，也不得为真实品牌编造内部经营数据。
-8. 题面的 title + scenario + task 合计不超过 420 个中文字符。
+1. 用具体 B 端场景制造一个真实矛盾，至少存在两个可辩护的解释或选择。
+2. 让 task 符合“题型任务”，只提出核心认知任务，不列完整答题提纲；scenario 只放题设事实。
+3. 默认提示只点一个容易忽略的观察角度；进一步提示只增加一个比较角度或关键未知量。
+4. 题面不出现书名、作者或方法论名称（如 JTBD、机会成本、单位经济等），也不虚构品牌内部数据或用营收、年产值等宏大数字堆难度。
+5. title + scenario + task 合计不超过 420 个中文字符。
 
 需要避免的近期题目：
 ${recentQuestions.length ? recentQuestions.map((item, index) => `${index + 1}. ${item}`).join("\n") : "无"}

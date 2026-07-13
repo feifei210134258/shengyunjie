@@ -183,3 +183,16 @@ test("builds an open-diagnosis prompt without prescribing a named method", () =>
   assert.doesNotMatch(prompt, /要求答题者使用「/);
   assert.doesNotMatch(prompt, /frameworkMap/);
 });
+
+test("gives a counterfactual archetype one positive task direction", () => {
+  const target = selectTrainingTarget({
+    dimension: "战略思维",
+    random: () => 0,
+  });
+  target.meta.archetypeId = "counterfactual_review";
+  target.meta.answerFormat = "决策复盘";
+
+  const prompt = buildQuestionGenerationPrompt({ target });
+
+  assert.match(prompt, /已经发生的决策和结果/);
+});

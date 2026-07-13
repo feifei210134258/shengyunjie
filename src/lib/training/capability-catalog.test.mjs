@@ -36,3 +36,9 @@ test("defines observable behavior, an execution trap, and evaluation focus", () 
     assert.ok(capability.evaluationFocus.length >= 3);
   }
 });
+
+test("defines one positive task brief for every answer archetype", () => {
+  for (const archetype of TRAINING_ARCHETYPES) {
+    assert.ok(archetype.taskBrief.length >= 15);
+  }
+});

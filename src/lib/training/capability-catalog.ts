@@ -9,14 +9,46 @@ export const TRAINING_DIMENSIONS = [
 export type TrainingDimension = (typeof TRAINING_DIMENSIONS)[number];
 
 export const TRAINING_ARCHETYPES = [
-  { id: "decision_memo", answerFormat: "决策备忘录" },
-  { id: "ambiguous_diagnosis", answerFormat: "调查与判断计划" },
-  { id: "discovery_plan", answerFormat: "探索验证方案" },
-  { id: "system_boundary", answerFormat: "系统边界设计" },
-  { id: "metric_review", answerFormat: "指标评审记录" },
-  { id: "counterfactual_review", answerFormat: "决策复盘" },
-  { id: "stakeholder_challenge", answerFormat: "多方协商方案" },
-  { id: "executive_proposal", answerFormat: "管理层提案" },
+  {
+    id: "decision_memo",
+    answerFormat: "决策备忘录",
+    taskBrief: "在多个可行选择之间作出判断，并说明哪些新证据会改变结论。",
+  },
+  {
+    id: "ambiguous_diagnosis",
+    answerFormat: "调查与判断计划",
+    taskBrief: "面对相互冲突的信号，排列多个竞争解释并设计区分证据。",
+  },
+  {
+    id: "discovery_plan",
+    answerFormat: "探索验证方案",
+    taskBrief: "识别最关键的未知量，设计最小验证并设置继续、转向或退出条件。",
+  },
+  {
+    id: "system_boundary",
+    answerFormat: "系统边界设计",
+    taskBrief: "界定角色、状态、责任、例外与演进边界，让异常情况下也能运行。",
+  },
+  {
+    id: "metric_review",
+    answerFormat: "指标评审记录",
+    taskBrief: "判断现有指标能否支持决策，并识别口径、样本或激励风险。",
+  },
+  {
+    id: "counterfactual_review",
+    answerFormat: "决策复盘",
+    taskBrief: "给出已经发生的决策和结果，要求区分判断质量、执行影响与运气。",
+  },
+  {
+    id: "stakeholder_challenge",
+    answerFormat: "多方协商方案",
+    taskBrief: "让目标冲突的角色形成可执行安排，并明确各方承诺和边界。",
+  },
+  {
+    id: "executive_proposal",
+    answerFormat: "管理层提案",
+    taskBrief: "对资源承诺提出一项管理层建议，并回应最重要的反对意见。",
+  },
 ] as const;
 
 export type TrainingArchetypeId = (typeof TRAINING_ARCHETYPES)[number]["id"];
@@ -316,5 +348,12 @@ export function getAnswerFormat(archetype: TrainingArchetypeId) {
   return (
     TRAINING_ARCHETYPES.find((item) => item.id === archetype)?.answerFormat ||
     "结构化产品判断"
+  );
+}
+
+export function getArchetypeTaskBrief(archetype: TrainingArchetypeId) {
+  return (
+    TRAINING_ARCHETYPES.find((item) => item.id === archetype)?.taskBrief ||
+    "要求用户对题设中的核心矛盾作出结构化判断。"
   );
 }
