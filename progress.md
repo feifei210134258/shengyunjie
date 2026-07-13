@@ -612,3 +612,24 @@ pm2 reload shengyunjie --update-env
 - 全量 Node 测试通过：27/27。
 - `npx tsc --noEmit` 通过；`npm run build` 通过。
 - `./init.sh` 完成并报告环境就绪；基线自带 `AuthShowcase.tsx` 的 `no-img-element` 警告，因此独立的 `eslint --max-warnings 0` 未通过（0 errors / 1 warning），未为消除警告改动历史基线。
+
+## [2026-07-13] Feature: 开放诊断训练题与出题去重
+
+### 完成内容
+- 新增 5 个训练维度、30 项高级产品子能力和 8 类题型的内部能力目录，不把书籍或方法论名称展示给用户。
+- 出题由程序先选择子能力、题型、业务场景、产品阶段和核心矛盾，再由 AI 输出结构化题目；本轮与近期记录共同参与轮换。
+- 增加完整签名去重、中文 trigram 文本相似度、方法/来源泄露、显式答题步骤、必填字段和长度校验；失败最多重生成一次。
+- 训练页默认展示第一层“思考提示”，用户可主动展开第二层提示；不再提前公布固定框架和统一答题模板。
+- 评卷按本题特定标准返回证据与差距，答题后默认显示独立参考答案、用户答案改写和另一条可辩护路径。
+- `question_meta`、逐项评价和 `used_secondary_hint` 随 `ai_feedback` 写入现有 `training_records` JSONB，不改数据库 Schema。
+- 新增 `npm run audit:training-questions`，支持 fixture 与本地在线批量审计。
+
+### 验证结果
+- 训练相关 Node 测试 17/17 通过，覆盖目录完整性、轮换、当轮排除、五题子能力分散、相似度、输出归一化、泄露拦截和评卷兼容。
+- 25 题真实模型在线审计通过：25 个唯一签名；每个维度覆盖 5 个子能力、5 个子能力/题型组合；最高文本相似度 0.075；方法泄露 0、硬性问题 0、额外请求重试 0。
+- 真实 `/api/train` 生成与评卷联调通过：返回 4 项题目特定标准、674 字参考答案、182 字替代路径，并原样保留 `question_meta` 与 `used_secondary_hint=true`。
+- `npm run audit:training-questions -- --fixture`、`npx tsc --noEmit`、针对性 ESLint 和 `git diff --check` 通过。
+
+### 决策与风险
+- 本轮不实现难度模型、接口鉴权改造、书籍 RAG 或数据库 Schema 变更。
+- in-app Browser 能打开本地训练页，但当前会话无登录态，随后按现有中间件跳到 `/login`；本轮没有创建测试账号。训练记录写入沿用此前已验证的 `/api/training/record` 链路，新增字段位于原有 `ai_feedback` JSONB payload。
