@@ -53,6 +53,7 @@ export interface QuestionValidationIssue {
     | "answer_leak"
     | "source_leak"
     | "task_in_scenario"
+    | "archetype_mismatch"
     | "over_guided"
     | "hint_too_long"
     | "pseudo_precision"
@@ -403,7 +404,6 @@ export function buildQuestionGenerationPrompt(input: {
 内部训练目标（不要逐字复制到题面）：
 - 训练维度：${target.meta.dimension}
 - 子能力：${target.capability.label}
-- 高级行为：${target.capability.advancedBehavior}
 - 执行层常见陷阱：${target.capability.executionTrap}
 - 题型：${target.meta.archetypeId}
 - 题型任务：${getArchetypeTaskBrief(target.meta.archetypeId)}
@@ -412,12 +412,11 @@ export function buildQuestionGenerationPrompt(input: {
 - 产品阶段：${target.productStageLabel}
 - 核心矛盾：${target.tensionLabel}
 - 证据状态：${target.evidenceState}
-- 评价重点：${target.capability.evaluationFocus.join("；")}
 
 出题原则：
 1. 用具体 B 端场景制造一个真实矛盾，至少存在两个可辩护的解释或选择。
-2. 让 task 符合“题型任务”，只提出核心认知任务，不列完整答题提纲；scenario 只放题设事实。
-3. 默认提示只点一个容易忽略的观察角度；进一步提示只增加一个比较角度或关键未知量。
+2. 题型任务决定 task 必须发生的作答动作，子能力只决定题目内容；尽量只用一个问句提出核心认知任务，不列完整答题提纲；scenario 只放题设事实。
+3. 默认提示只点一个容易忽略的观察角度；进一步提示只增加一个比较角度或关键未知量。每条提示只写一个简短问句。
 4. 题面不出现书名、作者或方法论名称（如 JTBD、机会成本、单位经济等），也不虚构品牌内部数据或用营收、年产值等宏大数字堆难度。
 5. title + scenario + task 合计不超过 420 个中文字符。
 
@@ -449,7 +448,12 @@ const EXPLICIT_STEPS_PATTERN =
   /按[^\n。；]{0,30}(?:步|顺序)回答|第一步|第二步|请从以下[\d一二三四五]/i;
 const TASK_IN_SCENARIO_PATTERN =
   /(?:请|你需要|你的任务是)(?:分析|判断|设计|撰写|给出|回答)/;
-const ANSWER_OUTLINE_TRIGGER = /(?:包括|需要说明|需说明|分别说明|请说明)[：:]?/;
+const COUNTERFACTUAL_TASK_PATTERN =
+  /(?:复盘|回顾|当初|决策质量|判断质量|执行影响|运气)/;
+const ANSWER_OUTLINE_TRIGGER =
+  /(?:包括|包含|含|需要说明|需说明|分别说明|请说明)[：:]?/;
+const ANSWER_ACTION_PATTERN =
+  /(?:识别|分析|设计|明确|说明|列出|给出|定义|判断|建议|回应)/g;
 const MACRO_PSEUDO_PRECISION_PATTERN =
   /(?:营收|年产值|融资额|市场份额)[^\n。]{0,12}\d|\d[^\n。]{0,12}(?:营收|年产值|融资额|市场份额)/;
 
@@ -461,6 +465,10 @@ function countAnswerOutlineParts(task: string) {
     .split(/[、，；]/)
     .map((item) => item.trim())
     .filter(Boolean).length;
+}
+
+function countAnswerActions(task: string) {
+  return task.match(ANSWER_ACTION_PATTERN)?.length || 0;
 }
 
 export function validateGeneratedTrainingQuestion(
@@ -513,7 +521,20 @@ export function validateGeneratedTrainingQuestion(
       message: "场景中混入了需要用户回答的任务",
     });
   }
-  if (countAnswerOutlineParts(question.task) >= 4) {
+  if (
+    question.questionMeta.archetypeId === "counterfactual_review" &&
+    !COUNTERFACTUAL_TASK_PATTERN.test(question.task)
+  ) {
+    issues.push({
+      code: "archetype_mismatch",
+      severity: "hard",
+      message: "决策复盘题必须回顾已发生的决策，不能改成泛化归因调查",
+    });
+  }
+  if (
+    countAnswerOutlineParts(question.task) >= 4 ||
+    countAnswerActions(question.task) >= 4
+  ) {
     issues.push({
       code: "over_guided",
       severity: "soft",

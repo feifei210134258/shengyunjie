@@ -178,8 +178,11 @@ test("builds an open-diagnosis prompt without prescribing a named method", () =>
   });
 
   assert.match(prompt, /开放诊断/);
-  assert.match(prompt, new RegExp(target.capability.advancedBehavior));
+  assert.doesNotMatch(prompt, new RegExp(target.capability.advancedBehavior));
   assert.match(prompt, /默认提示/);
+  assert.match(prompt, /题型任务决定 task 必须发生的作答动作/);
+  assert.match(prompt, /每条提示只写一个简短问句/);
+  assert.doesNotMatch(prompt, /评价重点/);
   assert.doesNotMatch(prompt, /要求答题者使用「/);
   assert.doesNotMatch(prompt, /frameworkMap/);
 });
@@ -195,6 +198,35 @@ test("gives a counterfactual archetype one positive task direction", () => {
   const prompt = buildQuestionGenerationPrompt({ target });
 
   assert.match(prompt, /已经发生的决策和结果/);
+});
+
+test("rejects a counterfactual question that becomes a generic diagnosis", () => {
+  const target = selectTrainingTarget({
+    dimension: "数据决策能力",
+    random: () => 0,
+  });
+  target.meta.archetypeId = "counterfactual_review";
+  target.meta.answerFormat = "决策复盘";
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "满意度下降",
+      scenario: "功能上线后满意度下降，同期服务流程也有调整。",
+      task: "请分析满意度下降的原因，并设计下一步调查。",
+      default_hint: "同期变化可能不止一个吗？",
+      secondary_hint: "哪组客户的变化最明显？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(
+    issues.some(
+      (issue) =>
+        issue.code === "archetype_mismatch" && issue.severity === "hard"
+    )
+  );
 });
 
 test("rejects a scenario that repeats the answer task", () => {
@@ -247,6 +279,75 @@ test("flags an over-guided task without blocking the question", () => {
       (issue) => issue.code === "over_guided" && issue.severity === "soft"
     )
   );
+});
+
+test("flags a task that chains too many answer actions", () => {
+  const target = selectTrainingTarget({
+    dimension: "用户洞察与需求管理",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "多方冲突",
+      scenario: "一个新功能对不同角色有相反影响。",
+      task:
+        "请识别关键角色，分析价值与损失，设计协商安排，明确各方承诺，并说明如何验证。",
+      default_hint: "谁在使用，谁在承担代价？",
+      secondary_hint: "哪个承诺最难持续？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "over_guided"));
+});
+
+test("keeps the three core actions of a discovery task", () => {
+  const target = selectTrainingTarget({
+    dimension: "用户洞察与需求管理",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "验证未知量",
+      scenario: "客户对一项新能力给出了冲突反馈。",
+      task:
+        "请设计一个最小验证方案，明确最想验证的未知量，并说明继续或退出条件。",
+      default_hint: "哪个未知量最可能改变决策？",
+      secondary_hint: "怎样用最小代价获得它？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(!issues.some((issue) => issue.code === "over_guided"));
+});
+
+test("flags a parenthesized verification outline", () => {
+  const target = selectTrainingTarget({
+    dimension: "用户洞察与需求管理",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "验证方向",
+      scenario: "两类客户对同一能力给出了相反反馈。",
+      task:
+        "识别关键未知量，并设计最小验证方案（含验证目标、方法、成功标准、失败标准及下一步决策）。",
+      default_hint: "哪个未知量最可能改变决策？",
+      secondary_hint: "怎样用最小代价获得它？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "over_guided"));
 });
 
 test("flags hints that are long enough to become an answer outline", () => {
