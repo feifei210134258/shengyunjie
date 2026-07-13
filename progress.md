@@ -664,3 +664,4 @@ pm2 reload shengyunjie --update-env
 - `deploy/pm` 已推送至 GitHub；生产机 `/www/wwwroot/shengyunjie` 已更新到合并提交，完成干净构建并重建 `shengyunjie` PM2 进程。
 - 修复部署脚本的 PM2 启动竞态：本地健康检查改为最长 20 秒轮询；同时移除生产校验脚本中已下线的旧文案断言。
 - 生产本机 `http://127.0.0.1:3001/training` 返回 200，PM2 状态为 online；`BASE_URL=https://pm.imfly.site bash scripts/verify-production-training.sh` 返回 `VERIFY_OK`。
+- 生产 `POST https://pm.imfly.site/api/train` 真实出题返回 200，生成“企业数据分析平台客户优先级决策”，题型为 `decision_memo` 且包含完整签名。
