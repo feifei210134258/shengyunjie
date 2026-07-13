@@ -1,0 +1,396 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  buildQuestionGenerationPrompt,
+  calculateChineseTrigramSimilarity,
+  collectExcludedQuestionSignatures,
+  normalizeGeneratedTrainingQuestion,
+  selectTrainingTarget,
+  validateGeneratedTrainingQuestion,
+} from "./question-generation.ts";
+
+test("rotates capability and archetype combinations within a dimension", () => {
+  const selected = [];
+
+  for (let index = 0; index < 5; index += 1) {
+    const target = selectTrainingTarget({
+      dimension: "战略思维",
+      recentMeta: selected.map((item) => item.meta),
+      random: () => 0,
+    });
+    selected.push(target);
+  }
+
+  assert.equal(
+    new Set(
+      selected.map(
+        (item) => `${item.meta.subSkillId}|${item.meta.archetypeId}`
+      )
+    ).size,
+    5
+  );
+});
+
+test("excludes signatures generated earlier in the current round", () => {
+  const first = selectTrainingTarget({
+    dimension: "数据决策能力",
+    random: () => 0,
+  });
+  const second = selectTrainingTarget({
+    dimension: "数据决策能力",
+    excludedSignatures: [first.meta.signature],
+    random: () => 0,
+  });
+
+  assert.notEqual(second.meta.signature, first.meta.signature);
+});
+
+test("spreads a five-question round across five subskills", () => {
+  const excludedSignatures = [];
+  const selected = [];
+  for (let index = 0; index < 5; index += 1) {
+    const target = selectTrainingTarget({
+      dimension: "战略思维",
+      excludedSignatures,
+      random: () => 0,
+    });
+    selected.push(target);
+    excludedSignatures.push(target.meta.signature);
+  }
+  assert.equal(new Set(selected.map((item) => item.meta.subSkillId)).size, 5);
+});
+
+test("spreads a five-dimension round across five answer archetypes", () => {
+  const dimensions = [
+    "战略思维",
+    "系统设计能力",
+    "数据决策能力",
+    "用户洞察与需求管理",
+    "商业思维",
+  ];
+  const excludedSignatures = [];
+  const selected = dimensions.map((dimension) => {
+    const target = selectTrainingTarget({
+      dimension,
+      excludedSignatures,
+      random: () => 0,
+    });
+    excludedSignatures.push(target.meta.signature);
+    return target;
+  });
+
+  assert.equal(new Set(selected.map((item) => item.meta.archetypeId)).size, 5);
+});
+
+test("detects a near rewrite with Chinese character trigrams", () => {
+  const left = "续费率下降，需要判断新功能是否导致客户流失";
+  const right = "客户续费率下滑，请判断是否由新上线功能造成流失";
+  const unrelated = "设计采购审批中的权限与例外处理机制";
+
+  assert.ok(calculateChineseTrigramSimilarity(left, right) >= 0.2);
+  assert.ok(
+    calculateChineseTrigramSimilarity(left, unrelated) <
+      calculateChineseTrigramSimilarity(left, right)
+  );
+});
+
+test("normalizes structured output with target-owned metadata and criteria", () => {
+  const target = selectTrainingTarget({
+    dimension: "战略思维",
+    random: () => 0,
+  });
+  const result = normalizeGeneratedTrainingQuestion(
+    {
+      title: "该不该继续做大客户定制",
+      scenario:
+        "某企业服务产品在连续承接定制项目后收入增长，但通用版本迭代速度持续下降。",
+      task: "请做出下一阶段判断，并说明哪些新证据会改变你的结论。",
+      default_hint: "先区分一次性收入与可复用能力。",
+      secondary_hint:
+        "注意评估定制对之后客户的边际交付成本。",
+      evaluation_criteria: [
+        {
+          id: "boundary",
+          label: "能力边界",
+          description: "能否识别值得长期控制的能力。",
+          weight: 40,
+        },
+      ],
+    },
+    target
+  );
+
+  assert.equal(result.defaultHint, "先区分一次性收入与可复用能力。");
+  assert.equal(result.questionMeta.signature, target.meta.signature);
+  assert.equal(result.evaluationCriteria.length, 3);
+});
+
+test("rejects public text that exposes named methods or answer steps", () => {
+  const target = selectTrainingTarget({
+    dimension: "用户洞察与需求管理",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "判断客户需求",
+      scenario: "销售团队希望为某客户开发一项新能力。",
+      task: "请使用 JTBD 框架，按目标、证据、取舍、验证四步回答。",
+      default_hint: "想想用户的真实任务。",
+      secondary_hint: "查看现有替代做法。",
+      evaluation_criteria: [],
+    },
+    target
+  );
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "answer_leak"));
+  assert.ok(
+    issues.some(
+      (issue) => issue.code === "source_leak" && issue.message.includes("JTBD")
+    )
+  );
+});
+
+test("collects unique signatures from generated client question state", () => {
+  const target = selectTrainingTarget({
+    dimension: "商业思维",
+    random: () => 0,
+  });
+  const signatures = collectExcludedQuestionSignatures({
+    first: { data: { questionMeta: target.meta } },
+    second: { data: { questionMeta: { ...target.meta, signature: "second" } } },
+    loading: { loading: true },
+  });
+
+  assert.deepEqual(signatures, [target.meta.signature, "second"]);
+});
+
+test("builds an open-diagnosis prompt without prescribing a named method", () => {
+  const target = selectTrainingTarget({
+    dimension: "战略思维",
+    random: () => 0,
+  });
+  const prompt = buildQuestionGenerationPrompt({
+    target,
+    recentQuestions: ["一道需要避免的近期题目"],
+    recentGaps: ["对改变结论的条件说明不足"],
+  });
+
+  assert.match(prompt, /开放诊断/);
+  assert.doesNotMatch(prompt, new RegExp(target.capability.advancedBehavior));
+  assert.match(prompt, /默认提示/);
+  assert.match(prompt, /题型任务决定 task 必须发生的作答动作/);
+  assert.match(prompt, /每条提示只写一个简短问句/);
+  assert.doesNotMatch(prompt, /评价重点/);
+  assert.doesNotMatch(prompt, /要求答题者使用「/);
+  assert.doesNotMatch(prompt, /frameworkMap/);
+});
+
+test("gives a counterfactual archetype one positive task direction", () => {
+  const target = selectTrainingTarget({
+    dimension: "战略思维",
+    random: () => 0,
+  });
+  target.meta.archetypeId = "counterfactual_review";
+  target.meta.answerFormat = "决策复盘";
+
+  const prompt = buildQuestionGenerationPrompt({ target });
+
+  assert.match(prompt, /已经发生的决策和结果/);
+});
+
+test("rejects a counterfactual question that becomes a generic diagnosis", () => {
+  const target = selectTrainingTarget({
+    dimension: "数据决策能力",
+    random: () => 0,
+  });
+  target.meta.archetypeId = "counterfactual_review";
+  target.meta.answerFormat = "决策复盘";
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "满意度下降",
+      scenario: "功能上线后满意度下降，同期服务流程也有调整。",
+      task: "请分析满意度下降的原因，并设计下一步调查。",
+      default_hint: "同期变化可能不止一个吗？",
+      secondary_hint: "哪组客户的变化最明显？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(
+    issues.some(
+      (issue) =>
+        issue.code === "archetype_mismatch" && issue.severity === "hard"
+    )
+  );
+});
+
+test("rejects a scenario that repeats the answer task", () => {
+  const target = selectTrainingTarget({
+    dimension: "数据决策能力",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "续费异常",
+      scenario: "某平台出现续费异常。请分析原因并给出方案。",
+      task: "你会如何定位原因？",
+      default_hint: "注意不同客群的变化。",
+      secondary_hint: "什么证据能区分两种解释？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(
+    issues.some(
+      (issue) => issue.code === "task_in_scenario" && issue.severity === "hard"
+    )
+  );
+});
+
+test("flags an over-guided task without blocking the question", () => {
+  const target = selectTrainingTarget({
+    dimension: "战略思维",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "资源取舍",
+      scenario: "团队需要在两个方向中选择一个。",
+      task: "请给出建议，需要说明目标、对象、指标、风险和回退条件。",
+      default_hint: "先看两个方向的时间窗口。",
+      secondary_hint: "哪个选择更容易逆转？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(
+    issues.some(
+      (issue) => issue.code === "over_guided" && issue.severity === "soft"
+    )
+  );
+});
+
+test("flags a task that chains too many answer actions", () => {
+  const target = selectTrainingTarget({
+    dimension: "用户洞察与需求管理",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "多方冲突",
+      scenario: "一个新功能对不同角色有相反影响。",
+      task:
+        "请识别关键角色，分析价值与损失，设计协商安排，明确各方承诺，并说明如何验证。",
+      default_hint: "谁在使用，谁在承担代价？",
+      secondary_hint: "哪个承诺最难持续？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "over_guided"));
+});
+
+test("keeps the three core actions of a discovery task", () => {
+  const target = selectTrainingTarget({
+    dimension: "用户洞察与需求管理",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "验证未知量",
+      scenario: "客户对一项新能力给出了冲突反馈。",
+      task:
+        "请设计一个最小验证方案，明确最想验证的未知量，并说明继续或退出条件。",
+      default_hint: "哪个未知量最可能改变决策？",
+      secondary_hint: "怎样用最小代价获得它？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(!issues.some((issue) => issue.code === "over_guided"));
+});
+
+test("flags a parenthesized verification outline", () => {
+  const target = selectTrainingTarget({
+    dimension: "用户洞察与需求管理",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "验证方向",
+      scenario: "两类客户对同一能力给出了相反反馈。",
+      task:
+        "识别关键未知量，并设计最小验证方案（含验证目标、方法、成功标准、失败标准及下一步决策）。",
+      default_hint: "哪个未知量最可能改变决策？",
+      secondary_hint: "怎样用最小代价获得它？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "over_guided"));
+});
+
+test("flags hints that are long enough to become an answer outline", () => {
+  const target = selectTrainingTarget({
+    dimension: "系统设计能力",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "审批异常",
+      scenario: "某审批流程在跨部门使用时频繁卡住。",
+      task: "你会如何重新设计这个流程？",
+      default_hint:
+        "请同时检查角色目标、状态流转、异常处理、权限分配、责任归属和后续演进方式，以及各种方案对日常操作成本和跨部门协作的长期影响，再得出结论。",
+      secondary_hint: "关注局部失败后谁有权恢复。",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "hint_too_long"));
+});
+
+test("flags macro numbers used as decorative difficulty", () => {
+  const target = selectTrainingTarget({
+    dimension: "商业思维",
+    random: () => 0,
+  });
+  const question = normalizeGeneratedTrainingQuestion(
+    {
+      title: "客户价值",
+      scenario: "某制造企业年产值 5 亿元，正考虑引入新的协同产品。",
+      task: "你会如何判断这个机会是否值得投入？",
+      default_hint: "不要只看客户规模。",
+      secondary_hint: "客户的改善能否被产品捕获？",
+      evaluation_criteria: [],
+    },
+    target
+  );
+
+  const issues = validateGeneratedTrainingQuestion(question, []);
+
+  assert.ok(issues.some((issue) => issue.code === "pseudo_precision"));
+});

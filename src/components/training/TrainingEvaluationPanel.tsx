@@ -1,6 +1,6 @@
 "use client";
 
-import { TrainingEvaluation } from "@/lib/training/personalization";
+import type { TrainingEvaluation } from "@/lib/training/personalization";
 import { cn } from "@/lib/utils";
 import {
   Activity,
@@ -92,14 +92,49 @@ export default function TrainingEvaluationPanel({ evaluation, className }: Props
         ))}
       </div>
 
+      {evaluation.criterion_scores.length > 0 && (
+        <section className="rounded-xl border border-line bg-white p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Target className="h-4 w-4 text-primary" strokeWidth={1.8} />
+            <h4 className="font-semibold text-ink">本题关键判断</h4>
+          </div>
+          <div className="space-y-3">
+            {evaluation.criterion_scores.map((criterion) => (
+              <div
+                key={criterion.id}
+                className="grid gap-2 border-t border-line pt-3 first:border-t-0 first:pt-0 sm:grid-cols-[150px_1fr]"
+              >
+                <div>
+                  <p className="text-body-sm font-semibold text-ink">
+                    {criterion.label}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 font-mono text-label font-bold",
+                      scoreColor(criterion.score)
+                    )}
+                  >
+                    {formatScore(criterion.score)} / 10
+                  </p>
+                </div>
+                <div className="text-body-sm leading-6 text-ink-muted">
+                  <p>{criterion.evidence}</p>
+                  <p className="mt-1 text-ink-faint">差距：{criterion.gap}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-xl border border-sky-200 bg-sky-50 p-5">
           <div className="mb-2 flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-primary" strokeWidth={1.8} />
-            <h4 className="font-semibold text-ink">示例回答</h4>
+            <h4 className="font-semibold text-ink">参考答案</h4>
           </div>
           <p className="text-body-sm leading-7 text-ink-muted">
-            {evaluation.example_answer}
+            {evaluation.reference_answer}
           </p>
         </section>
 
@@ -113,6 +148,16 @@ export default function TrainingEvaluationPanel({ evaluation, className }: Props
           </p>
         </section>
       </div>
+
+      <section className="rounded-xl border border-line bg-[#F8FAFC] p-4">
+        <h4 className="mb-2 flex items-center gap-2 font-semibold text-ink">
+          <ArrowRight className="h-4 w-4 text-primary" strokeWidth={1.8} />
+          另一条可辩护路径
+        </h4>
+        <p className="text-body-sm leading-7 text-ink-muted">
+          {evaluation.alternative_path}
+        </p>
+      </section>
 
       <section className="rounded-xl border border-line bg-[#F8FAFC] px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">

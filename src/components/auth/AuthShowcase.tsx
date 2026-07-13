@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { BarChart3, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -136,10 +137,12 @@ export function AuthShowcase({ mode }: AuthShowcaseProps) {
           </div>
 
           <div className="overflow-hidden rounded-xl border border-white/12 bg-white shadow-2xl">
-            <img
+            <Image
               key={currentReport.src}
               src={currentReport.src}
               alt={currentReport.label}
+              width={1200}
+              height={600}
               className="aspect-[2/1] w-full animate-fade-in object-cover object-top"
             />
           </div>
