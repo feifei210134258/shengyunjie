@@ -633,3 +633,10 @@ pm2 reload shengyunjie --update-env
 ### 决策与风险
 - 本轮不实现难度模型、接口鉴权改造、书籍 RAG 或数据库 Schema 变更。
 - in-app Browser 能打开本地训练页，但当前会话无登录态，随后按现有中间件跳到 `/login`；本轮没有创建测试账号。训练记录写入沿用此前已验证的 `/api/training/record` 链路，新增字段位于原有 `ai_feedback` JSONB payload。
+
+## [2026-07-13] Hotfix: 出题结果与持久化失败解耦
+
+- 诊断确认开发环境 `DEEPSEEK_API_KEY` 已配置，`POST /api/train` 真实返回结构化训练题；单次生成约 16 秒。
+- 服务日志显示异常来自 Supabase 会话读取失败及 `/api/training/questions` 返回 401，不是 AI 未配置。
+- 修复前，题目生成与题目保存处于同一个 `try`；保存请求发生网络异常时会覆盖已经生成成功的题目。现已将保存改为非阻塞请求并单独捕获错误。
+- `npx tsc --noEmit`、针对性 ESLint 与 `git diff --check` 通过。

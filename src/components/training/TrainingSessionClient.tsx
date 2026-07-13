@@ -1141,17 +1141,20 @@ export default function TrainingSessionClient() {
 
       const questionText = getTrainingQuestionText(generated);
       if (questionText) {
-        const saveResponse = await fetch("/api/training/questions", {
+        fetch("/api/training/questions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             dimension: dim,
             question: questionText,
           }),
-        });
-        if (!saveResponse.ok && saveResponse.status !== 401) {
-          console.error("保存题目失败:", await saveResponse.text());
-        }
+        })
+          .then(async (saveResponse) => {
+            if (!saveResponse.ok && saveResponse.status !== 401) {
+              console.error("保存题目失败:", await saveResponse.text());
+            }
+          })
+          .catch((error) => console.error("保存题目失败:", error));
       }
     } catch (error) {
       setQuestions((prev) => ({
